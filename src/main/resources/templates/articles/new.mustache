@@ -1,0 +1,27 @@
+
+{{>layouts/header}}
+
+<!--content-->
+<main class="container page-container center-page">
+    <div class="form-box">
+        <h2>📚 도서 등록하기</h2>
+        <form class="container" action="/articles/create" method="post">
+            <div class="mb-3">
+                <label class="form-label">제목</label>
+                <input class="form-input" type="text" placeholder="제목을 입력하세요" name="articleTitle">
+            </div>
+            <div class="mb-3">
+                <label class="form-label">작가</label>
+                <input class="form-input" type="text" placeholder="작가를 입력하세요" name="articleAuthor">
+            </div>
+            <div class="mb-3">
+                <label class="form-label">설명</label>
+                <textarea class="form-control" rows="3" placeholder="설명을 입력하세요" name="articleDescription"></textarea>
+            </div>
+            <button type="submit" class="btn-submit">등록하기</button>
+        </form>
+    </div>
+</main>
+
+
+{{>layouts/footer}}

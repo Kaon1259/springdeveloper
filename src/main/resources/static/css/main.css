@@ -1,0 +1,113 @@
+/* 전역 기본 */
+body {
+    font-family: 'Noto Sans KR', sans-serif;
+    background-color: #f8f9fa;
+    /* ❌ 전역 중앙정렬은 제거: 네비/레이아웃 깨짐 원인
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    */
+    padding-top: 72px; /* fixed-top navbar 높이만큼 여백 */
+}
+
+/* 페이지 컨테이너 공통 여백 */
+.page-container {
+    padding-top: 16px;
+    padding-bottom: 40px;
+}
+
+/* 폼 페이지를 화면 중앙에 배치 */
+.center-page {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: calc(100vh - 72px); /* 네비게이션 높이 제외 */
+}
+
+
+/* 폼 박스 */
+.form-box {
+    width: 100%;
+    max-width: 480px;      /* 반응형: 작은 화면 고려 */
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.06);
+    padding: 28px;
+}
+
+/* 제목 */
+.form-box h2 {
+    text-align: center;
+    margin-bottom: 20px;
+    color: #333;
+}
+
+/* 라벨/입력 */
+.mb-3 { margin-bottom: 14px; }
+
+.form-label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 600;
+    color: #555;
+}
+
+.form-input, .form-control {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #ced4da;
+    border-radius: 8px;
+    box-sizing: border-box;
+    font-size: 14px;
+}
+
+/* 버튼 */
+.btn-submit {
+    width: 100%;
+    padding: 10px;
+    background-color: #0d6efd; /* 부트스트랩 primary 색상과 맞춤 */
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: transform .05s ease, background .2s ease;
+}
+
+.btn-submit:hover { background-color: #0b5ed7; }
+.btn-submit:active { transform: translateY(1px); }
+
+/* 테이블 상단 여백 */
+.table { margin-top: 16px; }
+
+/* 작은 화면에서 여백/폰트 보정 */
+@media (max-width: 576px) {
+    .form-box { padding: 20px; }
+    .form-box h2 { font-size: 1.25rem; }
+}
+
+
+#message-container {
+    width: 100%;
+    text-align: center;
+    margin-top: 16px;
+    padding: 0 16px; /* 좌우 여백 */
+    box-sizing: border-box;
+}
+
+#message-container .alert {
+    width: 100%;
+    margin: 0 auto;
+    text-align: center;
+    border-radius: 6px;
+    font-weight: 500;
+}
+
+/* 점점 사라지기 효과 */
+.fade-out {
+    opacity: 0;
+    transition: opacity 0.5s ease-out;
+}
+
