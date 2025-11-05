@@ -12,7 +12,6 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import ymsoft.springdeveloper.com.springdeveloper.dto.MemberDto;
-import ymsoft.springdeveloper.com.springdeveloper.entity.Member;
 import ymsoft.springdeveloper.com.springdeveloper.service.memberService;
 
 import java.util.List;
@@ -43,7 +42,13 @@ public class MemberController {
         // 4️⃣ 뷰 반환
         return "members/list";
     }
-    
+
+    //금주 근무 현황
+    @GetMapping("/members/thisweek")
+    public String thisWeekMembers() {
+        return "members/thisweek";
+    }
+
     //신규 등록
     @GetMapping("/members/new")
     public String registerMember() {

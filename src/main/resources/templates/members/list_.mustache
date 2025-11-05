@@ -55,18 +55,6 @@
                                 <div class="text-muted">성별</div>
                                 <div id="infoGender" class="fw-semibold">-</div>
                             </div>
-
-                            <!-- 🔹 추가: 전화번호 -->
-                            <div class="col-6">
-                                <div class="text-muted">전화번호</div>
-                                <div id="infoPhone" class="fw-semibold">-</div>
-                            </div>
-                            <!-- 🔹 추가: 이메일 -->
-                            <div class="col-6">
-                                <div class="text-muted">이메일</div>
-                                <div id="infoEmail" class="fw-semibold">-</div>
-                            </div>
-
                             <div class="col-6">
                                 <div class="text-muted">아르바이트 시작일</div>
                                 <div id="infoStartDate" class="fw-semibold">-</div>
@@ -202,8 +190,6 @@
         const statusBadge  = document.getElementById('statusBadge');
         const infoName = document.getElementById('infoName');
         const infoGender = document.getElementById('infoGender');
-        const infoPhone = document.getElementById('infoPhone');   /* 🔹 추가 */
-        const infoEmail = document.getElementById('infoEmail');   /* 🔹 추가 */
         const infoStartDate = document.getElementById('infoStartDate');
         const infoHealth = document.getElementById('infoHealth');
         const infoHourlyWage = document.getElementById('infoHourlyWage');
@@ -292,8 +278,6 @@
         function renderMemberInfo(m) {
             infoName.textContent = m.name ?? '-';
             infoGender.textContent = m.gender ?? '-';
-            infoPhone.textContent = m.phone ?? '-';   /* 🔹 추가 */
-            infoEmail.textContent = m.email ?? '-';   /* 🔹 추가 */
             infoStartDate.textContent = m.startDate ?? '-';
 
             if (m.hasHealthCertificate) {
@@ -362,8 +346,6 @@
             statusBadge.className = 'badge bg-secondary';
             infoName.textContent = '-';
             infoGender.textContent = '-';
-            infoPhone.textContent = '-';   /* 🔹 추가 */
-            infoEmail.textContent = '-';   /* 🔹 추가 */
             infoStartDate.textContent = '-';
             infoHealth.textContent = '-';
             infoHourlyWage.textContent = '-';
@@ -402,6 +384,7 @@
             }
             daysPerWeekInput.value = uniqueDays.size || '';
             hoursPerDayInput.value = uniqueDays.size ? Math.round((weeklyHours/uniqueDays.size)*10)/10 : '';
+            // weeklyHoursEl은 recalcWage에서 표기
         }
 
         // ---- 급여 계산(주간/월간) ----
@@ -439,8 +422,11 @@
         // 월간: 이번 달에서 각 요일의 발생 횟수 × 해당 요일 스케줄 시간
         function computeMonthlyFromSchedules(schedules, year, month0) {
             // 요일 문자열 → JS getDay() (0=Sun..6=Sat)
-            const mapToJS = { 'SUN':0, 'MON':1, 'TUE':2, 'WED':3, 'THU':4, 'FRI':5, 'SAT':6 };
-            const byWeekday = new Map(); // jsDay -> perDayMinutes
+            const mapToJS = {
+                'SUN':0, 'MON':1, 'TUE':2, 'WED':3, 'THU':4, 'FRI':5, 'SAT':6
+            };
+            // 요일별 누적 분 & 근무일 카운트
+            const byWeekday = new Map(); // jsDay -> { perDayMinutes, label }
             schedules.forEach(s => {
                 const jsDay = mapToJS[s.day];
                 if (jsDay == null) return;
@@ -450,6 +436,7 @@
                 byWeekday.set(jsDay, prev + minutes);
             });
 
+            // 각 요일의 이번 달 발생 횟수
             let totalMinutes = 0;
             let totalDays = 0;
             byWeekday.forEach((perDayMinutes, jsDay) => {
@@ -460,8 +447,10 @@
             return { monthlyMinutes: totalMinutes, monthlyDaysCount: totalDays };
         }
 
+        // 해당 월에서 특정 요일(jsDay: 0=Sun..6=Sat) 발생 개수
         function countWeekdayInMonth(year, month0, jsDay) {
-            const lastDay = new Date(year, month0 + 1, 0).getDate();
+            const first = new Date(year, month0, 1);
+            const lastDay = new Date(year, month0 + 1, 0).getDate(); // 말일(1~31)
             let count = 0;
             for (let d = 1; d <= lastDay; d++) {
                 const day = new Date(year, month0, d).getDay();

@@ -40,7 +40,7 @@ public class Member {
     private LocalDate startDate;
 
     /** 연락처/이메일/시급/보건증 만료일 */
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false, unique = false)
     private String phone;
 
     @Column
