@@ -1,321 +1,447 @@
 {{>layouts/header}}
 
 <main class="container my-4">
-    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
-        <h3 class="mb-0">📅 금주의 근무 타임테이블</h3>
-        <div class="text-muted small" id="weekRange">-</div>
-    </div>
+  <div class="row g-3">
+    <!-- ============ 왼쪽: 상태 선택 + 알바생 리스트(색 점) ============ -->
+    <div class="col-12 col-lg-5">
+      <div class="d-grid gap-3 sticky-lg-top" style="top: 12px;">
 
-    <!-- 범례(직원 색상/토글) -->
-    <div class="card mb-3">
-        <div class="card-header fw-bold d-flex align-items-center justify-content-between">
-            <span>근무자 색상 범례</span>
-            <div class="d-flex gap-2">
-                <button class="btn btn-sm btn-outline-secondary" id="showAllBtn">모두 표시</button>
-                <button class="btn btn-sm btn-outline-secondary" id="clearFilterBtn">필터 해제</button>
+        <!-- 상태 선택 + 알바생 리스트업 -->
+        <div class="card">
+          <div class="card-header fw-bold">아르바이트 상태별 보기</div>
+          <div class="card-body">
+            <div class="row g-2 align-items-center">
+              <!-- 상태 -->
+              <div class="col-12">
+                <label for="statusSelect" class="form-label small text-muted">상태</label>
+                <select id="statusSelect" class="form-select">
+                  <option value="WORKING" selected>근무중</option>
+                  <option value="WAITING">시작전</option>
+                  <option value="RESTING">휴식중</option>
+                  <option value="PAUSED">일시중지</option>
+                  <option value="RESIGNED">퇴사</option>
+                </select>
+                <div class="form-text">상태를 변경하면 좌측 리스트와 우측 타임테이블이 함께 갱신됩니다.</div>
+              </div>
             </div>
+
+            <hr>
+
+            <!-- 알바생 리스트 (색 점 + 이름) -->
+            <div>
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <div class="small text-muted">알바생 목록</div>
+                <span id="memberCountBadge" class="badge bg-light text-dark">0명</span>
+              </div>
+              <ul id="memberList" class="list-group list-group-flush">
+                <!-- JS로 상태별 전원 렌더링 -->
+              </ul>
+            </div>
+          </div>
         </div>
-        <div class="card-body">
-            <div id="legend" class="d-flex flex-wrap gap-2"></div>
-            <div class="form-text">이름을 클릭하면 해당 인원만 하이라이트(토글) 됩니다.</div>
+
+        <!-- (선택) 알바생 정보 패널: 리스트에서 클릭 시 상세 표시 -->
+        <div class="card">
+          <div class="card-header fw-bold d-flex justify-content-between align-items-center">
+            <span>아르바이트 정보</span>
+            <span id="statusBadge" class="badge bg-secondary">-</span>
+          </div>
+          <div class="card-body">
+            <div class="row gy-2">
+              <div class="col-6">
+                <div class="text-muted">이름</div>
+                <div id="infoName" class="fw-semibold">-</div>
+              </div>
+              <div class="col-6">
+                <div class="text-muted">성별</div>
+                <div id="infoGender" class="fw-semibold">-</div>
+              </div>
+              <div class="col-6">
+                <div class="text-muted">전화번호</div>
+                <div id="infoPhone" class="fw-semibold">-</div>
+              </div>
+              <div class="col-6">
+                <div class="text-muted">이메일</div>
+                <div id="infoEmail" class="fw-semibold">-</div>
+              </div>
+              <div class="col-6">
+                <div class="text-muted">시작일</div>
+                <div id="infoStartDate" class="fw-semibold">-</div>
+              </div>
+              <div class="col-6">
+                <div class="text-muted">보건증</div>
+                <div id="infoHealth" class="fw-semibold">-</div>
+              </div>
+              <div class="col-12">
+                <div class="text-muted">시급(원)</div>
+                <div id="infoHourlyWage" class="fw-semibold">-</div>
+              </div>
+            </div>
+          </div>
         </div>
+
+      </div>
     </div>
 
-    <!-- 타임테이블 -->
-    <div class="card">
+    <!-- ============ 오른쪽: 주간 타임테이블(다중 멤버 색 표시) ============ -->
+    <div class="col-12 col-lg-7">
+      <div class="card">
         <div class="card-header fw-bold">주간 타임테이블 (월~일)</div>
         <div class="card-body">
-            <div class="table-responsive">
-                <table class="table table-bordered align-middle text-center timetable mb-0" id="timetable">
-                    <thead>
-                    <tr>
-                        <th style="width:90px;">시간</th>
-                        <th>월</th><th>화</th><th>수</th>
-                        <th>목</th><th>금</th><th>토</th><th>일</th>
-                    </tr>
-                    </thead>
-                    <tbody id="timetableBody">
-                    <!-- JS가 08:00~22:00 시간 슬롯을 채웁니다. -->
-                    </tbody>
-                </table>
-            </div>
-            <div class="small text-muted mt-2">
-                * 같은 시간대에 여러 명이 근무하면, 셀 안에 여러 개의 컬러 칩으로 표시됩니다.
-            </div>
+          <div class="table-responsive">
+            <table class="table table-bordered align-middle text-center timetable" id="timetable">
+              <thead>
+              <tr>
+                <th style="width:80px;">시간</th>
+                <th>월</th><th>화</th><th>수</th>
+                <th>목</th><th>금</th><th>토</th><th>일</th>
+              </tr>
+              </thead>
+              <tbody id="timetableBody">
+              <!-- JS가 08:00~22:00 시간 슬롯을 채웁니다. -->
+              </tbody>
+            </table>
+          </div>
+          <div class="small text-muted">
+            * 각 셀에 표시되는 작은 색 바는 해당 시간에 근무하는 알바생을 나타냅니다. (여러 명이면 여러 바가 중첩 표시)
+          </div>
         </div>
+      </div>
     </div>
+  </div>
 </main>
 
 <style>
-    .timetable th, .timetable td { vertical-align: middle; }
-    .chip {
-        display:inline-flex; align-items:center; gap:.35rem;
-        padding:.2rem .5rem; border-radius:999px; font-size:.8rem; line-height:1;
-        background: #e9ecef; color:#333; border:1px solid rgba(0,0,0,.05);
-        white-space:nowrap;
-    }
-    .chip .dot {
-        width:10px; height:10px; border-radius:50%;
-        border:1px solid rgba(0,0,0,.15);
-    }
-    .chip.muted { opacity:.25; filter:grayscale(60%); }
-    .chip.highlight { box-shadow:0 0 0 2px rgba(0,0,0,.05) inset; }
-    .cell-stack { display:flex; flex-wrap:wrap; gap:.25rem; justify-content:center; }
-    .legend-item {
-        cursor:pointer; user-select:none;
-        display:inline-flex; align-items:center; gap:.5rem; padding:.35rem .6rem;
-        border-radius:8px; border:1px solid #e9ecef; background:#fff;
-    }
-    .legend-item.active { outline:2px solid rgba(25,135,84,.25); }
-    .legend-item .dot { width:12px; height:12px; border-radius:50%; border:1px solid rgba(0,0,0,.15); }
-    .legend-name { font-weight:600; }
-    .legend-role { font-size:.8rem; color:#6c757d; }
-    .sticky-note { position:sticky; top:10px; }
+  .timetable th, .timetable td { vertical-align: middle; }
+  /* 셀 내부에 다중 멤버 바(색) 표시를 위한 컨테이너 */
+  .cell-stack {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px 4px;
+    justify-content: center;
+    align-items: center;
+    min-height: 26px;
+  }
+  .member-bar {
+    height: 8px;
+    border-radius: 4px;
+    display: inline-block;
+    padding: 0;
+    border: 1px solid rgba(0,0,0,.08);
+  }
+  .member-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    border-radius: 10px;
+    background: #fff;
+    border: 1px solid #eee;
+    margin-bottom: 6px;
+    cursor: pointer;
+  }
+  .member-chip:hover {
+    background: #f8f9fa;
+  }
+  .dot {
+    width: 12px; height: 12px; border-radius: 50%;
+    border: 1px solid rgba(0,0,0,.08);
+  }
 </style>
 
-<!-- 컨트롤러에서 내려주는 주간 스케줄 JSON
-  기대 포맷 (예시):
-  [
-    {
-      "memberId": 1,
-      "name": "김민수",
-      "phone": "010-1234-5678",      // 선택
-      "email": "minsu@example.com",  // 선택
-      "color": "#4caf50",            // 선택(없으면 자동 HSL)
-      "shifts": [
-        {"day":"MON","start":"10:00","end":"16:00"},
-        {"day":"WED","start":"12:00","end":"20:00"},
-        {"day":"FRI","start":"09:00","end":"15:00"}
-      ]
-    },
-    {
-      "memberId": 2,
-      "name": "이지은",
-      "shifts": [
-        {"day":"TUE","start":"11:00","end":"18:00"},
-        {"day":"THU","start":"14:00","end":"22:00"},
-        {"day":"SAT","start":"09:30","end":"13:30"}
-      ]
-    }
-  ]
--->
-<script id="schedulesData" type="application/json">
-{{{schedulesJson}}}
+<!-- 컨트롤러에서 내려준 JSON: membersJson (없으면 빈 배열) -->
+<script id="membersData" type="application/json">
+{{{membersJson}}}
 </script>
 
 <script>
-    (function() {
-        const DAYS = ['MON','TUE','WED','THU','FRI','SAT','SUN'];
-        const DAY_LABEL = {MON:'월',TUE:'화',WED:'수',THU:'목',FRI:'금',SAT:'토',SUN:'일'};
-        const HOUR_START = 8, HOUR_END = 22; // [08:00 ~ 22:00)
-        const timetableBody = document.getElementById('timetableBody');
-        const legend = document.getElementById('legend');
-        const weekRange = document.getElementById('weekRange');
-        const showAllBtn = document.getElementById('showAllBtn');
-        const clearFilterBtn = document.getElementById('clearFilterBtn');
+  // JSON 파싱
+  let allMembers = [];
+  try {
+    allMembers = JSON.parse(document.getElementById('membersData').textContent || '[]');
+  } catch(e) { allMembers = []; }
+</script>
 
-        // ===== 주(월~일) 라벨 =====
-        setWeekRangeLabel();
+<script>
+(function() {
+  // ===== Constants & DOM =====
+  const HOUR_START = 8, HOUR_END = 22;
+  const statusSelect = document.getElementById('statusSelect');
+  const memberList = document.getElementById('memberList');
+  const memberCountBadge = document.getElementById('memberCountBadge');
+  const timetableBody = document.getElementById('timetableBody');
 
-        // ===== 데이터 파싱 =====
-        let schedules = [];
-        try {
-            schedules = JSON.parse(document.getElementById('schedulesData').textContent || '[]') || [];
-        } catch (e) {
-            schedules = [];
+  // info panel
+  const statusBadge  = document.getElementById('statusBadge');
+  const infoName = document.getElementById('infoName');
+  const infoGender = document.getElementById('infoGender');
+  const infoPhone = document.getElementById('infoPhone');
+  const infoEmail = document.getElementById('infoEmail');
+  const infoStartDate = document.getElementById('infoStartDate');
+  const infoHealth = document.getElementById('infoHealth');
+  const infoHourlyWage = document.getElementById('infoHourlyWage');
+
+  // 최초 그리드 생성
+  renderTimeGrid();
+
+  // 초기 상태 값 보정
+  if (Array.isArray(allMembers) && allMembers.length > 0) {
+    statusSelect.value = allMembers[0].status || 'WORKING';
+  }
+
+  // 이벤트
+  statusSelect.addEventListener('change', handleStatusChange);
+  // 초기 렌더
+  handleStatusChange();
+
+  // ====== Rendering ======
+
+  function handleStatusChange() {
+    const status = statusSelect.value;
+    const filtered = (allMembers || []).filter(m => m.status === status);
+
+    // 좌측: 리스트업
+    renderMemberList(filtered);
+
+    // 우측: 전원 동시에 색 렌더
+    renderAllMembersSchedule(filtered);
+
+    // info 패널 초기화
+    if (filtered[0]) renderMemberInfo(filtered[0]);
+    else clearInfo();
+  }
+
+  function renderMemberList(members) {
+    memberList.innerHTML = '';
+    memberCountBadge.textContent = `${members.length}명`;
+
+    members
+      .slice()
+      .sort((a,b) => (a.name||'').localeCompare(b.name||'', 'ko'))
+      .forEach(m => {
+        const li = document.createElement('li');
+        li.className = 'list-group-item member-chip';
+        li.dataset.memberId = String(m.id);
+
+        const color = colorForMember(m);
+        li.innerHTML = `
+          <span class="dot" style="background:${color}"></span>
+          <span class="fw-semibold">${escapeHtml(m.name ?? '-')}</span>
+          <span class="text-muted small">${escapeHtml(m.phone ?? '')}</span>
+        `;
+        li.addEventListener('click', () => {
+          // 클릭 시 info 패널 갱신 + 해당 멤버 하이라이트 효과(임시로 테두리 두껍게)
+          renderMemberInfo(m);
+          highlightMemberInGrid(m);
+        });
+        memberList.appendChild(li);
+      });
+
+    // 리스트 없으면 안내
+    if (!members.length) {
+      const li = document.createElement('li');
+      li.className = 'list-group-item';
+      li.textContent = '해당 상태의 알바생이 없습니다.';
+      memberList.appendChild(li);
+    }
+  }
+
+  function renderAllMembersSchedule(members) {
+    // 그리드 초기화
+    clearGridCells();
+
+    // 모든 멤버의 스케줄을 병합하여 각 셀에 "색 바" 추가
+    const mapToCol = { 'MON':1, 'TUE':2, 'WED':3, 'THU':4, 'FRI':5, 'SAT':6, 'SUN':7 };
+
+    members.forEach(m => {
+      const color = colorForMember(m);
+      const schedules = getSchedules(m);
+      schedules.forEach(s => {
+        const st = parseHm(s.start), ed = parseHm(s.end);
+        const dayIdx = mapToCol[s.day];
+        if (!dayIdx) return;
+
+        // 시간 단위 셀에 투영 ([h, h+1) 포함 여부)
+        for (let h = HOUR_START; h < HOUR_END; h++) {
+          if (intervalHitHour(st, ed, h)) {
+            const row = timetableBody.querySelector(`tr[data-hour="${h}"]`);
+            if (!row) continue;
+            const cell = row.querySelector(`td[data-col="${dayIdx}"]`);
+            if (!cell) continue;
+
+            // 셀 내부 컨테이너
+            let stack = cell.querySelector('.cell-stack');
+            if (!stack) {
+              stack = document.createElement('div');
+              stack.className = 'cell-stack';
+              cell.appendChild(stack);
+            }
+
+            // 멤버 색 바 추가 (너비는 적당히 균등배치)
+            const bar = document.createElement('span');
+            bar.className = 'member-bar';
+            bar.style.background = hexWithAlpha(color, 0.85);
+            bar.style.minWidth = '18px';
+            bar.style.maxWidth = '46px';
+            bar.style.width = '20%';
+            bar.title = `${m.name || ''} ${s.start || ''}~${s.end || ''}`;
+            stack.appendChild(bar);
+          }
         }
+      });
+    });
+  }
 
-        // 멤버 색상 보정 (없으면 해시→HSL)
-        schedules.forEach(m => {
-            if (!m.color) m.color = colorFromString(`${m.memberId ?? ''}${m.name ?? ''}`);
-        });
+  function highlightMemberInGrid(member) {
+    // 간단히: 해당 멤버의 막대만 미세한 outline 효과 주기
+    const color = colorForMember(member);
+    const bars = document.querySelectorAll('.member-bar');
+    bars.forEach(el => el.style.outline = 'none');
+    // title에 이름이 포함된 바에만 아웃라인 (간단한 매칭)
+    const name = member.name || '';
+    document.querySelectorAll(`.member-bar[title*="${cssEscape(name)}"]`).forEach(el => {
+      el.style.outline = `2px solid ${hexWithAlpha(color, 1)}`;
+    });
+  }
 
-        // ===== 테이블 그리드 생성 =====
-        renderGrid();
+  function renderMemberInfo(m) {
+    infoName.textContent = m.name ?? '-';
+    infoGender.textContent = m.gender ?? '-';
+    infoPhone.textContent = m.phone ?? '-';
+    infoEmail.textContent = m.email ?? '-';
+    infoStartDate.textContent = m.startDate ?? '-';
 
-        // ===== 채우기 =====
-        fillCellsWithShifts(schedules);
+    if (m.hasHealthCertificate) {
+      infoHealth.textContent = m.healthCertExpiry ? `보유 (유효기간: ${m.healthCertExpiry})` : '보유';
+    } else {
+      infoHealth.textContent = '미보유';
+    }
 
-        // ===== 범례 생성 =====
-        let activeFilter = null; // memberId or null
-        renderLegend(schedules, activeFilter);
-        applyFilter(activeFilter);
+    infoHourlyWage.textContent =
+      (typeof m.hourlyWage === 'number')
+        ? new Intl.NumberFormat('ko-KR', { style: 'currency', currency: 'KRW', maximumFractionDigits: 0 }).format(m.hourlyWage)
+        : '-';
 
-        // ===== 이벤트 =====
-        showAllBtn.addEventListener('click', () => {
-            activeFilter = null;
-            renderLegend(schedules, activeFilter);
-            applyFilter(activeFilter);
-        });
-        clearFilterBtn.addEventListener('click', () => {
-            activeFilter = null;
-            renderLegend(schedules, activeFilter);
-            applyFilter(activeFilter);
-        });
+    const badgeMap = {
+      WORKING: 'bg-success', WAITING: 'bg-secondary', RESTING: 'bg-info',
+      PAUSED: 'bg-warning', RESIGNED: 'bg-danger'
+    };
+    statusBadge.textContent = m.status || '-';
+    statusBadge.className = `badge ${badgeMap[m.status] || 'bg-secondary'}`;
+  }
 
-        // ===== Functions =====
-        function renderGrid() {
-            const rows = [];
-            for (let h = HOUR_START; h < HOUR_END; h++) {
-                const label = `${String(h).padStart(2,'0')}:00`;
-                const tds = DAYS.map(d => `<td data-day="${d}" data-hour="${h}"><div class="cell-stack"></div></td>`).join('');
-                rows.push(`
-        <tr>
+  function clearInfo() {
+    statusBadge.textContent = '-';
+    statusBadge.className = 'badge bg-secondary';
+    infoName.textContent = '-';
+    infoGender.textContent = '-';
+    infoPhone.textContent = '-';
+    infoEmail.textContent = '-';
+    infoStartDate.textContent = '-';
+    infoHealth.textContent = '-';
+    infoHourlyWage.textContent = '-';
+  }
+
+  // ====== Grid helpers ======
+
+  function renderTimeGrid() {
+    const rows = [];
+    for (let h = HOUR_START; h <= HOUR_END; h++) {
+      const label = `${String(h).padStart(2,'0')}:00`;
+      rows.push(`
+        <tr data-hour="${h}">
           <th scope="row">${label}</th>
-          ${tds}
+          <td data-col="1"></td>
+          <td data-col="2"></td>
+          <td data-col="3"></td>
+          <td data-col="4"></td>
+          <td data-col="5"></td>
+          <td data-col="6"></td>
+          <td data-col="7"></td>
         </tr>
       `);
-            }
-            timetableBody.innerHTML = rows.join('');
-        }
+    }
+    timetableBody.innerHTML = rows.join('');
+  }
 
-        function fillCellsWithShifts(members) {
-            // 각 멤버의 각 shift를 시간 슬롯으로 분해해서 칩 추가
-            members.forEach(m => {
-                (m.shifts || []).forEach(s => {
-                    const {start, end, day} = s;
-                    if (!DAYS.includes(day)) return;
-                    // 시간 단위(1h) 블록 기준으로 포함되면 표시 (경계 포함 로직: [h, h+1)와 [start,end) 겹침)
-                    const {h:sh, m:sm} = parseHm(start);
-                    const {h:eh, m:em} = parseHm(end);
-                    // 시:분을 분 단위로
-                    const startMin = sh*60 + sm;
-                    const endMin   = eh*60 + em;
+  function clearGridCells() {
+    timetableBody.querySelectorAll('td').forEach(td => td.innerHTML = '');
+  }
 
-                    for (let h = HOUR_START; h < HOUR_END; h++) {
-                        const blockStart = h*60;
-                        const blockEnd   = (h+1)*60;
-                        if (rangesOverlap(startMin, endMin, blockStart, blockEnd)) {
-                            const cell = timetableBody.querySelector(`td[data-day="${day}"][data-hour="${h}"] .cell-stack`);
-                            if (cell) {
-                                const chip = document.createElement('span');
-                                chip.className = 'chip';
-                                chip.setAttribute('data-member-id', String(m.memberId ?? ''));
-                                chip.style.background = withAlpha(m.color, .18);
-                                chip.style.borderColor = withAlpha(m.color, .35);
-                                chip.innerHTML = `<span class="dot" style="background:${m.color}"></span>${escapeHtml(m.name || '이름없음')}`;
-                                cell.appendChild(chip);
-                            }
-                        }
-                    }
-                });
-            });
-        }
+  // ====== Data helpers ======
 
-        function renderLegend(members, filterId) {
-            legend.innerHTML = '';
-            members.forEach(m => {
-                const item = document.createElement('div');
-                item.className = 'legend-item' + (filterId && String(filterId) === String(m.memberId) ? ' active' : '');
-                item.setAttribute('data-member-id', String(m.memberId ?? ''));
-                item.innerHTML = `
-        <span class="dot" style="background:${m.color}"></span>
-        <span class="legend-name">${escapeHtml(m.name || '이름없음')}</span>
-        ${m.phone ? `<span class="legend-role">· ${escapeHtml(m.phone)}</span>` : ''}
-      `;
-                item.addEventListener('click', () => {
-                    activeFilter = (activeFilter && String(activeFilter) === String(m.memberId)) ? null : m.memberId;
-                    renderLegend(members, activeFilter);
-                    applyFilter(activeFilter);
-                });
-                legend.appendChild(item);
-            });
-        }
+  function getSchedules(m) {
+    if (Array.isArray(m?.schedule)) return m.schedule;
+    if (Array.isArray(m?.schedules)) return m.schedules;
+    return [];
+  }
 
-        function applyFilter(filterMemberId) {
-            const chips = Array.from(document.querySelectorAll('.chip'));
-            if (!filterMemberId) {
-                chips.forEach(c => { c.classList.remove('muted','highlight'); });
-                return;
-            }
-            chips.forEach(c => {
-                const mid = c.getAttribute('data-member-id') || '';
-                if (String(mid) === String(filterMemberId)) {
-                    c.classList.remove('muted');
-                    c.classList.add('highlight');
-                } else {
-                    c.classList.add('muted');
-                    c.classList.remove('highlight');
-                }
-            });
-        }
+  function parseHm(hm) {
+    if (!hm || typeof hm !== 'string') return {h:0,m:0};
+    const [h,m] = hm.split(':').map(n => parseInt(n,10));
+    return {h: isNaN(h)?0:h, m: isNaN(m)?0:m};
+  }
 
-        function parseHm(hm) {
-            if (!hm || typeof hm !== 'string') return {h:0,m:0};
-            const [h,m] = hm.split(':').map(n => parseInt(n,10));
-            return {h: isNaN(h)?0:h, m: isNaN(m)?0:m};
-        }
+  // [start, end) 구간이 특정 정시 h를 포함하는지
+  function intervalHitHour(st, ed, h) {
+    const stMin = st.h*60 + st.m;
+    const edMin = ed.h*60 + ed.m;
+    const a = h*60, b = (h+1)*60; // [a,b)
+    return Math.max(0, Math.min(edMin, b) - Math.max(stMin, a)) > 0;
+  }
 
-        function rangesOverlap(aStart, aEnd, bStart, bEnd) {
-            // [aStart, aEnd)와 [bStart, bEnd) 겹침 여부
-            return Math.max(aStart, bStart) < Math.min(aEnd, bEnd);
-        }
+  // ====== Color helpers (랜덤 느낌의 안정적 색상) ======
 
-        function colorFromString(str) {
-            // 안정적 HSL: 0~359 hue
-            const h = (hashCode(str) % 360 + 360) % 360;
-            const s = 70;  // %
-            const l = 50;  // %
-            return `hsl(${h} ${s}% ${l}%)`;
-        }
-        function hashCode(s) {
-            let h = 0;
-            for (let i=0; i<s.length; i++) {
-                h = ((h<<5)-h) + s.charCodeAt(i);
-                h |= 0;
-            }
-            return h;
-        }
-        function withAlpha(hslOrHex, alpha) {
-            // hsl(...) → hsla; hex → rgba 로 단순 변환 시도
-            if (hslOrHex.startsWith('hsl')) {
-                return hslOrHex.replace('hsl', 'hsla').replace(')', ` / ${alpha})`);
-            }
-            // 매우 단순한 hex 파서
-            const c = hexToRgb(hslOrHex);
-            if (!c) return hslOrHex;
-            return `rgba(${c.r},${c.g},${c.b},${alpha})`;
-        }
-        function hexToRgb(hex) {
-            if (!hex) return null;
-            const s = hex.replace('#','').trim();
-            if (![3,6].includes(s.length)) return null;
-            const n = s.length === 3 ? s.split('').map(ch=>ch+ch).join('') : s;
-            const num = parseInt(n,16);
-            if (Number.isNaN(num)) return null;
-            return { r:(num>>16)&255, g:(num>>8)&255, b:num&255 };
-        }
-        function escapeHtml(s) {
-            return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
-        }
+  function colorForMember(m) {
+    const key = (m.id != null ? String(m.id) : (m.name || 'x'));
+    const h = seededHash(key) % 360;       // Hue: 0~359
+    const s = 65;                           // Saturation
+    const l = 55;                           // Lightness
+    return hslToHex(h, s, l);
+  }
 
-        function setWeekRangeLabel() {
-            const now = new Date();
-            const monday = startOfWeek(now); // 월요일
-            const sunday = new Date(monday); sunday.setDate(monday.getDate()+6);
-            weekRange.textContent = fmtYmd(monday) + ' ~ ' + fmtYmd(sunday) + ` (주차: ${getWeekNumber(now)}주차)`;
-        }
-        function startOfWeek(d) {
-            const nd = new Date(d.getFullYear(), d.getMonth(), d.getDate());
-            const day = nd.getDay(); // 0=일
-            const diff = (day === 0 ? -6 : 1 - day); // 월요일 시작
-            nd.setDate(nd.getDate()+diff);
-            return nd;
-        }
-        function fmtYmd(d) {
-            const y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,'0'), dd=String(d.getDate()).padStart(2,'0');
-            return `${y}-${m}-${dd}`;
-        }
-        function getWeekNumber(d) {
-            // ISO week-number-ish (간단): 목요일 포함 주 기준
-            const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
-            const dayNum = (date.getUTCDay() + 6) % 7;
-            date.setUTCDate(date.getUTCDate() - dayNum + 3);
-            const firstThursday = new Date(Date.UTC(date.getUTCFullYear(),0,4));
-            const weekNo = 1 + Math.round(((date - firstThursday)/86400000 - 3 + ((firstThursday.getUTCDay()+6)%7))/7);
-            return weekNo;
-        }
-    })();
+  function seededHash(str) {
+    let h = 2166136261 >>> 0; // FNV-like
+    for (let i=0; i<str.length; i++) {
+      h ^= str.charCodeAt(i);
+      h = (h * 16777619) >>> 0;
+    }
+    return h >>> 0;
+  }
+
+  function hslToHex(h, s, l){
+    s /= 100; l/=100;
+    const k = n => (n + h/30) % 12;
+    const a = s * Math.min(l, 1 - l);
+    const f = n => l - a * Math.max(-1, Math.min(k(n)-3, Math.min(9-k(n), 1)));
+    const toHex = x => Math.round(255 * x).toString(16).padStart(2, '0');
+    return `#${toHex(f(0))}${toHex(f(8))}${toHex(f(4))}`;
+  }
+
+  function hexWithAlpha(hex, alpha=1){
+    // hex: #rrggbb → #rrggbbaa
+    const a = Math.round(alpha*255).toString(16).padStart(2,'0');
+    return `${hex}${a}`;
+  }
+
+  // ====== Utils ======
+
+  function escapeHtml(s) {
+    if (s == null) return '';
+    return String(s)
+      .replace(/&/g,'&amp;')
+      .replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;')
+      .replace(/"/g,'&quot;')
+      .replace(/'/g,'&#39;');
+  }
+
+  function cssEscape(s) {
+    // 매우 단순화: 따옴표만 이스케이프
+    return String(s || '').replace(/["'`]/g, '\\$&');
+  }
+
+})();
 </script>
 
 {{>layouts/footer}}

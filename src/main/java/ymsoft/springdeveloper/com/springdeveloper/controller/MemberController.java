@@ -45,7 +45,16 @@ public class MemberController {
 
     //금주 근무 현황
     @GetMapping("/members/thisweek")
-    public String thisWeekMembers() {
+    public String thisWeekMembers(Model model) throws Exception {
+        List<MemberDto> members = memService.findAll();
+        log.info("thisweek: {}", members);
+
+        // 2️⃣ members (뷰용 리스트)
+        model.addAttribute("members", members);
+
+        log.info(objectMapper.writeValueAsString(members));
+        model.addAttribute("membersJson", objectMapper.writeValueAsString(members));
+
         return "members/thisweek";
     }
 
