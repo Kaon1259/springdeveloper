@@ -111,3 +111,37 @@ body {
     transition: opacity 0.5s ease-out;
 }
 
+/* 깔끔한 숫자 정렬용 */
+.text-mono {
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.01em;
+}
+
+/* 카드 헤더 그라디언트 */
+.wage-preview-header {
+    background: linear-gradient(135deg, #198754 0%, #20c997 100%);
+    color: #fff;
+    border-bottom: none;
+}
+
+/* 테이블 비주얼 다듬기 */
+.wage-preview-table thead th {
+    background: #f6f9fb;
+    color: #6c757d;
+    font-weight: 600;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.wage-preview-table tbody tr:not(.table-subtle) td {
+    border-top: 1px dashed #eef2f6;
+}
+
+.wage-preview-table .table-subtle td {
+    background: #fafcfd;
+    color: #7a8a99;
+}
+
+/* 반응형 여백/간격 */
+.wage-preview-card .table > :not(caption) > * > * {
+    padding: 0.9rem 1rem;
+}

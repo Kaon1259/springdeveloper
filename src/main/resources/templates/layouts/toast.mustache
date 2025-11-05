@@ -1,0 +1,17 @@
+{{#toast}}
+    <div id="toastBox"
+         class="alert alert-{{toastType}} alert-dismissible fade show shadow-sm"
+         role="alert"
+         style="position:fixed; top:20px; right:20px; min-width:250px; z-index:2000;">
+        {{toast}}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    <script>
+        setTimeout(() => {
+            const toastEl = document.getElementById("toastBox");
+            if (toastEl) {
+                new bootstrap.Alert(toastEl).close();
+            }
+        }, 3000);
+    </script>
+{{/toast}}

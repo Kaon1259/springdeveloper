@@ -1,0 +1,538 @@
+{{>layouts/header}}
+
+<!-- 간단 스타일(선택) -->
+<style>
+    /* 숫자 정렬과 카드 헤더 스타일 */
+    .text-mono { font-variant-numeric: tabular-nums; letter-spacing:-0.01em; }
+    .wage-preview-header { background: linear-gradient(135deg, #198754 0%, #20c997 100%); color:#fff; border-bottom:none; }
+    .wage-preview-card .table > :not(caption) > * > * { padding: 0.9rem 1rem; }
+    .wage-preview-table thead th { background:#f6f9fb; color:#6c757d; font-weight:600; border-bottom:1px solid #e9ecef; }
+    .wage-preview-table tbody tr:not(.table-subtle) td { border-top: 1px dashed #eef2f6; }
+    .wage-preview-table .table-subtle td { background:#fafcfd; color:#7a8a99; }
+</style>
+
+<!--content-->
+<main class="container page-container center-page">
+    <div class="form-box">
+        <h2>👤 아르바이트 회원 등록</h2>
+        <form class="container" action="/members/create" method="post" id="memberForm">
+            <!-- 이름 -->
+            <div class="mb-3">
+                <label class="form-label">이름</label>
+                <input class="form-input" type="text" name="name" placeholder="이름을 입력하세요" required>
+            </div>
+
+            <!-- 성별 -->
+            <div class="mb-3">
+                <label class="form-label">성별</label>
+                <select class="form-select" name="gender" required>
+                    <option value="">성별을 선택하세요</option>
+                    <option value="남성">남성</option>
+                    <option value="여성">여성</option>
+                </select>
+            </div>
+
+            <!-- 아르바이트 시작일 -->
+            <div class="mb-3">
+                <label class="form-label">아르바이트 시작일</label>
+                <input class="form-input" type="date" name="startDate" required>
+            </div>
+
+            <!-- 연락처 -->
+            <div class="mb-3">
+                <label class="form-label">연락처</label>
+                <input
+                        class="form-input"
+                        type="tel"
+                        name="phone"
+                        id="phone"
+                        placeholder="010-1234-5678"
+                        pattern="^0\d{1,2}-\d{3,4}-\d{4}$"
+                        required>
+                <div class="form-text">숫자만 입력해도 자동으로 <code>010-1234-5678</code> 형태로 포맷팅됩니다.</div>
+            </div>
+
+            <!-- 이메일 -->
+            <div class="mb-3">
+                <label class="form-label">이메일</label>
+                <input class="form-input" type="email" name="email" id="email" placeholder="name@example.com">
+                <div class="form-text">선택 입력입니다.</div>
+            </div>
+
+            <!-- 시간당 단가(원) -->
+            <div class="mb-3">
+                <label class="form-label">시간당 단가(원)</label>
+                <input
+                        class="form-input"
+                        type="number"
+                        name="hourlyWage"
+                        id="hourlyWage"
+                        min="0"
+                        step="100"
+                        placeholder="12000"
+                        required>
+                <div class="form-text">숫자만 입력 (예: 12000). 서버에서는 정수(원)로 저장됩니다.</div>
+            </div>
+
+            <!-- 보건증 보유 여부 -->
+            <div class="mb-3">
+                <label class="form-label">보건증 보유</label>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="hasHealthCertificate" value="true" id="healthYes">
+                    <label class="form-check-label" for="healthYes">보유</label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="hasHealthCertificate" value="false" id="healthNo" checked>
+                    <label class="form-check-label" for="healthNo">미보유</label>
+                </div>
+            </div>
+
+            <!-- 보건증 유효기간 인라인 폼(보유 선택 시 표시) -->
+            <div id="healthExpiryPanel" class="mt-2" style="display:none;">
+                <div class="d-flex align-items-end gap-2">
+                    <div>
+                        <label class="form-label mb-1">유효기간(만료일)</label>
+                        <input type="date" class="form-input" id="healthExpiryDate">
+                    </div>
+                    <div class="mb-2">
+                        <button type="button" class="btn btn-success btn-sm" id="applyHealthExpiry">적용</button>
+                        <button type="button" class="btn btn-secondary btn-sm" id="cancelHealthExpiry">취소</button>
+                    </div>
+                </div>
+                <div id="healthExpiryPreview" class="text-muted mt-2">
+                    유효기간을 등록하세요.
+                </div>
+            </div>
+
+            <!-- 현재 상태 -->
+            <div class="mb-3">
+                <label class="form-label">현재 상태</label>
+                <select class="form-select" name="status" required>
+                    <option value="">상태를 선택하세요</option>
+                    <option value="WAITING">시작전</option>
+                    <option value="WORKING">근무중</option>
+                    <option value="RESTING">휴식중</option>
+                    <option value="PAUSED">일시중지</option>
+                    <option value="RESIGNED">퇴사</option>
+                </select>
+            </div>
+
+            <!-- 요일/시간 등록 버튼 -->
+            <div class="mb-2 d-flex gap-2">
+                <label class="form-label" style="margin-right:8px;">아르바이트 요일/시간</label>
+                <button type="button" class="btn btn-outline-primary btn-sm" id="openScheduleModal">요일/시간 등록</button>
+            </div>
+
+            <!-- 적용 스케줄 표 -->
+            <div class="mb-3">
+                <table class="table table-sm" id="scheduleTableView">
+                    <thead>
+                    <tr><th>요일</th><th>시작</th><th>종료</th></tr>
+                    </thead>
+                    <tbody>
+                    <tr class="placeholder">
+                        <td colspan="3" class="text-muted">아직 등록된 요일/시간이 없습니다. “요일/시간 등록” 버튼을 눌러 추가하세요.</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- ✅ 예상 급여 미리보기 (테이블형) -->
+            <div class="mb-4">
+                <div class="card wage-preview-card shadow-sm">
+                    <div class="card-header wage-preview-header d-flex justify-content-between align-items-center">
+                        <span class="fw-bold">예상 급여 미리보기</span>
+                        <small class="text-white-50">스케줄/시급 변경 시 자동 반영</small>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-borderless table-hover align-middle mb-0 wage-preview-table">
+                                <thead>
+                                <tr>
+                                    <th class="w-50">항목</th>
+                                    <th class="text-end w-50">값</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr>
+                                    <td class="text-muted">주간 총 근무시간</td>
+                                    <td class="text-end text-mono fw-semibold" id="previewWeeklyHours">0시간 0분</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted">주간 예상 급여</td>
+                                    <td class="text-end text-mono fw-bold" id="previewWeeklyPay">₩0</td>
+                                </tr>
+                                <tr class="table-subtle">
+                                    <td class="text-muted">월 환산 주차</td>
+                                    <td class="text-end text-mono">× 4.345</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted">월간 예상 급여</td>
+                                    <td class="text-end text-mono fw-bold text-success" id="previewMonthlyPay">₩0</td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="px-3 pb-3 pt-2 small text-muted">
+                            * 월 환산은 평균 1개월 ≈ 4.345주 기준입니다.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 등록일, 업데이트일은 자동처리 -->
+            <button type="submit" class="btn-submit">등록하기</button>
+        </form>
+    </div>
+</main>
+
+<!-- 모달: 요일/시간 편집 -->
+<div class="modal" id="scheduleModal" style="display:none;">
+    <div class="modal-dialog">
+        <div class="modal-content" style="padding:1rem;">
+            <h3 class="mb-2">요일/시간 등록</h3>
+
+            <div class="row mb-2">
+                <div class="col">
+                    <label class="form-label">요일</label>
+                    <select class="form-select" id="daySelect">
+                        <option value="MON">월요일</option>
+                        <option value="TUE">화요일</option>
+                        <option value="WED">수요일</option>
+                        <option value="THU">목요일</option>
+                        <option value="FRI">금요일</option>
+                        <option value="SAT">토요일</option>
+                        <option value="SUN">일요일</option>
+                    </select>
+                </div>
+                <div class="col">
+                    <label class="form-label">시작</label>
+                    <input type="time" class="form-input" id="startTime" value="10:00">
+                </div>
+                <div class="col">
+                    <label class="form-label">종료</label>
+                    <input type="time" class="form-input" id="endTime" value="19:00">
+                </div>
+            </div>
+
+            <div class="d-flex gap-2 mb-3">
+                <button type="button" class="btn btn-primary" id="addScheduleRow">추가</button>
+            </div>
+
+            <div class="mb-3">
+                <table class="table table-sm" id="scheduleTableEdit">
+                    <thead>
+                    <tr><th>요일</th><th>시작</th><th>종료</th><th>삭제</th></tr>
+                    </thead>
+                    <tbody><!-- 편집 중인 행들 --></tbody>
+                </table>
+            </div>
+
+            <div class="d-flex gap-2 justify-content-end">
+                <button type="button" class="btn btn-success" id="applySchedule">적용</button>
+                <button type="button" class="btn btn-secondary" id="cancelSchedule">취소</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{>layouts/footer}}
+
+<!-- 스크립트 -->
+<script>
+    (function() {
+        const form = document.getElementById('memberForm');
+
+        /* ===== 연락처(전화번호) 자동 포맷 ===== */
+        const phone = document.getElementById('phone');
+        phone.addEventListener('input', () => {
+            // \D, \d 정규식 단일 백슬래시 사용
+            let v = phone.value.replace(/\D/g, '');
+            if (v.startsWith('02')) {
+                if (v.length > 2 && v.length <= 6)      phone.value = v.replace(/(02)(\d{0,4})/, '$1-$2');
+                else if (v.length > 6)                  phone.value = v.replace(/(02)(\d{3,4})(\d{0,4}).*/, '$1-$2-$3');
+                else                                    phone.value = v;
+            } else {
+                if (v.length <= 3)                      phone.value = v;
+                else if (v.length <= 7)                 phone.value = v.replace(/(0\d{2})(\d{0,4})/, '$1-$2');
+                else                                    phone.value = v.replace(/(0\d{2})(\d{3,4})(\d{0,4}).*/, '$1-$2-$3');
+            }
+        });
+
+        /* ===== 단가 검증 & 변경 시 미리보기 갱신 ===== */
+        const hourlyWage = document.getElementById('hourlyWage');
+        hourlyWage.addEventListener('blur', () => {
+            const val = parseInt(hourlyWage.value || '0', 10);
+            if (isNaN(val) || val < 0) {
+                alert('시간당 단가를 올바르게 입력하세요.');
+                hourlyWage.focus();
+            }
+            updatePreview(); // 변경 시 미리보기 반영
+        });
+        hourlyWage.addEventListener('input', updatePreview);
+
+        /* ===== 스케줄 테이블 DOM ===== */
+        const viewTableBody = document.querySelector('#scheduleTableView tbody');
+        const editTableBody = document.querySelector('#scheduleTableEdit tbody');
+
+        /* ===== 모달 관련 ===== */
+        const openBtn = document.getElementById('openScheduleModal');
+        const modal = document.getElementById('scheduleModal');
+        const scheduleApplyBtn = document.getElementById('applySchedule');
+        const scheduleCancelBtn = document.getElementById('cancelSchedule');
+        const addRowBtn = document.getElementById('addScheduleRow');
+
+        /* ===== 입력 컨트롤 ===== */
+        const daySelect = document.getElementById('daySelect');
+        const startInput = document.getElementById('startTime');
+        const endInput = document.getElementById('endTime');
+
+        /* ===== 요일 매핑 ===== */
+        const dayMap = { MON:'월', TUE:'화', WED:'수', THU:'목', FRI:'금', SAT:'토', SUN:'일' };
+
+        /* ===== 모달 열기: View → Edit 복사 ===== */
+        openBtn.addEventListener('click', () => {
+            editTableBody.innerHTML = '';
+            Array.from(viewTableBody.querySelectorAll('tr')).forEach(tr => {
+                if (tr.classList.contains('placeholder')) return;
+                const d = tr.querySelector('td:nth-child(1)').getAttribute('data-day');
+                const s = tr.querySelector('td:nth-child(2)').getAttribute('data-start');
+                const e = tr.querySelector('td:nth-child(3)').getAttribute('data-end');
+                appendEditRow(d, s, e);
+            });
+            modal.style.display = 'block';
+        });
+
+        /* ===== 스케줄 행 추가 ===== */
+        addRowBtn.addEventListener('click', () => {
+            const day = daySelect.value;
+            const start = startInput.value;
+            const end = endInput.value;
+
+            if (!start || !end) { alert('시간을 입력하세요.'); return; }
+            if (start >= end) { alert('종료 시간이 시작 시간보다 커야 합니다.'); return; }
+
+            appendEditRow(day, start, end);
+        });
+
+        /* ===== 스케줄 행 삭제 ===== */
+        editTableBody.addEventListener('click', (e) => {
+            if (e.target && e.target.classList.contains('remove-row')) {
+                e.target.closest('tr').remove();
+                updatePreview(); // 삭제 즉시 미리보기 갱신
+            }
+        });
+
+        /* ===== 스케줄 적용: Edit → View + 히든 재생성 + 미리보기 갱신 ===== */
+        scheduleApplyBtn.addEventListener('click', () => {
+            viewTableBody.innerHTML = '';
+            const rows = Array.from(editTableBody.querySelectorAll('tr'));
+            if (rows.length === 0) {
+                addViewPlaceholder();
+            } else {
+                rows.forEach(r => {
+                    const d = r.querySelector('td:nth-child(1)').getAttribute('data-day');
+                    const s = r.querySelector('td:nth-child(2)').getAttribute('data-start');
+                    const e = r.querySelector('td:nth-child(3)').getAttribute('data-end');
+                    appendViewRow(d, s, e);
+                });
+            }
+            rebuildHiddenInputsFromView();
+            modal.style.display = 'none';
+            updatePreview(); // ✅ 스케줄 적용 시 미리보기 갱신
+        });
+
+        /* ===== 스케줄 취소 ===== */
+        scheduleCancelBtn.addEventListener('click', () => {
+            modal.style.display = 'none';
+        });
+
+        /* ===== 폼 제출 전 히든 최신화 ===== */
+        form.addEventListener('submit', () => {
+            alert('등록하기');
+            //rebuildHiddenInputsFromView();
+        });
+
+        /* ===== 유틸: View/Edit 렌더 ===== */
+        function appendEditRow(day, start, end) {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+        <td data-day="${day}">${dayMap[day]}(${day})</td>
+        <td data-start="${start}">${start}</td>
+        <td data-end="${end}">${end}</td>
+        <td><button type="button" class="btn btn-link text-danger btn-sm remove-row">삭제</button></td>
+      `;
+            editTableBody.appendChild(tr);
+        }
+        function appendViewRow(day, start, end) {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+        <td data-day="${day}">${dayMap[day]}(${day})</td>
+        <td data-start="${start}">${start}</td>
+        <td data-end="${end}">${end}</td>
+      `;
+            viewTableBody.appendChild(tr);
+        }
+        function addViewPlaceholder() {
+            const tr = document.createElement('tr');
+            tr.className = 'placeholder';
+            tr.innerHTML = `<td colspan="3" class="text-muted">아직 등록된 요일/시간이 없습니다. “요일/시간 등록” 버튼을 눌러 추가하세요.</td>`;
+            viewTableBody.appendChild(tr);
+        }
+
+        /* ===== 히든 인풋 재구성 ===== */
+        function rebuildHiddenInputsFromView() {
+            form.querySelectorAll('input[type="hidden"][data-schedule="1"]').forEach(n => n.remove());
+            const rows = Array.from(viewTableBody.querySelectorAll('tr')).filter(tr => !tr.classList.contains('placeholder'));
+            rows.forEach((r, i) => {
+                const day = r.querySelector('td:nth-child(1)').getAttribute('data-day');
+                const start = r.querySelector('td:nth-child(2)').getAttribute('data-start');
+                const end = r.querySelector('td:nth-child(3)').getAttribute('data-end');
+                addHidden(`schedule[${i}].day`, day);
+                addHidden(`schedule[${i}].start`, start);
+                addHidden(`schedule[${i}].end`, end);
+            });
+        }
+        function addHidden(name, value) {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = name;
+            input.value = value;
+            input.setAttribute('data-schedule', '1');
+            form.appendChild(input);
+        }
+
+        /* ===== 보건증 인라인 폼 ===== */
+        const healthYes = document.getElementById('healthYes');
+        const healthNo  = document.getElementById('healthNo');
+        const panel     = document.getElementById('healthExpiryPanel');
+        const dateInput = document.getElementById('healthExpiryDate');
+        const applyHealthBtn  = document.getElementById('applyHealthExpiry');
+        const cancelHealthBtn = document.getElementById('cancelHealthExpiry');
+        const preview   = document.getElementById('healthExpiryPreview');
+
+        const HIDDEN_FLAG = 'data-health-expiry';
+
+        function onHealthRadioChange() {
+            if (healthYes.checked) {
+                panel.style.display = 'block';
+                const existing = form.querySelector('input[type="hidden"][name="healthCertExpiry"]');
+                if (existing && existing.value) {
+                    dateInput.value = existing.value;
+                    preview.textContent = `만료일: ${existing.value}`;
+                    preview.classList.remove('text-muted');
+                } else {
+                    dateInput.value = '';
+                    preview.textContent = '유효기간을 등록하세요.';
+                    preview.classList.add('text-muted');
+                }
+            } else {
+                panel.style.display = 'none';
+                removeHealthExpiryHidden();
+                dateInput.value = '';
+                preview.textContent = '보유 선택 시 유효기간을 등록할 수 있습니다.';
+                preview.classList.add('text-muted');
+            }
+        }
+        healthYes.addEventListener('change', onHealthRadioChange);
+        healthNo.addEventListener('change', onHealthRadioChange);
+
+        applyHealthBtn.addEventListener('click', () => {
+            const val = dateInput.value;
+            if (!val) { alert('유효기간(만료일)을 선택하세요.'); return; }
+            const today = new Date().toISOString().slice(0,10);
+            if (val < today && !confirm('선택한 날짜가 이미 지났습니다. 그대로 적용할까요?')) return;
+
+            removeHealthExpiryHidden();
+            const hidden = document.createElement('input');
+            hidden.type = 'hidden';
+            hidden.name = 'healthCertExpiry';
+            hidden.value = val;
+            hidden.setAttribute(HIDDEN_FLAG, '1');
+            form.appendChild(hidden);
+
+            preview.textContent = `유효기간: ${val}`;
+            preview.classList.remove('text-muted');
+        });
+
+        cancelHealthBtn.addEventListener('click', () => {
+            const existing = form.querySelector('input[type="hidden"][name="healthCertExpiry"]');
+            if (existing && existing.value) {
+                dateInput.value = existing.value;
+                preview.textContent = `유효기간: ${existing.value}`;
+                preview.classList.remove('text-muted');
+            } else {
+                dateInput.value = '';
+                preview.textContent = '유효기간을 등록하세요.';
+                preview.classList.add('text-muted');
+            }
+        });
+
+        function removeHealthExpiryHidden() {
+            form.querySelectorAll(`input[type="hidden"][${HIDDEN_FLAG}="1"]`).forEach(n => n.remove());
+        }
+
+        form.addEventListener('submit', (e) => {
+            if (healthYes.checked) {
+                const hidden = form.querySelector('input[type="hidden"][name="healthCertExpiry"]');
+                if (!hidden && !confirm('보건증 “보유”로 선택하셨습니다. 유효기간 없이 계속 진행할까요?')) {
+                    e.preventDefault();
+                }
+            }
+        });
+
+        onHealthRadioChange();
+
+        /* ======== ▶ 예상 급여 미리보기 계산 로직 ◀ ======== */
+        const weeklyHoursEl  = document.getElementById('previewWeeklyHours');
+        const weeklyPayEl    = document.getElementById('previewWeeklyPay');
+        const monthlyPayEl   = document.getElementById('previewMonthlyPay');
+
+        // View 테이블 변화 자동 감지 → 미리보기 갱신 (안전망)
+        const viewObserver = new MutationObserver(() => updatePreview());
+        viewObserver.observe(viewTableBody, { childList: true });
+
+        function updatePreview() {
+            const totalMin = computeWeeklyMinutesFromView();
+
+            // "12,000" 같은 입력도 안전 처리
+            const wage = parseInt(String(hourlyWage.value || '0').replace(/,/g,''), 10) || 0;
+
+            const hours = Math.floor(totalMin / 60);
+            const mins  = totalMin % 60;
+            weeklyHoursEl.textContent = `${hours}시간 ${mins}분`;
+
+            const weeklyPay = Math.round((totalMin / 60) * wage);
+            weeklyPayEl.textContent  = formatKRW(weeklyPay);
+
+            const monthlyPay = Math.round(weeklyPay * 4.345); // 평균 1개월 ≈ 4.345주
+            monthlyPayEl.textContent = formatKRW(monthlyPay);
+        }
+
+        function computeWeeklyMinutesFromView() {
+            const rows = Array.from(viewTableBody.querySelectorAll('tr')).filter(tr => !tr.classList.contains('placeholder'));
+            let total = 0;
+            rows.forEach(r => {
+                const start = r.querySelector('td:nth-child(2)').getAttribute('data-start'); // "HH:MM"
+                const end   = r.querySelector('td:nth-child(3)').getAttribute('data-end');   // "HH:MM"
+                total += diffMinutes(start, end);
+            });
+            return total;
+        }
+
+        function diffMinutes(start, end) {
+            if (!start || !end) return 0;
+            const [sh, sm] = start.split(':').map(n => parseInt(n,10));
+            const [eh, em] = end.split(':').map(n => parseInt(n,10));
+            return (eh*60 + em) - (sh*60 + sm);
+        }
+
+        function formatKRW(n) {
+            return new Intl.NumberFormat('ko-KR', { style: 'currency', currency: 'KRW', maximumFractionDigits: 0 }).format(n || 0);
+        }
+
+        // 초기 1회 표시
+        updatePreview();
+
+    })();
+</script>
