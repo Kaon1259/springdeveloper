@@ -56,6 +56,14 @@ public class Member {
     @Column(nullable = false)
     private Boolean hasHealthCertificate = false;
 
+    /** 은행명 */
+    @Column(nullable = true)
+    private String bankName;
+
+    /** 계좌 */
+    @Column(nullable = true)
+    private String bankAccount;
+
     /** 상태 */
     @Enumerated(EnumType.STRING)
     @Column(length = 20, nullable = false)
@@ -81,7 +89,7 @@ public class Member {
     @Override
     public String toString() {
         return "Member [id=" + id + ", name=" + name + ", gender=" + gender + ", startDate="  + startDate + ", phone=" + phone + ", email=" + email +
-                ", hourlyWage=" + hourlyWage + ", healthCertExpiry=" + healthCertExpiry + ", status=" + status + ", schedules=" + schedules.toString() + "]";
+                ", hourlyWage=" + hourlyWage + ", healthCertExpiry=" + healthCertExpiry + ",bankName=" + bankName + ", bankAccount=" + bankAccount + ", status=" + status + ", schedules=" + schedules.toString() + "]";
     }
 
 

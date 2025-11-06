@@ -79,6 +79,8 @@ public class MemberController {
                 (member.getSchedule() != null) ? member.getSchedule() : List.of();
         model.addAttribute("schedules", schedules);
 
+        log.info(member.toString());
+
         return "members/edit";
     }
 

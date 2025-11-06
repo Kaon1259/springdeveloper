@@ -5,6 +5,8 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import ymsoft.springdeveloper.com.springdeveloper.entity.Member;
 import ymsoft.springdeveloper.com.springdeveloper.entity.ScheduleItem;
@@ -19,6 +21,8 @@ import java.util.stream.Collectors;
 @Slf4j
 @Builder
 @Data
+@Getter
+@Setter
 public class MemberDto {
 
     private Long id;
@@ -43,6 +47,9 @@ public class MemberDto {
 
     private Boolean hasHealthCertificate;   // null 가능 → Boolean.TRUE.equals(...)로 처리
     private LocalDate healthCertExpiry;     // 선택
+
+    private String bankName;
+    private String bankAccount;
 
     @NotNull
     private Member.Status status;           // Member 엔티티의 Status enum 사용
@@ -88,6 +95,8 @@ public class MemberDto {
                 .hourlyWage(m.getHourlyWage())
                 .hasHealthCertificate(m.getHasHealthCertificate())
                 .healthCertExpiry(m.getHealthCertExpiry())
+                .bankName(m.getBankName())
+                .bankAccount(m.getBankAccount())
                 .status(m.getStatus())
                 .schedule(
                         Optional.ofNullable(m.getSchedules())
@@ -110,6 +119,8 @@ public class MemberDto {
                 .hourlyWage(dto.getHourlyWage())
                 .hasHealthCertificate(Boolean.TRUE.equals(dto.getHasHealthCertificate()))
                 .healthCertExpiry(dto.getHealthCertExpiry())
+                .bankName(dto.getBankName())
+                .bankAccount(dto.getBankAccount())
                 .status(dto.getStatus())
                 .build();
 
