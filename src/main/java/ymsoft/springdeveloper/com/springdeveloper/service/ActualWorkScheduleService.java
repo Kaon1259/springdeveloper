@@ -17,9 +17,27 @@ public class ActualWorkScheduleService {
 
     private final ActualWorkScheduleRepository repository;
 
+    @Transactional(readOnly = true)
+    public Optional<ActualWorkSchedule> findByMemberAndDate(Long memberId, LocalDate workDate) {
+        return repository.findByMemberIdAndWorkDate(memberId, workDate);
+    }
+
     /** 저장 또는 업데이트 */
+    @Transactional
     public ActualWorkSchedule save(ActualWorkSchedule schedule) {
-        return repository.save(schedule);
+        Optional<ActualWorkSchedule> existing =
+                repository.findByMemberIdAndWorkDate(schedule.getMemberId(), schedule.getWorkDate());
+
+        if (existing.isPresent()) {
+            // 이미 있으면 update
+            ActualWorkSchedule entity = existing.get();
+            entity.setSegmentsJson(schedule.getSegmentsJson());
+            entity.setTotalMinutes(schedule.getTotalMinutes());
+            return repository.save(entity);
+        } else {
+            // 없으면 insert
+            return repository.save(schedule);
+        }
     }
 
     /** 오늘 근무자 조회 */
