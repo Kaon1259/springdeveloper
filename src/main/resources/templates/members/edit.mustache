@@ -631,10 +631,11 @@
                     rebuildPreviewFromGrid();
                 }
             });
-        }
-        function toggleSlot(slot, select) {
-            if (select) slot.classList.add('selected');
-            else slot.classList.remove('selected');
+
+            function toggleSlot(slot, select) {
+                if (select) slot.classList.add('selected');
+                else slot.classList.remove('selected');
+            }
         }
 
         /* ===== 초기화 버튼 ===== */
