@@ -12,6 +12,7 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import ymsoft.springdeveloper.com.springdeveloper.dto.MemberDto;
+import ymsoft.springdeveloper.com.springdeveloper.entity.Member;
 import ymsoft.springdeveloper.com.springdeveloper.service.memberService;
 
 import java.util.List;
@@ -70,6 +71,21 @@ public class MemberController {
         model.addAttribute("membersJson", objectMapper.writeValueAsString(members));
 
         return "members/thisweek";
+    }
+
+    //금일 실 근무 시간 등록
+    @GetMapping("/members/registerworkingtime")
+    public String registerTodayWorkingTime(Model model) throws Exception {
+        List<MemberDto> members = memService.findByStatus(Member.Status.WORKING);
+        log.info("registerworkingtime: {}", members);
+
+        // 2️⃣ members (뷰용 리스트)
+        model.addAttribute("members", members);
+
+        log.info(objectMapper.writeValueAsString(members));
+        model.addAttribute("membersJson", objectMapper.writeValueAsString(members));
+
+        return "members/registerTodayWorkingTime";
     }
 
     //신규 등록
