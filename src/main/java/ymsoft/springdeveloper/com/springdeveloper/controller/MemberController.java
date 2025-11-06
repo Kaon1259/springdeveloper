@@ -137,7 +137,7 @@ public class MemberController {
                                RedirectAttributes redirectAttributes,
                                Model model) {
 
-        log.info("memberDto: {}", dto.toString());
+        log.info("/members/{id}/update: {}", dto.toString());
 
         // path의 id를 DTO에 반영(신뢰원 통일)
         dto.setId(id);
