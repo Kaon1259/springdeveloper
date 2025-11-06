@@ -2,72 +2,6 @@
 {{>layouts/toast}}
 
 <!-- 스타일 -->
-<style>
-    .text-mono { font-variant-numeric: tabular-nums; letter-spacing:-0.01em; }
-    .wage-preview-header { background: linear-gradient(135deg, #198754 0%, #20c997 100%); color:#fff; border-bottom:none; }
-    .wage-preview-card .table > :not(caption) > * > * { padding: 0.9rem 1rem; }
-    .wage-preview-table thead th { background:#f6f9fb; color:#6c757d; font-weight:600; border-bottom:1px solid #e9ecef; }
-    .wage-preview-table tbody tr:not(.table-subtle) td { border-top: 1px dashed #eef2f6; }
-    .wage-preview-table .table-subtle td { background:#fafcfd; color:#7a8a99; }
-    @media (min-width: 992px){ .sticky-side { position: sticky; top: 12px; } }
-
-    /* ==== 모달 내 주간 타임테이블 선택 스타일 ==== */
-    .week-grid {
-        width: 100%;
-        border: 1px solid #e5e7eb;
-        border-radius: 10px;
-        overflow: hidden;
-        user-select: none;
-    }
-    .week-grid table {
-        width: 100%;
-        border-collapse: separate;
-        border-spacing: 0;
-        table-layout: fixed;
-        background: #fff;
-    }
-    .week-grid thead th {
-        background: #f8fafc;
-        color:#64748b;
-        font-weight: 600;
-        font-size: 0.95rem;
-        border-bottom: 1px solid #e5e7eb;
-        text-align: center;
-        padding: .6rem .4rem;
-        position: sticky; top: 0; z-index: 2;
-    }
-    .week-grid tbody th {
-        background: #fafafa;
-        color:#6b7280;
-        font-weight: 600;
-        width: 70px;
-        border-right: 1px solid #e5e7eb;
-        text-align: center;
-        padding: .45rem .25rem;
-        font-size: .9rem;
-    }
-    .slot {
-        border-bottom: 1px dashed #eef2f6;
-        border-right: 1px dashed #eef2f6;
-        height: 34px;
-        cursor: pointer;
-        position: relative;
-        background: #ffffff;
-    }
-    .slot:hover { background: #f8fbff; }
-    .slot.selected {
-        background: rgba(25,135,84,.18);
-        box-shadow: inset 0 0 0 1px rgba(25,135,84,.25);
-    }
-    .grid-toolbar {
-        display: flex; gap: 8px; align-items: center; justify-content: space-between;
-        margin-bottom: .5rem;
-    }
-    .grid-toolbar .left, .grid-toolbar .right { display: flex; gap: 8px; align-items: center; }
-    .modal { background: rgba(0,0,0,.35); position: fixed; inset: 0; display:none; }
-    .modal-dialog { margin: 50px auto; max-width: 980px; }
-    .modal-content { background:#fff; border-radius: 12px; }
-</style>
 
 <main class="container my-4">
     <h2 class="mb-3">👤 아르바이트 회원 정보 수정</h2>
@@ -164,7 +98,11 @@
                                 <div>
                                     <label class="form-label mb-1">유효기간(만료일)</label>
                                     <!-- 컨트롤러에서 yyyy-MM-dd 문자열 제공 -->
-                                    <input type="date" class="form-input form-control" id="healthExpiryDate" value="{{healthCertExpiryStr}}">
+                                    <input type="date"
+                                           class="form-input form-control"
+                                           id="healthExpiryDate"
+                                           name="healthCertExpiry"
+                                           value="{{healthCertExpiryStr}}">
                                 </div>
                                 <div class="mb-2">
                                     <button type="button" class="btn btn-success btn-sm" id="applyHealthExpiry">적용</button>
@@ -267,7 +205,7 @@
                                 <tbody>
                                 {{#schedules}}
                                     <tr>
-                                        <td data-day="{{day}}">{{day}}</td>
+                                        <td data-day="{{day}}">{{dayLabel}}</td>
                                         <td data-start="{{start}}">{{start}}</td>
                                         <td data-end="{{end}}">{{end}}</td>
                                     </tr>
@@ -487,12 +425,10 @@
             preview.classList.add('text-muted');
         }
 
-        function removeHealthExpiryHidden() {
-            form.querySelectorAll('input[type="hidden"][data-health-expiry="1"]').forEach(n => n.remove());
-        }
         function onHealthRadioChange() {
             if (healthYes.checked) {
                 panel.style.display = 'block';
+                dateInput.disabled = false;
                 const existing = form.querySelector('input[type="hidden"][name="healthCertExpiry"]');
                 if (existing && existing.value) {
                     dateInput.value = existing.value;
@@ -509,7 +445,8 @@
                 }
             } else {
                 panel.style.display = 'none';
-                removeHealthExpiryHidden();
+            //    removeHealthExpiryHidden();
+                dateInput.disabled = true;   // ✅ 비활성화하면 전송은 되지만 빈 값이면 바인딩에 영향 없음
                 dateInput.value = '';
                 preview.textContent = '보유 선택 시 유효기간을 등록할 수 있습니다.';
                 preview.classList.add('text-muted');
@@ -524,7 +461,7 @@
             const today = new Date().toISOString().slice(0,10);
             if (val < today && !confirm('선택한 날짜가 이미 지났습니다. 그대로 적용할까요?')) return;
 
-            removeHealthExpiryHidden();
+        //    removeHealthExpiryHidden();
             const hidden = document.createElement('input');
             hidden.type = 'hidden';
             hidden.name = 'healthCertExpiry';

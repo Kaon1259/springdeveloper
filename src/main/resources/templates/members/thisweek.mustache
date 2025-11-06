@@ -94,7 +94,7 @@
                     <div class="table-responsive">
                         <table class="table table-bordered align-middle text-center timetable" id="timetable">
                             <thead>
-                            <tr>
+                            <tr id="timetableHeadRow">
                                 <th style="width:80px;">시간</th>
                                 <th>월</th><th>화</th><th>수</th>
                                 <th>목</th><th>금</th><th>토</th><th>일</th>
@@ -116,6 +116,11 @@
 
 <style>
     .timetable th, .timetable td { vertical-align: middle; }
+
+    /* 헤더에 날짜(월/일) 표시 */
+    .weekday-title { display:block; font-weight:600; }
+    .date-label { display:block; font-size:.8rem; color:#6c757d; margin-top:2px; }
+
     /* 셀 내부에 다중 멤버 바(색) 표시를 위한 컨테이너 */
     .cell-stack {
         display: flex;
@@ -154,6 +159,10 @@
         width: 12px; height: 12px; border-radius: 50%;
         border: 1px solid rgba(0,0,0,.08);
     }
+
+    /* 오늘 컬럼 하이라이트: 아주 연한 연두색 */
+    .today-col { background: rgba(25,135,84,.12) !important; }
+    .today-head { background: rgba(25,135,84,.16) !important; }
 </style>
 
 <!-- 컨트롤러에서 내려준 JSON: membersJson (없으면 빈 배열) -->
@@ -177,6 +186,7 @@
         const memberList = document.getElementById('memberList');
         const memberCountBadge = document.getElementById('memberCountBadge');
         const timetableBody = document.getElementById('timetableBody');
+        const timetableHeadRow = document.getElementById('timetableHeadRow');
 
         // info panel
         const statusBadge  = document.getElementById('statusBadge');
@@ -188,8 +198,12 @@
         const infoHealth = document.getElementById('infoHealth');
         const infoHourlyWage = document.getElementById('infoHourlyWage');
 
-        // 최초 그리드 생성
+        // 요일(월~일)
+        const dayTitles = ['월','화','수','목','금','토','일'];
+
+        // 최초 그리드/헤더 생성
         renderTimeGrid();
+        renderWeekHeaderDatesAndHighlight(); // ← 요일 위 날짜 + 오늘 하이라이트
 
         // 초기 상태 값 보정
         if (Array.isArray(allMembers) && allMembers.length > 0) {
@@ -198,11 +212,44 @@
 
         // 이벤트
         statusSelect.addEventListener('change', handleStatusChange);
-        // 목록 영역의 상세보기 버튼은 이벤트 위임으로 처리
-        memberList.addEventListener('click', onMemberListClick);
+        memberList.addEventListener('click', onMemberListClick); // 목록 영역(상세보기 버튼) 위임
 
         // 초기 렌더
         handleStatusChange();
+
+        // ====== Week header: (월/일) 라벨 + 오늘 컬럼 하이라이트 ======
+        function renderWeekHeaderDatesAndHighlight(baseDate = new Date()) {
+            // 월요일 시작 주의 월~일 날짜 계산
+            const today = new Date(baseDate.getFullYear(), baseDate.getMonth(), baseDate.getDate());
+            const monOffset = (today.getDay() + 6) % 7; // 월=0 … 일=6
+            const monday = new Date(today);
+            monday.setDate(today.getDate() - monOffset);
+
+            // 헤더 <th>들 가져오기 (첫 번째는 '시간')
+            const ths = timetableHeadRow.querySelectorAll('th');
+            // data-col 부여 및 텍스트 구성
+            for (let i = 0; i < 7; i++) {
+                const th = ths[i + 1]; // 0은 '시간'이므로 +1
+                if (!th) continue;
+                const d = new Date(monday);
+                d.setDate(monday.getDate() + i);
+                const label = `${d.getMonth() + 1}/${d.getDate()}`; // M/D
+
+                th.setAttribute('data-col', String(i + 1));
+                th.innerHTML = `<span class="weekday-title">${dayTitles[i]}</span><small class="date-label">(${label})</small>`;
+                th.classList.remove('today-head');
+            }
+
+            // 오늘이 속한 컬럼 인덱스(1~7)
+            const todayCol = ((today.getDay() + 6) % 7) + 1;
+
+            // 헤더 오늘 컬럼 하이라이트
+            const todayHead = timetableHeadRow.querySelector(`th[data-col="${todayCol}"]`);
+            if (todayHead) todayHead.classList.add('today-head');
+
+            // 바디 오늘 컬럼 하이라이트
+            timetableBody.querySelectorAll(`td[data-col="${todayCol}"]`).forEach(td => td.classList.add('today-col'));
+        }
 
         // ====== Rendering ======
 
@@ -277,10 +324,9 @@
         }
 
         function renderAllMembersSchedule(members) {
-            // 그리드 초기화
+            // 그리드 초기화 (오늘 컬럼 하이라이트 유지 위해 클래스 제거 전 재적용)
             clearGridCells();
 
-            // 모든 멤버의 스케줄을 병합하여 각 셀에 "색 바" 추가
             const mapToCol = { 'MON':1, 'TUE':2, 'WED':3, 'THU':4, 'FRI':5, 'SAT':6, 'SUN':7 };
 
             members.forEach(m => {
@@ -307,7 +353,7 @@
                                 cell.appendChild(stack);
                             }
 
-                            // 멤버 색 바 추가 (너비는 적당히 균등배치)
+                            // 멤버 색 바 추가
                             const bar = document.createElement('span');
                             bar.className = 'member-bar';
                             bar.style.background = hexWithAlpha(color, 0.85);
@@ -320,14 +366,15 @@
                     }
                 });
             });
+
+            // 오늘 컬럼 하이라이트를 다시 적용 (초기화 과정에서 제거될 수 있으므로)
+            reapplyTodayHighlight();
         }
 
         function highlightMemberInGrid(member) {
-            // 간단히: 해당 멤버의 막대만 미세한 outline 효과 주기
             const color = colorForMember(member);
             const bars = document.querySelectorAll('.member-bar');
             bars.forEach(el => el.style.outline = 'none');
-            // title에 이름이 포함된 바에만 아웃라인 (간단한 매칭)
             const name = member.name || '';
             document.querySelectorAll(`.member-bar[title*="${cssEscape(name)}"]`).forEach(el => {
                 el.style.outline = `2px solid ${hexWithAlpha(color, 1)}`;
@@ -395,7 +442,16 @@
         }
 
         function clearGridCells() {
-            timetableBody.querySelectorAll('td').forEach(td => td.innerHTML = '');
+            timetableBody.querySelectorAll('td').forEach(td => {
+                td.classList.remove('today-col'); // 하이라이트 초기화
+                td.innerHTML = '';
+            });
+        }
+
+        function reapplyTodayHighlight() {
+            const today = new Date();
+            const todayCol = ((today.getDay() + 6) % 7) + 1;
+            timetableBody.querySelectorAll(`td[data-col="${todayCol}"]`).forEach(td => td.classList.add('today-col'));
         }
 
         // ====== Data helpers ======
@@ -424,9 +480,9 @@
 
         function colorForMember(m) {
             const key = (m.id != null ? String(m.id) : (m.name || 'x'));
-            const h = seededHash(key) % 360;       // Hue: 0~359
-            const s = 65;                           // Saturation
-            const l = 55;                           // Lightness
+            const h = seededHash(key) % 360; // Hue: 0~359
+            const s = 65;                    // Saturation
+            const l = 55;                    // Lightness
             return hslToHex(h, s, l);
         }
 
@@ -449,7 +505,6 @@
         }
 
         function hexWithAlpha(hex, alpha=1){
-            // hex: #rrggbb → #rrggbbaa
             const a = Math.round(alpha*255).toString(16).padStart(2,'0');
             return `${hex}${a}`;
         }

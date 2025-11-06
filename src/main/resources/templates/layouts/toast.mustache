@@ -2,16 +2,28 @@
     <div id="toastBox"
          class="alert alert-{{toastType}} alert-dismissible fade show shadow-sm"
          role="alert"
-         style="position:fixed; top:20px; right:20px; min-width:250px; z-index:2000;">
+         style="
+         position: fixed;
+         left: 50%;
+         top: 50%;
+         top: 20px; transform: translateX(-50%);
+         min-width: 250px;
+         max-width: 90vw;
+         z-index: 2000;
+         text-align: center;
+       ">
         {{toast}}
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
     <script>
-        setTimeout(() => {
-            const toastEl = document.getElementById("toastBox");
-            if (toastEl) {
-                new bootstrap.Alert(toastEl).close();
-            }
-        }, 3000);
+        (function () {
+            const el = document.getElementById('toastBox');
+            if (!el) return;
+
+            // 3초 뒤 자동 닫기 (Bootstrap API)
+            setTimeout(() => {
+                bootstrap.Alert.getOrCreateInstance(el).close();
+            }, 3000);
+        })();
     </script>
 {{/toast}}

@@ -65,6 +65,18 @@ public class MemberDto {
         private LocalTime start;  // "HH:mm"
         @NotNull
         private LocalTime end;    // "HH:mm"
+
+        public String getDayLabel() {
+            return switch (day) {
+                case MON ->  "(MON)월";
+                case TUE -> "(TUE)화";
+                case WED -> "(WED)수";
+                case THU -> "(THU)목";
+                case FRI -> "(FRI)금";
+                case SAT -> "(SAT)토";
+                case SUN -> "(SUN)일";
+            };
+        }
     }
 
     // ✅ List<Member> → List<MemberDto>

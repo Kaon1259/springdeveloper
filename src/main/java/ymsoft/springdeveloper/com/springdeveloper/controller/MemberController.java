@@ -43,6 +43,20 @@ public class MemberController {
         return "members/list";
     }
 
+    @GetMapping("/members/realtimedashboard")
+    public String realtimedashboard(Model model) throws Exception {
+
+        List<MemberDto> members = memService.findAll();
+        log.info("memberList: {}", members);
+
+        // 2️⃣ members (뷰용 리스트)
+        model.addAttribute("members", members);
+
+        log.info(objectMapper.writeValueAsString(members));
+        model.addAttribute("membersJson", objectMapper.writeValueAsString(members));
+        return "members/realtimedashboard";
+    }
+
     //금주 근무 현황
     @GetMapping("/members/thisweek")
     public String thisWeekMembers(Model model) throws Exception {
@@ -102,6 +116,7 @@ public class MemberController {
         if (Boolean.TRUE.equals(dto.getHasHealthCertificate())) {
              //보건증 보유인데 유효기간이 없는 경우는 허용(선택)하되, 필요 시 아래 주석 해제
              if (dto.getHealthCertExpiry() == null) {
+                 log.info("healthCertExpiry is empty");
                  bindingResult.rejectValue("healthCertExpiry", "required", "보건증 보유 시 유효기간을 입력하세요.");
              }
         } else {
@@ -144,19 +159,25 @@ public class MemberController {
 
         // --- 서버측 기본 검증 ---
         if (!org.springframework.util.StringUtils.hasText(dto.getName())) {
+            log.info("name is empty");
             bindingResult.rejectValue("name", "required", "이름은 필수입니다.");
         }
         if (dto.getHourlyWage() == null || dto.getHourlyWage() < 0) {
+            log.info("hourlyWage is empty");
             bindingResult.rejectValue("hourlyWage", "min", "시간당 단가는 0 이상이어야 합니다.");
         }
 
+
         // 보건증 보유/만료일 처리
         if (Boolean.TRUE.equals(dto.getHasHealthCertificate())) {
+            log.info("hasHealthCertificate is empty");
             // 필요 시 만료일 필수화
              if (dto.getHealthCertExpiry() == null) {
+                 log.info("healthCertExpiry is empty");
                  bindingResult.rejectValue("healthCertExpiry", "required", "보건증 보유 시 유효기간을 입력하세요.");
              }
         } else {
+            log.info("hasHealthCertificate is empty");
             dto.setHealthCertExpiry(null); // 미보유면 만료일 무시
         }
 
@@ -164,6 +185,7 @@ public class MemberController {
         if (dto.getSchedule() != null) {
             dto.getSchedule().forEach(s -> {
                 if (s.getStart() != null && s.getEnd() != null && !s.getEnd().isAfter(s.getStart())) {
+                    log.info("종료 시간은 시작 시간보다 뒤여야 합니다.");
                     bindingResult.rejectValue("schedule", "timeOrder", "종료 시간은 시작 시간보다 뒤여야 합니다.");
                 }
             });
@@ -171,12 +193,10 @@ public class MemberController {
 
         // --- 에러 시: edit.mustache가 기대하는 모델 값 복구 ---
         if (bindingResult.hasErrors()) {
-            model.addAttribute("member", dto);
-            model.addAttribute("schedules", dto.getSchedule() == null ? java.util.List.of() : dto.getSchedule());
-            model.addAttribute("healthCertExpiryStr", dto.getHealthCertExpiry() == null ? "" : dto.getHealthCertExpiry().toString());
+            log.info("bindingResult.hasErrors(): {}", dto.toString());
             redirectAttributes.addFlashAttribute("toast", "수정도중 오류가 발생하였습니다.");
             redirectAttributes.addFlashAttribute("toastType", "error");
-            return "members/edit";
+            return "redirect:/members/" + id + "/edit";
         }
 
         try {
@@ -189,14 +209,11 @@ public class MemberController {
             return "redirect:/members/" + id + "/edit";
 
         } catch (Exception ex) {
+            log.info("Exception : /members/{id}/update: {}", ex.toString());
             // 예외 처리: 에러 메시지와 함께 편집 화면 복귀
-            bindingResult.reject("updateFailed", "수정 중 오류가 발생했습니다: " + ex.getMessage());
-            model.addAttribute("member", dto);
-            model.addAttribute("schedules", dto.getSchedule() == null ? java.util.List.of() : dto.getSchedule());
-            model.addAttribute("healthCertExpiryStr", dto.getHealthCertExpiry() == null ? "" : dto.getHealthCertExpiry().toString());
             redirectAttributes.addFlashAttribute("toast", "수정도중 오류가 발생하였습니다.");
             redirectAttributes.addFlashAttribute("toastType", "error");
-            return "members/edit";
+            return "redirect:/members/" + id + "/edit";
         }
     }
 
