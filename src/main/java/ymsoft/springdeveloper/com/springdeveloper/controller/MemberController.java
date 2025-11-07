@@ -31,23 +31,6 @@ public class MemberController {
 
     private final ObjectMapper objectMapper; // ✅ 스프링이 모듈 등록된 ObjectMapper를 주입
 
-//    @GetMapping("/members")
-//    public String memberList(Model model) throws Exception {
-//
-//        //List<MemberDto> members = memService.findByStatus(Member.Status.WAITING);
-//        List<MemberDto> members = memService.findAll();
-//        log.info("memberList: {}", members);
-//
-//        // 2️⃣ members (뷰용 리스트)
-//        model.addAttribute("members", members);
-//
-//        log.info(objectMapper.writeValueAsString(members));
-//        model.addAttribute("membersJson", objectMapper.writeValueAsString(members));
-//
-//        // 4️⃣ 뷰 반환
-//        return "members/list";
-//    }
-
     @GetMapping("/members")
     public String memberList(
             @RequestParam(name = "week", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate week,
@@ -80,7 +63,7 @@ public class MemberController {
         model.addAttribute("weekPrevUrl", weekPrevUrl);
         model.addAttribute("weekNextUrl", weekNextUrl);
 
-        return "members/list"; // list.mustache
+        return "members/list";
     }
 
     @GetMapping("/members/realtimedashboard")
@@ -134,42 +117,6 @@ public class MemberController {
         return "members/showWorktimeDashboard"; // Mustache 파일 경로/이름
     }
 
-//    @GetMapping("/members/showworkmonthdashboard")
-//    public String showWorkMonthDashboard(
-//            @RequestParam(required = false)
-//            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate week, // 주 기준일(월요일) 선택 파라미터
-//            Model model
-//    ) throws Exception {
-//
-//        // 1) 기준 주 계산 (월요일 시작)
-//        LocalDate base = (week != null) ? week : LocalDate.now();
-//        LocalDate startOfWeek = base.with(DayOfWeek.MONDAY);
-//        LocalDate endOfWeek   = startOfWeek.plusDays(6);
-//
-//        // 2) 주간 라벨/이동 URL (⚠ 템플릿은 평탄 키 사용: weekRangeLabel / weekPrevUrl / weekNextUrl)
-//        model.addAttribute("weekRangeLabel",
-//                String.format("%s ~ %s",
-//                        startOfWeek.format(DateTimeFormatter.ofPattern("yyyy.MM.dd")),
-//                        endOfWeek.format(DateTimeFormatter.ofPattern("MM.dd"))));
-//        model.addAttribute("weekPrevUrl", "/members/showworktimedashboard?week=" + startOfWeek.minusWeeks(1));
-//        model.addAttribute("weekNextUrl", "/members/showworktimedashboard?week=" + startOfWeek.plusWeeks(1));
-//
-//        // 3) 멤버 목록 (좌측 리스트 & 우측 주간표 데이터 소스)
-//        List<MemberDto> members = memService.findAll();
-//        log.info("showworkmonthdashboard members: {}", members);
-//
-//        // 필요한 경우 서버에서 정렬/필터를 미리 적용해도 됩니다.
-//        model.addAttribute("members", members);
-//
-//        String membersJson = objectMapper.writeValueAsString(members);
-//        log.info("showworkmonthdashboard membersJson: {}", membersJson);
-//        model.addAttribute("membersJson", membersJson);
-//
-//        // (선택) 페이지 타이틀
-//        model.addAttribute("pageTitle", "월/주 실 근무시간 대시보드");
-//
-//        return "members/showWorkMonthDashboard"; // Mustache 파일 경로/이름
-//    }
 
     @GetMapping("/members/showworkmonthdashboard")
     public String showWorkMonthDashboard(

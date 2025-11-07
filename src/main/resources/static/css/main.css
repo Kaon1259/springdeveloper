@@ -215,3 +215,19 @@ body {
 .highlight-row {
     background-color: #fffbe6 !important; /* 연한 노란색 */
 }
+
+/* 현재 메뉴 강조 */
+.navbar .nav-link.active,
+.navbar .nav-link[aria-current="page"] {
+    font-weight: 700;
+    background: rgba(13,110,253,.12);
+    border-radius: .5rem;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+/* 호버 */
+.navbar .nav-link:hover {
+    background: rgba(0,0,0,.05);
+    border-radius: .5rem;
+}
