@@ -1,20 +1,20 @@
 package ymsoft.springdeveloper.com.springdeveloper.api;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import ymsoft.springdeveloper.com.springdeveloper.dto.ActualWorkScheduleBulkDto;
 import ymsoft.springdeveloper.com.springdeveloper.dto.ActualWorkScheduleDto;
 import ymsoft.springdeveloper.com.springdeveloper.dto.WeekWorkResponse;
 import ymsoft.springdeveloper.com.springdeveloper.entity.ActualWorkSchedule;
 import ymsoft.springdeveloper.com.springdeveloper.service.ActualWorkScheduleService;
 
 import java.time.LocalDate;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Slf4j
 @RestController
@@ -37,6 +37,64 @@ public class ActualWorkScheduleController {
         res.put("id", saved.getId());
         return ResponseEntity.ok(res);
     }
+
+    @PostMapping("/actual-bulk-register")
+    public ResponseEntity<Map<String, Object>> saveActualBulk(
+            @RequestBody @Valid ActualWorkScheduleBulkDto request
+    ) {
+        // 요청 예시:
+        // {
+        //   "date": "2025-11-08",
+        //   "segments": [
+        //     { "memberId": 1, "segments": [ { "start": "08:00", "end": "10:00" }, ... ] },
+        //     { "memberId": 2, "segments": [ { "start": "09:30", "end": "11:00" }, ... ] }
+        //   ]
+        // }
+
+        log.info(request.toString());
+        if (request.getSegments() == null || request.getSegments().isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", "segments가 비어 있습니다."
+            ));
+        }
+
+        log.info(request.getSegments().toString());
+        List<ActualWorkSchedule> savedList = new ArrayList<>();
+
+        for (ActualWorkScheduleBulkDto.Item item : request.getSegments()) {
+            if (item == null) continue;
+            if (item.getMemberId() == null) {
+                return ResponseEntity.badRequest().body(Map.of(
+                        "success", false,
+                        "message", "memberId가 누락된 항목이 있습니다."
+                ));
+            }
+            if (item.getSegments() == null) { // ✅ 여기서 NPE 방어
+                return ResponseEntity.badRequest().body(Map.of(
+                        "success", false,
+                        "message", "memberId=" + item.getMemberId() + " 의 segments가 누락되었습니다."
+                ));
+            }
+
+            // DTO를 이용해 엔티티 생성/저장
+            ActualWorkScheduleDto dto = new ActualWorkScheduleDto(
+                    item.getMemberId(),
+                    request.getDate(),
+                    item.getSegments()
+            );
+            ActualWorkSchedule entity = dto.toEntity();
+            savedList.add(service.save(entity));
+        }
+
+        Map<String, Object> res = new HashMap<>();
+        res.put("success", true);
+        res.put("message", "총 " + savedList.size() + "건 저장 완료");
+        res.put("ids", savedList.stream().map(ActualWorkSchedule::getId).collect(Collectors.toList()));
+        log.info(res.toString());
+        return ResponseEntity.ok(res);
+    }
+
 
     @GetMapping("/{memberId}/{date}")
     public ResponseEntity<Map<String, Object>> getActualSchedule(
