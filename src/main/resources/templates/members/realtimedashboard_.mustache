@@ -1,489 +1,466 @@
 {{>layouts/header}}
 
 <main class="container my-4">
-    <div class="row g-3">
-        <!-- ============ 왼쪽: 실시간 대시보드 ============ -->
-        <div class="col-12 col-lg-4">
-            <div class="d-grid gap-3 sticky-lg-top" style="top: 12px;">
-                <!-- 날짜 라벨 -->
-                <div class="h5 mb-0" id="todayKR"></div>
-
-                <!-- 금일 실시간 대시보드 -->
-                <div class="card">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <span class="fw-bold">금일 실시간 대시보드</span>
-                        <small class="text-muted" id="nowClock">--:--</small>
-                    </div>
-                    <div class="card-body">
-                        <div class="mb-2 small text-muted">* 버튼 클릭으로 상태를 전환합니다. (출근 → 휴식/복귀 → 퇴근)</div>
-                        <div id="realtimeList" class="list-group list-group-flush">
-                            <!-- JS로 금일 스케줄 대상 렌더 -->
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 오늘 출근자 -->
-                <div class="card">
-                    <div class="card-header fw-bold d-flex justify-content-between align-items-center">
-                        <span>현재 근무자</span>
-                        <span id="todayWorkingCount" class="badge bg-light text-dark">0명</span>
-                    </div>
-                    <div class="card-body">
-                        <ul id="todayWorkingList" class="list-group list-group-flush">
-                            <!-- JS로 금일 근무중/휴식중 렌더 -->
-                        </ul>
-                    </div>
-                </div>
-            </div>
+    <div class="card">
+        <div class="card-header fw-bold d-flex justify-content-between align-items-center">
+            <span>금(2025-11-08) 근무 현황</span>
+            <small class="text-muted" id="nowClock">--:--</small>
         </div>
 
-        <!-- ============ 오른쪽: 주간 타임테이블(진행 오버레이) ============ -->
-        <div class="col-12 col-lg-8">
-            <div class="card">
-                <div class="card-header fw-bold">주간 타임테이블 (월~일)</div>
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table table-bordered align-middle text-center timetable" id="timetable">
-                            <thead>
-                            <tr id="timetableHeadRow">
-                                <th style="width:80px;">시간</th>
-                                <th>월</th><th>화</th><th>수</th><th>목</th><th>금</th><th>토</th><th>일</th>
-                            </tr>
-                            </thead>
-                            <tbody id="timetableBody">
-                            <!-- JS가 06:00~22:00 시간 슬롯 생성 -->
-                            </tbody>
-                        </table>
+        <div class="card-body">
+            <!-- ====== STICKY: 금일 근무자 나열 ====== -->
+            <div id="stickyChips" class="sticky-chips">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="small text-muted">금일 근무자</div>
+                        <!-- ✅ 등록 버튼 추가 -->
+                        <button id="btnRegisterActual" class="btn btn-sm btn-success">
+                            실근무시간 등록
+                        </button>
                     </div>
-                    <div class="small text-muted">
-                        * 얇은 바: 계획(Plan) / 굵은 바: 실제(Actual, 여기서는 출근 후 진행 오버레이) / 오늘 컬럼만 진행 채우기
-                    </div>
+                    <span id="memberCountBadge" class="badge bg-light text-dark">0명</span>
                 </div>
+                <!-- ✅ 칩을 절대배치로 놓을 트랙 -->
+                <div id="chipsTrack" class="chips-track">
+                    <!-- JS가 칩들을 절대배치로 생성/동기화 -->
+                </div>
+            </div>
+
+            <!-- 10분 단위 타임테이블 (동적 컬럼: 금일 근무자 + 맨오른쪽 '시간대 합') -->
+            <div class="table-responsive" id="ttScroll">
+                <table class="table table-bordered align-middle text-center timetable-10m" id="tt10m">
+                    <thead>
+                    <tr id="tt10mHead">
+                        <th style="width:80px;">시간</th>
+                        <!-- JS가 금일 근무자 이름으로 동적 th 생성 -->
+                        <!-- 마지막에 '시간대 합' th 생성 -->
+                    </tr>
+                    </thead>
+                    <tbody id="tt10mBody">
+                    <!-- JS가 06:00~22:00, 10분 간격 행 생성 -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="small text-muted mt-2">
+                * 노란색: 계획된 스케줄 / 연두색(진하게): 현재 시각까지 경과한 구간(10분 단위 업데이트) / 오른쪽 '시간대 합'은 해당 시간에 근무 예정 인원 수
             </div>
         </div>
     </div>
 </main>
 
 <style>
-    .timetable th, .timetable td { vertical-align: middle; position: relative; }
-    .weekday-title { display:block; font-weight:600; }
-    .date-label { display:block; font-size:.8rem; color:#6c757d; margin-top:2px; }
+    .timetable-10m th, .timetable-10m td { vertical-align: middle; }
+    .timecell { font-variant-numeric: tabular-nums; }
 
-    /* 오늘 컬럼 하이라이트(연한 연두) */
-    .today-col { background: rgba(25,135,84,.08) !important; }
-    .today-head { background: rgba(25,135,84,.12) !important; }
+    .sticky-chips{
+        position: sticky;
+        top: var(--sticky-offset, 8px);
+        z-index: 20;
+        background: #fff;
+        border: 1px solid #f1f3f5;
+        border-radius: 10px;
+        padding: 10px 12px;
+        margin-bottom: 12px;
+        transition: box-shadow .15s ease, border-color .15s ease, background .15s ease;
+        overflow: hidden;
+    }
+    .sticky-chips.is-stuck{
+        box-shadow: 0 6px 18px rgba(0,0,0,.06);
+        border-color: #e9ecef;
+        background: #ffffffcc;
+        backdrop-filter: saturate(120%) blur(2px);
+    }
+    .chips-track{ position: relative; height: 38px; }
 
-    /* 셀 내부 스택: 여러 멤버 바 */
-    .cell-stack {
-        display: flex; flex-wrap: wrap; gap: 2px 4px;
-        justify-content: center; align-items: center; min-height: 26px;
+    .member-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 10px;
+        border-radius: 10px;
+        background: #fff;
+        border: 1px solid #eee;
+        max-width: 100%;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        position: absolute;
+        top: 0;
+        transform: translateX(0);
+        width: 140px;
     }
-    /* 계획 바(점선, 얇음) */
-    .plan-bar {
-        height: 6px; border-radius: 4px; border: 1px dashed rgba(0,0,0,.2);
-        background: rgba(0,0,0,.06);
-        min-width: 18px; max-width: 60px; width: 18%;
-    }
-    /* 실제 바(기본칸 배경) */
-    .actual-bar {
-        height: 10px; border-radius: 5px; border: 1px solid rgba(0,0,0,.08);
-        min-width: 18px; max-width: 60px; width: 22%;
-        position: relative; overflow: hidden;
-    }
-    /* 진행 오버레이(좀 더 진한 색, 10분 단위 폭 증가) */
-    .progress-overlay {
-        position: absolute; left: 0; top: 0; bottom: 0;
-        width: 0%;
-    }
+    .member-chip .name { font-weight: 600; }
+    .member-chip .plan { color:#6c757d; font-size:.85rem; white-space: nowrap; }
+    .dot { width: 10px; height: 10px; border-radius: 50%; border: 1px solid rgba(0,0,0,.08); flex: 0 0 auto; }
 
-    /* 대시보드 리스트 아이템 */
-    .rt-item { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 0; }
-    .rt-left { display: flex; align-items: center; gap: 8px; }
-    .dot { width: 12px; height: 12px; border-radius: 50%; border: 1px solid rgba(0,0,0,.08); }
-    .rt-actions .btn { margin-left: 6px; }
+    .slot-10m {
+        height: 14px;
+        border: 1px solid #eef2f6;
+        border-radius: 3px;
+        background: #fff;
+    }
+    .slot-10m.planned { background: rgba(255, 193, 7, .35); border-color: rgba(255, 193, 7, .55); }
+    .slot-10m.done    { background: rgba(25, 135, 84, .48); border-color: rgba(25, 135, 84, .62); }
+
+    #tt10m thead th { position: sticky; top: 0; z-index: 2; background: #f8fafc; }
+    #tt10m tbody th { position: sticky; left: 0; z-index: 1; background: #fafafa; }
+
+    .now-row th.timecell { background:#fff3cd; }
+    .now-row td .slot-10m { box-shadow: inset 0 0 0 1px rgba(255,193,7,.35); }
+
+    .sum-head { width: 100px; }
+    .sum-cell { background:#fafafa; font-weight:600; }
+    .sum-cell.now-hour { background:#e8f5e9; border-left:2px solid #198754; }
 </style>
 
-<!-- 컨트롤러에서 내려준 JSON: membersJson -->
 <script id="membersData" type="application/json">
 {{{membersJson}}}
 </script>
-<script>
-(function setTodayLabel(){
-const el = document.getElementById('todayKR');
-if (!el) return;
-const days = ['일','월','화','수','목','금','토'];
 
-// ✅ 오늘 날짜(실시간)
-const d = new Date();
-el.textContent = `${d.getFullYear()}년${d.getMonth()+1}월${d.getDate()}일 ${days[d.getDay()]}요일`;
-
-// ▶ 특정 날짜로 고정 출력하고 싶다면(예: 2025-11-07):
-// const fixed = new Date('2025-11-07T00:00:00+09:00');
-// el.textContent = `${fixed.getFullYear()}년${fixed.getMonth()+1}월${fixed.getDate()}일 ${days[fixed.getDay()]}요일`;
-})();
-</script>
 <script>
-    (function() {
-        /** ===== 설정/상수 ===== */
+    (function () {
+        /** ===== 설정 ===== */
+        const API_ENDPOINT = '/api/schedule/actual-bulk-register'; // ✅ 엔드포인트만 바꿔 쓰세요
+        const now = new Date();
+        const TARGET_DATE_STR = now.toISOString().slice(0, 10);
         const HOUR_START = 6, HOUR_END = 22;
-        const dayTitles = ['월','화','수','목','금','토','일'];
-        const mapToCol = { 'MON':1, 'TUE':2, 'WED':3, 'THU':4, 'FRI':5, 'SAT':6, 'SUN':7 };
+        const STEP_MIN = 10;
+        const SLOTS_PER_HOUR = 60 / STEP_MIN;
+        const TOTAL_ROWS = (HOUR_END - HOUR_START) * SLOTS_PER_HOUR;
 
         /** ===== DOM ===== */
-        const timetableHeadRow = document.getElementById('timetableHeadRow');
-        const timetableBody = document.getElementById('timetableBody');
-        const realtimeList = document.getElementById('realtimeList');
-        const todayWorkingList = document.getElementById('todayWorkingList');
-        const todayWorkingCount = document.getElementById('todayWorkingCount');
         const nowClock = document.getElementById('nowClock');
+        const chipsBox = document.getElementById('stickyChips');
+        const chipsTrack = document.getElementById('chipsTrack');
+        const memberCountBadge = document.getElementById('memberCountBadge');
+        const headRow = document.getElementById('tt10mHead');
+        const bodyEl = document.getElementById('tt10mBody');
+        const scrollBox = document.getElementById('ttScroll');
+        const btnRegisterActual = document.getElementById('btnRegisterActual'); // ✅
 
-        /** ===== 데이터 로드 ===== */
+        /** ===== 데이터 ===== */
         let allMembers = [];
         try { allMembers = JSON.parse(document.getElementById('membersData').textContent || '[]'); }
-        catch(e) { allMembers = []; }
+        catch (e) { allMembers = []; }
 
-        /** ===== 내부 상태(금일 근무 진행) =====
-         * memberRuntime: { [memberId]: { status, checkedInAt, onBreak, progressElRefs: Set<HTMLElement>, color } }
-         * status: 'READY' | 'WORKING' | 'BREAK' | 'DONE'
-         */
-        const memberRuntime = {};
+        const targetDate = new Date(`${TARGET_DATE_STR}T00:00:00`);
+        const DAY_KEY = dayKeyOf(targetDate);
 
-        /** ===== 초기 렌더 ===== */
-        renderTimeGrid();
-        renderWeekHeaderDatesAndHighlight();
-        bootstrapRealtimePanelForToday();
-        paintAllPlanBars();
-        tick(); // 시계 즉시 1회
+        const todayMembers = (allMembers || []).filter(m => getSchedules(m).some(s => s.day === DAY_KEY))
+                .sort((a,b) => (a.name||'').localeCompare(b.name||'', 'ko'));
 
-        // 30초마다 갱신(진행폭은 실제 현재 분을 10분 단위로 반올림)
-        setInterval(tick, 30 * 1000);
+        const colorMap = {};
+        todayMembers.forEach(m => colorMap[m.id] = colorForMember(m));
 
-        /** ===== 함수들 ===== */
+        const hourlyTotals = computeHourlyTotals(todayMembers);
 
-        function tick() {
-            nowClock.textContent = formatNow();
-            updateProgressOverlays();     // 10분 단위 폭 갱신
-            refreshTodayWorkingColumn();  // 출근자 목록 갱신
+        let didAutoScrollOnce = false;
+        let lastMinute = -1;
+
+        computeStickyOffset();
+        window.addEventListener('resize', computeStickyOffset);
+        window.addEventListener('scroll', toggleStickyShadow, { passive: true });
+
+        renderNow();
+        renderChips(todayMembers);
+        renderTableHeader(todayMembers);
+        renderTableBody();
+        paintPlanned(todayMembers);
+
+        updateDoneColors(todayMembers);
+        highlightHourSum();
+        scrollToNowRow({ smooth: true });
+        syncChipsToColumns();
+
+        scrollBox.addEventListener('scroll', syncChipsToColumns, { passive: true });
+        window.addEventListener('resize', syncChipsToColumns);
+        window.addEventListener('load', syncChipsToColumns);
+
+        // ✅ 버튼 활성/비활성
+        btnRegisterActual.disabled = todayMembers.length === 0;
+
+        function todayStr() {
+            const d = new Date();
+            const y = d.getFullYear();
+            const m = String(d.getMonth() + 1).padStart(2,'0');
+            const day = String(d.getDate()).padStart(2,'0');
+            return `${y}-${m}-${day}`;
         }
 
-        function formatNow() {
-            const d = new Date();
-            const hh = String(d.getHours()).padStart(2,'0');
-            const mm = String(d.getMinutes()).padStart(2,'0');
+        /** 안전한 HM 변환 (필요 시 기존 함수 사용) */
+        function safeIndexToHM(idx) {
+            if (typeof indexToHM === 'function') return indexToHM(idx);
+            // 아래 상수는 페이지 상단에 이미 선언되어 있을 것: HOUR_START, STEP_MIN
+            const totalMin = (HOUR_START * 60) + idx * STEP_MIN;
+            const hh = String(Math.floor(totalMin / 60)).padStart(2,'0');
+            const mm = String(totalMin % 60).padStart(2,'0');
             return `${hh}:${mm}`;
         }
 
-        /** 1) 그리드/헤더 */
-        function renderTimeGrid() {
+        // ✅ “실근무시간 등록” 클릭 → 연두색(done) 구간을 멤버별로 압축하여 API 호출
+        btnRegisterActual.addEventListener('click', async () => {
+            if (!todayMembers.length) return alert('금일 근무자가 없습니다.');
+
+            const confirmMsg = '현재까지의 실제 근무(연두색) 구간을 서버에 등록하시겠습니까?';
+            if (!confirm(confirmMsg)) return;
+
+            // 멤버별 done 인덱스를 연속 구간으로 압축 → [{start,end}]
+            const items = todayMembers.map(m => {
+                const doneIdx = collectDoneIndexesForMember(m.id);     // 이미 존재하는 유틸 가정
+                const ranges = compressIndexesToRanges(doneIdx);       // 이미 존재하는 유틸 가정
+                // [a,b]는 a~b 인덱스 포함. 끝시각은 (b+1) 슬롯의 시작(HM).
+                const segments = ranges.map(([a, b]) => ({
+                    start: safeIndexToHM(a),
+                    end:   safeIndexToHM(b + 1)
+                }));
+                return { memberId: m.id, segments };
+            }).filter(x => x.segments.length > 0);
+
+            if (!items.length) {
+                return alert('등록할 실제 근무 구간(연두색)이 없습니다.');
+            }
+
+            // 서버 DTO(ActualWorkScheduleBulkDto) 규격에 맞춘 payload
+            const payload = {
+                date: todayStr(),     // 기존 고정값(TARGET_DATE_STR) 대신 오늘 날짜 사용
+                segments: items       // [{ memberId, segments:[{start,end}] }, ...]
+            };
+
+            // 디버그 프리뷰
+            alert(`전송 데이터 미리보기:\n${JSON.stringify(payload, null, 2)}`);
+
+            try {
+                const res = await fetch(API_ENDPOINT, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await res.json().catch(() => ({}));
+                if (res.ok && (data.success === undefined || data.success === true)) {
+                    alert('✅ 실근무시간 등록 완료');
+                } else {
+                    alert('⚠️ 등록 실패: ' + (data.message || res.statusText || '알 수 없는 오류'));
+                    console.error('Server response:', data);
+                }
+            } catch (err) {
+                alert('❌ 네트워크 오류로 등록에 실패했습니다.');
+                console.error(err);
+            }
+        });
+
+        // 15초마다 갱신
+        setInterval(() => {
+            renderNow();
+            updateDoneColors(todayMembers);
+            highlightHourSum();
+
+            const now = new Date();
+            if (now.getMinutes() !== lastMinute) {
+                lastMinute = now.getMinutes();
+                scrollToNowRow({ smooth: true });
+            } else {
+                highlightNowRow();
+            }
+            syncChipsToColumns();
+        }, 15000);
+
+        /** ===== 렌더/동기화 기본들 ===== */
+        function renderNow() {
+            const d = new Date();
+            nowClock.textContent = `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+        }
+        function renderChips(members) {
+            chipsTrack.innerHTML = '';
+            memberCountBadge.textContent = `${members.length}명`;
+            if (!members.length) {
+                chipsTrack.innerHTML = `<span class="text-muted" style="position:absolute;left:0;top:8px;">금일 근무자가 없습니다.</span>`;
+                return;
+            }
+            members.forEach(m => {
+                const el = document.createElement('span');
+                el.className = 'member-chip';
+                el.dataset.memberId = String(m.id);
+                el.innerHTML = `
+                    <span class="dot" style="background:${colorMap[m.id]}"></span>
+                    <span class="name">${escapeHtml(m.name || '-')}</span>
+                    <small class="plan">${todayPlanLabel(m) || ''}</small>
+                `;
+                chipsTrack.appendChild(el);
+            });
+        }
+        function renderTableHeader(members) {
+            const memberHeads = members.map(m => `<th data-member-id="${String(m.id)}">${escapeHtml(m.name || '-')}</th>`).join('');
+            const sumHead = `<th class="sum-head">시간대 합</th>`;
+            headRow.innerHTML = `<th style="width:80px;">시간</th>${memberHeads}${sumHead}`;
+        }
+        function renderTableBody() {
             const rows = [];
-            for (let h = HOUR_START; h <= HOUR_END; h++) {
-                const label = `${String(h).padStart(2,'0')}:00`;
-                rows.push(`
-        <tr data-hour="${h}">
-          <th scope="row">${label}</th>
-          <td data-col="1"><div class="cell-stack"></div></td>
-          <td data-col="2"><div class="cell-stack"></div></td>
-          <td data-col="3"><div class="cell-stack"></div></td>
-          <td data-col="4"><div class="cell-stack"></div></td>
-          <td data-col="5"><div class="cell-stack"></div></td>
-          <td data-col="6"><div class="cell-stack"></div></td>
-          <td data-col="7"><div class="cell-stack"></div></td>
-        </tr>
-      `);
+            for (let i = 0; i < TOTAL_ROWS; i++) {
+                const tMin = HOUR_START * 60 + i * STEP_MIN;
+                const h = Math.floor(tMin / 60), m = tMin % 60;
+                const label = (m % 30 === 0) ? `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}` : '';
+                let row = `
+        <tr data-row-index="${i}">
+          <th class="timecell">${label}</th>
+          ${todayMembers.map(mb => `<td data-member-id="${String(mb.id)}"><div class="slot-10m"></div></td>`).join('')}
+      `;
+                if (m === 0) {
+                    const total = hourlyTotals[h] ?? 0;
+                    row += `<td class="sum-cell" data-hour="${h}" rowspan="${SLOTS_PER_HOUR}">${total}명</td>`;
+                }
+                row += `</tr>`;
+                rows.push(row);
             }
-            timetableBody.innerHTML = rows.join('');
+            bodyEl.innerHTML = rows.join('');
         }
-
-        function renderWeekHeaderDatesAndHighlight(baseDate = new Date()) {
-            const today = new Date(baseDate.getFullYear(), baseDate.getMonth(), baseDate.getDate());
-            const monOffset = (today.getDay() + 6) % 7; // 월=0 … 일=6
-            const monday = new Date(today); monday.setDate(today.getDate() - monOffset);
-
-            const ths = timetableHeadRow.querySelectorAll('th');
-            for (let i=0;i<7;i++){
-                const th = ths[i+1];
-                const d = new Date(monday); d.setDate(monday.getDate()+i);
-                const label = `${d.getMonth()+1}/${d.getDate()}`;
-                th.setAttribute('data-col', String(i+1));
-                th.innerHTML = `<span class="weekday-title">${dayTitles[i]}</span><small class="date-label">${label}</small>`;
-                th.classList.remove('today-head');
-            }
-            const todayCol = ((today.getDay() + 6) % 7) + 1;
-            timetableHeadRow.querySelector(`th[data-col="${todayCol}"]`)?.classList.add('today-head');
-            timetableBody.querySelectorAll(`td[data-col="${todayCol}"]`).forEach(td => td.classList.add('today-col'));
-        }
-
-        /** 2) 금일 대상 멤버로 대시보드 구성 */
-        function bootstrapRealtimePanelForToday() {
-            const todayDayKey = dayKeyOf(new Date());
-            const targets = (allMembers || []).filter(m => getSchedules(m).some(s => s.day === todayDayKey));
-            realtimeList.innerHTML = '';
-            targets.forEach(m => {
-                const color = colorForMember(m);
-                memberRuntime[m.id] = {
-                    status: 'READY',
-                    checkedInAt: null,
-                    onBreak: false,
-                    progressElRefs: new Set(),
-                    color
-                };
-                const item = renderRealtimeRow(m, color);
-                realtimeList.appendChild(item);
-
-                // 오늘 timetable에 "계획 바" + "실제 바 컨테이너" 생성(진행 오버레이가 붙을 위치)
-                addTodayBarsForMember(m);
-            });
-            refreshTodayWorkingColumn();
-        }
-
-        function renderRealtimeRow(m, color) {
-            const li = document.createElement('div');
-            li.className = 'list-group-item rt-item';
-            li.dataset.id = String(m.id);
-
-            li.innerHTML = `
-      <div class="rt-left">
-        <span class="dot" style="background:${color}"></span>
-        <div>
-          <div class="fw-semibold">${escapeHtml(m.name ?? '-')}</div>
-          <div class="small text-muted">${todayPlanLabel(m) || '금일 계획 없음'}</div>
-        </div>
-      </div>
-      <div class="rt-actions">
-        <button class="btn btn-sm btn-success btn-in">출근</button>
-        <button class="btn btn-sm btn-warning btn-break" disabled>휴식</button>
-        <button class="btn btn-sm btn-info btn-resume d-none">복귀</button>
-        <button class="btn btn-sm btn-danger btn-out" disabled>퇴근</button>
-      </div>
-    `;
-
-            const rt = memberRuntime[m.id];
-
-            const btnIn = li.querySelector('.btn-in');
-            const btnBreak = li.querySelector('.btn-break');
-            const btnResume = li.querySelector('.btn-resume');
-            const btnOut = li.querySelector('.btn-out');
-
-            btnIn.addEventListener('click', () => {
-                if (rt.status !== 'READY') return;
-                rt.status = 'WORKING';
-                rt.checkedInAt = new Date();
-                rt.onBreak = false;
-                btnIn.disabled = true;
-                btnBreak.disabled = false;
-                btnOut.disabled = false;
-                btnResume.classList.add('d-none');
-                // 진행 시작: 오버레이(좀 더 진한 색) 활성화
-                startProgressForMember(m);
-                refreshTodayWorkingColumn();
-            });
-
-            btnBreak.addEventListener('click', () => {
-                if (rt.status !== 'WORKING') return;
-                rt.status = 'BREAK';
-                rt.onBreak = true;
-                btnBreak.disabled = true;
-                btnResume.classList.remove('d-none');
-                // 진행 일시정지
-                pauseProgressForMember(m);
-                refreshTodayWorkingColumn();
-            });
-
-            btnResume.addEventListener('click', () => {
-                if (rt.status !== 'BREAK') return;
-                rt.status = 'WORKING';
-                rt.onBreak = false;
-                btnBreak.disabled = false;
-                btnResume.classList.add('d-none');
-                // 진행 재개
-                resumeProgressForMember(m);
-                refreshTodayWorkingColumn();
-            });
-
-            btnOut.addEventListener('click', () => {
-                if (rt.status === 'DONE' || rt.status === 'READY') return;
-                rt.status = 'DONE';
-                rt.onBreak = false;
-                btnBreak.disabled = true;
-                btnOut.disabled = true;
-                btnResume.classList.add('d-none');
-                // 진행 종료(100% 또는 현재 시각까지)
-                finishProgressForMember(m);
-                refreshTodayWorkingColumn();
-            });
-
-            return li;
-        }
-
-        function todayPlanLabel(m) {
-            const key = dayKeyOf(new Date());
-            const seg = getSchedules(m).find(s => s.day === key);
-            return seg ? `예정 ${seg.start}–${seg.end}` : '';
-        }
-
-        /** 3) 타임테이블 칠하기(계획/실제) */
-        function paintAllPlanBars() {
-            // 계획 바는 모든 요일에 대하여 얇은 점선(이미지와 동일)
-            (allMembers || []).forEach(m => {
-                const color = colorForMember(m);
-                getSchedules(m).forEach(s => {
-                    const st = parseHm(s.start), ed = parseHm(s.end);
-                    const dayIdx = mapToCol[s.day];
-                    if (!dayIdx) return;
-                    for (let h=HOUR_START; h < HOUR_END; h++) {
-                        if (intervalHitHour(st, ed, h)) {
-                            const row = timetableBody.querySelector(`tr[data-hour="${h}"]`);
-                            const cell = row?.querySelector(`td[data-col="${dayIdx}"]`);
-                            if (!cell) continue;
-                            const stack = cell.querySelector('.cell-stack');
-                            const bar = document.createElement('span');
-                            bar.className = 'plan-bar';
-                            stack.appendChild(bar);
-                        }
+        function paintPlanned(members) {
+            members.forEach(m => {
+                const segs = getSchedules(m).filter(s => s.day === DAY_KEY);
+                if (!segs.length) return;
+                const slots = bodyEl.querySelectorAll(`td[data-member-id="${String(m.id)}"] .slot-10m`);
+                segs.forEach(s => {
+                    const sIdx = hmToIndex(s.start), eIdx = hmToIndex(s.end);
+                    for (let i = Math.max(0, sIdx); i < Math.min(TOTAL_ROWS, eIdx); i++) {
+                        slots[i]?.classList.add('planned');
                     }
                 });
             });
         }
-
-        function addTodayBarsForMember(m) {
-            const key = dayKeyOf(new Date());
-            const seg = getSchedules(m).find(s => s.day === key);
-            if (!seg) return;
-
-            const color = memberRuntime[m.id]?.color || colorForMember(m);
-            const darker = darkenHex(color, 0.18);
-
-            const st = parseHm(seg.start), ed = parseHm(seg.end);
-            const dayIdx = mapToCol[seg.day];
-            for (let h=HOUR_START; h < HOUR_END; h++) {
-                if (intervalHitHour(st, ed, h)) {
-                    const row = timetableBody.querySelector(`tr[data-hour="${h}"]`);
-                    const cell = row?.querySelector(`td[data-col="${dayIdx}"]`);
-                    if (!cell) continue;
-                    const stack = cell.querySelector('.cell-stack');
-
-                    // 실제 바(밑색)
-                    const actual = document.createElement('span');
-                    actual.className = 'actual-bar';
-                    actual.style.background = hexWithAlpha(color, 0.75);
-                    stack.appendChild(actual);
-
-                    // 진행 오버레이(진한색)
-                    const overlay = document.createElement('span');
-                    overlay.className = 'progress-overlay';
-                    overlay.style.background = hexWithAlpha(darker, 0.95);
-                    actual.appendChild(overlay);
-
-                    // 진행 엘리먼트 레퍼런스 저장
-                    memberRuntime[m.id]?.progressElRefs.add(overlay);
-                }
-            }
-        }
-
-        /** 4) 진행(10분 단위 폭) */
-        function startProgressForMember(m) {
-            // 이미 생성된 overlay들이 있음(금일 계획 구간)
-            updateProgressOverlaysFor(m);
-        }
-        function pauseProgressForMember(m) {
-            // 유지. overlay 폭 갱신만 멈춘 효과(실제로는 tick에서 BREAK면 정지 처리)
-            updateProgressOverlaysFor(m);
-        }
-        function resumeProgressForMember(m) {
-            updateProgressOverlaysFor(m);
-        }
-        function finishProgressForMember(m) {
-            // 현재 시각과 비교하여 100% or 현재까지만 — 여기서는 100% 처리
-            setOverlayWidth(m, 100);
-        }
-
-        function updateProgressOverlays() {
-            (allMembers || []).forEach(m => updateProgressOverlaysFor(m));
-        }
-
-        function updateProgressOverlaysFor(m) {
-            const rt = memberRuntime[m.id];
-            if (!rt || rt.progressElRefs.size === 0) return;
-
-            const key = dayKeyOf(new Date());
-            const seg = getSchedules(m).find(s => s.day === key);
-            if (!seg) return;
-
-            const startMin = hmToMinutes(seg.start);
-            const endMin = hmToMinutes(seg.end);
-            const total = Math.max(0, endMin - startMin);
-            if (total === 0) return;
-
-            let widthPct = 0;
-
-            if (rt.status === 'WORKING' || rt.status === 'DONE') {
-                const now = new Date();
-                const nowMin = now.getHours() * 60 + now.getMinutes();
-                const elapsed = Math.max(0, Math.min(nowMin, endMin) - Math.max(startMin, hmToMinutes(seg.start)));
-                // 10분 단위로 바닥(내림) 처리
-                const quantized = Math.floor(elapsed / 10) * 10;
-                widthPct = Math.min(100, (quantized / total) * 100);
-                if (rt.status === 'DONE') widthPct = 100;
-            } else if (rt.status === 'BREAK' || rt.status === 'READY') {
-                // 정지(READY는 0%)
-                widthPct = (rt.status === 'BREAK') ? currentWidthPct(rt) : 0;
-            }
-
-            setOverlayWidth(m, widthPct);
-        }
-
-        function currentWidthPct(rt) {
-            // overlay 중 첫 번째의 width를 기준으로 반환
-            const el = rt.progressElRefs.values().next().value;
-            if (!el) return 0;
-            const w = parseFloat(el.style.width || '0');
-            return isNaN(w) ? 0 : w;
-        }
-
-        function setOverlayWidth(m, pct) {
-            const rt = memberRuntime[m.id];
-            if (!rt) return;
-            rt.progressElRefs.forEach(el => { el.style.width = `${pct}%`; });
-        }
-
-        /** 5) 오늘 출근자 컬럼 */
-        function refreshTodayWorkingColumn() {
-            const items = [];
-            Object.entries(memberRuntime).forEach(([id, rt]) => {
-                if (rt.status === 'WORKING' || rt.status === 'BREAK') {
-                    const m = allMembers.find(x => String(x.id) === String(id));
-                    if (!m) return;
-                    items.push({ m, rt });
-                }
+        function updateDoneColors(members) {
+            const currentIndex = indexFromNow();
+            members.forEach(m => {
+                const slots = bodyEl.querySelectorAll(`td[data-member-id="${String(m.id)}"] .slot-10m`);
+                slots.forEach((slot, i) => {
+                    if (slot.classList.contains('planned')) {
+                        if (i <= currentIndex - 1) slot.classList.add('done');
+                        else slot.classList.remove('done');
+                    }
+                });
             });
-
-            todayWorkingList.innerHTML = '';
-            todayWorkingCount.textContent = `${items.length}명`;
-
-            if (!items.length) {
-                const li = document.createElement('li');
-                li.className = 'list-group-item';
-                li.textContent = '현재 출근중인 인원이 없습니다.';
-                todayWorkingList.appendChild(li);
-                return;
+            highlightNowRow();
+        }
+        function highlightNowRow() {
+            bodyEl.querySelectorAll('.now-row').forEach(tr => tr.classList.remove('now-row'));
+            const idx = indexFromNow();
+            const row = bodyEl.querySelector(`tr[data-row-index="${idx}"]`);
+            if (row) row.classList.add('now-row');
+        }
+        function highlightHourSum() {
+            bodyEl.querySelectorAll('.sum-cell').forEach(td => td.classList.remove('now-hour'));
+            const now = new Date();
+            const h = now.getHours();
+            const sumTd = bodyEl.querySelector(`.sum-cell[data-hour="${h}"]`);
+            if (sumTd) sumTd.classList.add('now-hour');
+        }
+        function scrollToNowRow({ smooth = false } = {}) {
+            const idx = indexFromNow();
+            const row = bodyEl.querySelector(`tr[data-row-index="${idx}"]`);
+            if (!row) return;
+            if (!didAutoScrollOnce || smooth) {
+                row.scrollIntoView({ block: 'center', behavior: smooth ? 'smooth' : 'auto' });
+                didAutoScrollOnce = true;
             }
+        }
 
-            items.forEach(({m, rt}) => {
-                const li = document.createElement('li');
-                li.className = 'list-group-item d-flex align-items-center justify-content-between';
-                li.innerHTML = `
-        <span class="d-inline-flex align-items-center gap-2">
-          <span class="dot" style="background:${rt.color}"></span>
-          <span class="fw-semibold">${escapeHtml(m.name || '-')}</span>
-          <small class="text-muted">${rt.status === 'BREAK' ? '휴식중' : '근무중'}</small>
-        </span>
-        <small class="text-muted">${todayPlanLabel(m) || ''}</small>
-      `;
-                todayWorkingList.appendChild(li);
+        /** ===== 칩-컬럼 동기화 ===== */
+        function syncChipsToColumns(){
+            const headThs = headRow.querySelectorAll('th[data-member-id]');
+            if (!headThs.length) return;
+            const scrollRect = scrollBox.getBoundingClientRect();
+            const scrollLeft = scrollBox.scrollLeft;
+            headThs.forEach(th => {
+                const id = th.getAttribute('data-member-id');
+                const chip = chipsTrack.querySelector(`.member-chip[data-member-id="${CSS.escape(id)}"]`);
+                if (!chip) return;
+                const rect = th.getBoundingClientRect();
+                const leftInScroll = rect.left - scrollRect.left + scrollLeft;
+                chip.style.width = `${Math.max(80, th.offsetWidth)}px`;
+                chip.style.transform = `translateX(${leftInScroll}px)`;
             });
         }
 
-        /** ===== 유틸 & 색상 ===== */
+        /** ===== “실근무시간 등록”에 필요한 유틸 ===== */
+        function collectDoneIndexesForMember(memberId){
+            const slots = bodyEl.querySelectorAll(`td[data-member-id="${String(memberId)}"] .slot-10m`);
+            const idx = [];
+            slots.forEach((el, i) => { if (el.classList.contains('done')) idx.push(i); });
+            return idx;
+        }
+        function compressIndexesToRanges(indexes){
+            if (!indexes.length) return [];
+            const ranges = [];
+            let a = indexes[0], p = indexes[0];
+            for (let i = 1; i < indexes.length; i++){
+                if (indexes[i] === p + 1) { p = indexes[i]; continue; }
+                ranges.push([a, p]);
+                a = p = indexes[i];
+            }
+            ranges.push([a, p]);
+            return ranges;
+        }
+        function indexToHM(i){
+            const minutesFromStart = i * STEP_MIN;
+            const total = HOUR_START * 60 + minutesFromStart;
+            const h = Math.floor(total / 60);
+            const m = total % 60;
+            return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+        }
+
+        /** ===== Sticky/시간 유틸 ===== */
+        function computeStickyOffset(){
+            const fixedHeader = document.querySelector('.navbar.fixed-top, .fixed-top, header.sticky-top');
+            const hdrH = fixedHeader ? fixedHeader.getBoundingClientRect().height : 0;
+            const gap = 8;
+            document.documentElement.style.setProperty('--sticky-offset', (hdrH + gap) + 'px');
+        }
+        function toggleStickyShadow(){
+            const top = chipsBox.getBoundingClientRect().top;
+            const threshold = (parseInt(getComputedStyle(document.documentElement).getPropertyValue('--sticky-offset')) || 0) + 1;
+            if (top <= threshold) chipsBox.classList.add('is-stuck');
+            else chipsBox.classList.remove('is-stuck');
+        }
+        function computeHourlyTotals(members) {
+            const totals = {};
+            for (let h = HOUR_START; h < HOUR_END; h++) {
+                let count = 0;
+                members.forEach(m => {
+                    const segs = getSchedules(m).filter(s => s.day === DAY_KEY);
+                    if (segs.some(s => intervalHitHour(parseHm(s.start), parseHm(s.end), h))) count++;
+                });
+                totals[h] = count;
+            }
+            return totals;
+        }
+        function hmToIndex(hm) {
+            const [H, M] = String(hm || '0:0').split(':').map(Number);
+            const total = H * 60 + M;
+            return Math.floor((total - (HOUR_START * 60)) / STEP_MIN);
+        }
+        function indexFromNow() {
+            const now = new Date();
+            const base = new Date(now.getFullYear(), now.getMonth(), now.getDate(), HOUR_START, 0, 0);
+            const end  = new Date(now.getFullYear(), now.getMonth(), now.getDate(), HOUR_END, 0, 0);
+            if (now <= base) return 0;
+            if (now >= end) return TOTAL_ROWS - 1;
+            const diffMin = Math.floor((now - base) / 60000);
+            return Math.min(TOTAL_ROWS - 1, Math.max(0, Math.floor(diffMin / STEP_MIN)));
+        }
+        function parseHm(hm) {
+            const [h,m] = (hm||'0:0').split(':').map(n => parseInt(n,10));
+            return {h: h||0, m: m||0};
+        }
+        function intervalHitHour(st, ed, h) {
+            const stMin = st.h*60 + st.m;
+            const edMin = ed.h*60 + ed.m;
+            const a = h*60, b = (h+1)*60;
+            return Math.max(0, Math.min(edMin, b) - Math.max(stMin, a)) > 0;
+        }
+        function todayPlanLabel(m) {
+            const seg = getSchedules(m).find(s => s.day === DAY_KEY);
+            return seg ? `${seg.start}–${seg.end}` : '';
+        }
         function getSchedules(m) {
             if (Array.isArray(m?.schedule)) return m.schedule;
             if (Array.isArray(m?.schedules)) return m.schedules;
@@ -492,32 +469,17 @@ el.textContent = `${d.getFullYear()}년${d.getMonth()+1}월${d.getDate()}일 ${d
         function dayKeyOf(d) {
             return ['SUN','MON','TUE','WED','THU','FRI','SAT'][d.getDay()];
         }
-        function parseHm(hm) {
-            const [h,m] = (hm||'0:0').split(':').map(n => parseInt(n,10));
-            return {h: h||0, m: m||0};
+        function escapeHtml(s) {
+            if (s == null) return '';
+            return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
         }
-        function hmToMinutes(hm) {
-            const {h,m} = parseHm(hm);
-            return h*60+m;
-        }
-        function intervalHitHour(st, ed, h) {
-            const stMin = st.h*60 + st.m;
-            const edMin = ed.h*60 + ed.m;
-            const a = h*60, b = (h+1)*60;
-            return Math.max(0, Math.min(edMin, b) - Math.max(stMin, a)) > 0;
-        }
-
         function colorForMember(m) {
             const key = (m.id != null ? String(m.id) : (m.name || 'x'));
             const h = seededHash(key) % 360;
             const s = 65, l = 55;
             return hslToHex(h, s, l);
         }
-        function seededHash(str) {
-            let h = 2166136261 >>> 0;
-            for (let i=0;i<str.length;i++){ h ^= str.charCodeAt(i); h = (h * 16777619) >>> 0; }
-            return h >>> 0;
-        }
+        function seededHash(str) { let h = 2166136261>>>0; for (let i=0;i<str.length;i++){ h^=str.charCodeAt(i); h=(h*16777619)>>>0; } return h>>>0; }
         function hslToHex(h, s, l){
             s/=100; l/=100;
             const k=n=>(n + h/30)%12;
@@ -525,23 +487,6 @@ el.textContent = `${d.getFullYear()}년${d.getMonth()+1}월${d.getDate()}일 ${d
             const f=n=>l - a*Math.max(-1, Math.min(k(n)-3, Math.min(9-k(n),1)));
             const toHex=x=>Math.round(255*x).toString(16).padStart(2,'0');
             return `#${toHex(f(0))}${toHex(f(8))}${toHex(f(4))}`;
-        }
-        function hexWithAlpha(hex, alpha=1){
-            const a = Math.round(alpha*255).toString(16).padStart(2,'0');
-            return `${hex}${a}`;
-        }
-        function darkenHex(hex, amount=0.15){
-            // hex: #rrggbb
-            const r = parseInt(hex.slice(1,3),16);
-            const g = parseInt(hex.slice(3,5),16);
-            const b = parseInt(hex.slice(5,7),16);
-            const d = (c)=>Math.max(0, Math.round(c*(1-amount)));
-            const to = (n)=>n.toString(16).padStart(2,'0');
-            return `#${to(d(r))}${to(d(g))}${to(d(b))}`;
-        }
-        function escapeHtml(s) {
-            if (s == null) return '';
-            return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
         }
     })();
 </script>
