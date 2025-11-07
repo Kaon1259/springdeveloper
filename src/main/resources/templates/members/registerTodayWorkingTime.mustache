@@ -2,44 +2,92 @@
 
 <main class="container my-4">
     <div class="row g-3">
-        <!-- 왼쪽 현재 근무자 -->
-        <div class="col-12 col-lg-4">
+        <!-- ============ 왼쪽: 상태 선택 + 알바생 리스트(색 점) + 정보 패널 ============ -->
+        <div class="col-12 col-lg-5">
             <div class="d-grid gap-3 sticky-lg-top" style="top:12px;">
-                <div class="h5 mb-0" id="todayKR"></div>
 
+                <!-- 상태 선택 + 알바생 리스트업 -->
                 <div class="card">
-                    <div class="card-header fw-bold d-flex justify-content-between align-items-center">
-                        <span>현재 근무자</span>
-                        <span class="d-inline-flex align-items-center gap-2">
-              <small class="text-muted" id="nowClock">--:--</small>
-              <span id="todayWorkingCount" class="badge bg-light text-dark">0명</span>
-            </span>
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span class="fw-bold">아르바이트 상태별 보기</span>
+                        <a href="/members/new" class="btn btn-sm btn-primary">추가등록</a>
                     </div>
                     <div class="card-body">
-                        <div class="table-responsive">
-                            <table class="table table-sm align-middle mb-0" id="workingTable">
-                                <thead>
-                                <tr class="text-muted">
-                                    <th style="width:28px;"></th>
-                                    <th>이름</th>
-                                    <th style="width:80px;">상태</th>
-                                    <th style="width:120px;">예정</th>
-                                    <th style="width:64px;">선택</th>
-                                </tr>
-                                </thead>
-                                <tbody id="workingTbody"></tbody>
-                            </table>
+                        <div class="row g-2 align-items-center">
+                            <!-- 상태 -->
+                            <div class="col-12">
+                                <label for="statusSelect" class="form-label small text-muted">상태</label>
+                                <select id="statusSelect" class="form-select">
+                                    <option value="WORKING" selected>근무중</option>
+                                    <option value="WAITING">시작전</option>
+                                    <option value="RESTING">휴식중</option>
+                                    <option value="PAUSED">일시중지</option>
+                                    <option value="RESIGNED">퇴사</option>
+                                </select>
+                                <div class="form-text">상태를 변경하면 좌측 리스트와 우측 타임테이블이 함께 갱신됩니다.</div>
+                            </div>
                         </div>
-                        <div id="workingEmpty" class="text-muted small mt-2" style="display:none;">
-                            현재 근무중인 인원이 없습니다.
+
+                        <hr>
+
+                        <!-- 알바생 리스트 (색 점 + 이름 + 상세보기 버튼) -->
+                        <div>
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <div class="small text-muted">알바생 목록</div>
+                                <span id="memberCountBadge" class="badge bg-light text-dark">0명</span>
+                            </div>
+                            <ul id="memberList" class="list-group list-group-flush">
+                                <!-- JS로 상태별 전원 렌더링 -->
+                            </ul>
                         </div>
                     </div>
                 </div>
+
+                <!-- (선택) 알바생 정보 패널 -->
+                <div class="card">
+                    <div class="card-header fw-bold d-flex justify-content-between align-items-center">
+                        <span>아르바이트 정보</span>
+                        <span id="statusBadge" class="badge bg-secondary">-</span>
+                    </div>
+                    <div class="card-body">
+                        <div class="row gy-2">
+                            <div class="col-6">
+                                <div class="text-muted">이름</div>
+                                <div id="infoName" class="fw-semibold">-</div>
+                            </div>
+                            <div class="col-6">
+                                <div class="text-muted">성별</div>
+                                <div id="infoGender" class="fw-semibold">-</div>
+                            </div>
+                            <div class="col-6">
+                                <div class="text-muted">전화번호</div>
+                                <div id="infoPhone" class="fw-semibold">-</div>
+                            </div>
+                            <div class="col-6">
+                                <div class="text-muted">이메일</div>
+                                <div id="infoEmail" class="fw-semibold">-</div>
+                            </div>
+                            <div class="col-6">
+                                <div class="text-muted">시작일</div>
+                                <div id="infoStartDate" class="fw-semibold">-</div>
+                            </div>
+                            <div class="col-6">
+                                <div class="text-muted">보건증</div>
+                                <div id="infoHealth" class="fw-semibold">-</div>
+                            </div>
+                            <div class="col-12">
+                                <div class="text-muted">시급(원)</div>
+                                <div id="infoHourlyWage" class="fw-semibold">-</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </div>
 
-        <!-- 오른쪽 타임테이블 -->
-        <div class="col-12 col-lg-8">
+        <!-- ============ 오른쪽: 금일 10분 단위 타임테이블(실제 선택/저장) ============ -->
+        <div class="col-12 col-lg-7">
             <div class="card">
                 <div class="card-header fw-bold d-flex justify-content-between align-items-center">
                     <span>금일 10분 단위 타임테이블</span>
@@ -48,7 +96,7 @@
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
                         <div class="small text-muted">
-                            왼쪽 “현재 근무자”에서 선택하세요. 스케줄은 <b>주황</b>, 실제는 <b>10분 단위</b> 선택.
+                            알바생을 좌측 목록에서 선택하세요. 스케줄은 <b>주황</b>, 실제는 <b>10분 단위</b>로 선택합니다.
                         </div>
                         <div class="d-flex gap-2">
                             <button class="btn btn-outline-secondary btn-sm" id="btnClearActual" disabled>실제 초기화</button>
@@ -87,15 +135,44 @@
     .slot-10m.actual.on {background:rgba(25,135,84,.25);border-color:rgba(25,135,84,.35);}
     .hour-select-cell .btn {width:100%;}
     .timecell {font-variant-numeric: tabular-nums;}
+
+    /* 좌측 리스트 스타일 */
+    .member-chip {
+        display:flex; align-items:center; justify-content:space-between;
+        gap:8px; padding:8px 10px; border-radius:10px; background:#fff;
+        border:1px solid #eee; margin-bottom:6px; cursor:pointer;
+    }
+    .member-chip:hover { background:#f8f9fa; }
+    .member-chip .left { display:inline-flex; align-items:center; gap:8px; }
+    .dot { width:12px; height:12px; border-radius:50%; border:1px solid rgba(0,0,0,.08); }
 </style>
 
+<!-- 컨트롤러에서 내려준 JSON: membersJson (없으면 빈 배열) -->
 <script id="membersData" type="application/json">
 {{{membersJson}}}
 </script>
 
 <script>
     (function(){
+        /* ===== DOM ===== */
         const HOUR_START=6,HOUR_END=22,STEP_MIN=10,SLOTS_PER_HOUR=6;
+
+        // 좌측
+        const statusSelect = document.getElementById('statusSelect');
+        const memberList = document.getElementById('memberList');
+        const memberCountBadge = document.getElementById('memberCountBadge');
+
+        // 좌측 정보 패널
+        const statusBadge  = document.getElementById('statusBadge');
+        const infoName = document.getElementById('infoName');
+        const infoGender = document.getElementById('infoGender');
+        const infoPhone = document.getElementById('infoPhone');
+        const infoEmail = document.getElementById('infoEmail');
+        const infoStartDate = document.getElementById('infoStartDate');
+        const infoHealth = document.getElementById('infoHealth');
+        const infoHourlyWage = document.getElementById('infoHourlyWage');
+
+        // 우측
         const tbody10m=document.getElementById('tbody10m');
         const selectedMemberTitle=document.getElementById('selectedMemberTitle');
         const btnClearActual=document.getElementById('btnClearActual');
@@ -103,69 +180,159 @@
         const btnSaveActual=document.getElementById('btnSaveActual');
         const actualSummary=document.getElementById('actualSummary');
 
+        /* ===== 데이터 ===== */
         let allMembers=[];
-        try{allMembers=JSON.parse(document.getElementById('membersData').textContent||'[]');}catch(e){allMembers=[];}
+        try{ allMembers=JSON.parse(document.getElementById('membersData').textContent||'[]'); }catch(e){ allMembers=[]; }
 
+        /* ===== 상태 ===== */
         let selectedMemberId=null;
         let dragging=false,dragSelecting=true;
 
-        renderWorkingTable();
+        /* ===== 초기 상태값 보정 & 초기 렌더 ===== */
+        if(Array.isArray(allMembers) && allMembers.length>0){
+            statusSelect.value = allMembers[0].status || 'WORKING';
+        }
+        statusSelect.addEventListener('change', handleStatusChange);
+        memberList.addEventListener('click', onMemberListClick);
 
-        function renderWorkingTable(){
-            const tbody=document.getElementById('workingTbody');
-            tbody.innerHTML='';
-            const todayKey=dayKeyOf(new Date());
-            const list=allMembers.filter(m=>getSchedules(m).some(s=>s.day===todayKey));
-            list.forEach(m=>{
-                const tr=document.createElement('tr');
-                tr.innerHTML=`
-        <td><span class="dot" style="background:#999"></span></td>
-        <td>${m.name}</td>
-        <td><span class="badge bg-success">근무중</span></td>
-        <td>${todayPlanLabel(m)}</td>
-        <td><button class="btn btn-sm btn-outline-primary">선택</button></td>`;
-                tr.querySelector('button').addEventListener('click',()=>pickMember(m));
-                tbody.appendChild(tr);
-            });
+        handleStatusChange(); // 상태별 리스트 + 첫 멤버 자동 선택
+
+        /* ===== 좌측: 상태 변경 처리 ===== */
+        function handleStatusChange(){
+            const status = statusSelect.value;
+            const filtered = (allMembers||[]).filter(m=>m.status===status);
+            renderMemberList(filtered);
+            if(filtered.length){
+                pickMember(filtered[0]); // 첫 멤버 자동 선택
+            }else{
+                clearInfo();
+                resetRightPanel();
+            }
         }
 
-        /** ✅ 알바 선택 시 DB의 실제근무 데이터 로드 */
+        function renderMemberList(members){
+            memberList.innerHTML='';
+            memberCountBadge.textContent = `${members.length}명`;
+
+            members
+                    .slice()
+                    .sort((a,b)=>(a.name||'').localeCompare(b.name||'','ko'))
+                    .forEach(m=>{
+                        const li=document.createElement('li');
+                        li.className='list-group-item member-chip';
+                        li.dataset.memberId=String(m.id);
+
+                        const color = colorForMember(m);
+                        li.innerHTML = `
+          <span class="left">
+            <span class="dot" style="background:${color}"></span>
+            <span class="fw-semibold">${escapeHtml(m.name ?? '-')}</span>
+            <span class="text-muted small">${escapeHtml(m.phone ?? '')}</span>
+          </span>
+          <button type="button"
+                  class="btn btn-sm btn-outline-primary view-btn"
+                  data-id="${String(m.id)}"
+                  aria-label="상세보기">
+            상세보기
+          </button>
+        `;
+
+                        // 항목 클릭 → 선택/우측 갱신
+                        li.addEventListener('click', ()=> pickMember(m) );
+                        memberList.appendChild(li);
+                    });
+
+            if(!members.length){
+                const li=document.createElement('li');
+                li.className='list-group-item';
+                li.textContent='해당 상태의 알바생이 없습니다.';
+                memberList.appendChild(li);
+            }
+        }
+
+        // 상세보기 버튼(우측) 클릭 → /members/{id}/edit 이동
+        function onMemberListClick(e){
+            const btn = e.target.closest('.view-btn');
+            if(!btn) return;
+            e.stopPropagation();
+            const id = btn.getAttribute('data-id');
+            if(!id) return;
+            window.location.assign(`/members/${encodeURIComponent(id)}/edit`);
+        }
+
+        /* ===== 멤버 선택 → 우측 빌드 & 기존 실제 데이터 하이드레이트 ===== */
         function pickMember(m){
             selectedMemberId=m.id;
+            renderMemberInfo(m);
             selectedMemberTitle.textContent=`${m.name} — 금일 타임테이블`;
             buildTenMinuteTableFor(m);
 
             const date=fmtDateYYYYMMDD(new Date());
-
             fetch(`/api/schedule/${m.id}/${date}`)
                     .then(res=>res.ok?res.json():null)
                     .then(data=>{
                         if(!data) return;
                         if(Array.isArray(data.segments) && data.segments.length){
-                            console.log('🔹 기존 실제 데이터:',data);
-                            applyActualSegments(data.segments); // ✅ 실제 칸 표시
+                            applyActualSegments(data.segments);
                         }
-                    }).catch(err=>console.error(err));
+                    }).catch(console.error);
 
             btnClearActual.disabled=false;
             btnSelectAllActual.disabled=false;
             btnSaveActual.disabled=false;
+
+            // 버튼 핸들링(클릭 시 동작)
+            btnClearActual.onclick=()=>{
+                tbody10m.querySelectorAll('.slot-10m.actual.on').forEach(el=>el.classList.remove('on'));
+                updateActualSummary();
+            };
+            btnSelectAllActual.onclick=()=>{
+                const actualSlots=Array.from(tbody10m.querySelectorAll('.slot-10m.actual'));
+                const scheduleSlots=Array.from(tbody10m.querySelectorAll('.slot-10m.schedule'));
+                for(let i=0;i<actualSlots.length;i++){
+                    if(scheduleSlots[i].classList.contains('on')) actualSlots[i].classList.add('on');
+                    else actualSlots[i].classList.remove('on');
+                }
+                updateActualSummary();
+            };
+            btnSaveActual.onclick=saveActual;
         }
 
-        /** ✅ 실제근무 구간 표시 */
-        function applyActualSegments(segments){
-            const slots=Array.from(tbody10m.querySelectorAll('.slot-10m.actual'));
-            segments.forEach(seg=>{
-                const s=hmToMin(seg.start),e=hmToMin(seg.end);
-                slots.forEach((d,i)=>{
-                    const t=hmToMin(indexToHM(i));
-                    if(t>=s && t<e) d.classList.add('on');
-                });
-            });
-            updateActualSummary();
+        /* ===== 좌측 정보 패널 ===== */
+        function renderMemberInfo(m){
+            infoName.textContent = m.name ?? '-';
+            infoGender.textContent = m.gender ?? '-';
+            infoPhone.textContent = m.phone ?? '-';
+            infoEmail.textContent = m.email ?? '-';
+            infoStartDate.textContent = m.startDate ?? '-';
+            infoHealth.textContent = m.hasHealthCertificate
+                    ? (m.healthCertExpiry ? `보유 (유효기간: ${m.healthCertExpiry})` : '보유')
+                    : '미보유';
+            infoHourlyWage.textContent =
+                    (typeof m.hourlyWage === 'number')
+                            ? new Intl.NumberFormat('ko-KR',{style:'currency',currency:'KRW',maximumFractionDigits:0}).format(m.hourlyWage)
+                            : '-';
+
+            const badgeMap = {
+                WORKING:'bg-success', WAITING:'bg-secondary', RESTING:'bg-info',
+                PAUSED:'bg-warning', RESIGNED:'bg-danger'
+            };
+            statusBadge.textContent = m.status || '-';
+            statusBadge.className = `badge ${badgeMap[m.status] || 'bg-secondary'}`;
+        }
+        function clearInfo(){
+            statusBadge.textContent='-';
+            statusBadge.className='badge bg-secondary';
+            infoName.textContent='-';
+            infoGender.textContent='-';
+            infoPhone.textContent='-';
+            infoEmail.textContent='-';
+            infoStartDate.textContent='-';
+            infoHealth.textContent='-';
+            infoHourlyWage.textContent='-';
         }
 
-        /** 10분 단위 타임테이블 생성 */
+        /* ===== 우측: 10분 타임테이블 ===== */
         function buildTenMinuteTableFor(member){
             tbody10m.innerHTML='';
             const slots=[];
@@ -195,76 +362,103 @@
                 tbody10m.appendChild(tr);
             }
 
-            // 드래그, 버튼, 전체선택 로직 동일
+            // 드래그 선택
             const actualSlots=Array.from(tbody10m.querySelectorAll('.slot-10m.actual'));
-            const scheduleSlots=Array.from(tbody10m.querySelectorAll('.slot-10m.schedule'));
             actualSlots.forEach(div=>{
                 div.addEventListener('mousedown',e=>{
                     e.preventDefault(); dragging=true;
                     dragSelecting=!div.classList.contains('on');
                     toggleActual(div,dragSelecting);
                 });
-                div.addEventListener('mouseenter',()=>{if(dragging)toggleActual(div,dragSelecting);});
+                div.addEventListener('mouseenter',()=>{ if(dragging) toggleActual(div,dragSelecting); });
             });
-            window.addEventListener('mouseup',()=>{dragging=false;updateActualSummary();});
+            window.addEventListener('mouseup',()=>{ dragging=false; updateActualSummary(); });
 
+            // 시간 단위 토글
             tbody10m.querySelectorAll('.hour-toggle').forEach(btn=>{
                 btn.addEventListener('click',()=>{
                     const h=parseInt(btn.dataset.hour);
                     const s=(h-HOUR_START)*SLOTS_PER_HOUR, e=s+SLOTS_PER_HOUR;
                     let allOn=true;
-                    for(let i=s;i<e;i++){if(!actualSlots[i].classList.contains('on')){allOn=false;break;}}
-                    for(let i=s;i<e;i++){allOn?actualSlots[i].classList.remove('on'):actualSlots[i].classList.add('on');}
+                    for(let i=s;i<e;i++){ if(!actualSlots[i].classList.contains('on')){ allOn=false; break; } }
+                    for(let i=s;i<e;i++){ allOn?actualSlots[i].classList.remove('on'):actualSlots[i].classList.add('on'); }
                     updateActualSummary();
                 });
             });
 
-            btnSelectAllActual.onclick=()=>{
-                for(let i=0;i<actualSlots.length;i++){
-                    if(scheduleSlots[i].classList.contains('on'))actualSlots[i].classList.add('on');
-                    else actualSlots[i].classList.remove('on');
-                }
-                updateActualSummary();
-            };
-
             updateActualSummary();
         }
 
-        /** 저장 */
-        btnSaveActual.addEventListener('click',()=>{
-            if(!selectedMemberId){alert('알바생 선택');return;}
+        function applyActualSegments(segments){
+            const slots=Array.from(tbody10m.querySelectorAll('.slot-10m.actual'));
+            segments.forEach(seg=>{
+                const s=hmToMin(seg.start), e=hmToMin(seg.end);
+                slots.forEach((d,i)=>{
+                    const t=hmToMin(indexToHM(i));
+                    if(t>=s && t<e) d.classList.add('on');
+                });
+            });
+            updateActualSummary();
+        }
+
+        function saveActual(){
+            if(!selectedMemberId){ alert('알바생을 선택하세요.'); return; }
             const ranges=getSelectedRanges();
             const payload={memberId:selectedMemberId,date:fmtDateYYYYMMDD(new Date()),segments:ranges};
-            if(!confirm('실제 근무한 구간을 저장하시겠습니까?'))return;
+            if(!confirm('실제 근무한 구간을 저장하시겠습니까?')) return;
 
-            fetch('/api/schedule/save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)})
-                    .then(r=>r.json())
+            fetch('/api/schedule/save',{
+                method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)
+            }).then(r=>r.json())
                     .then(result=>{
                         if(result.success) alert('✅ 저장 성공!');
                         else alert('⚠️ 실패: '+(result.message||'오류'));
                     }).catch(()=>alert('❌ 저장 중 오류'));
-        });
+        }
 
-        /** 유틸 */
-        function toggleActual(div,on){on?div.classList.add('on'):div.classList.remove('on');}
-        function getSchedules(m){return m.schedules||m.schedule||[];}
-        function dayKeyOf(d){return ['SUN','MON','TUE','WED','THU','FRI','SAT'][d.getDay()];}
-        function hmToMin(hm){const[a,b]=hm.split(':').map(Number);return a*60+b;}
-        function indexToHM(i){const t=(HOUR_START*60)+i*STEP_MIN;return `${String(Math.floor(t/60)).padStart(2,'0')}:${String(t%60).padStart(2,'0')}`;}
-        function slotInside(hm,s,e){const t=hmToMin(hm),ss=hmToMin(s),ee=hmToMin(e);return t>=ss&&t<ee;}
+        function resetRightPanel(){
+            selectedMemberId=null;
+            selectedMemberTitle.textContent='선택된 알바생 없음';
+            tbody10m.innerHTML='';
+            btnClearActual.disabled=true;
+            btnSelectAllActual.disabled=true;
+            btnSaveActual.disabled=true;
+            actualSummary.textContent='-';
+        }
+
+        /* ===== 유틸 ===== */
+        function toggleActual(div,on){ on?div.classList.add('on'):div.classList.remove('on'); }
+        function getSchedules(m){ return m.schedules||m.schedule||[]; }
+        function dayKeyOf(d){ return ['SUN','MON','TUE','WED','THU','FRI','SAT'][d.getDay()]; }
+        function hmToMin(hm){ const[a,b]=hm.split(':').map(Number); return a*60+b; }
+        function indexToHM(i){ const t=(HOUR_START*60)+i*STEP_MIN; return `${String(Math.floor(t/60)).padStart(2,'0')}:${String(t%60).padStart(2,'0')}`; }
+        function slotInside(hm,s,e){ const t=hmToMin(hm),ss=hmToMin(s),ee=hmToMin(e); return t>=ss && t<ee; }
         function getSelectedRanges(){
             const s=Array.from(tbody10m.querySelectorAll('.slot-10m.actual'));
             const idx=s.map((d,i)=>d.classList.contains('on')?i:null).filter(i=>i!=null);
-            if(!idx.length)return[];
-            const r=[];let a=idx[0],p=idx[0];
-            for(let i=1;i<idx.length;i++){if(idx[i]===p+1)p=idx[i];else{r.push([a,p]);a=idx[i];p=idx[i];}}
+            if(!idx.length) return [];
+            const r=[]; let a=idx[0], p=idx[0];
+            for(let i=1;i<idx.length;i++){ if(idx[i]===p+1) p=idx[i]; else { r.push([a,p]); a=idx[i]; p=idx[i]; } }
             r.push([a,p]);
-            return r.map(([a,b])=>({start:indexToHM(a),end:addMinutes(indexToHM(b),STEP_MIN)}));
+            return r.map(([a,b])=>({start:indexToHM(a), end:addMinutes(indexToHM(b),STEP_MIN)}));
         }
-        function addMinutes(hm,mins){const[h,m]=hm.split(':').map(Number);const t=h*60+m+mins;return `${String(Math.floor(t/60)).padStart(2,'0')}:${String(t%60).padStart(2,'0')}`;}
-        function updateActualSummary(){const s=getSelectedRanges();actualSummary.textContent=s.length?s.map(r=>`${r.start}~${r.end}`).join(', '):'-';}
-        function fmtDateYYYYMMDD(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
-        function todayPlanLabel(m){const k=dayKeyOf(new Date());const seg=getSchedules(m).find(s=>s.day===k);return seg?`${seg.start}–${seg.end}`:'';}
+        function addMinutes(hm,mins){ const[h,m]=hm.split(':').map(Number); const t=h*60+m+mins; return `${String(Math.floor(t/60)).padStart(2,'0')}:${String(t%60).padStart(2,'0')}`; }
+        function updateActualSummary(){ const s=getSelectedRanges(); actualSummary.textContent = s.length ? s.map(r=>`${r.start}~${r.end}`).join(', ') : '-'; }
+        function fmtDateYYYYMMDD(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+
+        // 색상/문자 유틸 (안정적 색상)
+        function colorForMember(m){
+            const key = (m.id != null ? String(m.id) : (m.name || 'x'));
+            const h = seededHash(key) % 360, s=65, l=55;
+            return hslToHex(h,s,l);
+        }
+        function seededHash(str){ let h=2166136261>>>0; for(let i=0;i<str.length;i++){ h^=str.charCodeAt(i); h=(h*16777619)>>>0; } return h>>>0; }
+        function hslToHex(h,s,l){ s/=100; l/=100; const k=n=>(n+h/30)%12, a=s*Math.min(l,1-l);
+            const f=n=>l-a*Math.max(-1,Math.min(k(n)-3,Math.min(9-k(n),1)));
+            const toHex=x=>Math.round(255*x).toString(16).padStart(2,'0');
+            return `#${toHex(f(0))}${toHex(f(8))}${toHex(f(4))}`; }
+        function escapeHtml(s){ if(s==null) return ''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+
     })();
 </script>
 

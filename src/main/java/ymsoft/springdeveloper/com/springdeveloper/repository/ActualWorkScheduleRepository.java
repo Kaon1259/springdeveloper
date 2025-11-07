@@ -22,5 +22,9 @@ public interface ActualWorkScheduleRepository extends JpaRepository<ActualWorkSc
 
     /** 특정 날짜 범위의 근무 내역 */
     List<ActualWorkSchedule> findByWorkDateBetween(LocalDate startDate, LocalDate endDate);
+
+    List<ActualWorkSchedule> findByMemberIdAndWorkDateBetweenOrderByWorkDateAsc(
+            Long memberId, LocalDate start, LocalDate end
+    );
 }
 

@@ -2,9 +2,11 @@ package ymsoft.springdeveloper.com.springdeveloper.api;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ymsoft.springdeveloper.com.springdeveloper.dto.ActualWorkScheduleDto;
+import ymsoft.springdeveloper.com.springdeveloper.dto.WeekWorkResponse;
 import ymsoft.springdeveloper.com.springdeveloper.entity.ActualWorkSchedule;
 import ymsoft.springdeveloper.com.springdeveloper.service.ActualWorkScheduleService;
 
@@ -64,6 +66,22 @@ public class ActualWorkScheduleController {
                     return ResponseEntity.ok(res);
                 });
     }
+
+    // /api/schedule/{memberId}/{start}/{end}
+    @GetMapping("/{memberId}/{start}/{end}")
+    public ResponseEntity<WeekWorkResponse> getWorklogs(
+            @PathVariable Long memberId,
+            @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate start,
+            @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate end
+    ) {
+        WeekWorkResponse body = service.getWeek(memberId, start, end);
+
+        log.info("GET /api/schedule/{}/{}", memberId, start);
+        log.info("WeekWorkResponse {}", body.toString());
+
+        return ResponseEntity.ok(body);
+    }
+
 
     /** ✅ JSON 문자열 → List<Map<String,String>> 변환 (segments_json 파싱) */
     private List<Map<String, String>> parseSegmentsJson(String json) {

@@ -114,6 +114,43 @@
     </div>
 </main>
 
+<!-- ====== 상세보기 모달 (주간 10분 타임테이블) ====== -->
+<div class="modal fade show" id="memberWeeklyModal" tabindex="-1" aria-hidden="true" style="display:none;">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 id="memberWeeklyTitle" class="modal-title">주간 타임테이블</h5>
+                <button type="button" class="btn-close" id="memberWeeklyClose" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="table-responsive week10-wrapper">
+                    <table class="table table-sm table-bordered align-middle text-center week10-table" id="week10Table">
+                        <thead>
+                        <tr id="week10Head">
+                            <th style="width:74px;">시간</th>
+                            <th data-day="MON">월</th>
+                            <th data-day="TUE">화</th>
+                            <th data-day="WED">수</th>
+                            <th data-day="THU">목</th>
+                            <th data-day="FRI">금</th>
+                            <th data-day="SAT">토</th>
+                            <th data-day="SUN">일</th>
+                        </tr>
+                        </thead>
+                        <tbody id="week10Body">
+                        <!-- JS로 06:00~22:00, 10분 단위 행 생성 -->
+                        </tbody>
+                    </table>
+                </div>
+                <div class="small text-muted mt-2">초록색으로 표시된 부분이 해당 알바생의 근무 구간입니다. (10분 단위)</div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="memberWeeklyClose2">닫기</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <style>
     .timetable th, .timetable td { vertical-align: middle; }
 
@@ -150,11 +187,7 @@
         cursor: pointer;
     }
     .member-chip:hover { background: #f8f9fa; }
-    .member-chip .left {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-    }
+    .member-chip .left { display: inline-flex; align-items: center; gap: 8px; }
     .dot {
         width: 12px; height: 12px; border-radius: 50%;
         border: 1px solid rgba(0,0,0,.08);
@@ -163,6 +196,16 @@
     /* 오늘 컬럼 하이라이트: 아주 연한 연두색 */
     .today-col { background: rgba(25,135,84,.12) !important; }
     .today-head { background: rgba(25,135,84,.16) !important; }
+
+    /* ===== 모달(주간 10분표) ===== */
+    .week10-wrapper { max-height: 70vh; }
+    .week10-table { table-layout: fixed; }
+    .week10-table thead th { position: sticky; top: 0; z-index: 2; background: #f8fafc; }
+    .week10-table tbody th { position: sticky; left: 0; z-index: 1; background: #fafafa; }
+    .week10-timecell { font-variant-numeric: tabular-nums; font-size: .9rem; }
+    .week10-row-hour { border-top: 2px solid #e9ecef; }
+    .slot-10m-view { height: 16px; border: 1px solid #eef2f6; border-radius: 3px; background: #fff; }
+    .slot-10m-view.on { background: rgba(25,135,84,.28); border-color: rgba(25,135,84,.42); }
 </style>
 
 <!-- 컨트롤러에서 내려준 JSON: membersJson (없으면 빈 배열) -->
@@ -201,6 +244,14 @@
         // 요일(월~일)
         const dayTitles = ['월','화','수','목','금','토','일'];
 
+        // ====== Modal DOM ======
+        const modalEl = document.getElementById('memberWeeklyModal');
+        const modalClose = document.getElementById('memberWeeklyClose');
+        const modalClose2 = document.getElementById('memberWeeklyClose2');
+        const modalTitle = document.getElementById('memberWeeklyTitle');
+        const week10Body = document.getElementById('week10Body');
+        const week10Head = document.getElementById('week10Head');
+
         // 최초 그리드/헤더 생성
         renderTimeGrid();
         renderWeekHeaderDatesAndHighlight(); // ← 요일 위 날짜 + 오늘 하이라이트
@@ -212,7 +263,12 @@
 
         // 이벤트
         statusSelect.addEventListener('change', handleStatusChange);
-        memberList.addEventListener('click', onMemberListClick); // 목록 영역(상세보기 버튼) 위임
+        memberList.addEventListener('click', onMemberListClick); // 상세보기 버튼 위임
+        modalClose.addEventListener('click', closeMemberWeeklyModal);
+        modalClose2.addEventListener('click', closeMemberWeeklyModal);
+        modalEl.addEventListener('click', (e)=>{
+            if(e.target === modalEl) closeMemberWeeklyModal();
+        });
 
         // 초기 렌더
         handleStatusChange();
@@ -249,6 +305,17 @@
 
             // 바디 오늘 컬럼 하이라이트
             timetableBody.querySelectorAll(`td[data-col="${todayCol}"]`).forEach(td => td.classList.add('today-col'));
+
+            // 모달 헤더에도 같은 날짜 라벨 넣기
+            const modalThs = week10Head.querySelectorAll('th');
+            for (let i = 0; i < 7; i++) {
+                const th = modalThs[i + 1];
+                if (!th) continue;
+                const d = new Date(monday);
+                d.setDate(monday.getDate() + i);
+                const label = `${d.getMonth() + 1}/${d.getDate()}`;
+                th.innerHTML = `${['월','화','수','목','금','토','일'][i]}<br><small class="text-muted">(${label})</small>`;
+            }
         }
 
         // ====== Rendering ======
@@ -291,12 +358,14 @@
                   class="btn btn-sm btn-outline-primary view-btn"
                   data-id="${String(m.id)}"
                   aria-label="상세보기">
-            상세보기
+            일정상세보기
           </button>
         `;
 
-                        // 리스트 항목 클릭: 정보 패널/하이라이트
-                        li.addEventListener('click', () => {
+                        // 항목 클릭: 정보 패널/그리드 하이라이트
+                        li.addEventListener('click', (ev) => {
+                            // 버튼 클릭은 onMemberListClick에서 처리 → 여기서는 버튼 제외
+                            if (ev.target.closest('.view-btn')) return;
                             renderMemberInfo(m);
                             highlightMemberInGrid(m);
                         });
@@ -313,14 +382,16 @@
             }
         }
 
-        // 상세보기 버튼(우측) 클릭 핸들러: 이벤트 위임
+        // 상세보기 버튼(우측) 클릭 핸들러: 이벤트 위임 → 모달 오픈으로 변경
         function onMemberListClick(e) {
             const btn = e.target.closest('.view-btn');
             if (!btn) return;
             e.stopPropagation(); // li 클릭 이벤트와 충돌 방지
             const id = btn.getAttribute('data-id');
             if (!id) return;
-            window.location.assign(`/members/${encodeURIComponent(id)}/edit`);
+            const member = (allMembers || []).find(m => String(m.id) === String(id));
+            if (!member) return;
+            openMemberWeeklyModal(member);
         }
 
         function renderAllMembersSchedule(members) {
@@ -525,6 +596,93 @@
             // 매우 단순화: 따옴표만 이스케이프
             return String(s || '').replace(/["'`]/g, '\\$&');
         }
+
+        // ====== Modal: 주간 10분표 렌더 ======
+
+        const DAYS_ORDER = ['MON','TUE','WED','THU','FRI','SAT','SUN'];
+        const START_MIN = HOUR_START * 60;
+        const END_MIN   = HOUR_END   * 60; // 미포함 경계
+        const STEP_MIN  = 10;
+        const TOTAL_ROWS = (END_MIN - START_MIN) / STEP_MIN; // 96
+
+        function openMemberWeeklyModal(member){
+            // 타이틀
+            modalTitle.textContent = `${member.name ?? '-'} — 주간 10분 타임테이블`;
+
+            // 그리드 구성
+            buildWeek10Body();       // 빈 10분표 생성
+            paintMemberSchedule(member); // 스케줄 표시
+
+            // 모달 표시
+            modalEl.style.display = 'block';
+            document.body.classList.add('modal-open');
+            // 간단한 백드롭 효과
+            modalEl.classList.add('show');
+        }
+
+        function closeMemberWeeklyModal(){
+            modalEl.style.display = 'none';
+            modalEl.classList.remove('show');
+            document.body.classList.remove('modal-open');
+        }
+
+        function buildWeek10Body(){
+            const rows = [];
+            for(let idx=0; idx<TOTAL_ROWS; idx++){
+                const tMin = START_MIN + idx*STEP_MIN;
+                const h = Math.floor(tMin/60), m = tMin%60;
+                const hm = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+
+                rows.push(`
+                  <tr ${m===0 ? 'class="week10-row-hour"':''}>
+                    <th class="week10-timecell">${m%30===0 ? hm : ''}</th>
+                    ${DAYS_ORDER.map(()=>`<td><div class="slot-10m-view" data-idx="${idx}"></div></td>`).join('')}
+                  </tr>
+                `);
+            }
+            week10Body.innerHTML = rows.join('');
+        }
+
+        function paintMemberSchedule(member){
+            // day → [boolean(96)]
+            const gridMap = {};
+            DAYS_ORDER.forEach(d => gridMap[d] = new Array(TOTAL_ROWS).fill(false));
+
+            const schedules = getSchedules(member);
+            schedules.forEach(s => {
+                const day = s.day;
+                if(!gridMap[day]) return;
+                const sMin = hmToMin(s.start);
+                const eMin = hmToMin(s.end);
+                // 범위 클램프
+                const a = Math.max(START_MIN, sMin);
+                const b = Math.min(END_MIN,   eMin);
+                if(a >= b) return;
+
+                const sIdx = Math.floor((a - START_MIN)/STEP_MIN);
+                const eIdx = Math.ceil((b - START_MIN)/STEP_MIN) - 1; // 포함 인덱스
+                for(let i=sIdx;i<=eIdx;i++){
+                    if(i>=0 && i<TOTAL_ROWS) gridMap[day][i] = true;
+                }
+            });
+
+            // DOM 반영
+            const dayToColIndex = { MON:1,TUE:2,WED:3,THU:4,FRI:5,SAT:6,SUN:7 };
+            // 각 row에 대해 칼럼 접근
+            const trs = week10Body.querySelectorAll('tr');
+            for(let idx=0; idx<TOTAL_ROWS; idx++){
+                const tr = trs[idx];
+                if(!tr) continue;
+                DAYS_ORDER.forEach((d,di)=>{
+                    const td = tr.children[1 + di]; // 0은 th(시간)
+                    const div = td?.querySelector('.slot-10m-view');
+                    if(div && gridMap[d][idx]) div.classList.add('on');
+                    else if(div) div.classList.remove('on');
+                });
+            }
+        }
+
+        function hmToMin(hm){ const [H,M] = String(hm||'0:0').split(':').map(Number); return (H||0)*60 + (M||0); }
 
     })();
 </script>

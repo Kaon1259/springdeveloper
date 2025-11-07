@@ -2,19 +2,16 @@
 
 <main class="container my-4">
     <div class="row g-3">
-        <!-- ============ 왼쪽: 상태 선택 + 알바생 선택 + 정보 + 예상급여 ============ -->
+        <!-- ============ 왼쪽: 상태/알바생 선택 + 정보(기존 그대로) ============ -->
         <div class="col-12 col-lg-5">
-            <div class="d-grid gap-3 sticky-lg-top" style="top: 12px;">
-
+            <div class="d-grid gap-3 sticky-lg-top" style="top:12px;">
                 <!-- 상태/알바생 선택 -->
                 <div class="card">
                     <div class="card-header fw-bold">아르바이트 선택</div>
                     <div class="card-body">
                         <div class="row g-2 align-items-center">
-
-                            <!-- 상태 -->
                             <div class="col-12">
-                                <label for="statusSelect" class="form-label small text-muted">상태</label>
+                                <label class="form-label small text-muted" for="statusSelect">상태</label>
                                 <select id="statusSelect" class="form-select">
                                     <option value="WORKING" selected>근무중</option>
                                     <option value="WAITING">시작전</option>
@@ -23,8 +20,6 @@
                                     <option value="RESIGNED">퇴사</option>
                                 </select>
                             </div>
-
-                            <!-- 알바생 드롭다운 + 수정 버튼 -->
                             <div class="col-12">
                                 <label class="form-label small text-muted">알바생</label>
                                 <div class="input-group">
@@ -33,7 +28,7 @@
                                     </select>
                                     <button id="detailBtn" class="btn btn-primary" type="button" disabled>정보 수정</button>
                                 </div>
-                                <div class="form-text" id="memberSelectHelp">상태를 선택하면 해당 상태의 알바생이 표시됩니다.</div>
+                                <div class="form-text">상태를 선택하면 해당 상태의 알바생이 표시됩니다.</div>
                             </div>
                         </div>
                     </div>
@@ -47,126 +42,54 @@
                     </div>
                     <div class="card-body">
                         <div class="row gy-2">
-                            <div class="col-6">
-                                <div class="text-muted">이름</div>
-                                <div id="infoName" class="fw-semibold">-</div>
-                            </div>
-                            <div class="col-6">
-                                <div class="text-muted">성별</div>
-                                <div id="infoGender" class="fw-semibold">-</div>
-                            </div>
-
-                            <!-- 🔹 추가: 전화번호 -->
-                            <div class="col-6">
-                                <div class="text-muted">전화번호</div>
-                                <div id="infoPhone" class="fw-semibold">-</div>
-                            </div>
-                            <!-- 🔹 추가: 이메일 -->
-                            <div class="col-6">
-                                <div class="text-muted">이메일</div>
-                                <div id="infoEmail" class="fw-semibold">-</div>
-                            </div>
-
-                            <div class="col-6">
-                                <div class="text-muted">아르바이트 시작일</div>
-                                <div id="infoStartDate" class="fw-semibold">-</div>
-                            </div>
-                            <div class="col-6">
-                                <div class="text-muted">보건증</div>
-                                <div id="infoHealth" class="fw-semibold">-</div>
-                            </div>
-                            <!-- 시급 -->
-                            <div class="col-12">
-                                <div class="text-muted">시급(원)</div>
-                                <div id="infoHourlyWage" class="fw-semibold">-</div>
-                            </div>
+                            <div class="col-6"><div class="text-muted">이름</div><div id="infoName" class="fw-semibold">-</div></div>
+                            <div class="col-6"><div class="text-muted">성별</div><div id="infoGender" class="fw-semibold">-</div></div>
+                            <div class="col-6"><div class="text-muted">전화번호</div><div id="infoPhone" class="fw-semibold">-</div></div>
+                            <div class="col-6"><div class="text-muted">이메일</div><div id="infoEmail" class="fw-semibold">-</div></div>
+                            <div class="col-6"><div class="text-muted">시작일</div><div id="infoStartDate" class="fw-semibold">-</div></div>
+                            <div class="col-6"><div class="text-muted">보건증</div><div id="infoHealth" class="fw-semibold">-</div></div>
+                            <div class="col-12"><div class="text-muted">시급(원)</div><div id="infoHourlyWage" class="fw-semibold">-</div></div>
                         </div>
                     </div>
                 </div>
 
-                <!-- 예상급여 미리보기 -->
-                <div class="card shadow-sm">
-                    <div class="card-header fw-bold d-flex justify-content-between align-items-center" style="background:#198754;color:#fff;">
-                        <span>예상급여 미리보기</span>
-                        <small class="text-white-50">스케줄·시급 기반 계산</small>
-                    </div>
-                    <div class="card-body">
-                        <div class="row g-3 align-items-end">
-                            <div class="col-6">
-                                <label for="wageInput" class="form-label small text-muted">시급(원)</label>
-                                <input type="number" class="form-control" id="wageInput" placeholder="예: 12000" min="0" step="100">
-                            </div>
-                            <div class="col-6">
-                                <label for="daysPerWeekInput" class="form-label small text-muted">주당 근무일수(자동/수정가능)</label>
-                                <input type="number" class="form-control" id="daysPerWeekInput" min="0" step="1">
-                            </div>
-                            <div class="col-6">
-                                <label for="hoursPerDayInput" class="form-label small text-muted">하루 평균시간(자동/수정가능)</label>
-                                <div class="input-group">
-                                    <input type="number" class="form-control" id="hoursPerDayInput" min="0" step="0.5">
-                                    <span class="input-group-text">시간</span>
-                                </div>
-                            </div>
-                            <div class="col-6">
-                                <label for="weeksPerMonthInput" class="form-label small text-muted">월 환산 주차(미사용)</label>
-                                <div class="input-group">
-                                    <input type="number" class="form-control" id="weeksPerMonthInput" min="0" step="0.001" value="4.345" disabled>
-                                    <span class="input-group-text">주</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <hr class="my-3">
-
-                        <div class="row g-3 text-center">
-                            <div class="col-6">
-                                <div class="text-muted small">주간 근무시간</div>
-                                <div id="weeklyHours" class="display-6">0h</div>
-                            </div>
-                            <div class="col-6">
-                                <div class="text-muted small d-flex justify-content-center align-items-center gap-2">
-                                    <span>월간 근무시간</span>
-                                    <span id="monthLabel" class="badge bg-light text-dark"></span>
-                                </div>
-                                <div id="monthlyHours" class="display-6">0h</div>
-                                <div id="monthlyDays" class="small text-muted">(근무일 0일)</div>
-                            </div>
-                            <div class="col-6">
-                                <div class="text-muted small">주간 예상급여</div>
-                                <div id="weeklyWage" class="display-6">0원</div>
-                            </div>
-                            <div class="col-6">
-                                <div class="text-muted small">월간 예상급여</div>
-                                <div id="monthlyWage" class="display-6 text-success">0원</div>
-                            </div>
-                        </div>
-                        <div class="small text-muted mt-2">* 월간 계산은 <b>해당 달의 실제 요일 개수</b>를 반영합니다.</div>
+                <!-- 간단 범례 -->
+                <div class="card">
+                    <div class="card-body d-flex gap-3 align-items-center">
+                        <span class="legend legend-plan"></span><span class="small">계획</span>
+                        <span class="legend legend-actual"></span><span class="small">실제</span>
+                        <span class="legend legend-both"></span><span class="small">둘 다</span>
                     </div>
                 </div>
-
             </div>
         </div>
 
-        <!-- ============ 오른쪽: 주간 타임테이블만 ============ -->
+        <!-- ============ 오른쪽: 주간 10분 단위 타임테이블 ============ -->
         <div class="col-12 col-lg-7">
             <div class="card">
-                <div class="card-header fw-bold">주간 타임테이블 (월~일)</div>
+                <div class="card-header fw-bold d-flex justify-content-between align-items-center">
+                    <span id="selectedMemberTitle">주간 10분 단위 타임테이블 (월~일)</span>
+                    <div class="small text-muted">
+                        <span id="weekRangeLabel">{{weekRangeLabel}}</span>
+                        <a class="ms-2 btn btn-sm btn-outline-secondary" href="{{weekPrevUrl}}">◀ 이전 주</a>
+                        <a class="ms-1 btn btn-sm btn-outline-secondary" href="{{weekNextUrl}}">다음 주 ▶</a>
+                    </div>
+                </div>
                 <div class="card-body">
                     <div class="table-responsive">
-                        <table class="table table-bordered align-middle text-center timetable" id="timetable">
+                        <table class="table table-bordered align-middle text-center timetable-week-10m mb-2" id="tableWeek10m">
                             <thead>
-                            <tr>
+                            <tr id="theadWeek">
                                 <th style="width:80px;">시간</th>
-                                <th>월</th><th>화</th><th>수</th>
-                                <th>목</th><th>금</th><th>토</th><th>일</th>
+                                <th>월</th><th>화</th><th>수</th><th>목</th><th>금</th><th>토</th><th>일</th>
                             </tr>
                             </thead>
-                            <tbody id="timetableBody">
-                            <!-- JS가 06:00~22:00 시간 슬롯을 채웁니다. -->
-                            </tbody>
+                            <tbody id="tbodyWeek10m"></tbody>
                         </table>
                     </div>
-                    <div class="small text-muted">* 진한 셀은 해당 시간에 근무함을 의미합니다.</div>
+                    <div class="small text-muted mt-1">
+                        * 10분 단위로 칠해집니다. <span class="legend legend-plan"></span> 계획, <span class="legend legend-actual"></span> 실제, <span class="legend legend-both"></span> 겹치면 진한 표시.
+                    </div>
                 </div>
             </div>
         </div>
@@ -174,307 +97,280 @@
 </main>
 
 <style>
-    .timetable th, .timetable td { vertical-align: middle; }
-    .timetable td.active { background: rgba(25,135,84,.15); }
+    /* 셀(10분 슬롯) 기본 */
+    .cell-10m {
+        height: 16px;
+        border: 1px solid #eef2f6;
+        border-radius: 3px;
+        background: #fff;
+    }
+    /* 계획만 */
+    .cell-10m.schedule-on {
+        background: rgba(255,159,67,.28);            /* 주황 */
+        border-color: rgba(255,159,67,.55);
+    }
+    /* 실제만 */
+    .cell-10m.actual-on {
+        background: rgba(25,135,84,.22);             /* 초록 */
+        border-color: rgba(25,135,84,.35);
+    }
+    /* 계획+실제 겹침 */
+    .cell-10m.schedule-on.actual-on {
+        background:
+                linear-gradient(135deg, rgba(255,159,67,.40) 0%, rgba(255,159,67,.40) 50%, rgba(25,135,84,.40) 50%, rgba(25,135,84,.40) 100%);
+        border-color: rgba(25,135,84,.5);
+        box-shadow: inset 0 0 0 1px rgba(25,135,84,.25);
+    }
+    /* 매 시 정각 라인 강조 */
+    tr.hour-start > td, tr.hour-start > th {
+        border-top: 2px solid #dee2e6 !important;
+    }
+    .timecell { font-variant-numeric: tabular-nums; }
+
+    /* 범례 */
+    .legend { display:inline-block; width:14px; height:14px; border-radius:3px; border:1px solid #ddd; vertical-align:middle; }
+    .legend-plan { background: rgba(255,159,67,.35); border-color: rgba(255,159,67,.65); }
+    .legend-actual { background: rgba(25,135,84,.25); border-color: rgba(25,135,84,.4); }
+    .legend-both { background:
+            linear-gradient(135deg, rgba(255,159,67,.40) 0%, rgba(255,159,67,.40) 50%, rgba(25,135,84,.40) 50%, rgba(25,135,84,.40) 100%);
+        border-color: rgba(25,135,84,.5);
+    }
 </style>
 
-<!-- 컨트롤러에서 내려준 JSON: membersJson (없으면 빈 배열) -->
+<!-- 컨트롤러에서 내려준 JSON -->
 <script id="membersData" type="application/json">
 {{{membersJson}}}
 </script>
 
 <script>
-    // JSON 파싱
-    let allMembers = [];
-    try {
-        allMembers = JSON.parse(document.getElementById('membersData').textContent || '[]');
-    } catch(e) { allMembers = []; }
-</script>
+    (function(){
+        // ===== Constants & DOM =====
+        const HOUR_START=6, HOUR_END=22, STEP_MIN=10, SLOTS_PER_HOUR=60/STEP_MIN; // 6
+        const tbodyWeek=document.getElementById('tbodyWeek10m');
+        const theadWeek=document.getElementById('theadWeek');
+        const selectedMemberTitle=document.getElementById('selectedMemberTitle');
 
-<script>
-    (function() {
-        // 상수/DOM
-        const HOUR_START = 6, HOUR_END = 22;
-        const statusSelect = document.getElementById('statusSelect');
-        const memberSelect = document.getElementById('memberSelect');
-        const detailBtn = document.getElementById('detailBtn');
+        const statusSelect=document.getElementById('statusSelect');
+        const memberSelect=document.getElementById('memberSelect');
+        const detailBtn=document.getElementById('detailBtn');
 
-        const statusBadge  = document.getElementById('statusBadge');
-        const infoName = document.getElementById('infoName');
-        const infoGender = document.getElementById('infoGender');
-        const infoPhone = document.getElementById('infoPhone');   /* 🔹 추가 */
-        const infoEmail = document.getElementById('infoEmail');   /* 🔹 추가 */
-        const infoStartDate = document.getElementById('infoStartDate');
-        const infoHealth = document.getElementById('infoHealth');
-        const infoHourlyWage = document.getElementById('infoHourlyWage');
-        const timetableBody = document.getElementById('timetableBody');
+        const statusBadge=document.getElementById('statusBadge');
+        const infoName=document.getElementById('infoName');
+        const infoGender=document.getElementById('infoGender');
+        const infoPhone=document.getElementById('infoPhone');
+        const infoEmail=document.getElementById('infoEmail');
+        const infoStartDate=document.getElementById('infoStartDate');
+        const infoHealth=document.getElementById('infoHealth');
+        const infoHourlyWage=document.getElementById('infoHourlyWage');
 
-        // 급여 계산 영역
-        const wageInput = document.getElementById('wageInput');
-        const daysPerWeekInput = document.getElementById('daysPerWeekInput');
-        const hoursPerDayInput = document.getElementById('hoursPerDayInput');
-        const weeksPerMonthInput = document.getElementById('weeksPerMonthInput'); // 미사용(비활성화)
+        const weekRangeLabelEl=document.getElementById('weekRangeLabel');
 
-        const weeklyHoursEl = document.getElementById('weeklyHours');
-        const weeklyWageEl  = document.getElementById('weeklyWage');
-        const monthlyHoursEl = document.getElementById('monthlyHours');
-        const monthlyDaysEl  = document.getElementById('monthlyDays');
-        const monthlyWageEl  = document.getElementById('monthlyWage');
-        const monthLabelEl   = document.getElementById('monthLabel');
+        let allMembers=[];
+        try{ allMembers=JSON.parse(document.getElementById('membersData').textContent||'[]'); }catch(e){ allMembers=[]; }
 
-        // 달 표기 (클라이언트 현재 월)
-        const now = new Date();
-        const THIS_YEAR = now.getFullYear();
-        const THIS_MONTH0 = now.getMonth(); // 0~11
-        monthLabelEl.textContent = `${THIS_YEAR}-${String(THIS_MONTH0+1).padStart(2,'0')}`;
-
-        // 최초 그리드 생성
-        renderTimeGrid();
-
-        // 데이터가 있으면 상태를 첫 멤버 상태로 보정
-        if (Array.isArray(allMembers) && allMembers.length > 0) {
-            statusSelect.value = allMembers[0].status || 'WORKING';
+        // 초기 상태 보정
+        if(Array.isArray(allMembers)&&allMembers.length>0){
+            statusSelect.value=allMembers[0].status||'WORKING';
         }
 
         // 이벤트
         statusSelect.addEventListener('change', handleStatusChange);
         memberSelect.addEventListener('change', handleMemberChange);
-        detailBtn.addEventListener('click', openEditPage);
+        detailBtn.addEventListener('click', openEdit);
 
-        [wageInput, daysPerWeekInput, hoursPerDayInput].forEach(el => {
-            el.addEventListener('input', recalcWage);
-        });
-
-        // 초기 상태에 맞춰 드롭다운 채우기
+        // 시작
         handleStatusChange();
 
-        function handleStatusChange() {
-            const status = statusSelect.value;
-            const filtered = (allMembers || []).filter(m => m.status === status);
+        // ===== Handlers =====
+        function handleStatusChange(){
+            const status=statusSelect.value;
+            const filtered=(allMembers||[]).filter(m=>m.status===status);
 
-            memberSelect.innerHTML = '';
-            detailBtn.disabled = true;
+            memberSelect.innerHTML='';
+            detailBtn.disabled=true;
 
-            if (!filtered.length) {
-                memberSelect.innerHTML = '<option value="">해당 상태의 알바생이 없습니다</option>';
-                clearRightPanels();
+            if(!filtered.length){
+                memberSelect.innerHTML='<option value="">해당 상태의 알바생이 없습니다</option>';
+                clearRight();
                 return;
             }
-            memberSelect.appendChild(new Option('알바생을 선택하세요', ''));
-            filtered.forEach(m => {
-                const opt = new Option(`${m.name ?? '-'} (${m.gender ?? '-'})`, String(m.id));
-                memberSelect.appendChild(opt);
-            });
-
-            // 첫 명단 자동 선택 + 렌더링
-            memberSelect.value = String(filtered[0].id);
-            detailBtn.disabled = false;
+            memberSelect.appendChild(new Option('알바생을 선택하세요',''));
+            filtered.forEach(m=>memberSelect.appendChild(new Option(`${m.name ?? '-'} (${m.gender ?? '-'})`, String(m.id))));
+            memberSelect.value=String(filtered[0].id);
+            detailBtn.disabled=false;
             renderAll(filtered[0]);
         }
 
-        function handleMemberChange() {
-            const status = statusSelect.value;
-            const filtered = (allMembers || []).filter(m => m.status === status);
+        function handleMemberChange(){
+            const status=statusSelect.value;
+            const filtered=(allMembers||[]).filter(m=>m.status===status);
             const id = Number(memberSelect.value);
-            const member = filtered.find(m => m.id === id);
-            detailBtn.disabled = !member;
-            if (member) renderAll(member);
-            else clearRightPanels();
+            const m = filtered.find(x=>x.id===id);
+            detailBtn.disabled=!m;
+            if(m) renderAll(m); else clearRight();
         }
 
-        function renderAll(member) {
+        async function renderAll(member){
             renderMemberInfo(member);
-            renderMemberSchedule(member);
-            autoFillWageForm(member);
-            recalcWage(member); // ← 멤버 전달(월간 계산에서 시급 자동 반영에 사용)
-        }
 
-        function renderMemberInfo(m) {
-            infoName.textContent = m.name ?? '-';
-            infoGender.textContent = m.gender ?? '-';
-            infoPhone.textContent = m.phone ?? '-';   /* 🔹 추가 */
-            infoEmail.textContent = m.email ?? '-';   /* 🔹 추가 */
-            infoStartDate.textContent = m.startDate ?? '-';
+            // 주 시작/끝 계산
+            const { weekStartIso, weekEndIso, weekDates } = parseWeekRangeToDates(weekRangeLabelEl?.textContent || '');
+            renderWeekHeadDates(weekDates);
 
-            if (m.hasHealthCertificate) {
-                infoHealth.textContent = m.healthCertExpiry ? `보유 (유효기간: ${m.healthCertExpiry})` : '보유';
-            } else {
-                infoHealth.textContent = '미보유';
-            }
+            // 테이블 골격(96행 × 7컬럼) 생성
+            buildWeekGrid10m();
 
-            infoHourlyWage.textContent = (typeof m.hourlyWage === 'number')
-                    ? new Intl.NumberFormat('ko-KR', { style: 'currency', currency: 'KRW', maximumFractionDigits: 0 }).format(m.hourlyWage)
-                    : '-';
+            // 계획 표시
+            paintPlan(member, weekDates);
 
-            const badgeMap = {
-                WORKING: 'bg-success', WAITING: 'bg-secondary', RESTING: 'bg-info',
-                PAUSED: 'bg-warning', RESIGNED: 'bg-danger'
-            };
-            statusBadge.textContent = m.status || '-';
-            statusBadge.className = `badge ${badgeMap[m.status] || 'bg-secondary'}`;
-        }
-
-        // schedule/schedules 호환
-        function getSchedules(m) {
-            if (Array.isArray(m?.schedule)) return m.schedule;
-            if (Array.isArray(m?.schedules)) return m.schedules;
-            return [];
-        }
-
-        function renderMemberSchedule(m) {
-            timetableBody.querySelectorAll('td').forEach(td => td.classList.remove('active'));
-            const schedules = getSchedules(m);
-            schedules.forEach(s => {
-                const start = parseHm(s.start);
-                const end   = parseHm(s.end);
-                for (let h = start.h; h < end.h; h++) {
-                    if (h < HOUR_START || h > HOUR_END) continue;
-                    const row = timetableBody.querySelector(`tr[data-hour="${h}"]`);
-                    if (!row) continue;
-                    const cell = row.querySelector(`td[data-day="${s.day}"]`);
-                    if (cell) cell.classList.add('active');
+            // 실제 표시 (주간 API)
+            try{
+                const url=`/api/schedule/${encodeURIComponent(member.id)}/${weekStartIso}/${weekEndIso}`;
+                const resp=await fetch(url,{headers:{'Accept':'application/json'}});
+                if(resp.ok){
+                    const data=await resp.json();
+                    paintActualFromApi(data, weekDates);
                 }
-            });
+            }catch(e){ console.error(e); }
+
+            selectedMemberTitle.textContent = `${member.name ?? '-'} — 주간(10분 단위)`;
         }
 
-        function renderTimeGrid() {
-            const rows = [];
-            for (let h = HOUR_START; h <= HOUR_END; h++) {
-                const label = `${String(h).padStart(2,'0')}:00`;
-                rows.push(`
-                <tr data-hour="${h}">
-                  <th scope="row">${label}</th>
-                  <td data-day="MON"></td>
-                  <td data-day="TUE"></td>
-                  <td data-day="WED"></td>
-                  <td data-day="THU"></td>
-                  <td data-day="FRI"></td>
-                  <td data-day="SAT"></td>
-                  <td data-day="SUN"></td>
-                </tr>
-            `);
+        // ===== Build & Paint =====
+        function buildWeekGrid10m(){
+            tbodyWeek.innerHTML='';
+            const totalRows = (HOUR_END - HOUR_START) * SLOTS_PER_HOUR; // 16*6=96
+            for(let idx=0; idx<totalRows; idx++){
+                const minutesFromStart = idx * STEP_MIN;
+                const absMin = HOUR_START*60 + minutesFromStart;
+                const h = Math.floor(absMin/60), m = absMin%60;
+                const hm = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+
+                const tr = document.createElement('tr');
+                if(m===0) tr.classList.add('hour-start');
+                tr.innerHTML = `
+          <th class="timecell" scope="row">${hm}</th>
+          <td data-col="1"><div class="cell-10m"></div></td>
+          <td data-col="2"><div class="cell-10m"></div></td>
+          <td data-col="3"><div class="cell-10m"></div></td>
+          <td data-col="4"><div class="cell-10m"></div></td>
+          <td data-col="5"><div class="cell-10m"></div></td>
+          <td data-col="6"><div class="cell-10m"></div></td>
+          <td data-col="7"><div class="cell-10m"></div></td>
+        `;
+                tbodyWeek.appendChild(tr);
             }
-            timetableBody.innerHTML = rows.join('');
         }
 
-        function clearRightPanels() {
-            statusBadge.textContent = '-';
-            statusBadge.className = 'badge bg-secondary';
-            infoName.textContent = '-';
-            infoGender.textContent = '-';
-            infoPhone.textContent = '-';   /* 🔹 추가 */
-            infoEmail.textContent = '-';   /* 🔹 추가 */
-            infoStartDate.textContent = '-';
-            infoHealth.textContent = '-';
-            infoHourlyWage.textContent = '-';
-            renderTimeGrid();
-            setText(weeklyHoursEl,'0h'); setText(monthlyHoursEl,'0h');
-            setText(weeklyWageEl,'0원'); setText(monthlyWageEl,'0원');
-            monthlyDaysEl.textContent = '(근무일 0일)';
-            detailBtn.disabled = true;
+        function renderWeekHeadDates(weekDates){
+            // thead에 날짜(M/D) 라벨 표시
+            const ths = theadWeek.querySelectorAll('th');
+            for(let i=0;i<7;i++){
+                const th = ths[i+1]; // 0=시간
+                if(!th) continue;
+                const d = new Date(weekDates[i]);
+                th.innerHTML = `${['월','화','수','목','금','토','일'][i]}<br><small class="text-muted">(${d.getMonth()+1}/${d.getDate()})</small>`;
+            }
         }
 
-        function parseHm(hm) {
-            if (!hm || typeof hm !== 'string') return {h:0,m:0};
-            const [h,m] = hm.split(':').map(n => parseInt(n,10));
-            return {h: isNaN(h)?0:h, m: isNaN(m)?0:m};
+        function paintPlan(member, weekDates){
+            const schedules = getSchedules(member); // [{day:'MON', start:'HH:mm', end:'HH:mm'}]
+            // 요일 → js day (0=Sun..6=Sat)
+            const mapToJS={'SUN':0,'MON':1,'TUE':2,'WED':3,'THU':4,'FRI':5,'SAT':6};
+
+            for(let dayIdx=0; dayIdx<7; dayIdx++){
+                const jsDay = (dayIdx+1)%7; // 월=1 … 일=0
+                const daySegs = schedules.filter(s=>mapToJS[s.day]===jsDay);
+                if(!daySegs.length) continue;
+
+                // 각 10분 슬롯에 대해 on 판정
+                const rows = tbodyWeek.querySelectorAll('tr');
+                rows.forEach((tr, rIdx)=>{
+                    const cellDiv = tr.querySelector(`td[data-col="${dayIdx+1}"] .cell-10m`);
+                    if(!cellDiv) return;
+
+                    const absMin = HOUR_START*60 + rIdx*STEP_MIN;
+                    const hm = `${String(Math.floor(absMin/60)).padStart(2,'0')}:${String(absMin%60).padStart(2,'0')}`;
+
+                    if(daySegs.some(seg=>slotInside(hm, seg.start, seg.end))){
+                        cellDiv.classList.add('schedule-on');
+                    }
+                });
+            }
         }
 
-        // ---- 등록정보 페이지 이동 ----
-        function openEditPage() {
-            const id = Number(memberSelect.value || 0);
-            if (!id) { alert('알바생을 선택하세요.'); return; }
+        function paintActualFromApi(apiData, weekDates){
+            const days = Array.isArray(apiData?.days) ? apiData.days : [];
+            // date → segments[]
+            const byDate = new Map(days.map(d=>[String(d.date), Array.isArray(d.segments)?d.segments:[]]));
+
+            for(let dayIdx=0; dayIdx<7; dayIdx++){
+                const iso = weekDates[dayIdx];
+                const segs = byDate.get(iso) || [];
+                if(!segs.length) continue;
+
+                const rows = tbodyWeek.querySelectorAll('tr');
+                rows.forEach((tr, rIdx)=>{
+                    const cellDiv = tr.querySelector(`td[data-col="${dayIdx+1}"] .cell-10m`);
+                    if(!cellDiv) return;
+
+                    const absMin = HOUR_START*60 + rIdx*STEP_MIN;
+                    const hm = `${String(Math.floor(absMin/60)).padStart(2,'0')}:${String(absMin%60).padStart(2,'0')}`;
+
+                    if(segs.some(seg=>slotInside(hm, seg.start, seg.end))){
+                        cellDiv.classList.add('actual-on');
+                    }
+                });
+            }
+        }
+
+        // ===== Member / Info =====
+        function renderMemberInfo(m){
+            infoName.textContent=m.name ?? '-';
+            infoGender.textContent=m.gender ?? '-';
+            infoPhone.textContent=m.phone ?? '-';
+            infoEmail.textContent=m.email ?? '-';
+            infoStartDate.textContent=m.startDate ?? '-';
+            infoHealth.textContent = m.hasHealthCertificate ? (m.healthCertExpiry ? `보유 (유효기간: ${m.healthCertExpiry})` : '보유') : '미보유';
+            infoHourlyWage.textContent=(typeof m.hourlyWage==='number')
+                    ? new Intl.NumberFormat('ko-KR',{style:'currency',currency:'KRW',maximumFractionDigits:0}).format(m.hourlyWage)
+                    : '-';
+            const badgeMap={WORKING:'bg-success',WAITING:'bg-secondary',RESTING:'bg-info',PAUSED:'bg-warning',RESIGNED:'bg-danger'};
+            statusBadge.textContent=m.status || '-';
+            statusBadge.className=`badge ${badgeMap[m.status]||'bg-secondary'}`;
+        }
+
+        // ===== Utils =====
+        function getSchedules(m){ return Array.isArray(m?.schedules)?m.schedules : Array.isArray(m?.schedule)?m.schedule : []; }
+        function slotInside(hm, s, e){ const t=hmToMin(hm), ss=hmToMin(s), ee=hmToMin(e); return t>=ss && t<ee; }
+        function hmToMin(hm){ const [h,m]=String(hm).split(':').map(Number); return h*60+(m||0); }
+
+        function parseWeekRangeToDates(label){
+            // label 예: "2025.11.03 ~ 11.09"
+            const m = String(label).match(/(\d{4})\.(\d{2})\.(\d{2})/);
+            let start;
+            if(m){ start = new Date(+m[1], +m[2]-1, +m[3]); }
+            else { const today = new Date(); start = toMonday(today); }
+            const weekDates = Array.from({length:7}, (_,i)=>toIso(addDays(start,i)));
+            return { weekStartIso: weekDates[0], weekEndIso: weekDates[6], weekDates };
+        }
+        function toMonday(date){ const d=new Date(date.getFullYear(),date.getMonth(),date.getDate()); const off=(d.getDay()+6)%7; d.setDate(d.getDate()-off); return d; }
+        function addDays(d,n){ const x=new Date(d); x.setDate(x.getDate()+n); return x; }
+        function toIso(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+
+        function openEdit(){
+            const id = Number(memberSelect.value||0);
+            if(!id){ alert('알바생을 선택하세요.'); return; }
             window.location.assign(`/members/${id}/edit`);
         }
 
-        // ---- 자동 채움(주간 수치 추론) ----
-        function autoFillWageForm(m) {
-            const schedules = getSchedules(m);
-            const uniqueDays = new Set(schedules.map(s => s.day));
-            const totalMins = schedules.reduce((acc, s) => {
-                const st = parseHm(s.start), ed = parseHm(s.end);
-                return acc + Math.max(0, (ed.h*60+ed.m) - (st.h*60+st.m));
-            }, 0);
-            const weeklyHours = Math.round(totalMins/60 * 10)/10;
-
-            if (!wageInput.value && typeof m.hourlyWage === 'number') {
-                wageInput.value = String(m.hourlyWage);
-            }
-            daysPerWeekInput.value = uniqueDays.size || '';
-            hoursPerDayInput.value = uniqueDays.size ? Math.round((weeklyHours/uniqueDays.size)*10)/10 : '';
+        function clearRight(){
+            selectedMemberTitle.textContent='주간 10분 단위 타임테이블 (월~일)';
+            tbodyWeek.innerHTML='';
+            statusBadge.textContent='-'; statusBadge.className='badge bg-secondary';
+            infoName.textContent='-'; infoGender.textContent='-'; infoPhone.textContent='-'; infoEmail.textContent='-';
+            infoStartDate.textContent='-'; infoHealth.textContent='-'; infoHourlyWage.textContent='-';
         }
-
-        // ---- 급여 계산(주간/월간) ----
-        function recalcWage(currentMember) {
-            // 현재 선택 멤버
-            let member = currentMember;
-            if (!member) {
-                const status = statusSelect.value;
-                const id = Number(memberSelect.value);
-                member = (allMembers || []).filter(m => m.status === status).find(m => m.id === id);
-            }
-            if (!member) return;
-
-            const schedules = getSchedules(member);
-            const wage = Number(wageInput.value) || 0;
-
-            // 1) 주간 총 시간
-            const weeklyMinutes = schedules.reduce((acc, s) => {
-                const st = parseHm(s.start), ed = parseHm(s.end);
-                return acc + Math.max(0, (ed.h*60+ed.m) - (st.h*60+st.m));
-            }, 0);
-            const weeklyHours = Math.round((weeklyMinutes/60) * 10)/10;
-            setText(weeklyHoursEl, `${weeklyHours}h`);
-            setText(weeklyWageEl, toKRW(Math.round(weeklyHours * wage)));
-
-            // 2) 월간 계산(해당 달의 실제 요일 개수 반영)
-            const {monthlyMinutes, monthlyDaysCount} = computeMonthlyFromSchedules(schedules, THIS_YEAR, THIS_MONTH0);
-            const monthlyHours = Math.round((monthlyMinutes/60) * 10)/10;
-
-            setText(monthlyHoursEl, `${monthlyHours}h`);
-            monthlyDaysEl.textContent = `(근무일 ${monthlyDaysCount}일)`;
-            setText(monthlyWageEl, toKRW(Math.round((monthlyMinutes/60) * wage)));
-        }
-
-        // 월간: 이번 달에서 각 요일의 발생 횟수 × 해당 요일 스케줄 시간
-        function computeMonthlyFromSchedules(schedules, year, month0) {
-            // 요일 문자열 → JS getDay() (0=Sun..6=Sat)
-            const mapToJS = { 'SUN':0, 'MON':1, 'TUE':2, 'WED':3, 'THU':4, 'FRI':5, 'SAT':6 };
-            const byWeekday = new Map(); // jsDay -> perDayMinutes
-            schedules.forEach(s => {
-                const jsDay = mapToJS[s.day];
-                if (jsDay == null) return;
-                const st = parseHm(s.start), ed = parseHm(s.end);
-                const minutes = Math.max(0, (ed.h*60+ed.m) - (st.h*60+st.m));
-                const prev = byWeekday.get(jsDay) || 0;
-                byWeekday.set(jsDay, prev + minutes);
-            });
-
-            let totalMinutes = 0;
-            let totalDays = 0;
-            byWeekday.forEach((perDayMinutes, jsDay) => {
-                const occ = countWeekdayInMonth(year, month0, jsDay);
-                totalMinutes += perDayMinutes * occ;
-                if (perDayMinutes > 0) totalDays += occ;
-            });
-            return { monthlyMinutes: totalMinutes, monthlyDaysCount: totalDays };
-        }
-
-        function countWeekdayInMonth(year, month0, jsDay) {
-            const lastDay = new Date(year, month0 + 1, 0).getDate();
-            let count = 0;
-            for (let d = 1; d <= lastDay; d++) {
-                const day = new Date(year, month0, d).getDay();
-                if (day === jsDay) count++;
-            }
-            return count;
-        }
-
-        function toKRW(n) {
-            return new Intl.NumberFormat('ko-KR', { style: 'currency', currency: 'KRW', maximumFractionDigits: 0 }).format(n||0);
-        }
-        function setText(el, txt){ if (el) el.textContent = txt; }
-
     })();
 </script>
 

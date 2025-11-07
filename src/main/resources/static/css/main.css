@@ -210,3 +210,8 @@ body {
 .modal { background: rgba(0,0,0,.35); position: fixed; inset: 0; display:none; }
 .modal-dialog { margin: 50px auto; max-width: 980px; }
 .modal-content { background:#fff; border-radius: 12px; }
+
+/* 합계(실제), 예상 급여 행 강조 */
+.highlight-row {
+    background-color: #fffbe6 !important; /* 연한 노란색 */
+}
