@@ -132,26 +132,29 @@
 
 <script>
     (function(){
-        const memberNameLabel = document.getElementById('memberNameLabel');
-        const startMonth = document.getElementById('startMonth');
-        const btnPreview = document.getElementById('btnPreview');
-        const btnSave = document.getElementById('btnSave');
-        const alertArea = document.getElementById('alertArea');
+        const memberNameLabel   = document.getElementById('memberNameLabel');
+        const startMonth        = document.getElementById('startMonth');
+        const btnPreview        = document.getElementById('btnPreview');
+        const btnSave           = document.getElementById('btnSave');
+        const alertArea         = document.getElementById('alertArea');
 
-        const calendarGrid = document.getElementById('calendarGrid');
-        const monthTitle = document.getElementById('monthTitle');
-        const itemCountLabel = document.getElementById('itemCountLabel');
-        const monthTotalLabel = document.getElementById('monthTotalLabel');
+        const calendarGrid      = document.getElementById('calendarGrid');
+        const monthTitle        = document.getElementById('monthTitle');
+        const itemCountLabel    = document.getElementById('itemCountLabel');
+        const monthTotalLabel   = document.getElementById('monthTotalLabel');
 
         const API_GENERATE_ENDPOINT = '/api/schedule/work/generate';
+        const API_CHECK_ENDPOINT    = '/api/schedule/work';   // 기존 월 일정 조회
 
         // ===== 멤버 정보 파싱 =====
         let member = null;
         try {
             member = JSON.parse(document.getElementById('memberData').textContent || 'null');
-        } catch(e){ member = null; }
+        } catch(e){
+            member = null;
+        }
 
-        if(!member){
+        if (!member) {
             showAlert('멤버 정보를 불러올 수 없습니다. 다시 시도해 주세요.', 'danger');
             btnPreview.disabled = true;
             btnSave.disabled = true;
@@ -160,49 +163,55 @@
 
         memberNameLabel.textContent = `(${member.name || '-'}) [ID: ${member.id}]`;
 
-        // ✅ 기본월: URL ?baseMonth=YYYY-MM-DD 가 있으면 그 달, 없으면 오늘 기준
+        // ===== 기본 기준 월 세팅 =====
         const today = new Date();
-        const baseMonthFromQuery = getBaseMonthFromQuery();   // 예: "2025-11"
-        startMonth.value =
-                baseMonthFromQuery
-                        ? baseMonthFromQuery
-                        : `${today.getFullYear()}-${pad2(today.getMonth()+1)}`;
+        const baseMonthFromQuery = getBaseMonthFromQuery();   // "YYYY-MM" 또는 null
 
-        // 생성된 아이템(미리보기 결과)
+        startMonth.value = baseMonthFromQuery
+                ? baseMonthFromQuery
+                : `${today.getFullYear()}-${pad2(today.getMonth() + 1)}`;
+
+        // 미리보기로 생성된 아이템
         let generatedItems = [];
 
-        // 이벤트
+        // ===== 이벤트 =====
         btnPreview.addEventListener('click', onPreview);
         btnSave.addEventListener('click', onSave);
+        startMonth.addEventListener('change', onPreview); // 달 변경 시 자동 미리보기
 
-        // ✅ 달 선택이 바뀌면 자동 미리보기
-        startMonth.addEventListener('change', onPreview);
-
-        // 페이지 처음 들어오면 자동 미리보기 1회
+        // 페이지 진입 시 1회 자동 미리보기
         onPreview();
 
+        // ===== 미리보기 =====
         async function onPreview(){
             clearAlert();
 
-            const {fromDate, toDate} = getMonthRangeFromInput();
+            const { fromDate, toDate } = getMonthRangeFromInput();
             const items = buildItemsFromWeeklyTemplate(member, fromDate, toDate);
             generatedItems = items;
 
             renderPreviewCalendar(fromDate, toDate, items);
-            if(items.length === 0){
+
+            // 선택한 월에 기존 일정 있는지 체크 (비동기)
+            checkExistingSchedulesForMonth(fromDate, toDate).catch(console.error);
+
+            if (items.length === 0) {
                 showAlert('주간 템플릿으로 생성된 일정이 없습니다.', 'secondary');
-            }else{
+            } else {
                 showAlert(`총 ${items.length}개 구간이 생성되었습니다.`, 'info');
             }
         }
 
+        // ===== 저장 =====
         async function onSave(){
             clearAlert();
-            if(!generatedItems || generatedItems.length===0){
+
+            if (!generatedItems || generatedItems.length === 0) {
                 showAlert('저장할 일정이 없습니다. 먼저 미리보기를 실행하세요.', 'warning');
                 return;
             }
-            const {fromDate, toDate} = getMonthRangeFromInput();
+
+            const { fromDate, toDate } = getMonthRangeFromInput();
             const payload = {
                 memberId: member.id,
                 from: toIso(fromDate),
@@ -210,83 +219,140 @@
                 items: generatedItems
             };
 
-            try{
+            try {
                 const resp = await fetch(API_GENERATE_ENDPOINT, {
                     method: 'POST',
-                    headers: {'Content-Type':'application/json', 'Accept':'application/json'},
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
                     body: JSON.stringify(payload)
                 });
-                if(!resp.ok){
-                    const text = await resp.text().catch(()=> '');
+
+                if (!resp.ok) {
+                    const text = await resp.text().catch(() => '');
                     showAlert(`저장 실패: ${resp.status} ${text}`, 'danger');
                     return;
                 }
-                await resp.json().catch(()=> ({}));
-                showAlert('일정이 성공적으로 저장되었습니다.', 'success');
-            }catch(e){
+
+                await resp.json().catch(() => ({}));
+                showAlert('일정이 성공적으로 생성되었습니다.', 'success');
+
+                // 생성 후에는 다시 생성하지 못하도록 비활성화
+                btnSave.disabled = true;
+            } catch (e) {
                 console.error(e);
                 showAlert('저장 중 오류가 발생했습니다.', 'danger');
             }
         }
 
-        function getMonthRangeFromInput(){
-            const v = String(startMonth.value || '');
-            const [y,m] = v.split('-').map(n=>parseInt(n,10));
-            const yy = isNaN(y) ? today.getFullYear() : y;
-            const mm = isNaN(m) ? today.getMonth() : (m-1);
-            const fromDate = new Date(yy, mm, 1);
-            const toDate = new Date(yy, mm+1, 0);
-            return {fromDate, toDate};
+        // ===== 선택한 월에 기존 일정이 있는지 체크 =====
+        async function checkExistingSchedulesForMonth(fromDate, toDate){
+            const fromIso = toIso(fromDate);
+            const toIsoStr = toIso(toDate);
+
+            try {
+                const url = `${API_CHECK_ENDPOINT}/${encodeURIComponent(member.id)}/${fromIso}/${toIsoStr}`;
+                const resp = await fetch(url, {
+                    headers: { 'Accept': 'application/json' }
+                });
+
+                if (!resp.ok) {
+                    // 조회 실패 시 버튼 상태는 건드리지 않음
+                    return;
+                }
+
+                const data = await resp.json();
+                const days = Array.isArray(data?.days) ? data.days : [];
+                const hasExisting = days.some(d => Array.isArray(d.segments) && d.segments.length > 0);
+
+                if (hasExisting) {
+                    showAlert('선택한 월에 이미 일정이 존재합니다.', 'warning');
+                    btnSave.disabled = true;
+                } else {
+                    btnSave.disabled = false;
+                }
+            } catch (e) {
+                console.error(e);
+                // 조용히 실패 (버튼 상태 변경 안 함)
+            }
         }
 
-        // member.schedules(or schedule)를 이용해 한달치 생성
+        // ===== 월 범위 =====
+        function getMonthRangeFromInput(){
+            const v = String(startMonth.value || '');
+            const [ yRaw, mRaw ] = v.split('-');
+            const y = parseInt(yRaw, 10);
+            const m = parseInt(mRaw, 10);
+
+            const yy = isNaN(y) ? today.getFullYear() : y;
+            const mm = isNaN(m) ? today.getMonth() : (m - 1);
+
+            const fromDate = new Date(yy, mm, 1);
+            const toDate   = new Date(yy, mm + 1, 0);
+
+            return { fromDate, toDate };
+        }
+
+        // ===== 한 달치 아이템 생성 (주간 템플릿 기반) =====
         function buildItemsFromWeeklyTemplate(member, fromDate, toDate){
             const weekly = getSchedules(member); // [{day:'MON', start:'10:00', end:'14:00'}, ...]
-            if(!Array.isArray(weekly) || weekly.length===0) return [];
+            if (!Array.isArray(weekly) || weekly.length === 0) return [];
 
-            const mapToJS={'SUN':0,'MON':1,'TUE':2,'WED':3,'THU':4,'FRI':5,'SAT':6};
+            const mapToJS = {
+                'SUN': 0, 'MON': 1, 'TUE': 2, 'WED': 3,
+                'THU': 4, 'FRI': 5, 'SAT': 6
+            };
+
             const dedupe = new Set();
             const items = [];
 
-            for(let d=new Date(fromDate); d<=toDate; d.setDate(d.getDate()+1)){
+            for (let d = new Date(fromDate); d <= toDate; d.setDate(d.getDate() + 1)) {
                 const dow = d.getDay();
-                const segs = weekly.filter(s=> mapToJS[s.day] === dow);
-                if(!segs.length) continue;
+                const segs = weekly.filter(s => mapToJS[s.day] === dow);
+                if (!segs.length) continue;
 
                 const iso = toIso(d);
-                segs.forEach(s=>{
+
+                segs.forEach(s => {
                     const start = hmStr(s.start);
                     const end   = hmStr(s.end);
-                    if(!isValidRange(start, end)) return;
+                    if (!isValidRange(start, end)) return;
+
                     const key = `${iso}|${start}|${end}`;
-                    if(dedupe.has(key)) return;
+                    if (dedupe.has(key)) return;
+
                     dedupe.add(key);
-                    items.push({date: iso, start, end, note: '자동 생성'});
+                    items.push({ date: iso, start, end, note: '자동 생성' });
                 });
             }
 
-            items.sort((a,b)=>{
-                if(a.date !== b.date) return a.date < b.date ? -1 : 1;
+            // 날짜 → 시작시간 순 정렬
+            items.sort((a, b) => {
+                if (a.date !== b.date) return a.date < b.date ? -1 : 1;
                 return a.start < b.start ? -1 : (a.start > b.start ? 1 : 0);
             });
+
             return items;
         }
 
+        // ===== 달력 렌더 =====
         function renderPreviewCalendar(fromDate, toDate, items){
             const ms = new Date(fromDate.getFullYear(), fromDate.getMonth(), 1);
-            const me = new Date(fromDate.getFullYear(), fromDate.getMonth()+1, 0);
-            const monthName = `${ms.getFullYear()}년 ${pad2(ms.getMonth()+1)}월`;
+            const me = new Date(fromDate.getFullYear(), fromDate.getMonth() + 1, 0);
+            const monthName = `${ms.getFullYear()}년 ${pad2(ms.getMonth() + 1)}월`;
             monthTitle.textContent = `${monthName} 생성된 일정 미리보기`;
 
             const map = {};
-            items.forEach(it=>{
-                if(!map[it.date]) map[it.date] = [];
+            items.forEach(it => {
+                if (!map[it.date]) map[it.date] = [];
                 map[it.date].push(it);
             });
 
             calendarGrid.innerHTML = '';
+
             const DOW_HEAD = ['일','월','화','수','목','금','토'];
-            DOW_HEAD.forEach(label=>{
+            DOW_HEAD.forEach(label => {
                 const h = document.createElement('div');
                 h.className = 'dow';
                 h.textContent = label;
@@ -294,7 +360,7 @@
             });
 
             const firstDow = ms.getDay();
-            for(let i=0;i<firstDow;i++){
+            for (let i = 0; i < firstDow; i++) {
                 const blank = document.createElement('div');
                 blank.className = 'cell';
                 blank.style.visibility = 'hidden';
@@ -303,31 +369,35 @@
 
             let totalMinutes = 0;
 
-            for(let d=new Date(ms); d<=me; d.setDate(d.getDate()+1)){
+            for (let d = new Date(ms); d <= me; d.setDate(d.getDate() + 1)) {
                 const iso = toIso(d);
                 const dow = d.getDay();
                 const segs = map[iso] || [];
+
                 const cell = document.createElement('div');
                 cell.className = 'cell';
 
                 const chipsHtml = segs.length
-                        ? segs.map(s=>{
+                        ? segs.map(s => {
                             const mins = diffMinutes(s.start, s.end);
                             totalMinutes += mins;
                             return `<span class="chip"><span class="dot"></span>${s.start} ~ ${s.end}</span>`;
                         }).join(' ')
                         : '<span class="text-muted small">—</span>';
 
-                const dayMinutes = segs.reduce((acc,s)=> acc + diffMinutes(s.start, s.end), 0);
+                const dayMinutes = segs.reduce(
+                        (acc, s) => acc + diffMinutes(s.start, s.end),
+                        0
+                );
 
                 cell.innerHTML = `
-                <div class="date-head">
-                    <span>${d.getDate()}일</span>
-                    <span class="dow-mini">${DOW_HEAD[dow]}</span>
-                </div>
-                <div class="segments">${chipsHtml}</div>
-                <div class="day-total">${formatMins(dayMinutes)}</div>
-            `;
+                    <div class="date-head">
+                        <span>${d.getDate()}일</span>
+                        <span class="dow-mini">${DOW_HEAD[dow]}</span>
+                    </div>
+                    <div class="segments">${chipsHtml}</div>
+                    <div class="day-total">${formatMins(dayMinutes)}</div>
+                `;
                 calendarGrid.appendChild(cell);
             }
 
@@ -342,66 +412,107 @@
                             : [];
         }
 
-        function pad2(n){ return String(n).padStart(2,'0'); }
-        function toIso(d){ return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`; }
+        function pad2(n){
+            return String(n).padStart(2, '0');
+        }
+
+        function toIso(d){
+            return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+        }
 
         function hmStr(v){
-            if(typeof v === 'string' && /^\d{2}:\d{2}$/.test(v)) return v;
-            if(typeof v === 'string' && /^\d{2}:\d{2}:\d{2}$/.test(v)) return v.slice(0,5);
-            if(v && typeof v === 'object' && 'hour' in v && 'minute' in v) return `${pad2(v.hour)}:${pad2(v.minute)}`;
-            try{
+            if (typeof v === 'string' && /^\d{2}:\d{2}$/.test(v)) return v;
+            if (typeof v === 'string' && /^\d{2}:\d{2}:\d{2}$/.test(v)) return v.slice(0,5);
+
+            if (v && typeof v === 'object' && 'hour' in v && 'minute' in v) {
+                return `${pad2(v.hour)}:${pad2(v.minute)}`;
+            }
+
+            try {
                 const s = String(v);
-                if(/^\d{1,2}:\d{1,2}/.test(s)){
-                    const [h,m] = s.split(':').map(n=>parseInt(n,10));
-                    return `${pad2(h)}:${pad2(m||0)}`;
+                if (/^\d{1,2}:\d{1,2}/.test(s)) {
+                    const [h, m] = s.split(':').map(n => parseInt(n, 10));
+                    return `${pad2(h)}:${pad2(m || 0)}`;
                 }
-            }catch(_){}
+            } catch (_) {}
+
             return '00:00';
         }
 
         function parseHm(hm){
-            if(!hm||typeof hm!=='string') return {h:0,m:0};
-            const [h,m]=hm.split(':').map(n=>parseInt(n,10));
-            return {h:isNaN(h)?0:h, m:isNaN(m)?0:m};
+            if (!hm || typeof hm !== 'string') return {h:0, m:0};
+            const [h, m] = hm.split(':').map(n => parseInt(n, 10));
+            return { h: isNaN(h) ? 0 : h, m: isNaN(m) ? 0 : m };
         }
 
         function isValidRange(start, end){
-            const s=parseHm(start), e=parseHm(end);
-            return (e.h*60+e.m) - (s.h*60+s.m) > 0;
+            const s = parseHm(start);
+            const e = parseHm(end);
+            return (e.h * 60 + e.m) - (s.h * 60 + s.m) > 0;
         }
 
         function diffMinutes(start, end){
-            const s=parseHm(start), e=parseHm(end);
-            return (e.h*60+e.m) - (s.h*60+s.m);
+            const s = parseHm(start);
+            const e = parseHm(end);
+            return (e.h * 60 + e.m) - (s.h * 60 + s.m);
         }
 
         function formatMins(mins){
-            const v = Math.max(0, mins|0);
-            const h=Math.floor(v/60), m=v%60;
-            return m===0?`${h}시간`:`${h}시간 ${m}분`;
+            const v = Math.max(0, mins | 0);
+            const h = Math.floor(v / 60);
+            const m = v % 60;
+            return m === 0 ? `${h}시간` : `${h}시간 ${m}분`;
         }
 
-        function showAlert(msg, type='info'){
-            alertArea.innerHTML = `<div class="alert alert-${type} py-2 px-3" role="alert">${msg}</div>`;
-        }
-        function clearAlert(){ alertArea.innerHTML=''; }
+        // alertArea에 메시지 추가 (X 버튼 + 3초 후 자동 제거)
+        function showAlert(msg, type = 'info'){
+            if (!alertArea) return;
 
-        // ✅ URL ?baseMonth=YYYY-MM-DD → "YYYY-MM" 으로 변환해서 반환
+            const wrapper = document.createElement('div');
+            wrapper.className = `alert alert-${type} alert-dismissible fade show py-2 px-3 mb-1`;
+            wrapper.setAttribute('role', 'alert');
+            wrapper.innerHTML = `
+                <span>${msg}</span>
+                <button type="button" class="btn-close" data-alert-close aria-label="닫기"></button>
+            `;
+
+            alertArea.appendChild(wrapper);
+
+            const closeBtn = wrapper.querySelector('[data-alert-close]');
+            if (closeBtn) {
+                closeBtn.addEventListener('click', () => wrapper.remove());
+            }
+
+            setTimeout(() => {
+                if (wrapper && wrapper.parentNode) {
+                    wrapper.remove();
+                }
+            }, 3000);
+        }
+
+        function clearAlert(){
+            if (!alertArea) return;
+            alertArea.innerHTML = '';
+        }
+
+        // URL ?baseMonth=YYYY-MM-DD → "YYYY-MM"
         function getBaseMonthFromQuery(){
-            try{
+            try {
                 const params = new URLSearchParams(window.location.search);
                 const iso = params.get('baseMonth');
-                if(!iso) return null;
+                if (!iso) return null;
+
                 const m = iso.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-                if(!m) return null;
-                // type="month" 에 맞는 값: "YYYY-MM"
-                return `${m[1]}-${m[2]}`;
-            }catch(e){
+                if (!m) return null;
+
+                return `${m[1]}-${m[2]}`; // type="month" 형식
+            } catch (e) {
                 return null;
             }
         }
 
     })();
 </script>
+
 
 {{>layouts/footer}}
