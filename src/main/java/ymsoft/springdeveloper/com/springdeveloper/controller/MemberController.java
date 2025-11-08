@@ -73,19 +73,6 @@ public class MemberController {
         return "members/list";
     }
 
-//    @GetMapping("/members/realtimedashboard")
-//    public String realtimedashboard(Model model) throws Exception {
-//
-//        List<MemberDto> members = memService.findAll();
-//        log.info("memberList: {}", members);
-//
-//        // 2️⃣ members (뷰용 리스트)
-//        model.addAttribute("members", members);
-//
-//        log.info(objectMapper.writeValueAsString(members));
-//        model.addAttribute("membersJson", objectMapper.writeValueAsString(members));
-//        return "members/realtimedashboard";
-//    }
     @GetMapping("/members/realtimedashboard")
     public String realtimedashboard(Model model) throws Exception {
 

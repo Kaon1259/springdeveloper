@@ -259,7 +259,17 @@
                         return;
                     }
 
-                    const url = `/schedules/generator?memberId=${encodeURIComponent(currentMember.id)}`;
+                    // ✅ 현재 기준 월(첫째날) ISO 문자열 가져오기
+                    const baseMonthIso =
+                            (monthLabel.textContent || '').trim()
+                            || toIso(currentMonthStart);   // 혹시 비어있으면 currentMonthStart 사용
+
+                    // ✅ 기준 월 정보 함께 전달
+                    const url =
+                            `/schedules/generator` +
+                            `?memberId=${encodeURIComponent(currentMember.id)}` +
+                            `&baseMonth=${encodeURIComponent(baseMonthIso)}`;
+
                     // 새 창(팝업)으로 열기
                     window.open(
                             url,
