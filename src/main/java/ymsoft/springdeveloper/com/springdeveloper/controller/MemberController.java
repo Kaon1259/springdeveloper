@@ -14,9 +14,11 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import ymsoft.springdeveloper.com.springdeveloper.dto.MemberDto;
+import ymsoft.springdeveloper.com.springdeveloper.dto.MemberRealtimeDto;
 import ymsoft.springdeveloper.com.springdeveloper.dto.ScheduleGenerateRequest;
 import ymsoft.springdeveloper.com.springdeveloper.dto.ScheduleGenerateResponse;
 import ymsoft.springdeveloper.com.springdeveloper.entity.Member;
+import ymsoft.springdeveloper.com.springdeveloper.entity.WorkSchedule;
 import ymsoft.springdeveloper.com.springdeveloper.service.WorkScheduleService;
 import ymsoft.springdeveloper.com.springdeveloper.service.memberService;
 
@@ -24,6 +26,7 @@ import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Controller
@@ -32,6 +35,9 @@ public class MemberController {
 
     @Autowired
     private memberService memService;
+
+    @Autowired
+    private  WorkScheduleService workScheduleService;
 
     private final ObjectMapper objectMapper; // ✅ 스프링이 모듈 등록된 ObjectMapper를 주입
 
@@ -70,20 +76,58 @@ public class MemberController {
         return "members/list";
     }
 
+//    @GetMapping("/members/realtimedashboard")
+//    public String realtimedashboard(Model model) throws Exception {
+//
+//        List<MemberDto> members = memService.findAll();
+//        log.info("memberList: {}", members);
+//
+//        // 2️⃣ members (뷰용 리스트)
+//        model.addAttribute("members", members);
+//
+//        log.info(objectMapper.writeValueAsString(members));
+//        model.addAttribute("membersJson", objectMapper.writeValueAsString(members));
+//        return "members/realtimedashboard";
+//    }
     @GetMapping("/members/realtimedashboard")
     public String realtimedashboard(Model model) throws Exception {
 
+        // 📆 오늘 날짜
+        LocalDate today = LocalDate.now();
+
+        // 1) 기존처럼 전체 멤버 조회 (MemberDto 사용)
         List<MemberDto> members = memService.findAll();
-        log.info("memberList: {}", members);
 
-        // 2️⃣ members (뷰용 리스트)
-        model.addAttribute("members", members);
+        // 2) 오늘 실제 근무 일정 조회 (WorkSchedule)
+        //   -> WorkScheduleService / Repository에서 가져오도록 가정
+        List<WorkSchedule> todaySchedules = workScheduleService.findByWorkDateWithMember(today);
 
-        log.info(objectMapper.writeValueAsString(members));
-        model.addAttribute("membersJson", objectMapper.writeValueAsString(members));
+        // 3) memberId 기준으로 그룹핑
+        Map<Long, List<WorkSchedule>> wsByMember = todaySchedules.stream()
+                .collect(Collectors.groupingBy(ws -> ws.getMember().getId()));
+
+        // 4) 뷰에 내려줄 DTO로 변환 (JS가 쓰기 쉬운 형태)
+        String dayKey = toDayKey(today); // "MON" / "TUE" ... "SUN"
+
+        List<MemberRealtimeDto> viewMembers = members.stream()
+                .map(m -> MemberRealtimeDto.from(m, wsByMember.getOrDefault(m.getId(), List.of()), dayKey))
+                .collect(Collectors.toList());
+
+        model.addAttribute("members", viewMembers);
+
+        String json = objectMapper.writeValueAsString(viewMembers);
+        log.info("memberRealtime: {}", json);
+        model.addAttribute("membersJson", json);
+
         return "members/realtimedashboard";
     }
 
+    /** LocalDate -> "MON" / "TUE" ... "SUN" */
+    private String toDayKey(LocalDate date) {
+        // java.time.DayOfWeek: MONDAY, TUESDAY ...
+        String name = date.getDayOfWeek().name(); // "FRIDAY"
+        return name.substring(0, 3);             // "FRI"
+    }
     @GetMapping("/members/showworktimedashboard")
     public String showWorkTimeDashboard(
             @RequestParam(required = false)

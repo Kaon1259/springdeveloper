@@ -28,6 +28,10 @@ public class WorkScheduleService {
     private static final LocalTime START_BOUND = LocalTime.of(6, 0);
     private static final LocalTime END_BOUND   = LocalTime.of(22, 0); // exclusive
 
+    public List<WorkSchedule> findByWorkDateWithMember(LocalDate date){
+        return workScheduleRepository.findByWorkDateWithMember(date);
+    }
+
     @Transactional
     public ScheduleDayUpdateResponse upsertDay(ScheduleDayUpdateRequest req) {
         final Long memberId = req.getMemberId();

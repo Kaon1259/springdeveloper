@@ -260,3 +260,33 @@ body {
     background-color: #0d6efd;
     color: #fff;
 }
+
+/* ✅ 현재 시간에 근무 중인 슬롯 깜빡이는 효과 */
+/*.slot-10m.blinking {*/
+/*    animation: blink-green 1s ease-in-out infinite;*/
+/*}*/
+
+/*@keyframes blink-green {*/
+/*    0%, 100% {*/
+/*        background: rgba(25, 135, 84, .25);   !* 연두색 약하게 *!*/
+/*        box-shadow: 0 0 0 0 rgba(25,135,84,.5);*/
+/*    }*/
+/*    50% {*/
+/*        background: rgba(25, 135, 84, .9);    !* 연두색 진하게 *!*/
+/*        box-shadow: 0 0 8px 2px rgba(25,135,84,.8);*/
+/*    }*/
+/*}*/
+.slot-10m.blinking {
+    animation: blink-orange 1s ease-in-out infinite;
+}
+
+@keyframes blink-orange {
+    0%, 100% {
+        background: rgba(255, 159, 10, 0.25);   /* 밝은 주황 */
+        box-shadow: 0 0 0 0 rgba(255, 159, 10, 0.5);
+    }
+    50% {
+        background: rgba(255, 159, 10, 0.9);    /* 진한 주황 */
+        box-shadow: 0 0 8px 2px rgba(255, 159, 10, 0.8);
+    }
+}

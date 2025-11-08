@@ -10,23 +10,48 @@
         <div class="card-body">
             <!-- ====== STICKY: 금일 근무자 나열 ====== -->
             <div id="stickyChips" class="sticky-chips">
-                <div class="d-flex align-items-center justify-content-between mb-2">
-                    <div class="d-flex align-items-center gap-2">
+                <div class="d-flex align-items-center justify-content-between mb-2 flex-wrap gap-2">
+                    <div class="d-flex align-items-center gap-2 flex-wrap">
                         <div class="small text-muted">금일 근무자</div>
-                        <!-- ✅ 등록 버튼 추가 -->
+
+                        <!-- ✅ 실근무시간 등록 버튼 -->
                         <button id="btnRegisterActual" class="btn btn-sm btn-success">
                             실근무시간 등록
                         </button>
+
+                        <!-- ✅ 단위 선택 버튼 그룹 -->
+                        <div class="btn-group btn-group-sm ms-1" role="group" aria-label="슬롯 단위 선택">
+                            <button type="button"
+                                    class="btn btn-outline-secondary"
+                                    data-step-btn
+                                    data-step="10">
+                                10분 단위
+                            </button>
+                            <button type="button"
+                                    class="btn btn-outline-secondary active"
+                                    data-step-btn
+                                    data-step="30">
+                                30분 단위
+                            </button>
+                            <button type="button"
+                                    class="btn btn-outline-secondary"
+                                    data-step-btn
+                                    data-step="60">
+                                60분 단위
+                            </button>
+                        </div>
                     </div>
+
                     <span id="memberCountBadge" class="badge bg-light text-dark">0명</span>
                 </div>
+
                 <!-- ✅ 칩을 절대배치로 놓을 트랙 -->
                 <div id="chipsTrack" class="chips-track">
                     <!-- JS가 칩들을 절대배치로 생성/동기화 -->
                 </div>
             </div>
 
-            <!-- 10분 단위 타임테이블 (동적 컬럼: 금일 근무자 + 맨오른쪽 '시간대 합') -->
+            <!-- 타임테이블 (단위 선택에 따라 10/30/60분 단위로 동적 변경) -->
             <div class="table-responsive" id="ttScroll">
                 <table class="table table-bordered align-middle text-center timetable-10m" id="tt10m">
                     <thead>
@@ -37,13 +62,14 @@
                     </tr>
                     </thead>
                     <tbody id="tt10mBody">
-                    <!-- JS가 06:00~22:00, 10분 간격 행 생성 -->
+                    <!-- JS가 HOUR_START~HOUR_END, 선택 단위 간격으로 행 생성 -->
                     </tbody>
                 </table>
             </div>
 
             <div class="small text-muted mt-2">
-                * 노란색: 계획된 스케줄 / 연두색(진하게): 현재 시각까지 경과한 구간(10분 단위 업데이트) / 오른쪽 '시간대 합'은 해당 시간에 근무 예정 인원 수
+                * 노란색: 계획된 스케줄 / 연두색(진하게): 현재 시각까지 경과한 구간(선택된 단위로 업데이트) /
+                오른쪽 '시간대 합'은 해당 시간에 근무 예정 인원 수
             </div>
         </div>
     </div>
@@ -112,6 +138,18 @@
     .sum-head { width: 100px; }
     .sum-cell { background:#fafafa; font-weight:600; }
     .sum-cell.now-hour { background:#e8f5e9; border-left:2px solid #198754; }
+
+    /* ✅ 현재 시각 + 근무 중 슬롯 주황색 점멸 */
+    .slot-10m.blinking {
+        animation: slotBlink 1s step-start infinite;
+        background: rgba(255, 193, 7, 0.95) !important;
+        border-color: rgba(255, 193, 7, 1) !important;
+    }
+    @keyframes slotBlink {
+        0%   { filter: brightness(1.0); box-shadow: 0 0 0 0 rgba(255,193,7,0.0); }
+        50%  { filter: brightness(1.35); box-shadow: 0 0 0 2px rgba(255,193,7,0.6); }
+        100% { filter: brightness(1.0); box-shadow: 0 0 0 0 rgba(255,193,7,0.0); }
+    }
 </style>
 
 <script id="membersData" type="application/json">
@@ -121,7 +159,7 @@
 <script>
     (function () {
 
-         // 로컬 오늘(타임존 기준) 문자열 반환
+        // 로컬 오늘(타임존 기준) 문자열 반환
         function todayStr() {
             const d = new Date();
             const y = d.getFullYear();
@@ -131,13 +169,14 @@
         }
 
         /** ===== 설정 ===== */
-        const API_ENDPOINT = '/api/schedule/actual-bulk-register'; // ✅ 엔드포인트만 바꿔 쓰세요
-        const now = new Date();
-        const TARGET_DATE_STR = todayStr(); // ✅ UTC ISO 대신 로컬 오늘 사용
+        const API_ENDPOINT = '/api/schedule/actual-bulk-register';
+        const TARGET_DATE_STR = todayStr();
         const HOUR_START = 6, HOUR_END = 22;
-        const STEP_MIN = 10;
-        const SLOTS_PER_HOUR = 60 / STEP_MIN;
-        const TOTAL_ROWS = (HOUR_END - HOUR_START) * SLOTS_PER_HOUR;
+
+        // ✅ 기본 단위: 30분
+        let STEP_MIN = 30;
+        let SLOTS_PER_HOUR = 60 / STEP_MIN;
+        let TOTAL_ROWS = (HOUR_END - HOUR_START) * SLOTS_PER_HOUR;
 
         /** ===== DOM ===== */
         const nowClock = document.getElementById('nowClock');
@@ -147,7 +186,8 @@
         const headRow = document.getElementById('tt10mHead');
         const bodyEl = document.getElementById('tt10mBody');
         const scrollBox = document.getElementById('ttScroll');
-        const btnRegisterActual = document.getElementById('btnRegisterActual'); // ✅
+        const btnRegisterActual = document.getElementById('btnRegisterActual');
+        const stepButtons = document.querySelectorAll('[data-step-btn]'); // ✅ 단위 선택 버튼들
 
         /** ===== 데이터 ===== */
         let allMembers = [];
@@ -157,13 +197,8 @@
         const targetDate = new Date(`${TARGET_DATE_STR}T00:00:00`);
         const DAY_KEY = dayKeyOf(targetDate);
 
-        //const todayMembers = (allMembers || []).filter(m => getSchedules(m).some(s => s.day === DAY_KEY))
-
-                // ✅ '오늘(dayKey)이 하나라도 있으면' 금일 근무자로 취급
-        //    (현재/이후 시간대에 남은 스케줄이 없어도 포함)
-        const todayMembers = (allMembers || []).filter(m =>
-                getSchedules(m).some(s => s.day === DAY_KEY)
-                )
+        const todayMembers = (allMembers || [])
+                .filter(m => getSchedules(m).some(s => s.day === DAY_KEY))
                 .sort((a,b) => (a.name||'').localeCompare(b.name||'', 'ko'));
 
         const colorMap = {};
@@ -178,12 +213,12 @@
         window.addEventListener('resize', computeStickyOffset);
         window.addEventListener('scroll', toggleStickyShadow, { passive: true });
 
+        // 초기 렌더
         renderNow();
         renderChips(todayMembers);
         renderTableHeader(todayMembers);
         renderTableBody();
         paintPlanned(todayMembers);
-
         updateDoneColors(todayMembers);
         highlightHourSum();
         scrollToNowRow({ smooth: true });
@@ -193,14 +228,40 @@
         window.addEventListener('resize', syncChipsToColumns);
         window.addEventListener('load', syncChipsToColumns);
 
-        // ✅ 버튼 활성/비활성
         btnRegisterActual.disabled = todayMembers.length === 0;
 
+        // ✅ 단위 선택 버튼 이벤트
+        stepButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const newStep = parseInt(btn.dataset.step, 10);
+                if (!newStep || newStep === STEP_MIN) {
+                    // 그래도 active 표시만 정리
+                    stepButtons.forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    return;
+                }
+
+                STEP_MIN = newStep;
+                SLOTS_PER_HOUR = 60 / STEP_MIN;
+                TOTAL_ROWS = (HOUR_END - HOUR_START) * SLOTS_PER_HOUR;
+
+                // active 토글
+                stepButtons.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+
+                // 테이블 재렌더
+                renderTableBody();
+                paintPlanned(todayMembers);
+                updateDoneColors(todayMembers);
+                highlightHourSum();
+                syncChipsToColumns();
+                scrollToNowRow({ smooth: true });   // ✅ 단위 변경 후에도 현재 시간 위치로 이동
+            });
+        });
 
         /** 안전한 HM 변환 (필요 시 기존 함수 사용) */
         function safeIndexToHM(idx) {
             if (typeof indexToHM === 'function') return indexToHM(idx);
-            // 아래 상수는 페이지 상단에 이미 선언되어 있을 것: HOUR_START, STEP_MIN
             const totalMin = (HOUR_START * 60) + idx * STEP_MIN;
             const hh = String(Math.floor(totalMin / 60)).padStart(2,'0');
             const mm = String(totalMin % 60).padStart(2,'0');
@@ -214,11 +275,9 @@
             const confirmMsg = '현재까지의 실제 근무(연두색) 구간을 서버에 등록하시겠습니까?';
             if (!confirm(confirmMsg)) return;
 
-            // 멤버별 done 인덱스를 연속 구간으로 압축 → [{start,end}]
             const items = todayMembers.map(m => {
-                const doneIdx = collectDoneIndexesForMember(m.id);     // 이미 존재하는 유틸 가정
-                const ranges = compressIndexesToRanges(doneIdx);       // 이미 존재하는 유틸 가정
-                // [a,b]는 a~b 인덱스 포함. 끝시각은 (b+1) 슬롯의 시작(HM).
+                const doneIdx = collectDoneIndexesForMember(m.id);
+                const ranges = compressIndexesToRanges(doneIdx);
                 const segments = ranges.map(([a, b]) => ({
                     start: safeIndexToHM(a),
                     end:   safeIndexToHM(b + 1)
@@ -230,14 +289,10 @@
                 return alert('등록할 실제 근무 구간(연두색)이 없습니다.');
             }
 
-            // 서버 DTO(ActualWorkScheduleBulkDto) 규격에 맞춘 payload
             const payload = {
-                date: todayStr(),     // 기존 고정값(TARGET_DATE_STR) 대신 오늘 날짜 사용
-                segments: items       // [{ memberId, segments:[{start,end}] }, ...]
+                date: todayStr(),
+                segments: items
             };
-
-            // 디버그 프리뷰
-            alert(`전송 데이터 미리보기:\n${JSON.stringify(payload, null, 2)}`);
 
             try {
                 const res = await fetch(API_ENDPOINT, {
@@ -300,7 +355,9 @@
             });
         }
         function renderTableHeader(members) {
-            const memberHeads = members.map(m => `<th data-member-id="${String(m.id)}">${escapeHtml(m.name || '-')}</th>`).join('');
+            const memberHeads = members
+                    .map(m => `<th data-member-id="${String(m.id)}">${escapeHtml(m.name || '-')}</th>`)
+                    .join('');
             const sumHead = `<th class="sum-head">시간대 합</th>`;
             headRow.innerHTML = `<th style="width:80px;">시간</th>${memberHeads}${sumHead}`;
         }
@@ -309,7 +366,11 @@
             for (let i = 0; i < TOTAL_ROWS; i++) {
                 const tMin = HOUR_START * 60 + i * STEP_MIN;
                 const h = Math.floor(tMin / 60), m = tMin % 60;
-                const label = (m % 30 === 0) ? `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}` : '';
+                // ✅ 매 시 정각에만 label 표시
+                const label = (m === 0)
+                        ? `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`
+                        : '';
+
                 let row = `
         <tr data-row-index="${i}">
           <th class="timecell">${label}</th>
@@ -325,14 +386,32 @@
             bodyEl.innerHTML = rows.join('');
         }
         function paintPlanned(members) {
+            // 현재 테이블에 있는 모든 슬롯 기준으로,
+            // 각 멤버의 일정이 "슬롯 시간대와 1분이라도 겹치면" planned 처리
             members.forEach(m => {
                 const segs = getSchedules(m).filter(s => s.day === DAY_KEY);
                 if (!segs.length) return;
+
                 const slots = bodyEl.querySelectorAll(`td[data-member-id="${String(m.id)}"] .slot-10m`);
+                if (!slots.length) return;
+
                 segs.forEach(s => {
-                    const sIdx = hmToIndex(s.start), eIdx = hmToIndex(s.end);
-                    for (let i = Math.max(0, sIdx); i < Math.min(TOTAL_ROWS, eIdx); i++) {
-                        slots[i]?.classList.add('planned');
+                    const st = parseHm(s.start);
+                    const ed = parseHm(s.end);
+                    const stMin = st.h * 60 + st.m;
+                    const edMin = ed.h * 60 + ed.m;
+
+                    for (let i = 0; i < slots.length; i++) {
+                        const slotStartMin = HOUR_START * 60 + i * STEP_MIN;
+                        const slotEndMin   = slotStartMin + STEP_MIN;
+
+                        const overlap = Math.max(
+                                0,
+                                Math.min(edMin, slotEndMin) - Math.max(stMin, slotStartMin)
+                        );
+                        if (overlap > 0) {
+                            slots[i].classList.add('planned');
+                        }
                     }
                 });
             });
@@ -349,6 +428,7 @@
                 });
             });
             highlightNowRow();
+            updateBlinkingSlots(currentIndex);   // ✅ 현재 시각 행 주황색 점멸 처리
         }
         function highlightNowRow() {
             bodyEl.querySelectorAll('.now-row').forEach(tr => tr.classList.remove('now-row'));
@@ -363,14 +443,38 @@
             const sumTd = bodyEl.querySelector(`.sum-cell[data-hour="${h}"]`);
             if (sumTd) sumTd.classList.add('now-hour');
         }
+
+        // ✅ 현재 시각이 있는 행이 화면 상단 근처로 오도록 스크롤
         function scrollToNowRow({ smooth = false } = {}) {
             const idx = indexFromNow();
             const row = bodyEl.querySelector(`tr[data-row-index="${idx}"]`);
             if (!row) return;
+
+            // ✅ 페이지(문서 스크롤)를 현재 시각 행 기준으로 이동
             if (!didAutoScrollOnce || smooth) {
-                row.scrollIntoView({ block: 'center', behavior: smooth ? 'smooth' : 'auto' });
+                row.scrollIntoView({
+                    block: 'center',         // 화면 중앙 근처로 위치
+                    behavior: smooth ? 'smooth' : 'auto'
+                });
                 didAutoScrollOnce = true;
             }
+        }
+
+        function updateBlinkingSlots(currentIndex) {
+            // 이전에 깜빡이던 모든 슬롯 초기화
+            bodyEl.querySelectorAll('.slot-10m.blinking')
+                    .forEach(el => el.classList.remove('blinking'));
+
+            // 현재 인덱스 행 찾기
+            const row = bodyEl.querySelector(`tr[data-row-index="${currentIndex}"]`);
+            if (!row) return;
+
+            // 해당 행에서 "근무 중(=planned)"인 슬롯에만 blinking 적용
+            row.querySelectorAll('.slot-10m').forEach(el => {
+                if (el.classList.contains('planned')) {
+                    el.classList.add('blinking');
+                }
+            });
         }
 
         /** ===== 칩-컬럼 동기화 ===== */
@@ -480,7 +584,12 @@
         }
         function escapeHtml(s) {
             if (s == null) return '';
-            return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+            return String(s)
+                    .replace(/&/g,'&amp;')
+                    .replace(/</g,'&lt;')
+                    .replace(/>/g,'&gt;')
+                    .replace(/"/g,'&quot;')
+                    .replace(/'/g,'&#39;');
         }
         function colorForMember(m) {
             const key = (m.id != null ? String(m.id) : (m.name || 'x'));

@@ -1,6 +1,8 @@
 package ymsoft.springdeveloper.com.springdeveloper.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import ymsoft.springdeveloper.com.springdeveloper.entity.WorkSchedule;
 
 import java.time.LocalDate;
@@ -18,5 +20,13 @@ public interface WorkScheduleRepository extends JpaRepository<WorkSchedule, Long
     List<WorkSchedule> findByMemberIdAndWorkDate(Long memberId, LocalDate workDate);
 
     void deleteByMemberIdAndWorkDate(Long memberId, LocalDate workDate);
+
+    @Query("""
+        select ws
+        from WorkSchedule ws
+        join fetch ws.member m
+        where ws.workDate = :date
+        """)
+    List<WorkSchedule> findByWorkDateWithMember(@Param("date") LocalDate date);
 }
 
