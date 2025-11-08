@@ -2,7 +2,7 @@
 
 <main class="container my-4">
     <div class="row g-3">
-        <!-- ============ 왼쪽: 상태 선택 + 알바생 리스트(색 점) + 정보 패널 ============ -->
+        <!-- ============ 왼쪽: 상태 선택 + 알바생 리스트(색 점) ============ -->
         <div class="col-12 col-lg-5">
             <div class="d-grid gap-3 sticky-lg-top" style="top:12px;">
 
@@ -43,45 +43,7 @@
                     </div>
                 </div>
 
-                <!-- (선택) 알바생 정보 패널 -->
-                <div class="card">
-                    <div class="card-header fw-bold d-flex justify-content-between align-items-center">
-                        <span>아르바이트 정보</span>
-                        <span id="statusBadge" class="badge bg-secondary">-</span>
-                    </div>
-                    <div class="card-body">
-                        <div class="row gy-2">
-                            <div class="col-6">
-                                <div class="text-muted">이름</div>
-                                <div id="infoName" class="fw-semibold">-</div>
-                            </div>
-                            <div class="col-6">
-                                <div class="text-muted">성별</div>
-                                <div id="infoGender" class="fw-semibold">-</div>
-                            </div>
-                            <div class="col-6">
-                                <div class="text-muted">전화번호</div>
-                                <div id="infoPhone" class="fw-semibold">-</div>
-                            </div>
-                            <div class="col-6">
-                                <div class="text-muted">이메일</div>
-                                <div id="infoEmail" class="fw-semibold">-</div>
-                            </div>
-                            <div class="col-6">
-                                <div class="text-muted">시작일</div>
-                                <div id="infoStartDate" class="fw-semibold">-</div>
-                            </div>
-                            <div class="col-6">
-                                <div class="text-muted">보건증</div>
-                                <div id="infoHealth" class="fw-semibold">-</div>
-                            </div>
-                            <div class="col-12">
-                                <div class="text-muted">시급(원)</div>
-                                <div id="infoHourlyWage" class="fw-semibold">-</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                <!-- 좌측 "아르바이트 정보" 카드는 제거 -->
 
             </div>
         </div>
@@ -141,10 +103,18 @@
         display:flex; align-items:center; justify-content:space-between;
         gap:8px; padding:8px 10px; border-radius:10px; background:#fff;
         border:1px solid #eee; margin-bottom:6px; cursor:pointer;
+        transition: background .15s, border-color .15s, box-shadow .15s;
     }
     .member-chip:hover { background:#f8f9fa; }
     .member-chip .left { display:inline-flex; align-items:center; gap:8px; }
     .dot { width:12px; height:12px; border-radius:50%; border:1px solid rgba(0,0,0,.08); }
+
+    /* 선택된 멤버 하이라이트 */
+    .member-chip.active {
+        border-color: rgba(13,110,253,.45);
+        box-shadow: 0 0 0 3px rgba(13,110,253,.15) inset;
+        background:#f0f6ff;
+    }
 </style>
 
 <!-- 컨트롤러에서 내려준 JSON: membersJson (없으면 빈 배열) -->
@@ -154,23 +124,14 @@
 
 <script>
     (function(){
-        /* ===== DOM ===== */
+        /* ===== 상수 ===== */
         const HOUR_START=6,HOUR_END=22,STEP_MIN=10,SLOTS_PER_HOUR=6;
 
+        /* ===== DOM ===== */
         // 좌측
         const statusSelect = document.getElementById('statusSelect');
         const memberList = document.getElementById('memberList');
         const memberCountBadge = document.getElementById('memberCountBadge');
-
-        // 좌측 정보 패널
-        const statusBadge  = document.getElementById('statusBadge');
-        const infoName = document.getElementById('infoName');
-        const infoGender = document.getElementById('infoGender');
-        const infoPhone = document.getElementById('infoPhone');
-        const infoEmail = document.getElementById('infoEmail');
-        const infoStartDate = document.getElementById('infoStartDate');
-        const infoHealth = document.getElementById('infoHealth');
-        const infoHourlyWage = document.getElementById('infoHourlyWage');
 
         // 우측
         const tbody10m=document.getElementById('tbody10m');
@@ -182,11 +143,23 @@
 
         /* ===== 데이터 ===== */
         let allMembers=[];
-        try{ allMembers=JSON.parse(document.getElementById('membersData').textContent||'[]'); }catch(e){ allMembers=[]; }
+        try{
+            allMembers=JSON.parse(document.getElementById('membersData').textContent||'[]');
+        }catch(e){
+            allMembers=[];
+        }
 
         /* ===== 상태 ===== */
         let selectedMemberId=null;
         let dragging=false,dragSelecting=true;
+
+        /* ===== 전역 mouseup 핸들러 (중복 등록 방지) ===== */
+        window.addEventListener('mouseup', () => {
+            if(dragging){
+                dragging = false;
+                updateActualSummary();
+            }
+        });
 
         /* ===== 초기 상태값 보정 & 초기 렌더 ===== */
         if(Array.isArray(allMembers) && allMembers.length>0){
@@ -202,10 +175,12 @@
             const status = statusSelect.value;
             const filtered = (allMembers||[]).filter(m=>m.status===status);
             renderMemberList(filtered);
+
             if(filtered.length){
-                pickMember(filtered[0]); // 첫 멤버 자동 선택
+                // 이전에 선택한 멤버가 이 status에도 있으면 유지, 없으면 첫 번째
+                const keep = filtered.find(m => String(m.id) === String(selectedMemberId)) || filtered[0];
+                pickMember(keep);
             }else{
-                clearInfo();
                 resetRightPanel();
             }
         }
@@ -237,7 +212,7 @@
           </button>
         `;
 
-                        // 항목 클릭 → 선택/우측 갱신
+                        // 항목 전체 클릭 → 우측 타임테이블 갱신
                         li.addEventListener('click', ()=> pickMember(m) );
                         memberList.appendChild(li);
                     });
@@ -248,6 +223,11 @@
                 li.textContent='해당 상태의 알바생이 없습니다.';
                 memberList.appendChild(li);
             }
+
+            // 현재 선택된 멤버에 대해 active 표시 갱신
+            Array.from(memberList.querySelectorAll('.member-chip')).forEach(li=>{
+                li.classList.toggle('active', li.dataset.memberId === String(selectedMemberId));
+            });
         }
 
         // 상세보기 버튼(우측) 클릭 → /members/{id}/edit 이동
@@ -260,22 +240,40 @@
             window.location.assign(`/members/${encodeURIComponent(id)}/edit`);
         }
 
-        /* ===== 멤버 선택 → 우측 빌드 & 기존 실제 데이터 하이드레이트 ===== */
+        /* ===== 멤버 선택 → 스케줄 fetch → 실제 fetch ===== */
         function pickMember(m){
-            selectedMemberId=m.id;
-            renderMemberInfo(m);
+            if(!m) return;
+            selectedMemberId = m.id;
+
+            // 좌측 리스트에서 선택된 멤버만 하이라이트
+            Array.from(memberList.querySelectorAll('.member-chip')).forEach(li => {
+                li.classList.toggle('active', li.dataset.memberId === String(selectedMemberId));
+            });
+
             selectedMemberTitle.textContent=`${m.name} — 금일 타임테이블`;
-            buildTenMinuteTableFor(m);
+
+            // 1) 테이블 뼈대 먼저 생성 (스케줄/실제 모두 비어있음)
+            buildTenMinuteTable();
 
             const date=fmtDateYYYYMMDD(new Date());
-            fetch(`/api/schedule/${m.id}/${date}`)
-                    .then(res=>res.ok?res.json():null)
+
+            // 2) 스케줄(주황) 먼저 로딩
+            fetch(`/api/schedule/work/${m.id}/${date}`)
+                    .then(res=>res && res.ok ? res.json() : null)
                     .then(data=>{
-                        if(!data) return;
-                        if(Array.isArray(data.segments) && data.segments.length){
-                            applyActualSegments(data.segments);
+                        if(data && Array.isArray(data.segments) && data.segments.length){
+                            applyScheduleSegments(data.segments);   // 스케줄 칸에 반영
                         }
-                    }).catch(console.error);
+                        // 3) 이어서 실제(초록) 로딩
+                        return fetch(`/api/schedule/${m.id}/${date}`);
+                    })
+                    .then(res=>res && res.ok ? res.json() : null)
+                    .then(data=>{
+                        if(data && Array.isArray(data.segments) && data.segments.length){
+                            applyActualSegments(data.segments);      // 실제 칸에 반영
+                        }
+                    })
+                    .catch(console.error);
 
             btnClearActual.disabled=false;
             btnSelectAllActual.disabled=false;
@@ -298,42 +296,8 @@
             btnSaveActual.onclick=saveActual;
         }
 
-        /* ===== 좌측 정보 패널 ===== */
-        function renderMemberInfo(m){
-            infoName.textContent = m.name ?? '-';
-            infoGender.textContent = m.gender ?? '-';
-            infoPhone.textContent = m.phone ?? '-';
-            infoEmail.textContent = m.email ?? '-';
-            infoStartDate.textContent = m.startDate ?? '-';
-            infoHealth.textContent = m.hasHealthCertificate
-                    ? (m.healthCertExpiry ? `보유 (유효기간: ${m.healthCertExpiry})` : '보유')
-                    : '미보유';
-            infoHourlyWage.textContent =
-                    (typeof m.hourlyWage === 'number')
-                            ? new Intl.NumberFormat('ko-KR',{style:'currency',currency:'KRW',maximumFractionDigits:0}).format(m.hourlyWage)
-                            : '-';
-
-            const badgeMap = {
-                WORKING:'bg-success', WAITING:'bg-secondary', RESTING:'bg-info',
-                PAUSED:'bg-warning', RESIGNED:'bg-danger'
-            };
-            statusBadge.textContent = m.status || '-';
-            statusBadge.className = `badge ${badgeMap[m.status] || 'bg-secondary'}`;
-        }
-        function clearInfo(){
-            statusBadge.textContent='-';
-            statusBadge.className='badge bg-secondary';
-            infoName.textContent='-';
-            infoGender.textContent='-';
-            infoPhone.textContent='-';
-            infoEmail.textContent='-';
-            infoStartDate.textContent='-';
-            infoHealth.textContent='-';
-            infoHourlyWage.textContent='-';
-        }
-
-        /* ===== 우측: 10분 타임테이블 ===== */
-        function buildTenMinuteTableFor(member){
+        /* ===== 우측: 10분 타임테이블 (비어있는 상태로만 생성) ===== */
+        function buildTenMinuteTable(){
             tbody10m.innerHTML='';
             const slots=[];
             for(let h=HOUR_START;h<HOUR_END;h++){
@@ -341,15 +305,13 @@
                     slots.push({h,m,hm:`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`});
                 }
             }
-            const todayKey=dayKeyOf(new Date());
-            const segs=getSchedules(member).filter(s=>s.day===todayKey);
 
             for(let i=0;i<slots.length;i++){
                 const slot=slots[i];
                 const tr=document.createElement('tr');
                 tr.innerHTML=`
         <td class="timecell">${slot.hm}</td>
-        <td><div class="slot-10m schedule ${segs.some(s=>slotInside(slot.hm,s.start,s.end))?'on':''}"></div></td>
+        <td><div class="slot-10m schedule"></div></td>
         <td><div class="slot-10m actual" data-index="${i}"></div></td>
       `;
                 if(slot.m===0){
@@ -362,7 +324,7 @@
                 tbody10m.appendChild(tr);
             }
 
-            // 드래그 선택
+            // 드래그 선택: 실제 슬롯에만 적용
             const actualSlots=Array.from(tbody10m.querySelectorAll('.slot-10m.actual'));
             actualSlots.forEach(div=>{
                 div.addEventListener('mousedown',e=>{
@@ -372,7 +334,6 @@
                 });
                 div.addEventListener('mouseenter',()=>{ if(dragging) toggleActual(div,dragSelecting); });
             });
-            window.addEventListener('mouseup',()=>{ dragging=false; updateActualSummary(); });
 
             // 시간 단위 토글
             tbody10m.querySelectorAll('.hour-toggle').forEach(btn=>{
@@ -380,8 +341,12 @@
                     const h=parseInt(btn.dataset.hour);
                     const s=(h-HOUR_START)*SLOTS_PER_HOUR, e=s+SLOTS_PER_HOUR;
                     let allOn=true;
-                    for(let i=s;i<e;i++){ if(!actualSlots[i].classList.contains('on')){ allOn=false; break; } }
-                    for(let i=s;i<e;i++){ allOn?actualSlots[i].classList.remove('on'):actualSlots[i].classList.add('on'); }
+                    for(let i=s;i<e;i++){
+                        if(!actualSlots[i].classList.contains('on')){ allOn=false; break; }
+                    }
+                    for(let i=s;i<e;i++){
+                        allOn?actualSlots[i].classList.remove('on'):actualSlots[i].classList.add('on');
+                    }
                     updateActualSummary();
                 });
             });
@@ -389,6 +354,21 @@
             updateActualSummary();
         }
 
+        /* ===== 스케줄/실제 반영 ===== */
+
+        // 스케줄(주황) 적용
+        function applyScheduleSegments(segments){
+            const scheduleSlots = Array.from(tbody10m.querySelectorAll('.slot-10m.schedule'));
+            segments.forEach(seg=>{
+                const s=hmToMin(seg.start), e=hmToMin(seg.end);
+                scheduleSlots.forEach((d,i)=>{
+                    const t=hmToMin(indexToHM(i));
+                    if(t>=s && t<e) d.classList.add('on');
+                });
+            });
+        }
+
+        // 실제(초록) 적용
         function applyActualSegments(segments){
             const slots=Array.from(tbody10m.querySelectorAll('.slot-10m.actual'));
             segments.forEach(seg=>{
@@ -402,18 +382,25 @@
         }
 
         function saveActual(){
-            if(!selectedMemberId){ alert('알바생을 선택하세요.'); return; }
+            if(!selectedMemberId){
+                alert('알바생을 선택하세요.');
+                return;
+            }
             const ranges=getSelectedRanges();
             const payload={memberId:selectedMemberId,date:fmtDateYYYYMMDD(new Date()),segments:ranges};
             if(!confirm('실제 근무한 구간을 저장하시겠습니까?')) return;
 
             fetch('/api/schedule/save',{
-                method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)
-            }).then(r=>r.json())
+                method:'POST',
+                headers:{'Content-Type':'application/json'},
+                body:JSON.stringify(payload)
+            })
+                    .then(r=>r.json())
                     .then(result=>{
                         if(result.success) alert('✅ 저장 성공!');
                         else alert('⚠️ 실패: '+(result.message||'오류'));
-                    }).catch(()=>alert('❌ 저장 중 오류'));
+                    })
+                    .catch(()=>alert('❌ 저장 중 오류'));
         }
 
         function resetRightPanel(){
@@ -424,27 +411,51 @@
             btnSelectAllActual.disabled=true;
             btnSaveActual.disabled=true;
             actualSummary.textContent='-';
+
+            // 좌측 active도 모두 제거
+            Array.from(memberList.querySelectorAll('.member-chip')).forEach(li=>{
+                li.classList.remove('active');
+            });
         }
 
         /* ===== 유틸 ===== */
         function toggleActual(div,on){ on?div.classList.add('on'):div.classList.remove('on'); }
-        function getSchedules(m){ return m.schedules||m.schedule||[]; }
+        function getSchedules(m){ return m.schedules||m.schedule||[]; } // 지금은 안 쓰지만 남겨둠
         function dayKeyOf(d){ return ['SUN','MON','TUE','WED','THU','FRI','SAT'][d.getDay()]; }
         function hmToMin(hm){ const[a,b]=hm.split(':').map(Number); return a*60+b; }
-        function indexToHM(i){ const t=(HOUR_START*60)+i*STEP_MIN; return `${String(Math.floor(t/60)).padStart(2,'0')}:${String(t%60).padStart(2,'0')}`; }
-        function slotInside(hm,s,e){ const t=hmToMin(hm),ss=hmToMin(s),ee=hmToMin(e); return t>=ss && t<ee; }
+        function indexToHM(i){
+            const t=(HOUR_START*60)+i*STEP_MIN;
+            return `${String(Math.floor(t/60)).padStart(2,'0')}:${String(t%60).padStart(2,'0')}`;
+        }
+        function slotInside(hm,s,e){
+            if(!s||!e) return false;
+            const t=hmToMin(hm),ss=hmToMin(s),ee=hmToMin(e);
+            return t>=ss && t<ee;
+        }
         function getSelectedRanges(){
             const s=Array.from(tbody10m.querySelectorAll('.slot-10m.actual'));
             const idx=s.map((d,i)=>d.classList.contains('on')?i:null).filter(i=>i!=null);
             if(!idx.length) return [];
             const r=[]; let a=idx[0], p=idx[0];
-            for(let i=1;i<idx.length;i++){ if(idx[i]===p+1) p=idx[i]; else { r.push([a,p]); a=idx[i]; p=idx[i]; } }
+            for(let i=1;i<idx.length;i++){
+                if(idx[i]===p+1) p=idx[i];
+                else { r.push([a,p]); a=idx[i]; p=idx[i]; }
+            }
             r.push([a,p]);
             return r.map(([a,b])=>({start:indexToHM(a), end:addMinutes(indexToHM(b),STEP_MIN)}));
         }
-        function addMinutes(hm,mins){ const[h,m]=hm.split(':').map(Number); const t=h*60+m+mins; return `${String(Math.floor(t/60)).padStart(2,'0')}:${String(t%60).padStart(2,'0')}`; }
-        function updateActualSummary(){ const s=getSelectedRanges(); actualSummary.textContent = s.length ? s.map(r=>`${r.start}~${r.end}`).join(', ') : '-'; }
-        function fmtDateYYYYMMDD(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+        function addMinutes(hm,mins){
+            const[h,m]=hm.split(':').map(Number);
+            const t=h*60+m+mins;
+            return `${String(Math.floor(t/60)).padStart(2,'0')}:${String(t%60).padStart(2,'0')}`;
+        }
+        function updateActualSummary(){
+            const s=getSelectedRanges();
+            actualSummary.textContent = s.length ? s.map(r=>`${r.start}~${r.end}`).join(', ') : '-';
+        }
+        function fmtDateYYYYMMDD(d){
+            return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+        }
 
         // 색상/문자 유틸 (안정적 색상)
         function colorForMember(m){
@@ -452,12 +463,30 @@
             const h = seededHash(key) % 360, s=65, l=55;
             return hslToHex(h,s,l);
         }
-        function seededHash(str){ let h=2166136261>>>0; for(let i=0;i<str.length;i++){ h^=str.charCodeAt(i); h=(h*16777619)>>>0; } return h>>>0; }
-        function hslToHex(h,s,l){ s/=100; l/=100; const k=n=>(n+h/30)%12, a=s*Math.min(l,1-l);
+        function seededHash(str){
+            let h=2166136261>>>0;
+            for(let i=0;i<str.length;i++){
+                h^=str.charCodeAt(i);
+                h=(h*16777619)>>>0;
+            }
+            return h>>>0;
+        }
+        function hslToHex(h,s,l){
+            s/=100; l/=100;
+            const k=n=>(n+h/30)%12, a=s*Math.min(l,1-l);
             const f=n=>l-a*Math.max(-1,Math.min(k(n)-3,Math.min(9-k(n),1)));
             const toHex=x=>Math.round(255*x).toString(16).padStart(2,'0');
-            return `#${toHex(f(0))}${toHex(f(8))}${toHex(f(4))}`; }
-        function escapeHtml(s){ if(s==null) return ''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+            return `#${toHex(f(0))}${toHex(f(8))}${toHex(f(4))}`;
+        }
+        function escapeHtml(s){
+            if(s==null) return '';
+            return String(s)
+                    .replace(/&/g,'&amp;')
+                    .replace(/</g,'&lt;')
+                    .replace(/>/g,'&gt;')
+                    .replace(/"/g,'&quot;')
+                    .replace(/'/g,'&#39;');
+        }
 
     })();
 </script>

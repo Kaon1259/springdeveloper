@@ -290,3 +290,17 @@ body {
         box-shadow: 0 0 8px 2px rgba(255, 159, 10, 0.8);
     }
 }
+
+
+.member-chip.active {
+    border-color: rgba(13,110,253,.45);
+    box-shadow: 0 0 0 3px rgba(13,110,253,.15) inset;
+    background: #f0f6ff;
+    color: #212529; /* 글씨색 고정 (기본 텍스트 색상) */
+}
+
+.member-chip.active .fw-semibold,
+.member-chip.active .text-muted,
+.member-chip.active small {
+    color: #212529 !important; /* 내부 텍스트도 모두 기본색 유지 */
+}

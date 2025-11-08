@@ -9,10 +9,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ymsoft.springdeveloper.com.springdeveloper.dto.*;
 import ymsoft.springdeveloper.com.springdeveloper.entity.ActualWorkSchedule;
+import ymsoft.springdeveloper.com.springdeveloper.entity.WorkSchedule;
 import ymsoft.springdeveloper.com.springdeveloper.service.ActualWorkScheduleService;
 import ymsoft.springdeveloper.com.springdeveloper.service.WorkScheduleService;
 
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -40,6 +42,57 @@ public class WorkScheduleController {
         ScheduleDayUpdateResponse res = workScheduleService.upsertDay(request);
         return ResponseEntity.ok(res);
     }
+
+    @GetMapping("/{memberId}/{date}")
+    public ResponseEntity<Map<String, Object>> getWorkSchedule(
+            @PathVariable Long memberId,
+            @PathVariable String date
+    ) {
+        LocalDate workDate = LocalDate.parse(date);
+        log.info("GET /api/schedule/{}/{}", memberId, date);
+
+        // ✅ 서비스에서 List<WorkSchedule> 받아오기
+        List<WorkSchedule> schedules = workScheduleService.getSchedulesByMemberAndDate(memberId, workDate);
+
+        // 데이터 없을 때
+        if (schedules == null || schedules.isEmpty()) {
+            Map<String, Object> res = new HashMap<>();
+            res.put("success", false);
+            res.put("message", "해당일 근무 데이터 없음");
+            res.put("memberId", memberId);
+            res.put("date", workDate.toString());
+            res.put("segments", Collections.emptyList());
+            res.put("totalMinutes", 0);
+            return ResponseEntity.ok(res);
+        }
+
+        // ✅ segments: [{start:"HH:mm", end:"HH:mm"}] 리스트로 만들기
+        DateTimeFormatter timeFmt = DateTimeFormatter.ofPattern("HH:mm");
+
+        List<Map<String, String>> segments = schedules.stream()
+                .map(ws -> {
+                    Map<String, String> seg = new HashMap<>();
+                    seg.put("start", ws.getStart().format(timeFmt));
+                    seg.put("end", ws.getEnd().format(timeFmt));
+                    return seg;
+                })
+                .toList();
+
+        // ✅ 총 근무 시간(분) 합계
+        int totalMinutes = schedules.stream()
+                .mapToInt(WorkSchedule::getMinutes)
+                .sum();
+
+        Map<String, Object> res = new HashMap<>();
+        res.put("success", true);
+        res.put("memberId", memberId);
+        res.put("date", workDate.toString());
+        res.put("segments", segments);
+        res.put("totalMinutes", totalMinutes);
+
+        return ResponseEntity.ok(res);
+    }
+
 
     @GetMapping("/{memberId}/{start}/{end}")
     public ResponseEntity<ScheduleRangeResponse> getWork(

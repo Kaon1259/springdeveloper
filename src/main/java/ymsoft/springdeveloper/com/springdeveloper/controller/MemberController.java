@@ -6,7 +6,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.util.StringUtils;
@@ -15,8 +14,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import ymsoft.springdeveloper.com.springdeveloper.dto.MemberDto;
 import ymsoft.springdeveloper.com.springdeveloper.dto.MemberRealtimeDto;
-import ymsoft.springdeveloper.com.springdeveloper.dto.ScheduleGenerateRequest;
-import ymsoft.springdeveloper.com.springdeveloper.dto.ScheduleGenerateResponse;
 import ymsoft.springdeveloper.com.springdeveloper.entity.Member;
 import ymsoft.springdeveloper.com.springdeveloper.entity.WorkSchedule;
 import ymsoft.springdeveloper.com.springdeveloper.service.WorkScheduleService;
@@ -92,6 +89,7 @@ public class MemberController {
     @GetMapping("/members/realtimedashboard")
     public String realtimedashboard(Model model) throws Exception {
 
+        log.info("realtimedashboard");
         // 📆 오늘 날짜
         LocalDate today = LocalDate.now();
 
