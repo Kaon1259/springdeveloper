@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.util.StringUtils;
@@ -13,7 +14,10 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import ymsoft.springdeveloper.com.springdeveloper.dto.MemberDto;
+import ymsoft.springdeveloper.com.springdeveloper.dto.ScheduleGenerateRequest;
+import ymsoft.springdeveloper.com.springdeveloper.dto.ScheduleGenerateResponse;
 import ymsoft.springdeveloper.com.springdeveloper.entity.Member;
+import ymsoft.springdeveloper.com.springdeveloper.service.WorkScheduleService;
 import ymsoft.springdeveloper.com.springdeveloper.service.memberService;
 
 import java.time.DayOfWeek;
@@ -173,10 +177,10 @@ public class MemberController {
     }
 
     //금주 근무 현황
-    @GetMapping("/members/thisweek")
+    @GetMapping("/members/schedulemanagement")
     public String thisWeekMembers(Model model) throws Exception {
         List<MemberDto> members = memService.findAll();
-        log.info("thisweek: {}", members);
+        log.info("schedulemanagement: {}", members);
 
         // 2️⃣ members (뷰용 리스트)
         model.addAttribute("members", members);
@@ -184,7 +188,7 @@ public class MemberController {
         log.info(objectMapper.writeValueAsString(members));
         model.addAttribute("membersJson", objectMapper.writeValueAsString(members));
 
-        return "members/thisweek";
+        return "members/scheduleManagement";
     }
 
     //금일 실 근무 시간 등록

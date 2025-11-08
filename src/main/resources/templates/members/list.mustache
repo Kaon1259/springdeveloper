@@ -37,7 +37,10 @@
                 <!-- 알바생 정보 -->
                 <div class="card">
                     <div class="card-header fw-bold d-flex justify-content-between align-items-center">
-                        <span>아르바이트 정보</span>
+                        <span>
+                            아르바이트 정보
+                            <small id="createdAtLabel" class="text-muted ms-2">(등록일: -)</small>
+                        </span>
                         <span id="statusBadge" class="badge bg-secondary">-</span>
                     </div>
                     <div class="card-body">
@@ -49,6 +52,9 @@
                             <div class="col-6"><div class="text-muted">시작일</div><div id="infoStartDate" class="fw-semibold">-</div></div>
                             <div class="col-6"><div class="text-muted">보건증</div><div id="infoHealth" class="fw-semibold">-</div></div>
                             <div class="col-12"><div class="text-muted">시급(원)</div><div id="infoHourlyWage" class="fw-semibold">-</div></div>
+                            <!-- ✅ 추가: 은행 / 계좌번호 (시급 아래 줄) -->
+                            <div class="col-12"><div class="text-muted">은행</div><div id="infoBankName" class="fw-semibold">-</div></div>
+                            <div class="col-12"><div class="text-muted">계좌번호</div><div id="infoBankAccount" class="fw-semibold">-</div></div>
                         </div>
                     </div>
                 </div>
@@ -66,11 +72,10 @@
 
         <!-- ============ 오른쪽 ============ -->
         <div class="col-12 col-lg-7">
-
             <!-- 🔼 상단(카드 바깥): 뷰 전환 탭 + 주/월 내비 -->
-            <div class="d-flex flex-wrap justify-content-between align-items-center mb-2 gap-2">
+            <div class="d-flex flex-wrap justify-content-between align-items-center mb-2 gap-2 w-100">
                 <div id="viewTabsTop" class="btn-group btn-group-sm" role="group" aria-label="view switch">
-                    <button type="button" class="btn btn-outline-primary active" data-view="weekGrid">주간스케줄</button>
+                    <button type="button" class="btn btn-outline-primary" data-view="weekGrid">주간스케줄</button>
                     <button type="button" class="btn btn-outline-primary" data-view="weekSummary">주간근무시간</button>
                     <button type="button" class="btn btn-outline-primary" data-view="monthCalendar">월간 근무시간</button>
                 </div>
@@ -82,12 +87,18 @@
                     <a class="btn btn-sm btn-outline-secondary" id="btnWeekNext" href="{{weekNextUrl}}">다음 주 ▶</a>
                 </div>
 
-                <!-- 월간 내비 (월 보기에만 표시) -->
-                <div id="navMonth" class="d-none align-items-center gap-2">
-                    <button class="btn btn-sm btn-outline-secondary" id="btnMonthPrev">◀ 이전 달</button>
-                    <div class="fw-semibold" id="monthLabel">0000.00</div>
-                    <button class="btn btn-sm btn-outline-secondary" id="btnMonthNext">다음 달 ▶</button>
-                    <button class="btn btn-sm btn-outline-secondary" id="btnMonthThis">이번 달</button>
+                <!-- 월간 내비 (월 보기에만 표시): 한 줄(왼쪽 기간, 오른쪽 버튼 3개) -->
+                <div id="navMonth" class="d-none w-100">
+                    <div class="d-flex justify-content-between align-items-center w-100 gap-2">
+                        <span id="monthRangeLabel" class="small text-muted">0000.00.01 ~ 00.00</span>
+                        <div class="d-flex gap-2">
+                            <a class="btn btn-sm btn-outline-secondary" id="btnMonthPrev" href="#">◀ 이전 달</a>
+                            <a class="btn btn-sm btn-outline-secondary" id="btnMonthThis" href="#">이번 달</a>
+                            <a class="btn btn-sm btn-outline-secondary" id="btnMonthNext" href="#">다음 달 ▶</a>
+                        </div>
+                    </div>
+                    <!-- 상태 보관용(표시 안 함) -->
+                    <span id="monthLabel" class="d-none">0000.00</span>
                 </div>
             </div>
 
@@ -167,9 +178,7 @@
 
                     <!-- 뷰 3: 월간 달력 -->
                     <div id="viewMonthCalendar" class="d-none">
-                        <div class="calendar-grid" id="calendarGrid">
-                            <!-- JS 렌더: 요일 헤더 + 날짜 셀 -->
-                        </div>
+                        <div class="calendar-grid" id="calendarGrid"></div>
 
                         <!-- 월 합계/급여 -->
                         <div class="mt-3">
@@ -215,41 +224,17 @@
     .legend-actual { background: rgba(25,135,84,.25); border-color: rgba(25,135,84,.4); }
     .legend-both { background: linear-gradient(135deg, rgba(255,159,67,.40) 0%, rgba(255,159,67,.40) 50%, rgba(25,135,84,.40) 50%, rgba(25,135,84,.40) 100%); border-color: rgba(25,135,84,.5); }
 
-    /* 달력 */
-    .calendar-grid {
-        display: grid;
-        grid-template-columns: repeat(7, 1fr); /* 일~토 */
-        gap: 8px;
-    }
-    .calendar-grid .dow {
-        text-align: center;
-        font-weight: 600;
-        color: #6c757d;
-        padding: 6px 0;
-        border-bottom: 1px dashed #e9ecef;
-    }
-    .calendar-grid .cell {
-        border: 1px solid #e9ecef;
-        border-radius: 10px;
-        padding: 8px;
-        min-height: 120px;
-        background: #fff;
-        display: flex;
-        flex-direction: column;
-        gap: 6px;
-    }
-    .cell .date-head {
-        display:flex; align-items:center; justify-content:space-between;
-        font-weight:600; font-size:.95rem;
-    }
+    .calendar-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:8px; }
+    .calendar-grid .dow { text-align:center; font-weight:600; color:#6c757d; padding:6px 0; border-bottom:1px dashed #e9ecef; }
+    .calendar-grid .cell { border:1px solid #e9ecef; border-radius:10px; padding:8px; min-height:120px; background:#fff; display:flex; flex-direction:column; gap:6px; }
+    .cell .date-head { display:flex; align-items:center; justify-content:space-between; font-weight:600; font-size:.95rem; }
     .cell .date-head .dow-mini { color:#6c757d; font-weight:500; font-size:.85rem; }
     .cell .segments { display:flex; flex-wrap:wrap; gap:6px; }
     .cell .day-total { margin-top:auto; text-align:right; font-size:.875rem; color:#212529; }
     .cell.muted { background:#fcfcfc; color:#96a0aa; }
-    .cell.today { outline: 2px solid #51cf66; outline-offset: 2px; }
+    .cell.today { outline:2px solid #51cf66; outline-offset:2px; }
 </style>
 
-<!-- 컨트롤러에서 내려준 JSON -->
 <script id="membersData" type="application/json">
 {{{membersJson}}}
 </script>
@@ -258,6 +243,7 @@
     (function(){
         // ===== Constants & DOM =====
         const HOUR_START=6, HOUR_END=22, STEP_MIN=10, SLOTS_PER_HOUR=60/STEP_MIN;
+        const VIEW_PARAM='view', VIEW_STORAGE_KEY='schedule:view', DEFAULT_VIEW='weekGrid';
 
         const tbodyWeek=document.getElementById('tbodyWeek10m');
         const theadWeek=document.getElementById('theadWeek');
@@ -275,16 +261,17 @@
         const infoStartDate=document.getElementById('infoStartDate');
         const infoHealth=document.getElementById('infoHealth');
         const infoHourlyWage=document.getElementById('infoHourlyWage');
+        const infoBankName=document.getElementById('infoBankName');          // ✅ 추가
+        const infoBankAccount=document.getElementById('infoBankAccount');    // ✅ 추가
+        const createdAtLabel=document.getElementById('createdAtLabel');
 
         const weekRangeLabelEl=document.getElementById('weekRangeLabel');
         const selectedMemberStatus = document.getElementById('selectedMemberStatus');
 
-        // 상단 탭 & 내비
         const viewTabsTop=document.getElementById('viewTabsTop');
         const navWeek=document.getElementById('navWeek');
         const navMonth=document.getElementById('navMonth');
 
-        // 주간 요약 DOM
         const tbodyWeekSummary=document.getElementById('tbodyWeekSummary');
         const weekPlannedTotalCell=document.getElementById('weekPlannedTotalCell');
         const weekActualTotalCell=document.getElementById('weekActualTotalCell');
@@ -292,45 +279,58 @@
         const weekPayCell=document.getElementById('weekPayCell');
         const hourlyWageCellW=document.getElementById('hourlyWageCellW');
 
-        // 월간 달력 DOM
         const calendarGrid=document.getElementById('calendarGrid');
-        const monthLabel=document.getElementById('monthLabel');
+        const monthLabel=document.getElementById('monthLabel');            // 숨김: 상태 보관
+        const monthRangeLabel=document.getElementById('monthRangeLabel');  // 표시용 범위
         const btnMonthPrev=document.getElementById('btnMonthPrev');
-        const btnMonthNext=document.getElementById('btnMonthNext');
         const btnMonthThis=document.getElementById('btnMonthThis');
+        const btnMonthNext=document.getElementById('btnMonthNext');
         const monthActualTotalCell=document.getElementById('monthActualTotalCell');
         const monthPayCell=document.getElementById('monthPayCell');
         const hourlyWageCellM=document.getElementById('hourlyWageCellM');
 
-        // 뷰 컨테이너
         const viewWeekGrid=document.getElementById('viewWeekGrid');
         const viewWeekSummary=document.getElementById('viewWeekSummary');
         const viewMonthCalendar=document.getElementById('viewMonthCalendar');
 
+        // 현재 선택 멤버
+        let currentMember = null;
+
+        // 멤버 데이터
         let allMembers=[];
         try{ allMembers=JSON.parse(document.getElementById('membersData').textContent||'[]'); }catch(e){ allMembers=[]; }
         if(Array.isArray(allMembers)&&allMembers.length>0){ statusSelect.value=allMembers[0].status||'WORKING'; }
 
-        // 탭 이벤트
+        // ===== 초기 활성 뷰 복원 =====
+        const initialView = (() => {
+            const url = new URL(window.location.href);
+            return url.searchParams.get(VIEW_PARAM) || localStorage.getItem(VIEW_STORAGE_KEY) || DEFAULT_VIEW;
+        })();
+        setActiveTabButton(initialView);
+        switchView(initialView);
+
+        // 월 내비 클릭 핸들러 연결
+        attachMonthHandlers();
+
+        // ===== 탭 이벤트 =====
         viewTabsTop.addEventListener('click', (e)=>{
             const btn = e.target.closest('button[data-view]');
             if(!btn) return;
-            viewTabsTop.querySelectorAll('button').forEach(b=>b.classList.remove('active'));
-            btn.classList.add('active');
-            switchView(btn.dataset.view);
+            const view = btn.dataset.view;
+            setActiveTabButton(view);
+            switchView(view);
+            const url = new URL(window.location.href);
+            url.searchParams.set(VIEW_PARAM, view);
+            window.history.replaceState({}, '', url.toString());
+            try{ localStorage.setItem(VIEW_STORAGE_KEY, view); }catch(_){}
         });
 
-        // 상태/멤버/정보 이벤트
+        // ===== 상태/멤버/정보 이벤트 =====
         statusSelect.addEventListener('change', handleStatusChange);
         memberSelect.addEventListener('change', handleMemberChange);
         detailBtn.addEventListener('click', openEdit);
 
-        // 월 내비 이벤트(클라이언트에서 ?week=YYYY-MM-DD로 이동)
-        btnMonthPrev.addEventListener('click', ()=>jumpMonth(-1));
-        btnMonthNext.addEventListener('click', ()=>jumpMonth(+1));
-        btnMonthThis.addEventListener('click', ()=>jumpToMonth(new Date()));
-
-        // 시작
+        // ===== 시작 =====
         handleStatusChange();
 
         function handleStatusChange(){
@@ -361,6 +361,7 @@
         }
 
         async function renderAll(member){
+            currentMember = member;
             renderMemberInfo(member);
             selectedMemberStatus.classList.remove('d-none');
             selectedMemberStatus.textContent = member?.status || '-';
@@ -369,7 +370,6 @@
             const { weekStartIso, weekEndIso, weekDates } = parseWeekRangeToDates(weekRangeLabelEl?.textContent || '');
             renderWeekHeadDates(weekDates);
 
-            // 기본: 주간 스케줄(10분)
             buildWeekGrid10m();
             paintPlan(member, weekDates);
 
@@ -381,16 +381,24 @@
                     paintActualFromApi(data, weekDates);
                     await renderWeekSummary(member, weekDates, data);
 
-                    // 월 렌더: 주 시작이 포함된 달 기준
+                    // 기본 월: 주 시작 날짜가 속한 달
                     const baseDate = parseIsoDate(weekStartIso);
                     await renderMonthCalendar(member, baseDate);
                 }
             }catch(e){ console.error(e); }
 
             selectedMemberTitle.textContent = `${member.name ?? '-'} — 보기 전환`;
-            // 현재 활성 탭에 맞춰 내비 표시 토글
-            const active = viewTabsTop.querySelector('button.active')?.dataset.view || 'weekGrid';
+            const active = getActiveView();
             switchView(active);
+        }
+
+        function setActiveTabButton(view){
+            viewTabsTop.querySelectorAll('button').forEach(b=>b.classList.remove('active'));
+            const btn = viewTabsTop.querySelector(`button[data-view="${view}"]`) || viewTabsTop.querySelector(`button[data-view="${DEFAULT_VIEW}"]`);
+            if(btn) btn.classList.add('active');
+        }
+        function getActiveView(){
+            return viewTabsTop.querySelector('button.active')?.dataset.view || DEFAULT_VIEW;
         }
 
         function switchView(view){
@@ -401,6 +409,40 @@
             viewWeekGrid.classList.toggle('d-none', view!=='weekGrid');
             viewWeekSummary.classList.toggle('d-none', view!=='weekSummary');
             viewMonthCalendar.classList.toggle('d-none', view!=='monthCalendar');
+        }
+
+        // ===== 월 내비: 리로드 없이 작동 =====
+        function attachMonthHandlers(){
+            if(btnMonthPrev){
+                btnMonthPrev.addEventListener('click', (e)=>{
+                    e.preventDefault();
+                    navigateMonth(-1);
+                });
+            }
+            if(btnMonthNext){
+                btnMonthNext.addEventListener('click', (e)=>{
+                    e.preventDefault();
+                    navigateMonth(+1);
+                });
+            }
+            if(btnMonthThis){
+                btnMonthThis.addEventListener('click', (e)=>{
+                    e.preventDefault();
+                    const today = new Date();
+                    const thisMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+                    if(currentMember){
+                        renderMonthCalendar(currentMember, thisMonth);
+                    }
+                });
+            }
+        }
+
+        function navigateMonth(offset){
+            const curStart = getCurrentMonthStart(); // 현재 보이는 달의 1일
+            const target = new Date(curStart.getFullYear(), curStart.getMonth()+offset, 1);
+            if(currentMember){
+                renderMonthCalendar(currentMember, target);
+            }
         }
 
         // ===== 주간 10분 그리드 =====
@@ -416,15 +458,14 @@
                 const tr = document.createElement('tr');
                 if(m===0) tr.classList.add('hour-start');
                 tr.innerHTML = `
-        <th class="timecell" scope="row">${hm}</th>
-        <td data-col="1"><div class="cell-10m"></div></td>
-        <td data-col="2"><div class="cell-10m"></div></td>
-        <td data-col="3"><div class="cell-10m"></div></td>
-        <td data-col="4"><div class="cell-10m"></div></td>
-        <td data-col="5"><div class="cell-10m"></div></td>
-        <td data-col="6"><div class="cell-10m"></div></td>
-        <td data-col="7"><div class="cell-10m"></div></td>
-      `;
+<th class="timecell" scope="row">${hm}</th>
+<td data-col="1"><div class="cell-10m"></div></td>
+<td data-col="2"><div class="cell-10m"></div></td>
+<td data-col="3"><div class="cell-10m"></div></td>
+<td data-col="4"><div class="cell-10m"></div></td>
+<td data-col="5"><div class="cell-10m"></div></td>
+<td data-col="6"><div class="cell-10m"></div></td>
+<td data-col="7"><div class="cell-10m"></div></td>`;
                 tbodyWeek.appendChild(tr);
             }
         }
@@ -440,7 +481,7 @@
         }
 
         function paintPlan(member){
-            const schedules = getSchedules(member); // [{day:'MON', start:'HH:mm', end:'HH:mm'}]
+            const schedules = getSchedules(member);
             const mapToJS={'SUN':0,'MON':1,'TUE':2,'WED':3,'THU':4,'FRI':5,'SAT':6};
 
             for(let dayIdx=0; dayIdx<7; dayIdx++){
@@ -522,13 +563,12 @@
                         : '<span class="text-muted">—</span>';
 
                 rows.push(`
-        <tr>
-          <th scope="row">${dayLabel}</th>
-          <td>${chipsPlanned}</td>
-          <td>${chipsActual}</td>
-          <td class="text-end">${formatMins(a.minutes||0)}</td>
-        </tr>
-      `);
+<tr>
+  <th scope="row">${dayLabel}</th>
+  <td>${chipsPlanned}</td>
+  <td>${chipsActual}</td>
+  <td class="text-end">${formatMins(a.minutes||0)}</td>
+</tr>`);
             }
 
             tbodyWeekSummary.innerHTML = rows.join('');
@@ -542,16 +582,24 @@
             weekPayCell.textContent = (pay!=null) ? krw(pay) : '-';
         }
 
-        // ===== 월간 달력 =====
+        // ===== 월간 달력 (라벨/버튼 즉시 갱신 + fetch 후 렌더) =====
         async function renderMonthCalendar(member, baseDate){
             // baseDate가 속한 달의 1일/말일
             const ms = new Date(baseDate.getFullYear(), baseDate.getMonth(), 1);
             const me = new Date(baseDate.getFullYear(), baseDate.getMonth()+1, 0);
             const monthStartIso = toIso(ms), monthEndIso = toIso(me);
 
-            // 라벨/내비 준비
+            // 라벨/데이터셋 즉시 갱신
             monthLabel.textContent = `${ms.getFullYear()}.${String(ms.getMonth()+1).padStart(2,'0')}`;
-            monthLabel.dataset.monthStart = monthStartIso; // 내비 계산용 저장
+            monthLabel.dataset.monthStart = monthStartIso;
+
+            // 표시 범위: YYYY.MM.DD ~ MM.DD
+            const leftY = ms.getFullYear();
+            const leftM = String(ms.getMonth()+1).padStart(2,'0');
+            const leftD = '01';
+            const rightM = String(me.getMonth()+1).padStart(2,'0');
+            const rightD = String(me.getDate()).padStart(2,'0');
+            monthRangeLabel.textContent = `${leftY}.${leftM}.${leftD} ~ ${rightM}.${rightD}`;
 
             // fetch
             let actualMap = {};
@@ -595,37 +643,28 @@
                         : '<span class="text-muted small">—</span>';
 
                 cell.innerHTML = `
-        <div class="date-head">
-          <span>${d.getDate()}일</span>
-          <span class="dow-mini">${DOW_HEAD[dow]}</span>
-        </div>
-        <div class="segments">${chipsHtml}</div>
-        <div class="day-total">${formatMins(a.minutes||0)}</div>
-      `;
+<div class="date-head">
+  <span>${d.getDate()}일</span>
+  <span class="dow-mini">${DOW_HEAD[dow]}</span>
+</div>
+<div class="segments">${chipsHtml}</div>
+<div class="day-total">${formatMins(a.minutes||0)}</div>`;
                 calendarGrid.appendChild(cell);
             }
 
             monthActualTotalCell.textContent = formatMins(monthMinutes);
-            const wage = (typeof member?.hourlyWage === 'number') ? member.hourlyWage : null;
+            const wage = (typeof member?.hourlyWage==='number') ? member?.hourlyWage : null;
             hourlyWageCellM.textContent = (wage!=null) ? krw(wage) : '-';
             const monthPay = (wage!=null) ? Math.round((monthMinutes/60)*wage) : null;
             monthPayCell.textContent = (monthPay!=null) ? krw(monthPay) : '-';
         }
 
-        // ===== 월 내비게이션 (쿼리: ?week=YYYY-MM-DD 로 서버 이동) =====
-        function jumpMonth(offset){
-            const msIso = monthLabel.dataset.monthStart; // YYYY-MM-01
-            const d = parseIsoDate(msIso);
-            const target = new Date(d.getFullYear(), d.getMonth()+offset, 1);
-            jumpToMonth(target);
-        }
-        function jumpToMonth(dateObj){
-            // 서버 컨트롤러는 week(월요일) 파라미터를 받으므로, 해당 월 1일 기준의 월요일로 보정
-            const monthMonday = toMonday(new Date(dateObj.getFullYear(), dateObj.getMonth(), 1));
-            const iso = toIso(monthMonday);
-            const url = new URL(window.location.href);
-            url.searchParams.set('week', iso);
-            window.location.assign(url.toString());
+        // ===== 현재 보이는 달의 1일 =====
+        function getCurrentMonthStart(){
+            const ds = monthLabel?.dataset?.monthStart;
+            if(ds && /^\d{4}-\d{2}-\d{2}$/.test(ds)) return parseIsoDate(ds);
+            const t = new Date();
+            return new Date(t.getFullYear(), t.getMonth(), 1);
         }
 
         // ===== Info/Utils =====
@@ -637,6 +676,16 @@
             infoStartDate.textContent=m.startDate ?? '-';
             infoHealth.textContent = m.hasHealthCertificate ? (m.healthCertExpiry ? `보유 (유효기간: ${m.healthCertExpiry})` : '보유') : '미보유';
             infoHourlyWage.textContent=(typeof m.hourlyWage==='number') ? krw(m.hourlyWage) : '-';
+
+            // ✅ 은행/계좌
+            infoBankName.textContent = m.bankName ?? '-';
+            infoBankAccount.textContent = m.bankAccount ?? '-';
+
+            // --- 등록일 표시 ---
+            const created = getCreatedAt(m); // Date | null
+            const createdStr = created ? formatYmdHm(created) : '-';
+            createdAtLabel.textContent = `(등록일: ${createdStr})`;
+
             const badgeMap={WORKING:'bg-success',WAITING:'bg-secondary',RESTING:'bg-info',PAUSED:'bg-warning',RESIGNED:'bg-danger'};
             statusBadge.textContent=m.status || '-';
             statusBadge.className=`badge ${badgeMap[m.status]||'bg-secondary'}`;
@@ -658,6 +707,9 @@
             statusBadge.textContent='-'; statusBadge.className='badge bg-secondary';
             infoName.textContent='-'; infoGender.textContent='-'; infoPhone.textContent='-'; infoEmail.textContent='-';
             infoStartDate.textContent='-'; infoHealth.textContent='-'; infoHourlyWage.textContent='-';
+            infoBankName.textContent='-'; infoBankAccount.textContent='-';   // ✅ reset
+            monthRangeLabel.textContent='0000.00.01 ~ 00.00';
+            createdAtLabel.textContent='(등록일: -)';
         }
 
         function getSchedules(m){ return Array.isArray(m?.schedules)?m.schedules : Array.isArray(m?.schedule)?m.schedule : []; }
@@ -723,6 +775,32 @@
             const f=n=>l-a*Math.max(-1,Math.min(k(n)-3,Math.min(9-k(n),1)));
             const toHex=x=>Math.round(255*x).toString(16).padStart(2,'0');
             return `#${toHex(f(0))}${toHex(f(8))}${toHex(f(4))}`;
+        }
+
+        // ===== 등록일 헬퍼 =====
+        function getCreatedAt(m){
+            // created_at(문자열/숫자), createdAt 모두 지원
+            const v = m?.created_at ?? m?.createdAt ?? null;
+            if(v==null) return null;
+            if(typeof v === 'number'){
+                const ms = v < 1e12 ? v * 1000 : v; // 초 → ms 보정
+                const d = new Date(ms);
+                return isNaN(d.getTime()) ? null : d;
+            }
+            if(typeof v === 'string'){
+                const d = new Date(v);
+                return isNaN(d.getTime()) ? null : d;
+            }
+            return null;
+        }
+        function pad2(n){ return String(n).padStart(2,'0'); }
+        function formatYmdHm(d){
+            const y=d.getFullYear();
+            const M=pad2(d.getMonth()+1);
+            const D=pad2(d.getDate());
+            const h=pad2(d.getHours());
+            const m=pad2(d.getMinutes());
+            return `${y}-${M}-${D} ${h}:${m}`;
         }
     })();
 </script>

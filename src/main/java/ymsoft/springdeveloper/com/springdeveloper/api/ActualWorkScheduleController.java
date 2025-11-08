@@ -3,14 +3,14 @@ package ymsoft.springdeveloper.com.springdeveloper.api;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import ymsoft.springdeveloper.com.springdeveloper.dto.ActualWorkScheduleBulkDto;
-import ymsoft.springdeveloper.com.springdeveloper.dto.ActualWorkScheduleDto;
-import ymsoft.springdeveloper.com.springdeveloper.dto.WeekWorkResponse;
+import ymsoft.springdeveloper.com.springdeveloper.dto.*;
 import ymsoft.springdeveloper.com.springdeveloper.entity.ActualWorkSchedule;
 import ymsoft.springdeveloper.com.springdeveloper.service.ActualWorkScheduleService;
+import ymsoft.springdeveloper.com.springdeveloper.service.WorkScheduleService;
 
 import java.time.LocalDate;
 import java.util.*;
@@ -22,7 +22,11 @@ import java.util.stream.Collectors;
 @RequestMapping("/api/schedule")
 public class ActualWorkScheduleController {
 
+    @Autowired
     private final ActualWorkScheduleService service;
+
+    @Autowired
+    private final WorkScheduleService workScheduleService;
 
     @PostMapping("/save")
     public ResponseEntity<Map<String, Object>> saveActual(@RequestBody ActualWorkScheduleDto request) {
@@ -95,6 +99,13 @@ public class ActualWorkScheduleController {
         return ResponseEntity.ok(res);
     }
 
+    @PostMapping("/generate")
+    public ResponseEntity<ScheduleGenerateResponse> generate(
+            @Valid @RequestBody ScheduleGenerateRequest request
+    ) {
+        ScheduleGenerateResponse resp = workScheduleService.generateSchedules(request);
+        return ResponseEntity.ok(resp);
+    }
 
     @GetMapping("/{memberId}/{date}")
     public ResponseEntity<Map<String, Object>> getActualSchedule(

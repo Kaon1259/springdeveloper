@@ -12,6 +12,7 @@ import ymsoft.springdeveloper.com.springdeveloper.entity.Member;
 import ymsoft.springdeveloper.com.springdeveloper.entity.ScheduleItem;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -56,6 +57,10 @@ public class MemberDto {
 
     private List<ScheduleRow> schedule = new ArrayList<>();
 
+    /** 등록일, 수정일 추가 **/
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
+
     @Builder
     @Data
     public static class ScheduleRow {
@@ -79,14 +84,14 @@ public class MemberDto {
         }
     }
 
-    // ✅ List<Member> → List<MemberDto>
+    // List<Member> → List<MemberDto>
     public static List<MemberDto> toDtoList(List<Member> members) {
         return members.stream()
                 .map(MemberDto::fromEntity)
                 .collect(Collectors.toList());
     }
 
-    // ✅ ScheduleItem → ScheduleRow 변환
+    // ScheduleItem → ScheduleRow 변환
     private static ScheduleRow toScheduleRow(ScheduleItem s) {
         return ScheduleRow.builder()
                 .day(WeekDay.valueOf(s.getDay().name()))
@@ -95,7 +100,7 @@ public class MemberDto {
                 .build();
     }
 
-    // ✅ Member → MemberDto 변환 (단일)
+    // Member → MemberDto 변환 (단일)
     public static MemberDto fromEntity(Member m) {
         return MemberDto.builder()
                 .id(m.getId())
@@ -110,6 +115,8 @@ public class MemberDto {
                 .bankName(m.getBankName())
                 .bankAccount(m.getBankAccount())
                 .status(m.getStatus())
+                .createdAt(m.getCreatedAt())
+                .updatedAt(m.getUpdatedAt())
                 .schedule(
                         Optional.ofNullable(m.getSchedules())
                                 .orElse(List.of())
