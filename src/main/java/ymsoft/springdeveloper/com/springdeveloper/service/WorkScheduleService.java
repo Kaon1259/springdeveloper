@@ -2,29 +2,171 @@ package ymsoft.springdeveloper.com.springdeveloper.service;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import ymsoft.springdeveloper.com.springdeveloper.dto.ScheduleGenerateRequest;
-import ymsoft.springdeveloper.com.springdeveloper.dto.ScheduleGenerateResponse;
-import ymsoft.springdeveloper.com.springdeveloper.dto.ScheduleRangeResponse;
+import ymsoft.springdeveloper.com.springdeveloper.dto.*;
 import ymsoft.springdeveloper.com.springdeveloper.entity.Member;
+import ymsoft.springdeveloper.com.springdeveloper.entity.ScheduleItem;
 import ymsoft.springdeveloper.com.springdeveloper.entity.WorkSchedule;
 import ymsoft.springdeveloper.com.springdeveloper.repository.memberRepository;
 import ymsoft.springdeveloper.com.springdeveloper.repository.WorkScheduleRepository;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class WorkScheduleService {
 
     private final memberRepository memberRepository;
     private final WorkScheduleRepository workScheduleRepository;
+
+    private static final int SLOT_MIN = 10;
+    private static final LocalTime START_BOUND = LocalTime.of(6, 0);
+    private static final LocalTime END_BOUND   = LocalTime.of(22, 0); // exclusive
+
+    @Transactional
+    public ScheduleDayUpdateResponse upsertDay(ScheduleDayUpdateRequest req) {
+        final Long memberId = req.getMemberId();
+        final LocalDate date = req.getDate();
+
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 memberId: " + memberId));
+
+        // 1) 구간 정규화
+        List<ScheduleDayUpdateRequest.Segment> normalized = normalizeAndValidate(req.getSegments());
+
+        // 2) 해당 날짜 기존 일정 전체 삭제 + 즉시 flush
+        workScheduleRepository.deleteByMemberIdAndWorkDate(memberId, date);
+        workScheduleRepository.flush(); // ★ 인덱스 충돌 방지(삭제를 즉시 DB반영)
+
+        // 3) 저장 전 동일 구간 de-dup (start|end 기준)
+        Set<String> seen = new HashSet<>();
+        List<WorkSchedule> toSave = new ArrayList<>();
+        for (ScheduleDayUpdateRequest.Segment seg : normalized) {
+            String key = seg.getStart() + "|" + seg.getEnd();
+            if (!seen.add(key)) continue; // ★ 동일 구간 중복 방지
+
+            WorkSchedule ws = WorkSchedule.builder()
+                    .member(member)
+                    .workDate(date)
+                    .start(seg.getStart())
+                    .end(seg.getEnd())
+                    .source(WorkSchedule.SourceType.MANUAL)
+                    .note(seg.getNote())
+                    .build();
+            toSave.add(ws);
+        }
+
+        // 4) 저장
+        if (toSave.isEmpty()) {
+            return ScheduleDayUpdateResponse.builder()
+                    .memberId(memberId)
+                    .date(date)
+                    .count(0)
+                    .minutes(0)
+                    .segments(List.of())
+                    .build();
+        }
+
+        List<WorkSchedule> saved = workScheduleRepository.saveAll(toSave);
+
+        int minutes = saved.stream()
+                .mapToInt(s -> diffMinutes(s.getStart(), s.getEnd()))
+                .sum();
+
+        List<ScheduleDayUpdateResponse.Segment> outSegs = saved.stream()
+                .sorted(Comparator.comparing(WorkSchedule::getStart))
+                .map(s -> ScheduleDayUpdateResponse.Segment.builder()
+                        .start(fmt(s.getStart()))
+                        .end(fmt(s.getEnd()))
+                        .note(s.getNote())
+                        .build())
+                .toList();
+
+        return ScheduleDayUpdateResponse.builder()
+                .memberId(memberId)
+                .date(date)
+                .count(saved.size())
+                .minutes(minutes)
+                .segments(outSegs)
+                .build();
+    }
+
+    // ====== 이하 보조 메서드(그대로 사용) ======
+
+    private List<ScheduleDayUpdateRequest.Segment> normalizeAndValidate(List<ScheduleDayUpdateRequest.Segment> segments) {
+        if (segments == null || segments.isEmpty()) return List.of();
+
+        List<ScheduleDayUpdateRequest.Segment> clipped = new ArrayList<>();
+        for (ScheduleDayUpdateRequest.Segment s : segments) {
+            LocalTime st = s.getStart();
+            LocalTime en = s.getEnd();
+            if (st == null || en == null) continue;
+
+            if (st.isBefore(START_BOUND)) st = START_BOUND;
+            if (en.isAfter(END_BOUND))    en = END_BOUND;
+            if (!st.isBefore(en)) continue;
+
+            st = snapDownTo10(st);
+            en = snapUpTo10(en);
+            if (!st.isBefore(en)) continue;
+
+            if (!isTenMinUnit(st) || !isTenMinUnit(en)) {
+                throw new IllegalArgumentException("구간은 10분 단위여야 합니다. (" + st + "~" + en + ")");
+            }
+
+            clipped.add(ScheduleDayUpdateRequest.Segment.builder()
+                    .start(st).end(en).note(s.getNote()).build());
+        }
+        if (clipped.isEmpty()) return List.of();
+
+        clipped.sort(Comparator.comparing(ScheduleDayUpdateRequest.Segment::getStart));
+
+        List<ScheduleDayUpdateRequest.Segment> merged = new ArrayList<>();
+        LocalTime curS = clipped.get(0).getStart();
+        LocalTime curE = clipped.get(0).getEnd();
+        String curNote = clipped.get(0).getNote();
+
+        for (int i = 1; i < clipped.size(); i++) {
+            LocalTime s2 = clipped.get(i).getStart();
+            LocalTime e2 = clipped.get(i).getEnd();
+            String n2 = clipped.get(i).getNote();
+
+            if (!s2.isAfter(curE)) {                 // 겹침
+                if (e2.isAfter(curE)) curE = e2;
+            } else if (s2.equals(curE)) {            // 인접
+                curE = e2;
+            } else {
+                merged.add(ScheduleDayUpdateRequest.Segment.builder().start(curS).end(curE).note(curNote).build());
+                curS = s2; curE = e2; curNote = n2;
+            }
+        }
+        merged.add(ScheduleDayUpdateRequest.Segment.builder().start(curS).end(curE).note(curNote).build());
+
+        return merged;
+    }
+
+    private static boolean isTenMinUnit(LocalTime t) {
+        return t.getMinute() % SLOT_MIN == 0 && t.getSecond() == 0 && t.getNano() == 0;
+    }
+    private static LocalTime snapDownTo10(LocalTime t) {
+        int m = t.getMinute() - (t.getMinute() % SLOT_MIN);
+        return LocalTime.of(t.getHour(), m);
+    }
+    private static LocalTime snapUpTo10(LocalTime t) {
+        int mod = t.getMinute() % SLOT_MIN;
+        int add = (mod == 0) ? 0 : (SLOT_MIN - mod);
+        LocalTime r = t.plusMinutes(add);
+        return LocalTime.of(r.getHour(), r.getMinute());
+    }
+
+    private static String fmt(LocalTime t) {
+        return t == null ? null : String.format("%02d:%02d", t.getHour(), t.getMinute());
+    }
 
     @Transactional
     public ScheduleGenerateResponse generateSchedules(ScheduleGenerateRequest req) {
@@ -135,6 +277,7 @@ public class WorkScheduleService {
                 .build();
         return workScheduleRepository.save(ws);
     }
+
     public ScheduleRangeResponse getWorkRange(Long memberId, LocalDate start, LocalDate end) {
         validateParams(memberId, start, end);
 
@@ -182,6 +325,7 @@ public class WorkScheduleService {
 
         return resp;
     }
+
 
     private void validateParams(Long memberId, LocalDate start, LocalDate end) {
         if (memberId == null) throw new IllegalArgumentException("memberId는 필수입니다.");

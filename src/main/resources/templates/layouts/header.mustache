@@ -23,7 +23,6 @@
 
 <nav class="navbar navbar-expand-lg navbar-light bg-light fixed-top shadow-sm">
     <div class="container">
-        <!-- ☕ 브랜드 -->
         <a class="navbar-brand fs-3" href="/" aria-label="Home" title="Home">☕</a>
 
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
@@ -32,19 +31,35 @@
             <span class="navbar-toggler-icon"></span>
         </button>
 
-        <!-- 좌측 메뉴 -->
         <div class="collapse navbar-collapse" id="navbarLeft">
-            <ul class="navbar-nav me-auto">
-                <li class="nav-item"><a class="nav-link" href="/members/realtimedashboard">실시간현황</a></li>
-                <li class="nav-item"><a class="nav-link" href="/members/schedulemanagement">일정관리</a></li>
-                <li class="nav-item"><a class="nav-link" href="/members/registerworkingtime">실근무시간등록</a></li>
-                <li class="nav-item"><a class="nav-link" href="/members/showworktimedashboard">(주간)근무시간조회</a></li>
-                <li class="nav-item"><a class="nav-link" href="/members/showworkmonthdashboard">(월간)근무시간조회</a></li>
-                <li class="nav-item"><a class="nav-link" href="/members">근무자조회</a></li>
-                <li class="nav-item"><a class="nav-link" href="/members/new">근무자신규등록</a></li>
+            <ul class="navbar-nav me-auto align-items-center">
+
+                <li class="nav-item">
+                    <a class="nav-link" href="/members/realtimedashboard">실시간현황</a>
+                </li>
+
+                <!-- 근무시간 관리 (마우스 오버 펼침 / 상위는 클릭 막음) -->
+                <li class="nav-item dropdown hover-dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="workTimeMenu"
+                       role="button" aria-expanded="false">근무시간 관리</a>
+                    <ul class="dropdown-menu" aria-labelledby="workTimeMenu">
+                        <li><a class="dropdown-item" href="/members/registerworkingtime">실근무시간등록</a></li>
+                        <li><a class="dropdown-item" href="/members/showworktimedashboard">(주간)근무시간조회</a></li>
+                        <li><a class="dropdown-item" href="/members/showworkmonthdashboard">(월간)근무시간조회</a></li>
+                    </ul>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link" href="/members/schedulemanagement">일정관리</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/members">근무자조회</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/members/new">근무자신규등록</a>
+                </li>
             </ul>
 
-            <!-- 우측 메뉴 -->
             <ul class="navbar-nav ms-auto">
                 <li class="nav-item"><a class="nav-link" href="/greetings">Greeting</a></li>
                 <li class="nav-item"><a class="nav-link" href="/goodbye">Good Bye</a></li>

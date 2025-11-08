@@ -86,12 +86,9 @@ public class Member {
         WAITING, WORKING, RESTING, PAUSED, RESIGNED
     }
 
-    @Override
-    public String toString() {
-        return "Member [id=" + id + ", name=" + name + ", gender=" + gender + ", startDate="  + startDate + ", phone=" + phone + ", email=" + email +
-                ", hourlyWage=" + hourlyWage + ", healthCertExpiry=" + healthCertExpiry + ",bankName=" + bankName + ", bankAccount=" + bankAccount + ", status=" + status + ", schedules=" + schedules.toString() + "]";
-    }
-
-
-
+//    @Override
+//    public String toString() {
+//        return "Member [id=" + id + ", name=" + name + ", gender=" + gender + ", startDate="  + startDate + ", phone=" + phone + ", email=" + email +
+//                ", hourlyWage=" + hourlyWage + ", healthCertExpiry=" + healthCertExpiry + ",bankName=" + bankName + ", bankAccount=" + bankAccount + ", status=" + status + ", schedules=" + schedules.toString() + "]";
+//    }
 }

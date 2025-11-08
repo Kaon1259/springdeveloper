@@ -33,6 +33,13 @@ public class WorkScheduleController {
         return ResponseEntity.ok(resp);
     }
 
+    @PostMapping("/update")
+    public ResponseEntity<ScheduleDayUpdateResponse> updateDay(
+            @Valid @RequestBody ScheduleDayUpdateRequest request
+    ) {
+        ScheduleDayUpdateResponse res = workScheduleService.upsertDay(request);
+        return ResponseEntity.ok(res);
+    }
 
     @GetMapping("/{memberId}/{start}/{end}")
     public ResponseEntity<ScheduleRangeResponse> getWork(

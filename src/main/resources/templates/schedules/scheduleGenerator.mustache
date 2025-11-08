@@ -1,0 +1,388 @@
+{{>layouts/header_}}
+
+<main class="container my-4">
+    <div class="row g-3">
+        <div class="col-12">
+            <div class="card mb-3">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <div>
+                        <span class="fw-bold">일정 생성하기</span>
+                        <small id="memberNameLabel" class="text-muted ms-2"></small>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="window.close();">
+                        창 닫기
+                    </button>
+                </div>
+
+                <div class="card-body">
+                    <!-- ✅ 달 선택 + 버튼들 가로 정렬 -->
+                    <div class="row g-3 align-items-center">
+                        <div class="col-12 col-md-4 d-flex align-items-center gap-2">
+                            <label for="startMonth" class="form-label small text-muted mb-0">기준 월</label>
+                            <input id="startMonth" type="month" class="form-control" style="flex:1;">
+                        </div>
+                        <div class="col-12 col-md-8">
+                            <div class="d-flex gap-2">
+                                <button id="btnPreview" class="btn btn-outline-primary flex-fill" type="button">
+                                    미리보기
+                                </button>
+                                <button id="btnSave" class="btn btn-primary flex-fill" type="button">
+                                    생성된 일정 저장
+                                </button>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="form-text">
+                                이 월 기준으로 한 달 일정을 생성합니다.
+                            </div>
+                        </div>
+                    </div>
+                    <div id="alertArea" class="mt-3"></div>
+                </div>
+            </div>
+
+            <!-- 달력 미리보기 -->
+            <div class="card">
+                <div class="card-header fw-bold d-flex justify-content-between align-items-center">
+                    <span id="monthTitle">생성된 일정 미리보기</span>
+                    <span class="small text-muted" id="itemCountLabel">0개 구간</span>
+                </div>
+                <div class="card-body">
+                    <div class="calendar-grid" id="calendarGrid"></div>
+                    <div class="mt-3 d-flex justify-content-between">
+                        <span class="small text-muted">월 합계(계획)</span>
+                        <span id="monthTotalLabel" class="fw-semibold">0시간</span>
+                    </div>
+                    <div class="small text-muted mt-2">
+                        * 이 달력은 주간 템플릿을 기준으로 생성된 <b>계획</b>입니다. 저장 버튼을 눌러 실제 일정으로 반영할 수 있습니다.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<style>
+    .calendar-grid {
+        display:grid;
+        grid-template-columns:repeat(7,1fr);
+        gap:8px;
+    }
+    .calendar-grid .dow {
+        text-align:center;
+        font-weight:600;
+        color:#6c757d;
+        padding:6px 0;
+        border-bottom:1px dashed #e9ecef;
+    }
+    .calendar-grid .cell {
+        border:1px solid #e9ecef;
+        border-radius:10px;
+        padding:8px;
+        min-height:120px;
+        background:#fff;
+        display:flex;
+        flex-direction:column;
+        gap:6px;
+        font-size:.9rem;
+    }
+    .cell .date-head {
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        font-weight:600;
+        font-size:.95rem;
+    }
+    .cell .dow-mini {
+        color:#6c757d;
+        font-weight:500;
+        font-size:.85rem;
+    }
+    .cell .segments {
+        display:flex;
+        flex-wrap:wrap;
+        gap:4px;
+    }
+    .chip {
+        display:inline-flex;
+        align-items:center;
+        gap:4px;
+        padding:1px 6px;
+        border-radius:999px;
+        border:1px solid rgba(13,110,253,.35);
+        background:rgba(13,110,253,.08);
+        font-size:.8rem;
+    }
+    .chip .dot {
+        width:8px; height:8px; border-radius:50%;
+        background:#0d6efd;
+    }
+    .cell .day-total {
+        margin-top:auto;
+        text-align:right;
+        font-size:.8rem;
+        color:#212529;
+    }
+</style>
+
+<!-- 서버에서 멤버 JSON 주입 -->
+<script id="memberData" type="application/json">
+{{{memberJson}}}
+</script>
+
+<script>
+    (function(){
+        const memberNameLabel = document.getElementById('memberNameLabel');
+        const startMonth = document.getElementById('startMonth');
+        const btnPreview = document.getElementById('btnPreview');
+        const btnSave = document.getElementById('btnSave');
+        const alertArea = document.getElementById('alertArea');
+
+        const calendarGrid = document.getElementById('calendarGrid');
+        const monthTitle = document.getElementById('monthTitle');
+        const itemCountLabel = document.getElementById('itemCountLabel');
+        const monthTotalLabel = document.getElementById('monthTotalLabel');
+
+        const API_GENERATE_ENDPOINT = '/api/schedule/work/generate';
+
+        // ===== 멤버 정보 파싱 =====
+        let member = null;
+        try {
+            member = JSON.parse(document.getElementById('memberData').textContent || 'null');
+        } catch(e){ member = null; }
+
+        if(!member){
+            showAlert('멤버 정보를 불러올 수 없습니다. 다시 시도해 주세요.', 'danger');
+            btnPreview.disabled = true;
+            btnSave.disabled = true;
+            return;
+        }
+
+        memberNameLabel.textContent = `(${member.name || '-'}) [ID: ${member.id}]`;
+
+        // 기본월: 오늘
+        const today = new Date();
+        startMonth.value = `${today.getFullYear()}-${pad2(today.getMonth()+1)}`;
+
+        // 생성된 아이템(미리보기 결과)
+        let generatedItems = [];
+
+        // 이벤트
+        btnPreview.addEventListener('click', onPreview);
+        btnSave.addEventListener('click', onSave);
+
+        // ✅ 달 선택이 바뀌면 자동 미리보기
+        startMonth.addEventListener('change', onPreview);
+
+        // 페이지 처음 들어오면 자동 미리보기 1회
+        onPreview();
+
+        async function onPreview(){
+            clearAlert();
+
+            const {fromDate, toDate} = getMonthRangeFromInput();
+            const items = buildItemsFromWeeklyTemplate(member, fromDate, toDate);
+            generatedItems = items;
+
+            renderPreviewCalendar(fromDate, toDate, items);
+            if(items.length === 0){
+                showAlert('주간 템플릿으로 생성된 일정이 없습니다.', 'secondary');
+            }else{
+                showAlert(`총 ${items.length}개 구간이 생성되었습니다.`, 'info');
+            }
+        }
+
+        async function onSave(){
+            clearAlert();
+            if(!generatedItems || generatedItems.length===0){
+                showAlert('저장할 일정이 없습니다. 먼저 미리보기를 실행하세요.', 'warning');
+                return;
+            }
+            const {fromDate, toDate} = getMonthRangeFromInput();
+            const payload = {
+                memberId: member.id,
+                from: toIso(fromDate),
+                to: toIso(toDate),
+                items: generatedItems
+            };
+
+            try{
+                const resp = await fetch(API_GENERATE_ENDPOINT, {
+                    method: 'POST',
+                    headers: {'Content-Type':'application/json', 'Accept':'application/json'},
+                    body: JSON.stringify(payload)
+                });
+                if(!resp.ok){
+                    const text = await resp.text().catch(()=> '');
+                    showAlert(`저장 실패: ${resp.status} ${text}`, 'danger');
+                    return;
+                }
+                await resp.json().catch(()=> ({}));
+                showAlert('일정이 성공적으로 저장되었습니다.', 'success');
+            }catch(e){
+                console.error(e);
+                showAlert('저장 중 오류가 발생했습니다.', 'danger');
+            }
+        }
+
+        function getMonthRangeFromInput(){
+            const v = String(startMonth.value || '');
+            const [y,m] = v.split('-').map(n=>parseInt(n,10));
+            const yy = isNaN(y) ? today.getFullYear() : y;
+            const mm = isNaN(m) ? today.getMonth() : (m-1);
+            const fromDate = new Date(yy, mm, 1);
+            const toDate = new Date(yy, mm+1, 0);
+            return {fromDate, toDate};
+        }
+
+        // member.schedules(or schedule)를 이용해 한달치 생성
+        function buildItemsFromWeeklyTemplate(member, fromDate, toDate){
+            const weekly = getSchedules(member); // [{day:'MON', start:'10:00', end:'14:00'}, ...]
+            if(!Array.isArray(weekly) || weekly.length===0) return [];
+
+            const mapToJS={'SUN':0,'MON':1,'TUE':2,'WED':3,'THU':4,'FRI':5,'SAT':6};
+            const dedupe = new Set();
+            const items = [];
+
+            for(let d=new Date(fromDate); d<=toDate; d.setDate(d.getDate()+1)){
+                const dow = d.getDay();
+                const segs = weekly.filter(s=> mapToJS[s.day] === dow);
+                if(!segs.length) continue;
+
+                const iso = toIso(d);
+                segs.forEach(s=>{
+                    const start = hmStr(s.start);
+                    const end   = hmStr(s.end);
+                    if(!isValidRange(start, end)) return;
+                    const key = `${iso}|${start}|${end}`;
+                    if(dedupe.has(key)) return;
+                    dedupe.add(key);
+                    items.push({date: iso, start, end, note: '자동 생성'});
+                });
+            }
+
+            items.sort((a,b)=>{
+                if(a.date !== b.date) return a.date < b.date ? -1 : 1;
+                return a.start < b.start ? -1 : (a.start > b.start ? 1 : 0);
+            });
+            return items;
+        }
+
+        function renderPreviewCalendar(fromDate, toDate, items){
+            const ms = new Date(fromDate.getFullYear(), fromDate.getMonth(), 1);
+            const me = new Date(fromDate.getFullYear(), fromDate.getMonth()+1, 0);
+            const monthName = `${ms.getFullYear()}년 ${pad2(ms.getMonth()+1)}월`;
+            monthTitle.textContent = `${monthName} 생성된 일정 미리보기`;
+
+            const map = {};
+            items.forEach(it=>{
+                if(!map[it.date]) map[it.date] = [];
+                map[it.date].push(it);
+            });
+
+            calendarGrid.innerHTML = '';
+            const DOW_HEAD = ['일','월','화','수','목','금','토'];
+            DOW_HEAD.forEach(label=>{
+                const h = document.createElement('div');
+                h.className = 'dow';
+                h.textContent = label;
+                calendarGrid.appendChild(h);
+            });
+
+            const firstDow = ms.getDay();
+            for(let i=0;i<firstDow;i++){
+                const blank = document.createElement('div');
+                blank.className = 'cell';
+                blank.style.visibility = 'hidden';
+                calendarGrid.appendChild(blank);
+            }
+
+            let totalMinutes = 0;
+
+            for(let d=new Date(ms); d<=me; d.setDate(d.getDate()+1)){
+                const iso = toIso(d);
+                const dow = d.getDay();
+                const segs = map[iso] || [];
+                const cell = document.createElement('div');
+                cell.className = 'cell';
+
+                const chipsHtml = segs.length
+                        ? segs.map(s=>{
+                            const mins = diffMinutes(s.start, s.end);
+                            totalMinutes += mins;
+                            return `<span class="chip"><span class="dot"></span>${s.start} ~ ${s.end}</span>`;
+                        }).join(' ')
+                        : '<span class="text-muted small">—</span>';
+
+                const dayMinutes = segs.reduce((acc,s)=> acc + diffMinutes(s.start, s.end), 0);
+
+                cell.innerHTML = `
+                <div class="date-head">
+                    <span>${d.getDate()}일</span>
+                    <span class="dow-mini">${DOW_HEAD[dow]}</span>
+                </div>
+                <div class="segments">${chipsHtml}</div>
+                <div class="day-total">${formatMins(dayMinutes)}</div>
+            `;
+                calendarGrid.appendChild(cell);
+            }
+
+            itemCountLabel.textContent = `${items.length}개 구간`;
+            monthTotalLabel.textContent = formatMins(totalMinutes);
+        }
+
+        // ===== 공통 유틸 =====
+        function getSchedules(m){
+            return Array.isArray(m?.schedules) ? m.schedules
+                    : Array.isArray(m?.schedule)  ? m.schedule
+                            : [];
+        }
+
+        function pad2(n){ return String(n).padStart(2,'0'); }
+        function toIso(d){ return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`; }
+
+        function hmStr(v){
+            if(typeof v === 'string' && /^\d{2}:\d{2}$/.test(v)) return v;
+            if(typeof v === 'string' && /^\d{2}:\d{2}:\d{2}$/.test(v)) return v.slice(0,5);
+            if(v && typeof v === 'object' && 'hour' in v && 'minute' in v) return `${pad2(v.hour)}:${pad2(v.minute)}`;
+            try{
+                const s = String(v);
+                if(/^\d{1,2}:\d{1,2}/.test(s)){
+                    const [h,m] = s.split(':').map(n=>parseInt(n,10));
+                    return `${pad2(h)}:${pad2(m||0)}`;
+                }
+            }catch(_){}
+            return '00:00';
+        }
+
+        function parseHm(hm){
+            if(!hm||typeof hm!=='string') return {h:0,m:0};
+            const [h,m]=hm.split(':').map(n=>parseInt(n,10));
+            return {h:isNaN(h)?0:h, m:isNaN(m)?0:m};
+        }
+
+        function isValidRange(start, end){
+            const s=parseHm(start), e=parseHm(end);
+            return (e.h*60+e.m) - (s.h*60+s.m) > 0;
+        }
+
+        function diffMinutes(start, end){
+            const s=parseHm(start), e=parseHm(end);
+            return (e.h*60+e.m) - (s.h*60+s.m);
+        }
+
+        function formatMins(mins){
+            const v = Math.max(0, mins|0);
+            const h=Math.floor(v/60), m=v%60;
+            return m===0?`${h}시간`:`${h}시간 ${m}분`;
+        }
+
+        function showAlert(msg, type='info'){
+            alertArea.innerHTML = `<div class="alert alert-${type} py-2 px-3" role="alert">${msg}</div>`;
+        }
+        function clearAlert(){ alertArea.innerHTML=''; }
+
+    })();
+</script>
+
+{{>layouts/footer}}

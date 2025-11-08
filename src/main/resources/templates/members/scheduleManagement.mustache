@@ -3,11 +3,9 @@
 <main class="container my-4">
     <div class="row g-3">
 
-        <!-- ============ 좌측: 아르바이트 상태별 보기 ============ -->
+        <!-- ============ 좌측: 아르바이트 상태별 보기 (세로 리스트) ============ -->
         <div class="col-12 col-lg-4">
             <div class="d-grid gap-3 sticky-lg-top" style="top:12px;">
-
-                <!-- 상태별 보기 -->
                 <div class="card">
                     <div class="card-header fw-bold d-flex align-items-center justify-content-between">
                         <span>아르바이트 상태별 보기</span>
@@ -26,16 +24,15 @@
                             <div class="form-text">상태를 바꾸면 해당 상태인 아르바이트생이 아래에 표시됩니다.</div>
                         </div>
 
-                        <!-- 아르바이트 칩 목록 -->
-                        <div id="memberPills" class="d-flex flex-wrap gap-2"></div>
+                        <!-- 세로 리스트 -->
+                        <div id="memberPills" class="vlist"></div>
 
                         <div class="small text-muted mt-3">
-                            * 색상은 사람마다 고유하게 지정됩니다. 칩을 클릭하여 선택하세요.
+                            * 색상은 사람마다 고유하게 지정됩니다. 행을 클릭하여 선택하세요.
                         </div>
                     </div>
                 </div>
 
-                <!-- 간단 범례 -->
                 <div class="card">
                     <div class="card-body d-flex align-items-center gap-3">
                         <span class="legend legend-plan"></span><span class="small">계획(주간 템플릿)</span>
@@ -45,10 +42,8 @@
             </div>
         </div>
 
-        <!-- ============ 우측: 월 달력만 표시 ============ -->
+        <!-- ============ 우측: 월 달력 ============ -->
         <div class="col-12 col-lg-8">
-
-            <!-- 선택 월 실제 일정(저장된 스케줄) 달력 -->
             <div class="card">
                 <div class="card-header fw-bold d-flex align-items-center justify-content-between">
           <span>
@@ -65,7 +60,6 @@
                 </div>
                 <div class="card-body">
 
-                    <!-- 일정 없음(empty state) -->
                     <div id="emptyState" class="d-none text-center py-4">
                         <div class="mb-2 text-muted">이 달에는 저장된 일정이 없습니다.</div>
                         <button id="btnCreateFromEmpty" class="btn btn-primary btn-sm">일정 생성하기</button>
@@ -80,45 +74,112 @@
                         </div>
                     </div>
                     <div class="small text-muted mt-2">
-                        * 날짜 칸에는 저장된 일정(실제)이 칩으로 표시됩니다.
+                        * 날짜 칸을 클릭하면 선택되고, 날짜와 요일 사이에 작은 <b>[수정]</b> 버튼이 나타납니다.
                     </div>
-                    <!-- 내부 상태 보관(표시안함) -->
                     <span id="monthLabel" class="d-none">0000-00-01</span>
                 </div>
             </div>
-
         </div>
     </div>
 </main>
+
+<!-- ===== 편집 모달 유지 (기존과 동일) ===== -->
+<div id="editOverlay" class="edit-overlay d-none" role="dialog" aria-modal="true">
+    <div class="edit-modal">
+        <div class="edit-modal-header d-flex justify-content-between align-items-center">
+            <div class="fw-bold">
+                <span id="editTitleDate">0000-00-00</span>
+                <span class="text-muted">/</span>
+                <span id="editTitleMember">알바생 이름</span>
+            </div>
+            <div class="d-flex gap-2">
+                <button id="btnSaveEdit" class="btn btn-sm btn-primary">저장</button>
+                <button id="btnCancelEdit" class="btn btn-sm btn-outline-secondary">취소</button>
+                <button id="btnCloseModal" class="btn btn-sm btn-outline-dark">닫기</button>
+            </div>
+        </div>
+
+        <div class="edit-modal-body">
+            <div class="small text-muted mb-2">슬롯을 클릭하여 선택/해제하세요. (한 칸 = 10분)</div>
+
+            <div class="hour-grid-wrap">
+                <table class="table table-sm align-middle hour-grid">
+                    <thead>
+                    <tr>
+                        <th style="width:88px">시간</th>
+                        <th class="text-center">:00</th>
+                        <th class="text-center">:10</th>
+                        <th class="text-center">:20</th>
+                        <th class="text-center">:30</th>
+                        <th class="text-center">:40</th>
+                        <th class="text-center">:50</th>
+                        <th class="text-end" style="width:96px">해당 시각 합계</th>
+                    </tr>
+                    </thead>
+                    <tbody id="hourGridBody"></tbody>
+                    <tfoot>
+                    <tr>
+                        <th colspan="7" class="text-end">총 선택</th>
+                        <th class="text-end"><span id="selectedMinutes" class="fw-bold">0</span>분</th>
+                    </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
 
 <style>
     .legend { display:inline-block; width:14px; height:14px; border-radius:3px; border:1px solid #ddd; vertical-align:middle; }
     .legend-plan { background: rgba(13,110,253,.25); border-color: rgba(13,110,253,.45); }
     .legend-actual { background: rgba(25,135,84,.25); border-color: rgba(25,135,84,.40); }
 
-    /* 멤버 칩 */
+    /* ===== 세로 리스트 ===== */
+    .vlist { display: flex; flex-direction: column; gap: 8px; }
     .pill {
-        display:inline-flex; align-items:center; gap:8px;
-        padding:6px 10px; border:1px solid #e9ecef; border-radius:999px;
+        width:100%;
+        display:flex; align-items:center; gap:10px;
+        padding:10px 12px; border:1px solid #e9ecef; border-radius:10px;
         cursor:pointer; user-select:none; background:#fff;
+        transition: background .15s, border-color .15s, box-shadow .15s;
     }
-    .pill .dot { width:10px; height:10px; border-radius:50%; border:1px solid rgba(0,0,0,.1); }
-    .pill.active { outline:2px solid rgba(13,110,253,.35); outline-offset:2px; }
+    .pill:hover { background:#fafafa; border-color:#dee2e6; }
+    .pill.active { border-color: rgba(13,110,253,.45); box-shadow:0 0 0 3px rgba(13,110,253,.15) inset; }
+    .pill .dot { width:12px; height:12px; border-radius:50%; border:1px solid rgba(0,0,0,.08); flex:0 0 12px; }
     .pill .name { font-weight:600; }
+    .pill .meta { margin-left:auto; display:flex; align-items:center; gap:8px; }
     .pill .status { font-size:.8rem; color:#6c757d; }
 
     /* 달력 */
     .calendar-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:8px; }
     .calendar-grid .dow { text-align:center; font-weight:600; color:#6c757d; padding:6px 0; border-bottom:1px dashed #e9ecef; }
-    .calendar-grid .cell { border:1px solid #e9ecef; border-radius:10px; padding:8px; min-height:120px; background:#fff; display:flex; flex-direction:column; gap:6px; }
-    .cell .date-head { display:flex; align-items:center; justify-content:space-between; font-weight:600; font-size:.95rem; }
+    .calendar-grid .cell { border:1px solid #e9ecef; border-radius:10px; padding:8px; min-height:120px; background:#fff; display:flex; flex-direction:column; gap:6px; cursor:pointer; }
+    .cell .date-head { display:flex; align-items:center; justify-content:space-between; font-weight:600; font-size:.95rem; gap:8px; }
+    .date-head .mid-actions { margin:0 6px; display:inline-flex; align-items:center; gap:8px; }
     .cell .date-head .dow-mini { color:#6c757d; font-weight:500; font-size:.85rem; }
     .cell .segments { display:flex; flex-wrap:wrap; gap:6px; }
     .cell .day-total { margin-top:auto; text-align:right; font-size:.875rem; color:#212529; }
-    .cell.muted { background:#fcfcfc; color:#96a0aa; }
+    .cell.muted { background:#fcfcfc; color:#96a0aa; cursor:default; }
     .cell.today { outline:2px solid #51cf66; outline-offset:2px; }
+    .cell.selected { box-shadow:0 0 0 3px rgba(13,110,253,.25) inset; }
+    .btn-edit-inline { padding:1px 6px; font-size:.75rem; line-height:1.1; border-radius:10px; }
 
-    .chip { display:inline-flex; align-items:center; gap:6px; padding:2px 6px; border:1px solid #dee2e6; border-radius:999px; background:#fff; }
+    /* 편집 모달 */
+    .edit-overlay { position:fixed; inset:0; background:rgba(0,0,0,.35); display:flex; align-items:center; justify-content:center; z-index:1055; }
+    .edit-modal { width:min(920px, 96vw); background:#fff; border-radius:12px; box-shadow:0 10px 40px rgba(0,0,0,.2); }
+    .edit-modal-header { padding:12px 16px; border-bottom:1px solid #e9ecef; }
+    .edit-modal-body { padding:16px; }
+
+    .hour-grid-wrap { max-height:70vh; overflow:auto; border:1px solid #e9ecef; border-radius:10px; }
+    .hour-grid th, .hour-grid td { vertical-align:middle; }
+    .slot-cell { text-align:center; }
+    .slot-btn {
+        width:100%; min-width:56px; padding:.35rem .2rem;
+        border:1px solid #dee2e6; background:#fff; border-radius:8px;
+        cursor:pointer; user-select:none; font-size:.9rem;
+    }
+    .slot-btn.selected { background:rgba(13,110,253,.12); border-color:rgba(13,110,253,.45); font-weight:600; }
+    .min-badge { display:inline-block; min-width:52px; text-align:right; }
 </style>
 
 <script id="membersData" type="application/json">
@@ -146,7 +207,18 @@
         const btnMonthNext = document.getElementById('btnMonthNext');
         const monthActualTotalCell = document.getElementById('monthActualTotalCell');
 
+        // 편집 모달
+        const editOverlay = document.getElementById('editOverlay');
+        const editTitleDate = document.getElementById('editTitleDate');
+        const editTitleMember = document.getElementById('editTitleMember');
+        const btnSaveEdit = document.getElementById('btnSaveEdit');
+        const btnCancelEdit = document.getElementById('btnCancelEdit');
+        const btnCloseModal = document.getElementById('btnCloseModal');
+        const hourGridBody = document.getElementById('hourGridBody');
+        const selectedMinutesEl = document.getElementById('selectedMinutes');
+
         const API_ENDPOINT = '/api/schedule/work';
+        const API_UPDATE_ENDPOINT = '/api/schedule/work/update';
 
         // ===== 상태 =====
         let allMembers = [];
@@ -156,34 +228,55 @@
         }
 
         let currentMember = null;
-        // 내부 표시월(입력폼 없이 state로 관리)
         let currentMonthStart = firstDayOfMonth(new Date());
 
-        // 초기 렌더
-        attachHandlers();
-        renderMembersByStatus();     // 상태 목록/칩 렌더 + 첫 멤버 선택
-        // 선택된 멤버가 있으면 달력 즉시 렌더
+        // 달력 선택 상태
+        let selectedCellEl = null;
+        let selectedDateIso = null;
 
-        // ========== 이벤트 바인딩 ==========
+        // 모달 편집 상태
+        const SLOT_MINUTES = 10;
+        const START_HOUR = 6;
+        const END_HOUR = 22; // exclusive
+        let originalSegments = [];
+        let slotState = new Set();
+
+        // 초기
+        attachHandlers();
+        renderMembersByStatus(); // 첫 렌더
+
+        // ===== 이벤트 =====
         function attachHandlers(){
-            statusSelect.addEventListener('change', ()=>{
-                renderMembersByStatus();
-            });
+            statusSelect.addEventListener('change', ()=> renderMembersByStatus());
             btnMonthPrev.addEventListener('click', (e)=>{ e.preventDefault(); shiftMonth(-1); });
             btnMonthNext.addEventListener('click', (e)=>{ e.preventDefault(); shiftMonth(+1); });
             btnMonthThis.addEventListener('click', (e)=>{ e.preventDefault(); goToThisMonth(); });
 
-            if (btnCreateFromEmpty) {
+            if(btnCreateFromEmpty){
                 btnCreateFromEmpty.addEventListener('click', ()=>{
-                    if(!currentMember){ alert('근로자를 먼저 선택하세요.'); return; }
-                    const monthParam = `${currentMonthStart.getFullYear()}-${pad2(currentMonthStart.getMonth()+1)}`;
-                    // 필요 시 경로 수정
-                    window.location.assign(`/schedules/generator?memberId=${encodeURIComponent(currentMember.id)}&month=${encodeURIComponent(monthParam)}`);
+                    if(!currentMember){
+                        alert('근로자를 먼저 선택하세요.');
+                        return;
+                    }
+
+                    const url = `/schedules/generator?memberId=${encodeURIComponent(currentMember.id)}`;
+                    // 새 창(팝업)으로 열기
+                    window.open(
+                            url,
+                            'scheduleGenerator',
+                            'width=1200,height=800,top=80,left=80,scrollbars=yes,resizable=yes'
+                    );
                 });
             }
+
+
+            btnSaveEdit.addEventListener('click', onSaveEdit);
+            btnCancelEdit.addEventListener('click', onCancelEdit);
+            btnCloseModal.addEventListener('click', closeEditModal);
+            editOverlay.addEventListener('click', (e)=>{ if(e.target===editOverlay) closeEditModal(); });
         }
 
-        // ========== 멤버 렌더 ==========
+        // ===== 멤버 렌더 (세로 리스트 + 선택 유지) =====
         function renderMembersByStatus(){
             const status = statusSelect.value;
             const filtered = (allMembers||[]).filter(m=>m.status===status);
@@ -197,44 +290,60 @@
                 return;
             }
 
+            // 현재 선택된 멤버가 이 상태에 포함되어 있으면 유지
+            let toSelect = null;
+            if(currentMember && filtered.some(x => String(x.id) === String(currentMember.id))){
+                toSelect = filtered.find(x => String(x.id) === String(currentMember.id));
+            } else {
+                toSelect = filtered[0];
+            }
+
             filtered.forEach(m=>{
                 const color = colorForMember(m);
-                const pill = document.createElement('button');
-                pill.type = 'button';
-                pill.className = 'pill';
-                pill.dataset.memberId = String(m.id);
-                pill.innerHTML = `
-        <span class="dot" style="background:${color}"></span>
-        <span class="name">${escapeHtml(m.name ?? '-')}</span>
-        <span class="status">(${escapeHtml(m.gender ?? '-')})</span>`;
-                pill.addEventListener('click', (evt)=>{
+
+                const row = document.createElement('button');
+                row.type = 'button';
+                row.className = 'pill';
+                row.dataset.memberId = String(m.id);
+                row.innerHTML = `
+                <span class="dot" style="background:${color}"></span>
+                <span class="name">${escapeHtml(m.name ?? '-')}</span>
+                <span class="meta">
+                    <span class="status">(${escapeHtml(m.gender ?? '-')})</span>
+                </span>
+            `;
+                row.addEventListener('click', (evt)=>{
                     evt.preventDefault();
                     evt.stopPropagation();
                     selectMember(m);
                 });
-                memberPills.appendChild(pill);
+                memberPills.appendChild(row);
             });
 
-            // 첫 사람 자동 선택
-            selectMember(filtered[0]);
+            // active 표시 적용
+            selectMember(toSelect, {keepCalendar:true});
         }
 
-        function selectMember(m){
+        function selectMember(m, opts={keepCalendar:false}){
             currentMember = m;
 
-            // pill active 표시
+            // active 표시
             Array.from(memberPills.querySelectorAll('.pill')).forEach(el=>el.classList.remove('active'));
             if(m){
                 const active = memberPills.querySelector(`.pill[data-member-id="${m.id}"]`);
                 if(active) active.classList.add('active');
             }
 
-            // 제목 옆 이름/상태
             updateSelectedBadgeAndName();
+            clearSelectedCell();
 
-            // 달력 갱신
             if(currentMember){
-                renderMonthCalendar(currentMember, currentMonthStart);
+                if (opts.keepCalendar) {
+                    // 상태만 바뀌고 같은 멤버 유지 시에는 현재 달 유지하여 렌더
+                    renderMonthCalendar(currentMember, currentMonthStart);
+                } else {
+                    renderMonthCalendar(currentMember, currentMonthStart);
+                }
             }else{
                 clearCalendar();
             }
@@ -257,19 +366,16 @@
             selectedMemberStatusRight.className = `badge ${badgeMap[currentMember.status]||'bg-secondary'} ms-2`;
         }
 
-        // ========== 달력 ==========
+        // ===== 달력 =====
         async function renderMonthCalendar(member, baseDate){
             const ms = firstDayOfMonth(baseDate);
             const me = lastDayOfMonth(baseDate);
-            currentMonthStart = ms; // 상태 유지
+            currentMonthStart = ms;
 
             const monthStartIso = toIso(ms), monthEndIso = toIso(me);
-
-            // 헤더 라벨
             monthLabel.textContent = monthStartIso;
             monthRangeLabel.textContent = `${ms.getFullYear()}.${pad2(ms.getMonth()+1)}.01 ~ ${pad2(me.getMonth()+1)}.${pad2(me.getDate())}`;
 
-            // 데이터 조회
             let dayMap = {};
             try{
                 const url = `${API_ENDPOINT}/${encodeURIComponent(member.id)}/${monthStartIso}/${monthEndIso}`;
@@ -277,14 +383,9 @@
                 if(resp.ok){
                     const data = await resp.json();
                     dayMap = normalizeActualDays(data);
-                }else{
-                    console.warn('Fetch failed:', resp.status);
                 }
-            }catch(e){
-                console.error(e);
-            }
+            }catch(e){ console.error(e); }
 
-            // 렌더
             calendarGrid.innerHTML = '';
             const DOW_HEAD = ['일','월','화','수','목','금','토'];
             DOW_HEAD.forEach(label=>{
@@ -294,7 +395,7 @@
                 calendarGrid.appendChild(h);
             });
 
-            const firstDow = ms.getDay(); // 0=일
+            const firstDow = ms.getDay();
             for(let i=0;i<firstDow;i++){
                 const blank = document.createElement('div');
                 blank.className = 'cell muted';
@@ -314,6 +415,7 @@
 
                 const cell = document.createElement('div');
                 cell.className = 'cell';
+                cell.dataset.date = iso;
                 if(iso===todayIso) cell.classList.add('today');
 
                 const chipsHtml = (day.segments?.length)
@@ -321,25 +423,54 @@
                         : '<span class="text-muted small">—</span>';
 
                 cell.innerHTML = `
-        <div class="date-head">
-          <span>${d.getDate()}일</span>
-          <span class="dow-mini">${DOW_HEAD[dow]}</span>
-        </div>
-        <div class="segments">${chipsHtml}</div>
-        <div class="day-total">${formatMins(day.minutes||0)}</div>`;
+                <div class="date-head">
+                  <span class="date-text">${d.getDate()}일</span>
+                  <span class="mid-actions"></span>
+                  <span class="dow-mini">${DOW_HEAD[dow]}</span>
+                </div>
+                <div class="segments">${chipsHtml}</div>
+                <div class="day-total">${formatMins(day.minutes||0)}</div>`;
+
+                cell.addEventListener('click', (evt)=>{
+                    if(cell.classList.contains('muted')) return;
+                    onSelectCell(cell, iso, day.segments||[]);
+                });
+
                 calendarGrid.appendChild(cell);
             }
 
             monthActualTotalCell.textContent = formatMins(monthMinutes);
+            if(!anySegments){ emptyState.classList.remove('d-none'); calendarGrid.classList.add('d-none'); }
+            else { emptyState.classList.add('d-none'); calendarGrid.classList.remove('d-none'); }
+        }
 
-            // 빈 상태 표시
-            if(!anySegments){
-                emptyState.classList.remove('d-none');
-                calendarGrid.classList.add('d-none');
-            }else{
-                emptyState.classList.add('d-none');
-                calendarGrid.classList.remove('d-none');
+        function onSelectCell(cellEl, dateIso, segments){
+            clearSelectedCell();
+            selectedCellEl = cellEl;
+            selectedDateIso = dateIso;
+            selectedCellEl.classList.add('selected');
+
+            const mid = selectedCellEl.querySelector('.mid-actions');
+            if(mid){
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'btn btn-outline-primary btn-edit-inline';
+                btn.textContent = '수정';
+                btn.addEventListener('click', (evt)=>{
+                    evt.stopPropagation();
+                    openEditModal(dateIso, segments);
+                });
+                mid.appendChild(btn);
             }
+        }
+
+        function clearSelectedCell(){
+            if(!selectedCellEl) return;
+            selectedCellEl.classList.remove('selected');
+            const midPrev = selectedCellEl.querySelector('.mid-actions');
+            if(midPrev) midPrev.innerHTML = '';
+            selectedCellEl = null;
+            selectedDateIso = null;
         }
 
         function clearCalendar(){
@@ -348,22 +479,115 @@
             monthActualTotalCell.textContent='0시간';
             emptyState.classList.remove('d-none');
             calendarGrid.classList.add('d-none');
+            clearSelectedCell();
         }
 
         function shiftMonth(offset){
             currentMonthStart = firstDayOfMonth(new Date(currentMonthStart.getFullYear(), currentMonthStart.getMonth()+offset, 1));
-            if(currentMember){
-                renderMonthCalendar(currentMember, currentMonthStart);
-            }
+            clearSelectedCell();
+            if(currentMember){ renderMonthCalendar(currentMember, currentMonthStart); }
         }
         function goToThisMonth(){
             currentMonthStart = firstDayOfMonth(new Date());
-            if(currentMember){
+            clearSelectedCell();
+            if(currentMember){ renderMonthCalendar(currentMember, currentMonthStart); }
+        }
+
+        // ===== 편집 모달 =====
+        function openEditModal(dateIso, segments){
+            if(!currentMember) return;
+
+            editTitleDate.textContent = dateIso;
+            editTitleMember.textContent = currentMember.name ?? '-';
+
+            originalSegments = Array.isArray(segments) ? segments.slice() : [];
+            slotState = segmentsToSlots(originalSegments);
+
+            renderHourGrid();
+            updateSelectedMinutes();
+
+            editOverlay.classList.remove('d-none');
+        }
+
+        function closeEditModal(){ editOverlay.classList.add('d-none'); }
+        function onCancelEdit(){
+            slotState = segmentsToSlots(originalSegments);
+            renderHourGrid();
+            updateSelectedMinutes();
+        }
+
+        async function onSaveEdit(){
+            if(!currentMember || !selectedDateIso) return;
+
+            const segments = slotsToSegments(slotState, SLOT_MINUTES);
+
+            try{
+                const body = { memberId: currentMember.id, date: selectedDateIso, segments };
+                const resp = await fetch(API_UPDATE_ENDPOINT, {
+                    method: 'POST',
+                    headers: {'Content-Type':'application/json', 'Accept':'application/json'},
+                    body: JSON.stringify(body)
+                });
+                if(!resp.ok){
+                    const text = await resp.text().catch(()=> '');
+                    alert(`저장 실패: ${resp.status} ${text}`);
+                    return;
+                }
+                closeEditModal();
                 renderMonthCalendar(currentMember, currentMonthStart);
+            }catch(e){
+                console.error(e);
+                alert('저장 중 오류가 발생했습니다.');
             }
         }
 
-        // ========== 유틸 ==========
+        // 시간표 렌더: 06~21시까지 각 행 6칸(:00~:50)
+        function renderHourGrid(){
+            hourGridBody.innerHTML = '';
+            for(let h=START_HOUR; h<END_HOUR; h++){
+                const tr = document.createElement('tr');
+
+                const th = document.createElement('th');
+                th.textContent = `${pad2(h)}:00`;
+                tr.appendChild(th);
+
+                let rowSelectedCount = 0;
+
+                for(let i=0;i<6;i++){
+                    const mm = i*10;
+                    const hm = `${pad2(h)}:${pad2(mm)}`;
+                    const td = document.createElement('td');
+                    td.className = 'slot-cell';
+
+                    const btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.className = 'slot-btn';
+                    btn.textContent = hm;
+                    btn.dataset.hm = hm;
+
+                    if(slotState.has(hm)){ btn.classList.add('selected'); rowSelectedCount++; }
+
+                    btn.addEventListener('click', ()=>{
+                        if(slotState.has(hm)){ slotState.delete(hm); btn.classList.remove('selected'); rowSelectedCount--; }
+                        else { slotState.add(hm); btn.classList.add('selected'); rowSelectedCount++; }
+                        lastTd.textContent = `${rowSelectedCount*10}분`;
+                        updateSelectedMinutes();
+                    });
+
+                    td.appendChild(btn);
+                    tr.appendChild(td);
+                }
+
+                const lastTd = document.createElement('td');
+                lastTd.className = 'text-end';
+                lastTd.innerHTML = `<span class="min-badge">${rowSelectedCount*10}분</span>`;
+                tr.appendChild(lastTd);
+
+                hourGridBody.appendChild(tr);
+            }
+        }
+
+        // ===== 유틸 =====
         function firstDayOfMonth(d){ return new Date(d.getFullYear(), d.getMonth(), 1); }
         function lastDayOfMonth(d){ return new Date(d.getFullYear(), d.getMonth()+1, 0); }
         function pad2(n){ return String(n).padStart(2,'0'); }
@@ -381,13 +605,6 @@
         function seededHash(str){ let h=2166136261>>>0; for(let i=0;i<str.length;i++){ h^=str.charCodeAt(i); h=(h*16777619)>>>0; } return h>>>0; }
         function hslToHex(h,s,l){
             s/=100; l/=100;
-            const k=n=>(n+h/30)%12, a=s*Math.min(l,1-l);
-            const f=n=>l-a*Math.max(-1,Math.min(k(n)-3,Math.min(9-k(n),1)));
-            const toHex=x=>Math.round(255*x).toString(16).toString(16).padStart(2,'0'); // (safety)
-        }
-        // ↑ 위 함수가 길어져 간단/안전 버전으로 대체
-        function hslToHexSimple(h,s,l){
-            s/=100; l/=100;
             const c=(1-Math.abs(2*l-1))*s, x=c*(1-Math.abs((h/60)%2-1)), m=l-c/2;
             let r=0,g=0,b=0;
             if(0<=h&&h<60){ r=c; g=x; b=0; }
@@ -399,9 +616,6 @@
             const toHex = v => Math.round((v+m)*255).toString(16).padStart(2,'0');
             return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
         }
-        // 교체
-        function hslToHex(h,s,l){ return hslToHexSimple(h,s,l); }
-
         function escapeHtml(s){ return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
 
         function formatMins(mins){
@@ -410,8 +624,6 @@
             return m===0?`${h}시간`:`${h}시간 ${m}분`;
         }
 
-        // 서버 응답 일반화
-        // 기대 형태: { days: [ {date:"YYYY-MM-DD", minutes?:number, segments:[{start:"HH:mm", end:"HH:mm"}]} ] }
         function normalizeActualDays(apiData){
             const map = {};
             const arr = Array.isArray(apiData?.days) ? apiData.days : [];
@@ -420,10 +632,45 @@
                 const segments = Array.isArray(d.segments) ? d.segments : [];
                 const minutes = (typeof d.minutes==='number')
                         ? d.minutes
-                        : segments.reduce((acc,s)=> acc + ((parseInt(s.end.slice(0,2))*60+parseInt(s.end.slice(3,5))) - (parseInt(s.start.slice(0,2))*60+parseInt(s.start.slice(3,5)))), 0);
+                        : segments.reduce((acc,s)=> acc + (hmToMin(s.end) - hmToMin(s.start)), 0);
                 map[date] = { segments, minutes };
             });
             return map;
+        }
+
+        function hmToMin(hm){ const [h,m]=hm.split(':').map(n=>parseInt(n,10)); return h*60+m; }
+        function minToHm(min){ const h=Math.floor(min/60), m=min%60; return `${pad2(h)}:${pad2(m)}`; }
+
+        // segments -> slots
+        function segmentsToSlots(segments){
+            const set = new Set();
+            const startMin = START_HOUR*60;
+            const endMin = END_HOUR*60; // exclusive
+            (segments||[]).forEach(seg=>{
+                let s = Math.max(hmToMin(seg.start), startMin);
+                let e = Math.min(hmToMin(seg.end), endMin);
+                for(let t=s; t<e; t+=SLOT_MINUTES){
+                    set.add(minToHm(t));
+                }
+            });
+            return set;
+        }
+
+        // slots -> merged segments
+        function slotsToSegments(set, step){
+            const sorted = Array.from(set).map(hmToMin).sort((a,b)=>a-b);
+            const res = [];
+            let i=0;
+            while(i<sorted.length){
+                let s = sorted[i], t = s + step; i++;
+                while(i<sorted.length && sorted[i]===t){ t += step; i++; }
+                res.push({start:minToHm(s), end:minToHm(t)});
+            }
+            return res;
+        }
+
+        function updateSelectedMinutes(){
+            selectedMinutesEl.textContent = (slotState.size * SLOT_MINUTES)|0;
         }
     })();
 </script>

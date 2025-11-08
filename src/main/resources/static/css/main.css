@@ -231,3 +231,32 @@ body {
     background: rgba(0,0,0,.05);
     border-radius: .5rem;
 }
+
+.navbar .hover-dropdown:hover .dropdown-menu {
+    display: block;
+    opacity: 1;
+}
+
+/* 마우스 오버 시 하위 메뉴 표시 */
+.hover-dropdown:hover > .dropdown-menu {
+    display: block;
+    margin-top: 0;
+    opacity: 1;
+}
+
+/* 드롭다운 기본 스타일/애니메이션 */
+.navbar .dropdown-menu {
+    display: none;
+    opacity: 0;
+    transition: opacity .15s ease-in-out;
+    margin-top: 0;
+    border-radius: .5rem;
+    box-shadow: 0 3px 12px rgba(0,0,0,.1);
+}
+
+/* 활성화 스타일 보정 (부트스트랩 기본과 어울리게) */
+.navbar .dropdown-item.active,
+.navbar .dropdown-item:active {
+    background-color: #0d6efd;
+    color: #fff;
+}
