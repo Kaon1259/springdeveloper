@@ -37,11 +37,11 @@
                 <!-- 근로자 정보 -->
                 <div class="card">
                     <div class="card-header fw-bold d-flex justify-content-between align-items-center">
-            <span>
-              시간제 근로자 정보
-              <small id="createdAtLabel" class="text-muted ms-2">(등록일: -)</small>
-              <small id="updatedAtLabel" class="text-muted ms-2">(마지막수정일: -)</small>
-            </span>
+                        <span>
+                          시간제 근로자 정보
+                          <small id="createdAtLabel" class="text-muted ms-2">(등록일: -)</small>
+                          <small id="updatedAtLabel" class="text-muted ms-2">(마지막수정일: -)</small>
+                        </span>
                         <span id="statusBadge" class="badge bg-secondary">-</span>
                     </div>
                     <div class="card-body">
@@ -173,7 +173,7 @@
         }
 
         let currentMember = null;
-        let generatedItems = []; // 저장 payload (date/start/end 목록)
+        let generatedItems = []; // [{date, start, end, note?}, ...]
 
         // 기본 시작월: 오늘 달
         const today = new Date();
@@ -197,10 +197,13 @@
             }
 
             const {fromDate, toDate} = getRange();
-            // 템플릿 → 날짜별 분해
+
+            // 템플릿 → 날짜별 분해 (+유효성 검증, 중복 제거)
             generatedItems = buildItemsFromWeeklyTemplate(currentMember, fromDate, toDate);
+
             // 미리보기 렌더
             renderPreviewCalendars(fromDate, toDate, currentMember, generatedItems);
+
             btnSave.disabled = generatedItems.length === 0;
             if(generatedItems.length === 0){
                 showAlert('생성된 일정이 없습니다. (주간 템플릿이 없거나, 범위 내 매칭이 없음)', 'secondary');
@@ -226,8 +229,9 @@
                 from: toIso(fromDate),
                 to: toIso(toDate),
                 items: generatedItems
+                // overwrite: 필요 시 true/false 추가 가능
             };
-            alert( JSON.stringify(payload.items));
+
             try{
                 const resp = await fetch('/api/schedule/generate', {
                     method: 'POST',
@@ -239,9 +243,9 @@
                     showAlert(`저장 실패: ${resp.status} ${text}`, 'danger');
                     return;
                 }
-                const resJson = await resp.json().catch(()=>({}));
+                await resp.json().catch(()=>({}));
                 showAlert('저장 완료!', 'success');
-                // 필요 시, 저장 후 실제 일정 재조회/갱신 로직 추가 가능
+                // TODO: 저장 후 조회/새로고침 로직 필요 시 추가
             }catch(e){
                 console.error(e);
                 showAlert('저장 중 오류가 발생했습니다.', 'danger');
@@ -256,24 +260,42 @@
             return { fromDate, toDate };
         }
 
+        // 주간 템플릿 → 날짜별 아이템 생성
         function buildItemsFromWeeklyTemplate(member, fromDate, toDate){
             const weekly = getSchedules(member); // [{day:'MON', start:'10:00', end:'14:00'}, ...]
             if(!Array.isArray(weekly) || weekly.length===0) return [];
 
-            // ScheduleItem.Day → JS 요일 매핑(0=일~6=토)
             const mapToJS={'SUN':0,'MON':1,'TUE':2,'WED':3,'THU':4,'FRI':5,'SAT':6};
-
+            const dedupe = new Set();
             const items = [];
+
             for(let d = new Date(fromDate); d <= toDate; d.setDate(d.getDate()+1)){
                 const dow = d.getDay(); // 0~6
-                // 해당 dow의 구간들
                 const segs = weekly.filter(s => mapToJS[s.day] === dow);
                 if(!segs.length) continue;
                 const iso = toIso(d);
+
                 segs.forEach(s=>{
-                    items.push({date: iso, start: hmStr(s.start), end: hmStr(s.end)});
+                    const start = hmStr(s.start);
+                    const end   = hmStr(s.end);
+
+                    // 유효성: 시작<종료
+                    if(!isValidRange(start, end)) return;
+
+                    // 중복 제거(같은 날짜, 같은 구간)
+                    const key = `${iso}|${start}|${end}`;
+                    if(dedupe.has(key)) return;
+                    dedupe.add(key);
+
+                    items.push({date: iso, start, end, note: '자동 생성'});
                 });
             }
+
+            // 정렬(날짜, 시작시간)
+            items.sort((a,b)=>{
+                if(a.date !== b.date) return a.date < b.date ? -1 : 1;
+                return a.start < b.start ? -1 : (a.start > b.start ? 1 : 0);
+            });
             return items;
         }
 
@@ -298,16 +320,16 @@
 
                 const section = document.createElement('section');
                 section.innerHTML = `
-        <div class="d-flex justify-content-between align-items-center mb-2">
-          <div class="fw-semibold">${ms.getFullYear()}.${pad2(ms.getMonth()+1)}</div>
-          <div class="small text-muted">${ms.getFullYear()}.${pad2(ms.getMonth()+1)}.01 ~ ${pad2(me.getMonth()+1)}.${pad2(me.getDate())}</div>
-        </div>
-        <div class="calendar-grid"></div>
-        <div class="mt-2 d-flex justify-content-between">
-          <div class="small text-muted">월 합계(계획)</div>
-          <div class="fw-semibold month-total">0시간</div>
-        </div>
-      `;
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                  <div class="fw-semibold">${ms.getFullYear()}.${pad2(ms.getMonth()+1)}</div>
+                  <div class="small text-muted">${ms.getFullYear()}.${pad2(ms.getMonth()+1)}.01 ~ ${pad2(me.getMonth()+1)}.${pad2(me.getDate())}</div>
+                </div>
+                <div class="calendar-grid"></div>
+                <div class="mt-2 d-flex justify-content-between">
+                  <div class="small text-muted">월 합계(계획)</div>
+                  <div class="fw-semibold month-total">0시간</div>
+                </div>
+            `;
                 const grid = section.querySelector('.calendar-grid');
 
                 // 요일 헤더
@@ -340,13 +362,13 @@
                     monthMinutes += minutes;
 
                     cell.innerHTML = `
-          <div class="date-head">
-            <span>${d.getDate()}일</span>
-            <span class="dow-mini">${DOW_HEAD[d.getDay()]}</span>
-          </div>
-          <div class="segments">${chips}</div>
-          <div class="day-total">${formatMins(minutes)}</div>
-        `;
+                    <div class="date-head">
+                      <span>${d.getDate()}일</span>
+                      <span class="dow-mini">${DOW_HEAD[d.getDay()]}</span>
+                    </div>
+                    <div class="segments">${chips}</div>
+                    <div class="day-total">${formatMins(minutes)}</div>
+                `;
                     grid.appendChild(cell);
                 }
 
@@ -442,8 +464,9 @@
         function pad2(n){ return String(n).padStart(2,'0'); }
         function toIso(d){ return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`; }
         function hmStr(v){
-            // "HH:mm" or Date/String → "HH:mm"
+            // "HH:mm" or Date-like → "HH:mm"
             if(typeof v === 'string' && /^\d{2}:\d{2}$/.test(v)) return v;
+            if(typeof v === 'string' && /^\d{2}:\d{2}:\d{2}$/.test(v)) return v.slice(0,5); // "HH:mm:ss" -> "HH:mm"
             if(v && typeof v === 'object' && 'hour' in v && 'minute' in v) return `${pad2(v.hour)}:${pad2(v.minute)}`;
             try{
                 const s = String(v);
@@ -459,6 +482,11 @@
             const [h,m] = hm.split(':').map(n=>parseInt(n,10));
             return {h:isNaN(h)?0:h, m:isNaN(m)?0:m};
         }
+        function isValidRange(start, end){
+            const s = parseHm(start), e = parseHm(end);
+            const diff = (e.h*60+e.m) - (s.h*60+s.m);
+            return diff > 0;
+        }
         function diffMinutes(start, end){
             const s = parseHm(start), e = parseHm(end);
             return (e.h*60+e.m) - (s.h*60+s.m);
@@ -473,7 +501,6 @@
         }
         function fmtDateTime(v){
             if(!v) return '-';
-            // 숫자 timestamp(초/밀리초), ISO 문자열 모두 대응
             if(typeof v === 'number'){
                 const ms = v < 1e12 ? v*1000 : v;
                 const d = new Date(ms);
@@ -489,7 +516,6 @@
         }
         function clearAlert(){ alertArea.innerHTML=''; }
         function escapeHtml(s){ return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
-
     })();
 </script>
 

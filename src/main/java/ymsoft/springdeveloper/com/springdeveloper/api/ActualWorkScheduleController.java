@@ -46,15 +46,6 @@ public class ActualWorkScheduleController {
     public ResponseEntity<Map<String, Object>> saveActualBulk(
             @RequestBody @Valid ActualWorkScheduleBulkDto request
     ) {
-        // 요청 예시:
-        // {
-        //   "date": "2025-11-08",
-        //   "segments": [
-        //     { "memberId": 1, "segments": [ { "start": "08:00", "end": "10:00" }, ... ] },
-        //     { "memberId": 2, "segments": [ { "start": "09:30", "end": "11:00" }, ... ] }
-        //   ]
-        // }
-
         log.info(request.toString());
         if (request.getSegments() == null || request.getSegments().isEmpty()) {
             return ResponseEntity.badRequest().body(Map.of(
@@ -97,14 +88,6 @@ public class ActualWorkScheduleController {
         res.put("ids", savedList.stream().map(ActualWorkSchedule::getId).collect(Collectors.toList()));
         log.info(res.toString());
         return ResponseEntity.ok(res);
-    }
-
-    @PostMapping("/generate")
-    public ResponseEntity<ScheduleGenerateResponse> generate(
-            @Valid @RequestBody ScheduleGenerateRequest request
-    ) {
-        ScheduleGenerateResponse resp = workScheduleService.generateSchedules(request);
-        return ResponseEntity.ok(resp);
     }
 
     @GetMapping("/{memberId}/{date}")

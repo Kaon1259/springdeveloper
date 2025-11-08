@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import ymsoft.springdeveloper.com.springdeveloper.dto.ScheduleGenerateRequest;
 import ymsoft.springdeveloper.com.springdeveloper.dto.ScheduleGenerateResponse;
+import ymsoft.springdeveloper.com.springdeveloper.dto.ScheduleRangeResponse;
 import ymsoft.springdeveloper.com.springdeveloper.entity.Member;
 import ymsoft.springdeveloper.com.springdeveloper.entity.WorkSchedule;
 import ymsoft.springdeveloper.com.springdeveloper.repository.memberRepository;
@@ -13,7 +14,10 @@ import ymsoft.springdeveloper.com.springdeveloper.repository.WorkScheduleReposit
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -131,6 +135,66 @@ public class WorkScheduleService {
                 .build();
         return workScheduleRepository.save(ws);
     }
+    public ScheduleRangeResponse getWorkRange(Long memberId, LocalDate start, LocalDate end) {
+        validateParams(memberId, start, end);
+
+        // (선택) 멤버 존재 여부 체크
+        if (!memberRepository.existsById(memberId)) {
+            throw new IllegalArgumentException("존재하지 않는 근로자입니다. memberId=" + memberId);
+        }
+
+        List<WorkSchedule> schedules =
+                workScheduleRepository.findByMemberIdAndWorkDateBetweenOrderByWorkDateAscStartAsc(
+                        memberId, start, end
+                );
+
+        // workDate 기준으로 그룹핑(정렬 유지)
+        Map<LocalDate, List<WorkSchedule>> byDate = schedules.stream()
+                .collect(Collectors.groupingBy(
+                        WorkSchedule::getWorkDate,
+                        LinkedHashMap::new,
+                        Collectors.toList()
+                ));
+
+        ScheduleRangeResponse resp = new ScheduleRangeResponse();
+
+        byDate.forEach((date, list) -> {
+            // 해당 날짜의 구간 목록
+            List<ScheduleRangeResponse.Seg> segs = list.stream()
+                    .map(ws -> ScheduleRangeResponse.Seg.builder()
+                            .start(ws.getStart())
+                            .end(ws.getEnd())
+                            .note(ws.getNote())
+                            .build())
+                    .collect(Collectors.toList());
+
+            int minutes = list.stream()
+                    .mapToInt(ws -> diffMinutes(ws.getStart(), ws.getEnd()))
+                    .filter(m -> m > 0)
+                    .sum();
+
+            resp.getDays().add(ScheduleRangeResponse.Day.builder()
+                    .date(date)
+                    .segments(segs)
+                    .minutes(minutes)
+                    .build());
+        });
+
+        return resp;
+    }
+
+    private void validateParams(Long memberId, LocalDate start, LocalDate end) {
+        if (memberId == null) throw new IllegalArgumentException("memberId는 필수입니다.");
+        if (start == null) throw new IllegalArgumentException("start는 필수입니다.");
+        if (end == null) throw new IllegalArgumentException("end는 필수입니다.");
+        if (end.isBefore(start)) throw new IllegalArgumentException("end는 start보다 빠를 수 없습니다.");
+    }
+
+    private int diffMinutes(LocalTime s, LocalTime e) {
+        if (s == null || e == null) return 0;
+        return (e.getHour() * 60 + e.getMinute()) - (s.getHour() * 60 + s.getMinute());
+    }
+
 
     /** 겹침 판단: [aStart, aEnd) 와 [bStart, bEnd) 가 교차하는가 */
     private boolean isOverlap(LocalTime aStart, LocalTime aEnd, LocalTime bStart, LocalTime bEnd) {
