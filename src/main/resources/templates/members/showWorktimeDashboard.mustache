@@ -42,45 +42,7 @@
                     </div>
                 </div>
 
-                <!-- (선택) 알바생 정보 패널 -->
-                <div class="card">
-                    <div class="card-header fw-bold d-flex justify-content-between align-items-center">
-                        <span>아르바이트 정보</span>
-                        <span id="statusBadge" class="badge bg-secondary">-</span>
-                    </div>
-                    <div class="card-body">
-                        <div class="row gy-2">
-                            <div class="col-6">
-                                <div class="text-muted">이름</div>
-                                <div id="infoName" class="fw-semibold">-</div>
-                            </div>
-                            <div class="col-6">
-                                <div class="text-muted">성별</div>
-                                <div id="infoGender" class="fw-semibold">-</div>
-                            </div>
-                            <div class="col-6">
-                                <div class="text-muted">전화번호</div>
-                                <div id="infoPhone" class="fw-semibold">-</div>
-                            </div>
-                            <div class="col-6">
-                                <div class="text-muted">이메일</div>
-                                <div id="infoEmail" class="fw-semibold">-</div>
-                            </div>
-                            <div class="col-6">
-                                <div class="text-muted">시작일</div>
-                                <div id="infoStartDate" class="fw-semibold">-</div>
-                            </div>
-                            <div class="col-6">
-                                <div class="text-muted">보건증</div>
-                                <div id="infoHealth" class="fw-semibold">-</div>
-                            </div>
-                            <div class="col-12">
-                                <div class="text-muted">시급(원)</div>
-                                <div id="infoHourlyWage" class="fw-semibold">-</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                <!-- ✅ 좌측 아르바이트 정보 카드 제거됨 -->
 
             </div>
         </div>
@@ -110,7 +72,7 @@
                             <thead class="table-light">
                             <tr>
                                 <th style="width:110px;">요일</th>
-                                <th>계획 근무기간 (멤버 정보)</th>
+                                <th>계획 근무기간 (API /work)</th>
                                 <th>실 근무시간 (실데이터)</th>
                                 <th style="width:120px;" class="text-end">실 합계</th>
                             </tr>
@@ -153,7 +115,7 @@
                     </div>
 
                     <div class="small text-muted">
-                        * 계획은 멤버 정보의 정규 스케줄(요일/시:분) 기반이고, 실제는 일자별 실근무 데이터(API) 기반입니다.
+                        * 계획은 <code>/api/schedule/work/{memberId}/{start}/{end}</code> 기반이고, 실제는 일자별 실근무 데이터(API) 기반입니다.
                     </div>
                 </div>
             </div>
@@ -167,12 +129,22 @@
         border:1px solid #e9ecef; border-radius:14px; padding:4px 8px; background:#fff;
     }
     .chip .dot { width:10px; height:10px; border-radius:50%; border:1px solid rgba(0,0,0,.08); }
+
     .member-chip {
         display:flex; align-items:center; justify-content:space-between; gap:8px;
         padding:8px 10px; border-radius:10px; background:#fff; border:1px solid #eee; margin-bottom:6px; cursor:pointer;
+        transition: background .15s, border-color .15s, box-shadow .15s;
     }
     .member-chip:hover { background:#f8f9fa; }
     .member-chip .left { display:inline-flex; align-items:center; gap:8px; }
+    .member-chip .dot { width:10px; height:10px; border-radius:50%; border:1px solid rgba(0,0,0,.08); }
+
+    /* ✅ 선택된 멤버 하이라이트 */
+    .member-chip.active {
+        border-color: rgba(13,110,253,.45);
+        box-shadow: 0 0 0 3px rgba(13,110,253,.15) inset;
+        background:#f0f6ff;
+    }
 </style>
 
 <!-- 컨트롤러에서 내려준 JSON -->
@@ -195,16 +167,6 @@
         const memberList = document.getElementById('memberList');
         const memberCountBadge = document.getElementById('memberCountBadge');
 
-        // info
-        const statusBadge  = document.getElementById('statusBadge');
-        const infoName = document.getElementById('infoName');
-        const infoGender = document.getElementById('infoGender');
-        const infoPhone = document.getElementById('infoPhone');
-        const infoEmail = document.getElementById('infoEmail');
-        const infoStartDate = document.getElementById('infoStartDate');
-        const infoHealth = document.getElementById('infoHealth');
-        const infoHourlyWage = document.getElementById('infoHourlyWage');
-
         // right table
         const workTableBody = document.getElementById('workTableBody');
         const selectedMemberTitle = document.getElementById('selectedMemberTitle');
@@ -221,10 +183,13 @@
 
         // 요일(월~일)
         const DOW = ['일','월','화','수','목','금','토'];
-        const DOW_KEY = ['SUN','MON','TUE','WED','THU','FRI','SAT'];
 
         // API
-        const API_BASE = '/api/schedule';
+        const API_BASE_ACTUAL = '/api/schedule';       // 실제 근무 주간 API
+        const API_BASE_PLAN   = '/api/schedule/work';  // 계획 근무 주간 API
+
+        // 선택 상태
+        let selectedMemberId = null;
 
         // 초기 상태
         if (Array.isArray(allMembers) && allMembers.length > 0) {
@@ -245,11 +210,12 @@
 
             renderMemberList(filtered);
 
-            if (filtered[0]) {
-                renderMemberInfo(filtered[0]);
-                await loadAndRenderWeek(filtered[0]); // 계획+실제
+            if (filtered.length) {
+                // 이전에 선택한 멤버가 필터 안에 있으면 유지, 아니면 첫 번째 선택
+                const keep = filtered.find(m => String(m.id) === String(selectedMemberId)) || filtered[0];
+                await pickMember(keep);
             } else {
-                clearInfo();
+                selectedMemberId = null;
                 clearWorkTable();
             }
         }
@@ -264,12 +230,12 @@
             }
             const li = e.target.closest('li.member-chip');
             if (!li) return;
+
             const id = li.getAttribute('data-member-id');
             const members = getCurrentFilteredMembers();
             const target = members.find(m => String(m.id) === String(id));
             if (target) {
-                renderMemberInfo(target);
-                await loadAndRenderWeek(target);
+                await pickMember(target);
             }
         }
 
@@ -278,16 +244,20 @@
             return (allMembers || []).filter(m => m.status === status);
         }
 
-        // ===== Left list & info =====
+        // ===== 좌측 리스트 렌더링 =====
         function renderMemberList(members) {
             memberList.innerHTML = '';
             memberCountBadge.textContent = `${members.length}명`;
-            members.slice().sort((a,b)=>(a.name||'').localeCompare(b.name||'','ko')).forEach(m=>{
-                const li = document.createElement('li');
-                li.className = 'list-group-item member-chip';
-                li.dataset.memberId = String(m.id);
-                const color = colorForMember(m);
-                li.innerHTML = `
+
+            members
+                    .slice()
+                    .sort((a,b)=>(a.name||'').localeCompare(b.name||'','ko'))
+                    .forEach(m=>{
+                        const li = document.createElement('li');
+                        li.className = 'list-group-item member-chip';
+                        li.dataset.memberId = String(m.id);
+                        const color = colorForMember(m);
+                        li.innerHTML = `
         <span class="left">
           <span class="dot" style="background:${color}"></span>
           <span class="fw-semibold">${escapeHtml(m.name ?? '-')}</span>
@@ -295,66 +265,59 @@
         </span>
         <button type="button" class="btn btn-sm btn-outline-primary view-btn" data-id="${String(m.id)}">상세보기</button>
       `;
-                memberList.appendChild(li);
-            });
+                        memberList.appendChild(li);
+                    });
+
             if (!members.length) {
                 const li = document.createElement('li');
                 li.className = 'list-group-item';
                 li.textContent = '해당 상태의 알바생이 없습니다.';
                 memberList.appendChild(li);
             }
+
+            // 현재 선택된 멤버 active 표시
+            updateMemberListActive();
         }
 
-        function renderMemberInfo(m) {
-            infoName.textContent = m.name ?? '-';
-            infoGender.textContent = m.gender ?? '-';
-            infoPhone.textContent = m.phone ?? '-';
-            infoEmail.textContent = m.email ?? '-';
-            infoStartDate.textContent = m.startDate ?? '-';
-            if (m.hasHealthCertificate) {
-                infoHealth.textContent = m.healthCertExpiry ? `보유 (유효기간: ${m.healthCertExpiry})` : '보유';
-            } else {
-                infoHealth.textContent = '미보유';
-            }
-            infoHourlyWage.textContent =
-                    (typeof m.hourlyWage === 'number')
-                            ? new Intl.NumberFormat('ko-KR',{style:'currency',currency:'KRW',maximumFractionDigits:0}).format(m.hourlyWage)
-                            : '-';
+        // ✅ 멤버 선택 공통 처리: active + 우측 갱신
+        async function pickMember(m) {
+            if (!m) return;
+            selectedMemberId = m.id;
 
-            const badgeMap = {WORKING:'bg-success',WAITING:'bg-secondary',RESTING:'bg-info',PAUSED:'bg-warning',RESIGNED:'bg-danger'};
-            statusBadge.textContent = m.status || '-';
-            statusBadge.className = `badge ${badgeMap[m.status] || 'bg-secondary'}`;
+            updateMemberListActive();
+
+            selectedMemberTitle.textContent = m?.name ? `${m.name} — 주간 근무(계획/실제)` : '-';
+            selectedMemberStatus.textContent = m?.status || '-';
+            selectedMemberStatus.className = `badge ${statusClass(m?.status)}`;
+
+            await loadAndRenderWeek(m);
         }
 
-        function clearInfo() {
-            statusBadge.textContent = '-';
-            statusBadge.className = 'badge bg-secondary';
-            infoName.textContent = '-';
-            infoGender.textContent = '-';
-            infoPhone.textContent = '-';
-            infoEmail.textContent = '-';
-            infoStartDate.textContent = '-';
-            infoHealth.textContent = '-';
-            infoHourlyWage.textContent = '-';
+        function updateMemberListActive() {
+            Array.from(memberList.querySelectorAll('.member-chip')).forEach(li => {
+                li.classList.toggle('active', li.dataset.memberId === String(selectedMemberId));
+            });
         }
 
         // ===== Right: 계획(좌) + 실제(우) =====
         async function loadAndRenderWeek(member) {
-            selectedMemberTitle.textContent = member?.name ? `${member.name} — 주간 근무(계획/실제)` : '-';
-            selectedMemberStatus.textContent = member?.status || '-';
-            selectedMemberStatus.className = `badge ${statusClass(member?.status)}`;
+            // 1) 계획
+            let plannedMap = {};
+            try {
+                plannedMap = await fetchPlannedWeek(member.id);
+            } catch (err) {
+                console.error('planned fetch error:', err);
+                plannedMap = {};
+            }
 
-            // 계획: 멤버 정보의 요일별 schedule
-            const plannedMap = buildPlannedByDate(member, weekStartIso);
-
-            // 실제: API 조회
+            // 2) 실제
             let actualMap = {};
             try {
-                const url = `${API_BASE}/${encodeURIComponent(member.id)}/${weekStartIso}/${weekEndIso}`;
+                const url = `${API_BASE_ACTUAL}/${encodeURIComponent(member.id)}/${weekStartIso}/${weekEndIso}`;
                 const resp = await fetch(url, { headers: { 'Accept': 'application/json' } });
                 if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
                 const data = await resp.json();
-                actualMap = normalizeActualDays(data); // 'YYYY-MM-DD' -> {segments, minutes}
+                actualMap = normalizeDays(data);
             } catch (err) {
                 console.error('worklogs fetch error:', err);
                 actualMap = {};
@@ -363,33 +326,27 @@
             renderWeekTableRows(member, plannedMap, actualMap);
         }
 
-        // 계획(요일 스케줄) → 주간 날짜별로 변환
-        function buildPlannedByDate(member, startIso) {
-            const result = {}; // 'YYYY-MM-DD' -> {segments:[{start,end}], minutes}
-            const list = Array.isArray(member?.schedule) ? member.schedule
-                    : Array.isArray(member?.schedules) ? member.schedules
-                            : []; // [{day:'MON'.., start:'HH:mm', end:'HH:mm'}]
-
-            const start = new Date(startIso);
-            for (let i=0;i<7;i++){
-                const d = new Date(start); d.setDate(start.getDate()+i);
-                const iso = toIso(d);
-                const dowKey = DOW_KEY[d.getDay()];
-                const segs = list.filter(s=>s.day===dowKey).map(s=>({start:s.start, end:s.end}));
-                const minutes = segs.reduce((acc,s)=>acc+diffMinutes(s.start,s.end),0);
-                result[iso] = { segments: segs, minutes };
+        // 계획 주간 데이터 호출
+        async function fetchPlannedWeek(memberId) {
+            const url = `${API_BASE_PLAN}/${encodeURIComponent(memberId)}/${weekStartIso}/${weekEndIso}`;
+            const resp = await fetch(url, { headers: { 'Accept': 'application/json' } });
+            if (!resp.ok) {
+                const text = await resp.text().catch(()=> '');
+                throw new Error(`planned API ${resp.status} ${text}`);
             }
-            return result;
+            const data = await resp.json();
+            return normalizeDays(data);  // { days:[{date, segments, minutes?}, ...] }
         }
 
-        // 실제 응답 정규화
-        function normalizeActualDays(apiData){
+        // 계획/실제 공통 응답 정규화
+        function normalizeDays(apiData){
             const map = {};
             const arr = Array.isArray(apiData?.days) ? apiData.days : [];
             arr.forEach(d=>{
                 const date = String(d.date);
                 const segments = Array.isArray(d.segments) ? d.segments : [];
-                const minutes = (typeof d.minutes==='number') ? d.minutes
+                const minutes = (typeof d.minutes==='number')
+                        ? d.minutes
                         : segments.reduce((acc,s)=>acc+diffMinutes(s.start,s.end),0);
                 map[date] = { segments, minutes };
             });
@@ -399,8 +356,8 @@
         function renderWeekTableRows(member, plannedMap, actualMap) {
             const rows = [];
             let wPlanned = 0, wActual = 0;
-            const colorPlan = '#0d6efd'; // 파랑 (계획 칩 점)
-            const colorActual = colorForMember(member); // 멤버 고유 색 (실제 칩 점)
+            const colorPlan = '#0d6efd';               // 계획 칩
+            const colorActual = colorForMember(member); // 실제 칩
 
             const start = new Date(weekStartIso);
             for (let i=0;i<7;i++){
@@ -458,6 +415,12 @@
             weekDeltaCell.textContent = '0분';
             hourlyWageCell.textContent = '-';
             weekPayCell.textContent = '-';
+
+            // 좌측 active 제거
+            selectedMemberId = null;
+            Array.from(memberList.querySelectorAll('.member-chip')).forEach(li=>{
+                li.classList.remove('active');
+            });
         }
 
         // ===== 날짜/시간 유틸 =====
@@ -490,7 +453,8 @@
             return {h:isNaN(h)?0:h, m:isNaN(m)?0:m};
         }
         function formatMins(mins){
-            const h=Math.floor(mins/60), m=mins%60;
+            const v = Math.max(0, mins|0);
+            const h=Math.floor(v/60), m=v%60;
             return m===0 ? `${h}시간` : `${h}시간 ${m}분`;
         }
         function deltaString(min){

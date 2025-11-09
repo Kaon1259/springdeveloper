@@ -115,10 +115,25 @@
         top: 0;
         transform: translateX(0);
         width: 140px;
+        /* 칩 색상을 위한 CSS 변수 (슬롯 색과 맞추기 위함) */
+        --chip-color: #ffc107;
     }
     .member-chip .name { font-weight: 600; }
     .member-chip .plan { color:#6c757d; font-size:.85rem; white-space: nowrap; }
     .dot { width: 10px; height: 10px; border-radius: 50%; border: 1px solid rgba(0,0,0,.08); flex: 0 0 auto; }
+
+    /* ✅ 현재 근무중인 사람 칩 점멸 */
+    .member-chip.blinking {
+        animation: chipBlink 1s step-start infinite;
+        background: rgba(255, 255, 255, 0.95);
+        box-shadow: 0 0 0 2px var(--chip-color);
+        border-color: var(--chip-color);
+    }
+    @keyframes chipBlink {
+        0%   { filter: brightness(1.0); box-shadow: 0 0 0 0 rgba(0,0,0,0.0); }
+        50%  { filter: brightness(1.15); box-shadow: 0 0 0 4px rgba(0,0,0,0.12); }
+        100% { filter: brightness(1.0); box-shadow: 0 0 0 0 rgba(0,0,0,0.0); }
+    }
 
     .slot-10m {
         height: 14px;
@@ -158,8 +173,6 @@
 
 <script>
     (function () {
-
-        // 로컬 오늘(타임존 기준) 문자열 반환
         function todayStr() {
             const d = new Date();
             const y = d.getFullYear();
@@ -168,17 +181,14 @@
             return `${y}-${m}-${day}`;
         }
 
-        /** ===== 설정 ===== */
         const API_ENDPOINT = '/api/schedule/actual-bulk-register';
         const TARGET_DATE_STR = todayStr();
         const HOUR_START = 6, HOUR_END = 22;
 
-        // ✅ 기본 단위: 30분
         let STEP_MIN = 30;
         let SLOTS_PER_HOUR = 60 / STEP_MIN;
         let TOTAL_ROWS = (HOUR_END - HOUR_START) * SLOTS_PER_HOUR;
 
-        /** ===== DOM ===== */
         const nowClock = document.getElementById('nowClock');
         const chipsBox = document.getElementById('stickyChips');
         const chipsTrack = document.getElementById('chipsTrack');
@@ -187,9 +197,8 @@
         const bodyEl = document.getElementById('tt10mBody');
         const scrollBox = document.getElementById('ttScroll');
         const btnRegisterActual = document.getElementById('btnRegisterActual');
-        const stepButtons = document.querySelectorAll('[data-step-btn]'); // ✅ 단위 선택 버튼들
+        const stepButtons = document.querySelectorAll('[data-step-btn]');
 
-        /** ===== 데이터 ===== */
         let allMembers = [];
         try { allMembers = JSON.parse(document.getElementById('membersData').textContent || '[]'); }
         catch (e) { allMembers = []; }
@@ -213,7 +222,6 @@
         window.addEventListener('resize', computeStickyOffset);
         window.addEventListener('scroll', toggleStickyShadow, { passive: true });
 
-        // 초기 렌더
         renderNow();
         renderChips(todayMembers);
         renderTableHeader(todayMembers);
@@ -230,12 +238,11 @@
 
         btnRegisterActual.disabled = todayMembers.length === 0;
 
-        // ✅ 단위 선택 버튼 이벤트
+        /* ===== 단위 선택 버튼 ===== */
         stepButtons.forEach(btn => {
             btn.addEventListener('click', () => {
                 const newStep = parseInt(btn.dataset.step, 10);
                 if (!newStep || newStep === STEP_MIN) {
-                    // 그래도 active 표시만 정리
                     stepButtons.forEach(b => b.classList.remove('active'));
                     btn.classList.add('active');
                     return;
@@ -245,21 +252,18 @@
                 SLOTS_PER_HOUR = 60 / STEP_MIN;
                 TOTAL_ROWS = (HOUR_END - HOUR_START) * SLOTS_PER_HOUR;
 
-                // active 토글
                 stepButtons.forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
 
-                // 테이블 재렌더
                 renderTableBody();
                 paintPlanned(todayMembers);
                 updateDoneColors(todayMembers);
                 highlightHourSum();
                 syncChipsToColumns();
-                scrollToNowRow({ smooth: true });   // ✅ 단위 변경 후에도 현재 시간 위치로 이동
+                scrollToNowRow({ smooth: true });
             });
         });
 
-        /** 안전한 HM 변환 (필요 시 기존 함수 사용) */
         function safeIndexToHM(idx) {
             if (typeof indexToHM === 'function') return indexToHM(idx);
             const totalMin = (HOUR_START * 60) + idx * STEP_MIN;
@@ -268,7 +272,6 @@
             return `${hh}:${mm}`;
         }
 
-        // ✅ “실근무시간 등록” 클릭 → 연두색(done) 구간을 멤버별로 압축하여 API 호출
         btnRegisterActual.addEventListener('click', async () => {
             if (!todayMembers.length) return alert('금일 근무자가 없습니다.');
 
@@ -314,7 +317,6 @@
             }
         });
 
-        // 15초마다 갱신
         setInterval(() => {
             renderNow();
             updateDoneColors(todayMembers);
@@ -330,11 +332,11 @@
             syncChipsToColumns();
         }, 15000);
 
-        /** ===== 렌더/동기화 기본들 ===== */
         function renderNow() {
             const d = new Date();
             nowClock.textContent = `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
         }
+
         function renderChips(members) {
             chipsTrack.innerHTML = '';
             memberCountBadge.textContent = `${members.length}명`;
@@ -346,14 +348,19 @@
                 const el = document.createElement('span');
                 el.className = 'member-chip';
                 el.dataset.memberId = String(m.id);
+
+                const color = colorMap[m.id];
+                el.style.setProperty('--chip-color', color || '#ffc107');
+
                 el.innerHTML = `
-                    <span class="dot" style="background:${colorMap[m.id]}"></span>
+                    <span class="dot" style="background:${color}"></span>
                     <span class="name">${escapeHtml(m.name || '-')}</span>
                     <small class="plan">${todayPlanLabel(m) || ''}</small>
                 `;
                 chipsTrack.appendChild(el);
             });
         }
+
         function renderTableHeader(members) {
             const memberHeads = members
                     .map(m => `<th data-member-id="${String(m.id)}">${escapeHtml(m.name || '-')}</th>`)
@@ -361,12 +368,12 @@
             const sumHead = `<th class="sum-head">시간대 합</th>`;
             headRow.innerHTML = `<th style="width:80px;">시간</th>${memberHeads}${sumHead}`;
         }
+
         function renderTableBody() {
             const rows = [];
             for (let i = 0; i < TOTAL_ROWS; i++) {
                 const tMin = HOUR_START * 60 + i * STEP_MIN;
                 const h = Math.floor(tMin / 60), m = tMin % 60;
-                // ✅ 매 시 정각에만 label 표시
                 const label = (m === 0)
                         ? `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`
                         : '';
@@ -385,9 +392,8 @@
             }
             bodyEl.innerHTML = rows.join('');
         }
+
         function paintPlanned(members) {
-            // 현재 테이블에 있는 모든 슬롯 기준으로,
-            // 각 멤버의 일정이 "슬롯 시간대와 1분이라도 겹치면" planned 처리
             members.forEach(m => {
                 const segs = getSchedules(m).filter(s => s.day === DAY_KEY);
                 if (!segs.length) return;
@@ -416,6 +422,7 @@
                 });
             });
         }
+
         function updateDoneColors(members) {
             const currentIndex = indexFromNow();
             members.forEach(m => {
@@ -428,14 +435,16 @@
                 });
             });
             highlightNowRow();
-            updateBlinkingSlots(currentIndex);   // ✅ 현재 시각 행 주황색 점멸 처리
+            updateBlinkingSlots(currentIndex);
         }
+
         function highlightNowRow() {
             bodyEl.querySelectorAll('.now-row').forEach(tr => tr.classList.remove('now-row'));
             const idx = indexFromNow();
             const row = bodyEl.querySelector(`tr[data-row-index="${idx}"]`);
             if (row) row.classList.add('now-row');
         }
+
         function highlightHourSum() {
             bodyEl.querySelectorAll('.sum-cell').forEach(td => td.classList.remove('now-hour'));
             const now = new Date();
@@ -444,40 +453,49 @@
             if (sumTd) sumTd.classList.add('now-hour');
         }
 
-        // ✅ 현재 시각이 있는 행이 화면 상단 근처로 오도록 스크롤
         function scrollToNowRow({ smooth = false } = {}) {
             const idx = indexFromNow();
             const row = bodyEl.querySelector(`tr[data-row-index="${idx}"]`);
             if (!row) return;
 
-            // ✅ 페이지(문서 스크롤)를 현재 시각 행 기준으로 이동
             if (!didAutoScrollOnce || smooth) {
                 row.scrollIntoView({
-                    block: 'center',         // 화면 중앙 근처로 위치
+                    block: 'center',
                     behavior: smooth ? 'smooth' : 'auto'
                 });
                 didAutoScrollOnce = true;
             }
         }
 
+        // ✅ 현재 시각 행의 슬롯 + 해당 멤버 칩 점멸 처리
         function updateBlinkingSlots(currentIndex) {
-            // 이전에 깜빡이던 모든 슬롯 초기화
+            // 이전 슬롯 점멸 제거
             bodyEl.querySelectorAll('.slot-10m.blinking')
                     .forEach(el => el.classList.remove('blinking'));
 
-            // 현재 인덱스 행 찾기
+            // 이전 칩 점멸 제거
+            chipsTrack.querySelectorAll('.member-chip.blinking')
+                    .forEach(el => el.classList.remove('blinking'));
+
             const row = bodyEl.querySelector(`tr[data-row-index="${currentIndex}"]`);
             if (!row) return;
 
-            // 해당 행에서 "근무 중(=planned)"인 슬롯에만 blinking 적용
-            row.querySelectorAll('.slot-10m').forEach(el => {
-                if (el.classList.contains('planned')) {
-                    el.classList.add('blinking');
-                }
+            row.querySelectorAll('td[data-member-id] .slot-10m').forEach(slot => {
+                if (!slot.classList.contains('planned')) return;
+
+                slot.classList.add('blinking');
+
+                const td = slot.closest('td[data-member-id]');
+                if (!td) return;
+
+                const memberId = td.getAttribute('data-member-id');
+                if (!memberId) return;
+
+                const chip = chipsTrack.querySelector(`.member-chip[data-member-id="${CSS.escape(memberId)}"]`);
+                if (chip) chip.classList.add('blinking');
             });
         }
 
-        /** ===== 칩-컬럼 동기화 ===== */
         function syncChipsToColumns(){
             const headThs = headRow.querySelectorAll('th[data-member-id]');
             if (!headThs.length) return;
@@ -494,13 +512,13 @@
             });
         }
 
-        /** ===== “실근무시간 등록”에 필요한 유틸 ===== */
         function collectDoneIndexesForMember(memberId){
             const slots = bodyEl.querySelectorAll(`td[data-member-id="${String(memberId)}"] .slot-10m`);
             const idx = [];
             slots.forEach((el, i) => { if (el.classList.contains('done')) idx.push(i); });
             return idx;
         }
+
         function compressIndexesToRanges(indexes){
             if (!indexes.length) return [];
             const ranges = [];
@@ -513,6 +531,7 @@
             ranges.push([a, p]);
             return ranges;
         }
+
         function indexToHM(i){
             const minutesFromStart = i * STEP_MIN;
             const total = HOUR_START * 60 + minutesFromStart;
@@ -521,19 +540,20 @@
             return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
         }
 
-        /** ===== Sticky/시간 유틸 ===== */
         function computeStickyOffset(){
             const fixedHeader = document.querySelector('.navbar.fixed-top, .fixed-top, header.sticky-top');
             const hdrH = fixedHeader ? fixedHeader.getBoundingClientRect().height : 0;
             const gap = 8;
             document.documentElement.style.setProperty('--sticky-offset', (hdrH + gap) + 'px');
         }
+
         function toggleStickyShadow(){
             const top = chipsBox.getBoundingClientRect().top;
             const threshold = (parseInt(getComputedStyle(document.documentElement).getPropertyValue('--sticky-offset')) || 0) + 1;
             if (top <= threshold) chipsBox.classList.add('is-stuck');
             else chipsBox.classList.remove('is-stuck');
         }
+
         function computeHourlyTotals(members) {
             const totals = {};
             for (let h = HOUR_START; h < HOUR_END; h++) {
@@ -546,11 +566,13 @@
             }
             return totals;
         }
+
         function hmToIndex(hm) {
             const [H, M] = String(hm || '0:0').split(':').map(Number);
             const total = H * 60 + M;
             return Math.floor((total - (HOUR_START * 60)) / STEP_MIN);
         }
+
         function indexFromNow() {
             const now = new Date();
             const base = new Date(now.getFullYear(), now.getMonth(), now.getDate(), HOUR_START, 0, 0);
@@ -560,28 +582,34 @@
             const diffMin = Math.floor((now - base) / 60000);
             return Math.min(TOTAL_ROWS - 1, Math.max(0, Math.floor(diffMin / STEP_MIN)));
         }
+
         function parseHm(hm) {
             const [h,m] = (hm||'0:0').split(':').map(n => parseInt(n,10));
             return {h: h||0, m: m||0};
         }
+
         function intervalHitHour(st, ed, h) {
             const stMin = st.h*60 + st.m;
             const edMin = ed.h*60 + ed.m;
             const a = h*60, b = (h+1)*60;
             return Math.max(0, Math.min(edMin, b) - Math.max(stMin, a)) > 0;
         }
+
         function todayPlanLabel(m) {
             const seg = getSchedules(m).find(s => s.day === DAY_KEY);
             return seg ? `${seg.start}–${seg.end}` : '';
         }
+
         function getSchedules(m) {
             if (Array.isArray(m?.schedule)) return m.schedule;
             if (Array.isArray(m?.schedules)) return m.schedules;
             return [];
         }
+
         function dayKeyOf(d) {
             return ['SUN','MON','TUE','WED','THU','FRI','SAT'][d.getDay()];
         }
+
         function escapeHtml(s) {
             if (s == null) return '';
             return String(s)
@@ -591,14 +619,24 @@
                     .replace(/"/g,'&quot;')
                     .replace(/'/g,'&#39;');
         }
+
         function colorForMember(m) {
             const key = (m.id != null ? String(m.id) : (m.name || 'x'));
             const h = seededHash(key) % 360;
             const s = 65, l = 55;
             return hslToHex(h, s, l);
         }
-        function seededHash(str) { let h = 2166136261>>>0; for (let i=0;i<str.length;i++){ h^=str.charCodeAt(i); h=(h*16777619)>>>0; } return h>>>0; }
-        function hslToHex(h, s, l){
+
+        function seededHash(str) {
+            let h = 2166136261>>>0;
+            for (let i=0;i<str.length;i++){
+                h^=str.charCodeAt(i);
+                h=(h*16777619)>>>0;
+            }
+            return h>>>0;
+        }
+
+        function hslToHex(h,s,l){
             s/=100; l/=100;
             const k=n=>(n + h/30)%12;
             const a=s*Math.min(l,1-l);

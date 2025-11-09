@@ -330,6 +330,44 @@ public class WorkScheduleService {
         return resp;
     }
 
+    /**
+     * 특정 멤버의 오늘자 스케줄 조회
+     */
+    public List<WorkSchedule> getTodaySchedulesByMember(Long memberId) {
+        LocalDate today = LocalDate.now();
+        return getSchedulesByMemberAndDate(memberId, today);
+    }
+
+    /**
+     * 특정 멤버의 특정 날짜 스케줄 조회
+     */
+    public List<WorkSchedule> getSchedulesByMemberAndDate(Long memberId, LocalDate date) {
+        return workScheduleRepository.findByMember_IdAndWorkDate(memberId, date);
+    }
+
+    /**
+     * 여러 멤버의 오늘자 스케줄을 memberId 기준으로 묶어서 반환
+     */
+    public Map<Long, List<WorkSchedule>> getTodaySchedulesByMembers(List<Long> memberIds) {
+        LocalDate today = LocalDate.now();
+        return getSchedulesByMembersAndDate(memberIds, today);
+    }
+
+    /**
+     * 여러 멤버의 특정 날짜 스케줄을 memberId 기준으로 묶어서 반환
+     */
+    public Map<Long, List<WorkSchedule>> getSchedulesByMembersAndDate(List<Long> memberIds, LocalDate date) {
+        if (memberIds == null || memberIds.isEmpty()) {
+            return Map.of();
+        }
+
+        List<WorkSchedule> list =
+                workScheduleRepository.findByMember_IdInAndWorkDate(memberIds, date);
+
+        // memberId 별로 그룹핑
+        return list.stream()
+                .collect(Collectors.groupingBy(ws -> ws.getMember().getId()));
+    }
 
     private void validateParams(Long memberId, LocalDate start, LocalDate end) {
         if (memberId == null) throw new IllegalArgumentException("memberId는 필수입니다.");

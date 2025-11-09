@@ -259,7 +259,17 @@
                         return;
                     }
 
-                    const url = `/schedules/generator?memberId=${encodeURIComponent(currentMember.id)}`;
+                    // ✅ 현재 기준 월(첫째날) ISO 문자열 가져오기
+                    const baseMonthIso =
+                            (monthLabel.textContent || '').trim()
+                            || toIso(currentMonthStart);   // 혹시 비어있으면 currentMonthStart 사용
+
+                    // ✅ 기준 월 정보 함께 전달
+                    const url =
+                            `/schedules/generator` +
+                            `?memberId=${encodeURIComponent(currentMember.id)}` +
+                            `&baseMonth=${encodeURIComponent(baseMonthIso)}`;
+
                     // 새 창(팝업)으로 열기
                     window.open(
                             url,
@@ -544,18 +554,36 @@
         // 시간표 렌더: 06~21시까지 각 행 6칸(:00~:50)
         function renderHourGrid(){
             hourGridBody.innerHTML = '';
+
             for(let h=START_HOUR; h<END_HOUR; h++){
                 const tr = document.createElement('tr');
 
+                // ✅ 이 시간대의 선택 개수 & 전체 HM 목록
+                let rowSelectedCount = 0;
+                const fullHourHms = [];
+
+                // ===== 시간 헤더 (시간 + 전체 버튼) =====
                 const th = document.createElement('th');
-                th.textContent = `${pad2(h)}:00`;
+                th.className = 'd-flex align-items-center justify-content-between';
+
+                const labelSpan = document.createElement('span');
+                labelSpan.textContent = `${pad2(h)}:00`;
+
+                const allBtn = document.createElement('button');
+                allBtn.type = 'button';
+                allBtn.className = 'btn btn-sm btn-light border btn-hour-all';
+                allBtn.textContent = '전체';
+
+                th.appendChild(labelSpan);
+                th.appendChild(allBtn);
                 tr.appendChild(th);
 
-                let rowSelectedCount = 0;
-
+                // ===== 10분 슬롯 6개 =====
                 for(let i=0;i<6;i++){
                     const mm = i*10;
                     const hm = `${pad2(h)}:${pad2(mm)}`;
+                    fullHourHms.push(hm);
+
                     const td = document.createElement('td');
                     td.className = 'slot-cell';
 
@@ -565,23 +593,81 @@
                     btn.textContent = hm;
                     btn.dataset.hm = hm;
 
-                    if(slotState.has(hm)){ btn.classList.add('selected'); rowSelectedCount++; }
-
-                    btn.addEventListener('click', ()=>{
-                        if(slotState.has(hm)){ slotState.delete(hm); btn.classList.remove('selected'); rowSelectedCount--; }
-                        else { slotState.add(hm); btn.classList.add('selected'); rowSelectedCount++; }
-                        lastTd.textContent = `${rowSelectedCount*10}분`;
-                        updateSelectedMinutes();
-                    });
+                    if(slotState.has(hm)){
+                        btn.classList.add('selected');
+                        rowSelectedCount++;
+                    }
 
                     td.appendChild(btn);
                     tr.appendChild(td);
                 }
 
+                // ===== 해당 시각 합계 =====
                 const lastTd = document.createElement('td');
                 lastTd.className = 'text-end';
                 lastTd.innerHTML = `<span class="min-badge">${rowSelectedCount*10}분</span>`;
                 tr.appendChild(lastTd);
+
+                // 슬롯 클릭 이벤트 (개별 토글)
+                const slotButtons = tr.querySelectorAll('.slot-btn');
+                slotButtons.forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const hm = btn.dataset.hm;
+                        if(slotState.has(hm)){
+                            slotState.delete(hm);
+                            btn.classList.remove('selected');
+                            rowSelectedCount--;
+                        }else{
+                            slotState.add(hm);
+                            btn.classList.add('selected');
+                            rowSelectedCount++;
+                        }
+
+                        const badgeSpan = lastTd.querySelector('.min-badge');
+                        if(badgeSpan){
+                            badgeSpan.textContent = `${rowSelectedCount*10}분`;
+                        }else{
+                            lastTd.textContent = `${rowSelectedCount*10}분`;
+                        }
+                        updateSelectedMinutes();
+                    });
+                });
+
+                // ✅ “전체” 버튼 클릭 이벤트 (해당 시간대 전체 선택/해제)
+                allBtn.addEventListener('click', () => {
+                    // 현재 이 시간대가 모두 선택된 상태인지 확인
+                    const allSelected = fullHourHms.every(hm => slotState.has(hm));
+
+                    if(allSelected){
+                        // 모두 선택 되어 있으면 -> 모두 해제
+                        fullHourHms.forEach(hm => {
+                            if(slotState.has(hm)){
+                                slotState.delete(hm);
+                                const btn = tr.querySelector(`.slot-btn[data-hm="${hm}"]`);
+                                if(btn) btn.classList.remove('selected');
+                            }
+                        });
+                        rowSelectedCount = 0;
+                    }else{
+                        // 하나라도 비어있으면 -> 모두 선택
+                        fullHourHms.forEach(hm => {
+                            if(!slotState.has(hm)){
+                                slotState.add(hm);
+                                const btn = tr.querySelector(`.slot-btn[data-hm="${hm}"]`);
+                                if(btn) btn.classList.add('selected');
+                            }
+                        });
+                        rowSelectedCount = fullHourHms.length;
+                    }
+
+                    const badgeSpan = lastTd.querySelector('.min-badge');
+                    if(badgeSpan){
+                        badgeSpan.textContent = `${rowSelectedCount*10}분`;
+                    }else{
+                        lastTd.textContent = `${rowSelectedCount*10}분`;
+                    }
+                    updateSelectedMinutes();
+                });
 
                 hourGridBody.appendChild(tr);
             }

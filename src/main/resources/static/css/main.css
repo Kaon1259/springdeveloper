@@ -290,3 +290,30 @@ body {
         box-shadow: 0 0 8px 2px rgba(255, 159, 10, 0.8);
     }
 }
+
+
+.member-chip.active {
+    border-color: rgba(13,110,253,.45);
+    box-shadow: 0 0 0 3px rgba(13,110,253,.15) inset;
+    background: #f0f6ff;
+    color: #212529; /* 글씨색 고정 (기본 텍스트 색상) */
+}
+
+.member-chip.active .fw-semibold,
+.member-chip.active .text-muted,
+.member-chip.active small {
+    color: #212529 !important; /* 내부 텍스트도 모두 기본색 유지 */
+}
+
+.legend { display:inline-block; width:14px; height:14px; border-radius:3px; border:1px solid #ddd; vertical-align:middle; }
+.legend-plan { background: rgba(13,110,253,.25); border-color: rgba(13,110,253,.45); }
+.legend-actual { background: rgba(25,135,84,.25); border-color: rgba(25,135,84,.40); }
+
+.min-badge { display:inline-block; min-width:52px; text-align:right; }
+
+/* ✅ 시간 옆 “전체” 버튼 */
+.btn-hour-all {
+    padding: 0 6px;
+    font-size: .7rem;
+    line-height: 1.2;
+}
