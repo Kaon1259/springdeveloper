@@ -42,8 +42,8 @@
         <!-- ============ 오른쪽: 월단위 급여 테이블 ============ -->
         <div class="col-12 col-lg-8">
 
-            <!-- 🔼 상단: 제목 + 월 내비 (스크롤 시 상단 고정) -->
-            <div class="d-flex flex-wrap justify-content-between align-items-center mb-2 gap-2 sticky-pay-header">
+            <!-- 상단: 제목 + 월 내비 -->
+            <div class="d-flex flex-wrap justify-content-between align-items-center mb-2 gap-2">
                 <div>
                     <span class="fw-bold h5 mb-0" id="pageTitle">급여 관리</span>
                     <span id="selectedMemberName" class="ms-2 text-primary fw-semibold"></span>
@@ -166,16 +166,6 @@
         background:#f0f6ff;
     }
 
-    /* ✅ 급여관리(이름) + 월 내비 상단 고정 */
-    .sticky-pay-header {
-        position: sticky;
-        top: 12px;              /* 상단 헤더(navbar) 높이에 맞춰 여유 */
-        z-index: 1020;
-        background:#ffffff;
-        padding-top: .25rem;
-        padding-bottom: .25rem;
-    }
-
     /* ✅ 주차 행: 위 행 = 날짜(연회색), 아래 행 = 근무시간 */
     .day-cell-date,
     .day-cell-time {
@@ -241,7 +231,7 @@
 <script>
     (function() {
         const API_BASE_ACTUAL = '/api/schedule';   // GET /{memberId}/{startIso}/{endIso}
-        const PAYROLL_SAVE_API = '/api/payroll/month'; // 급여 저장/확정/지급 API
+        const PAYROLL_SAVE_API = '/api/payroll/month'; // ✅ 급여 저장/확정/지급 API (원하면 여기만 변경)
 
         // 좌측
         const statusSelect         = document.getElementById('statusSelect');
@@ -267,12 +257,12 @@
         const summaryMonthJuhyuPay = document.getElementById('summaryMonthJuhyuPay');
         const summaryMonthTotal    = document.getElementById('summaryMonthTotal');
 
-        // 급여 상태 버튼
+        // ✅ 급여 상태 버튼
         const btnSaveDraft         = document.getElementById('btnSaveDraft');
         const btnConfirm           = document.getElementById('btnConfirm');
         const btnMarkPaid          = document.getElementById('btnMarkPaid');
 
-        // 토스트
+        // ✅ 토스트 DOM
         const toastEl              = document.getElementById('mainToast');
         const toastBodyEl          = document.getElementById('mainToastBody');
 
@@ -288,7 +278,7 @@
         let selectedMemberId = null;
         let currentMonthStart = firstDayOfMonth(new Date()); // 현재 달 1일
 
-        // 최근 계산된 월 급여 데이터 (API 전송용)
+        // ✅ 최근 계산된 월 급여 데이터 (API 전송용)
         let lastPayrollPayload = null;
 
         // 상태 초기값
@@ -313,7 +303,7 @@
             reloadForCurrentMember();
         });
 
-        // 급여 상태 버튼 클릭 이벤트
+        // ✅ 급여 상태 버튼 클릭 이벤트
         btnSaveDraft.addEventListener('click', function () {
             savePayrollWithStatus('DRAFT', '임시저장 되었습니다.');
         });
@@ -571,7 +561,7 @@
 
                 const weekPayLabel = (weekWorkPay != null) ? krw(weekWorkPay) : '-';
 
-                // 두 줄짜리 주차 블록
+                // ====== 두 줄짜리 주차 블록 생성 ======
                 const trDates = document.createElement('tr');
                 trDates.innerHTML = `
                 <th scope="row" rowspan="2">
@@ -608,7 +598,7 @@
             summaryMonthJuhyuPay.textContent = (monthJuhyuPay != null) ? krw(monthJuhyuPay) : '-';
             summaryMonthTotal.textContent    = (monthTotal    != null) ? krw(monthTotal)    : '-';
 
-            // API 전송용 페이로드 보관
+            // ✅ API 전송용 페이로드 보관
             if (currentMember && wage != null && monthWorkPay != null && monthJuhyuPay != null && monthTotal != null) {
                 lastPayrollPayload = {
                     memberId: currentMember.id,
@@ -659,6 +649,7 @@
                     return;
                 }
 
+                // 서버에서 status / id 를 돌려준다면 여기서 UI 업데이트해도 됨.
                 showToast(successMessage || '처리되었습니다.', 'success');
             } catch (e) {
                 console.error('payroll save fetch error', e);
@@ -686,6 +677,7 @@
                 const t = bootstrap.Toast.getOrCreateInstance(toastEl);
                 t.show();
             } else {
+                // 혹시 bootstrap JS가 없는 경우 fallback
                 toastEl.style.display = 'block';
                 setTimeout(() => { toastEl.style.display = 'none'; }, 2000);
             }
@@ -758,7 +750,7 @@
             return {h: isNaN(h)?0:h, m: isNaN(m)?0:m};
         }
 
-        // 주간 주휴수당 "분" 계산
+        // ✅ 주간 주휴수당 "분" 계산: 1주 실근무가 15시간(900분) 이상일 때만, 주휴시간 = 주간 실근무 ÷ 5
         function calcWeeklyJuhyuMinutes(weeklyMinutes) {
             if (!weeklyMinutes || weeklyMinutes < 15*60) return 0;
             return Math.round(weeklyMinutes / 5);
