@@ -1,0 +1,612 @@
+{{>layouts/header}}
+
+<main class="container my-4">
+    <div class="row g-3">
+        <!-- ============ 왼쪽: 상태별 근무자 리스트 ============ -->
+        <div class="col-12 col-lg-4">
+            <div class="d-grid gap-3 sticky-lg-top" style="top:12px;">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span class="fw-bold">상태별 근무자</span>
+                        <a href="/members/new" class="btn btn-sm btn-primary">추가등록</a>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label for="statusSelect" class="form-label small text-muted">상태</label>
+                            <select id="statusSelect" class="form-select">
+                                <option value="WORKING" selected>근무중</option>
+                                <option value="WAITING">시작전</option>
+                                <option value="RESTING">휴식중</option>
+                                <option value="PAUSED">일시중지</option>
+                                <option value="RESIGNED">퇴사</option>
+                            </select>
+                            <div class="form-text">상태를 바꾸면 좌측 리스트와 우측 지급내역이 함께 갱신됩니다.</div>
+                        </div>
+
+                        <hr>
+
+                        <div>
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <div class="small text-muted">근무자 목록</div>
+                                <span id="memberCountBadge" class="badge bg-light text-dark">0명</span>
+                            </div>
+                            <ul id="memberList" class="list-group list-group-flush">
+                                <!-- JS 렌더 -->
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============ 오른쪽: 지급된 급여 내역 ============ -->
+        <div class="col-12 col-lg-8">
+            <div class="pay-right-wrapper">
+
+                <!-- 🔼 상단: 제목 (스크롤 시 상단 고정) -->
+                <div class="d-flex flex-wrap justify-content-between align-items-center mb-2 gap-2 sticky-pay-header">
+                    <div class="d-flex flex-wrap align-items-center gap-2">
+                        <div>
+                            <span class="fw-bold h5 mb-0" id="pageTitle">급여 지급관리</span>
+                            <span id="selectedMemberName" class="ms-2 text-primary fw-semibold"></span>
+                            <span id="selectedMemberStatus" class="badge bg-secondary ms-2 d-none">-</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header fw-bold d-flex justify-content-between align-items-center">
+                        <span>지급된 급여 내역 (월별)</span>
+                        <span id="payHistoryCount" class="badge bg-light text-dark">0건</span>
+                    </div>
+                    <div class="card-body">
+
+                        <!-- 안내 -->
+                        <div class="small text-muted mb-2">
+                            좌측에서 근무자를 선택하면, <b>지급완료된 월급 내역</b>을 보여줍니다.<br>
+                            하단에는 지금까지 지급한 <b>실근무시간 / 주휴수당시간 / 근무수당 / 주휴수당 / 총 지급액</b>이 합산됩니다.
+                        </div>
+
+                        <!-- 지급내역 테이블 -->
+                        <div class="table-responsive">
+                            <table class="table table-bordered align-middle text-center" id="payHistoryTable">
+                                <thead class="table-light">
+                                <tr>
+                                    <th style="width:90px;">연도-월</th>
+                                    <th style="width:160px;">지급일</th>
+                                    <th style="width:80px;">상태</th>
+                                    <th style="width:110px;">시급</th>
+                                    <th style="width:120px;">실근무</th>
+                                    <th style="width:120px;">주휴수당 시간</th>
+                                    <th style="width:140px;" class="text-end">근무수당</th>
+                                    <th style="width:140px;" class="text-end">주휴수당</th>
+                                    <th style="width:160px;" class="text-end">총 지급액</th>
+                                </tr>
+                                </thead>
+                                <tbody id="payHistoryBody">
+                                <!-- JS 렌더 -->
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- 합계 영역 -->
+                        <div class="mt-3">
+                            <div class="d-flex justify-content-between">
+                                <div class="small text-muted">총 실근무 시간</div>
+                                <div class="fw-semibold" id="summaryTotalWorkTime">0시간</div>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <div class="small text-muted">총 주휴수당 시간</div>
+                                <div class="fw-semibold" id="summaryTotalJuhyuTime">0시간</div>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <div class="small text-muted">총 근무수당</div>
+                                <div class="fw-semibold" id="summaryTotalWorkPay">-</div>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <div class="small text-muted">총 주휴수당</div>
+                                <div class="fw-semibold" id="summaryTotalJuhyuPay">-</div>
+                            </div>
+                            <hr class="my-2">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="small fw-bold">총 지급액 (근무수당 + 주휴수당)</div>
+                                <div class="fw-bold text-primary" id="summaryTotalPay">-</div>
+                            </div>
+                        </div>
+
+                        <div class="small text-muted mt-3">
+                            * "급여 관리" 화면에서 <b>지급완료</b>로 처리된 월급만 이 화면에 표시됩니다.<br>
+                            * 실근무/주휴수당 시간은 각 월의 합산값이며, 금액은 당시 시급 기준으로 계산된 값입니다.
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</main>
+
+<style>
+    /* 좌측 멤버 리스트 chip 스타일 */
+    .member-chip {
+        display:flex; align-items:center; justify-content:space-between;
+        gap:8px; padding:8px 10px; border-radius:10px;
+        background:#fff; border:1px solid #eee; margin-bottom:6px; cursor:pointer;
+        transition: background .15s, border-color .15s, box-shadow .15s;
+    }
+    .member-chip:hover { background:#f8f9fa; }
+    .member-chip .dot {
+        width:10px; height:10px; border-radius:50%;
+        border:1px solid rgba(0,0,0,.08);
+    }
+    .member-chip.active {
+        border-color: rgba(13,110,253,.45);
+        box-shadow: 0 0 0 3px rgba(13,110,253,.15) inset;
+        background:#f0f6ff;
+    }
+
+    /* 우측 전체 래퍼 – sticky 기준 컨테이너 */
+    .pay-right-wrapper {
+        position: relative;
+    }
+
+    /* ✅ 상단 타이틀 + 선택한 근무자 정보 sticky */
+    .sticky-pay-header {
+        position: sticky;
+        top: 70px;              /* 상단 navbar 높이에 맞춰 조정 */
+        z-index: 1030;
+        background:#ffffff;
+        padding-top: .25rem;
+        padding-bottom: .25rem;
+    }
+
+    /* 합계 숫자 오른쪽 정렬 */
+    #summaryTotalWorkTime,
+    #summaryTotalJuhyuTime,
+    #summaryTotalWorkPay,
+    #summaryTotalJuhyuPay,
+    #summaryTotalPay {
+        text-align:right;
+    }
+</style>
+
+<!-- ✅ 부트스트랩 토스트 영역 -->
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index:1080;">
+    <div id="mainToast" class="toast align-items-center text-bg-success border-0" role="alert"
+         aria-live="assertive" aria-atomic="true">
+        <div class="d-flex">
+            <div class="toast-body" id="mainToastBody">
+                처리되었습니다.
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto"
+                    data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+    </div>
+</div>
+
+<!-- 서버에서 내려준 멤버 JSON -->
+<script id="membersData" type="application/json">
+{{{membersJson}}}
+</script>
+
+<script>
+    (function() {
+        // 급여 내역 조회 API
+        // GET /api/payroll/member/{memberId}
+        const PAYROLL_MEMBER_API = '/api/payroll/member';
+
+        // 좌측
+        const statusSelect         = document.getElementById('statusSelect');
+        const memberList           = document.getElementById('memberList');
+        const memberCountBadge     = document.getElementById('memberCountBadge');
+
+        // 우측 상단
+        const pageTitle            = document.getElementById('pageTitle');
+        const selectedMemberNameEl = document.getElementById('selectedMemberName');
+        const selectedMemberStatus = document.getElementById('selectedMemberStatus');
+
+        // 지급 내역 테이블
+        const payHistoryBody       = document.getElementById('payHistoryBody');
+        const payHistoryCount      = document.getElementById('payHistoryCount');
+
+        // 합계 영역
+        const summaryTotalWorkTime = document.getElementById('summaryTotalWorkTime');
+        const summaryTotalJuhyuTime= document.getElementById('summaryTotalJuhyuTime');
+        const summaryTotalWorkPay  = document.getElementById('summaryTotalWorkPay');
+        const summaryTotalJuhyuPay = document.getElementById('summaryTotalJuhyuPay');
+        const summaryTotalPay      = document.getElementById('summaryTotalPay');
+
+        // 토스트
+        const toastEl              = document.getElementById('mainToast');
+        const toastBodyEl          = document.getElementById('mainToastBody');
+
+        // 상태
+        let allMembers = [];
+        try {
+            allMembers = JSON.parse(document.getElementById('membersData').textContent || '[]');
+        } catch(e) {
+            allMembers = [];
+        }
+
+        let currentMember = null;
+        let selectedMemberId = null;
+
+        // 상태 초기값
+        if (Array.isArray(allMembers) && allMembers.length > 0) {
+            statusSelect.value = allMembers[0].status || 'WORKING';
+        }
+
+        // 이벤트 바인딩
+        statusSelect.addEventListener('change', handleStatusChange);
+        memberList.addEventListener('click', onMemberListClick);
+
+        // 초기 실행
+        handleStatusChange();
+
+        // ===== 상태 변경 시 멤버 리스트 갱신 =====
+        function handleStatusChange() {
+            const status = statusSelect.value;
+            const filtered = (allMembers || []).filter(m => m.status === status);
+
+            renderMemberList(filtered);
+
+            if (filtered.length) {
+                const keep = filtered.find(m => String(m.id) === String(selectedMemberId)) || filtered[0];
+                selectMember(keep);
+            } else {
+                selectedMemberId = null;
+                currentMember = null;
+                clearRight();
+            }
+        }
+
+        function renderMemberList(members) {
+            memberList.innerHTML = '';
+            memberCountBadge.textContent = members.length + '명';
+
+            members
+                    .slice()
+                    .sort((a,b) => (a.name||'').localeCompare(b.name||'', 'ko'))
+                    .forEach(m => {
+                        const li = document.createElement('li');
+                        li.className = 'list-group-item member-chip';
+                        li.dataset.memberId = String(m.id);
+                        const color = colorForMember(m);
+
+                        li.innerHTML = `
+                        <span class="left d-inline-flex align-items-center gap-2">
+                            <span class="dot" style="background:${color}"></span>
+                            <span class="fw-semibold">${escapeHtml(m.name ?? '-')}</span>
+                            <span class="text-muted small">${escapeHtml(m.phone ?? '')}</span>
+                        </span>
+                        <button type="button"
+                                class="btn btn-sm btn-outline-primary view-btn"
+                                data-id="${String(m.id)}">상세</button>
+                    `;
+                        memberList.appendChild(li);
+                    });
+
+            if (!members.length) {
+                const li = document.createElement('li');
+                li.className = 'list-group-item';
+                li.textContent = '해당 상태의 근무자가 없습니다.';
+                memberList.appendChild(li);
+            }
+
+            updateMemberListActive();
+        }
+
+        function onMemberListClick(e) {
+            const btn = e.target.closest('.view-btn');
+            if (btn) {
+                const id = btn.getAttribute('data-id');
+                if (id) window.location.assign(`/members/${encodeURIComponent(id)}/edit`);
+                return;
+            }
+
+            const li = e.target.closest('li.member-chip');
+            if (!li) return;
+            const id = li.dataset.memberId;
+            const members = (allMembers || []).filter(m => m.status === statusSelect.value);
+            const target = members.find(m => String(m.id) === String(id));
+            if (target) selectMember(target);
+        }
+
+        function selectMember(member) {
+            currentMember = member;
+            selectedMemberId = member.id;
+            updateMemberListActive();
+            renderMemberHeader(member);
+            loadPaidPayroll(member);
+        }
+
+        function updateMemberListActive() {
+            Array.from(memberList.querySelectorAll('.member-chip')).forEach(li => {
+                li.classList.toggle('active', li.dataset.memberId === String(selectedMemberId));
+            });
+        }
+
+        function renderMemberHeader(member) {
+            if (!member) {
+                pageTitle.textContent = '급여 지급관리';
+                selectedMemberNameEl.textContent = '';
+                selectedMemberStatus.classList.add('d-none');
+                selectedMemberStatus.textContent = '-';
+                selectedMemberStatus.className = 'badge bg-secondary d-none';
+                return;
+            }
+            pageTitle.textContent = '급여 지급관리';
+            selectedMemberNameEl.textContent = `(${member.name ?? '-'})`;
+            const badgeMap = {
+                WORKING: 'bg-success',
+                WAITING: 'bg-secondary',
+                RESTING: 'bg-info',
+                PAUSED: 'bg-warning',
+                RESIGNED: 'bg-danger'
+            };
+            selectedMemberStatus.classList.remove('d-none');
+            selectedMemberStatus.textContent = member.status || '-';
+            selectedMemberStatus.className = `badge ${badgeMap[member.status] || 'bg-secondary'} ms-2`;
+        }
+
+        function clearRight() {
+            payHistoryBody.innerHTML = '';
+            payHistoryCount.textContent = '0건';
+
+            summaryTotalWorkTime.textContent = '0시간';
+            summaryTotalJuhyuTime.textContent = '0시간';
+            summaryTotalWorkPay.textContent  = '-';
+            summaryTotalJuhyuPay.textContent = '-';
+            summaryTotalPay.textContent      = '-';
+
+            renderMemberHeader(null);
+        }
+
+        // ===== 지급완료 급여 내역 로딩 =====
+        async function loadPaidPayroll(member) {
+            if (!member) {
+                clearRight();
+                return;
+            }
+
+            payHistoryBody.innerHTML = `
+                <tr>
+                    <td colspan="9" class="text-center text-muted">불러오는 중...</td>
+                </tr>
+            `;
+            payHistoryCount.textContent = '0건';
+
+            let list = [];
+            try {
+                const url = `${PAYROLL_MEMBER_API}/${encodeURIComponent(member.id)}`;
+                const resp = await fetch(url, { headers: { 'Accept': 'application/json' } });
+                if (!resp.ok) {
+                    const text = await resp.text().catch(()=> '');
+                    console.error('loadPaidPayroll error', resp.status, text);
+                    showToast('지급내역을 불러오는 중 오류가 발생했습니다.', 'danger');
+                    clearRight();
+                    renderMemberHeader(member);
+                    return;
+                }
+                list = await resp.json();
+                if (!Array.isArray(list)) list = [];
+            } catch (e) {
+                console.error('loadPaidPayroll fetch error', e);
+                showToast('지급내역을 불러오는 중 통신 오류가 발생했습니다.', 'danger');
+                clearRight();
+                renderMemberHeader(member);
+                return;
+            }
+
+            renderPayrollList(member, list);
+        }
+
+        // ===== 지급내역 테이블 + 합계 렌더 =====
+        function renderPayrollList(member, list) {
+            payHistoryBody.innerHTML = '';
+
+            if (!Array.isArray(list) || list.length === 0) {
+                payHistoryBody.innerHTML = `
+                    <tr>
+                        <td colspan="9" class="text-center text-muted">
+                            지급완료된 급여 내역이 없습니다.
+                        </td>
+                    </tr>
+                `;
+                payHistoryCount.textContent = '0건';
+
+                summaryTotalWorkTime.textContent = '0시간';
+                summaryTotalJuhyuTime.textContent = '0시간';
+                summaryTotalWorkPay.textContent  = '-';
+                summaryTotalJuhyuPay.textContent = '-';
+                summaryTotalPay.textContent      = '-';
+
+                return;
+            }
+
+            // payYear, payMonth 기준 최신순 정렬 (최근 지급이 위로 오도록)
+            list.sort((a, b) => {
+                const ay = a.payYear || 0, by = b.payYear || 0;
+                const am = a.payMonth || 0, bm = b.payMonth || 0;
+                if (ay !== by) return by - ay;
+                return bm - am;
+            });
+
+            let totalWorkMinutes = 0;
+            let totalJuhyuMinutes = 0;
+            let totalWorkPay = 0;
+            let totalJuhyuPay = 0;
+            let totalPay = 0;
+
+            const rows = list.map(item => {
+                const year  = item.payYear ?? '-';
+                const month = item.payMonth != null ? pad2(item.payMonth) : '--';
+
+                // ✅ 지급일 포맷팅: 2025-11-12 10:20
+                const rawPaidDate = item.paidDate;
+                const paidDate = rawPaidDate ? formatDateTime(rawPaidDate) : '-';
+
+                const status = (item.status || 'PAID').toUpperCase();
+
+                const workMinutes  = item.monthWorkMinutes  || 0;
+                const juhyuMinutes = item.monthJuhyuMinutes || 0;
+                const workPay      = item.monthWorkPay      || 0;
+                const juhyuPay     = item.monthJuhyuPay     || 0;
+                const total        = item.monthTotalPay     || (workPay + juhyuPay);
+
+                totalWorkMinutes  += workMinutes;
+                totalJuhyuMinutes += juhyuMinutes;
+                totalWorkPay      += workPay;
+                totalJuhyuPay     += juhyuPay;
+                totalPay          += total;
+
+                const hourly = (typeof item.hourlyWage === 'number')
+                        ? krw(item.hourlyWage)
+                        : ((typeof member?.hourlyWage === 'number') ? krw(member.hourlyWage) : '-');
+
+                const statusLabelMap = { DRAFT:'임시저장', CONFIRMED:'확정', PAID:'지급완료' };
+                const statusBadgeMap = { DRAFT:'bg-secondary', CONFIRMED:'bg-info', PAID:'bg-success' };
+                const statusLabel = statusLabelMap[status] || status;
+                const statusClass = statusBadgeMap[status] || 'bg-secondary';
+
+                return `
+                    <tr>
+                        <td>${year}-${month}</td>
+                        <td>${paidDate}</td>
+                        <td>
+                            <span class="badge ${statusClass}">${statusLabel}</span>
+                        </td>
+                        <td class="text-end">${hourly}</td>
+                        <td>${formatMins(workMinutes)}</td>
+                        <td>${formatMins(juhyuMinutes)}</td>
+                        <td class="text-end">${workPay ? krw(workPay) : '-'}</td>
+                        <td class="text-end">${juhyuPay ? krw(juhyuPay) : '-'}</td>
+                        <td class="text-end fw-semibold">${total ? krw(total) : '-'}</td>
+                    </tr>
+                `;
+            });
+
+            payHistoryBody.innerHTML = rows.join('');
+            payHistoryCount.textContent = `${list.length}건`;
+
+            // 합계 반영
+            summaryTotalWorkTime.textContent  = formatMins(totalWorkMinutes);
+            summaryTotalJuhyuTime.textContent = formatMins(totalJuhyuMinutes);
+            summaryTotalWorkPay.textContent   = totalWorkPay  ? krw(totalWorkPay)  : '-';
+            summaryTotalJuhyuPay.textContent  = totalJuhyuPay ? krw(totalJuhyuPay) : '-';
+            summaryTotalPay.textContent       = totalPay      ? krw(totalPay)      : '-';
+        }
+
+        // ===== 토스트 헬퍼 =====
+        function showToast(message, type) {
+            if (!toastEl || !toastBodyEl) return;
+            toastBodyEl.textContent = message;
+
+            toastEl.classList.remove('text-bg-success','text-bg-danger','text-bg-warning','text-bg-info');
+            if (type === 'danger') {
+                toastEl.classList.add('text-bg-danger');
+            } else if (type === 'warning') {
+                toastEl.classList.add('text-bg-warning');
+            } else if (type === 'info') {
+                toastEl.classList.add('text-bg-info');
+            } else {
+                toastEl.classList.add('text-bg-success');
+            }
+
+            if (window.bootstrap && bootstrap.Toast) {
+                const t = bootstrap.Toast.getOrCreateInstance(toastEl);
+                t.show();
+            } else {
+                toastEl.style.display = 'block';
+                setTimeout(() => { toastEl.style.display = 'none'; }, 2000);
+            }
+        }
+
+        // ===== 유틸 함수들 =====
+        function pad2(n) {
+            return String(n).padStart(2,'0');
+        }
+
+        function formatMins(mins) {
+            const v = Math.max(0, mins|0);
+            const h = Math.floor(v/60);
+            const m = v % 60;
+            return m === 0 ? `${h}시간` : `${h}시간 ${m}분`;
+        }
+
+        function krw(v) {
+            return new Intl.NumberFormat('ko-KR', {
+                style: 'currency',
+                currency: 'KRW',
+                maximumFractionDigits: 0
+            }).format(v);
+        }
+
+        function colorForMember(m) {
+            const key = (m?.id != null ? String(m.id) : (m?.name || 'x'));
+            const h = seededHash(key) % 360, s = 65, l = 55;
+            return hslToHex(h, s, l);
+        }
+
+        function seededHash(str) {
+            let h = 2166136261 >>> 0;
+            for (let i=0;i<str.length;i++) {
+                h ^= str.charCodeAt(i);
+                h = (h * 16777619) >>> 0;
+            }
+            return h >>> 0;
+        }
+
+        function hslToHex(h,s,l) {
+            s/=100; l/=100;
+            const k = n => (n + h/30) % 12;
+            const a = s * Math.min(l, 1-l);
+            const f = n => l - a * Math.max(-1, Math.min(k(n)-3, Math.min(9-k(n),1)));
+            const toHex = x => Math.round(255*x).toString(16).padStart(2,'0');
+            return `#${toHex(f(0))}${toHex(f(8))}${toHex(f(4))}`;
+        }
+
+        function escapeHtml(s) {
+            if (s == null) return '';
+            return String(s)
+                    .replace(/&/g,'&amp;')
+                    .replace(/</g,'&lt;')
+                    .replace(/>/g,'&gt;')
+                    .replace(/"/g,'&quot;')
+                    .replace(/'/g,'&#39;');
+        }
+
+        // ✅ 지급일 포맷터: 2025-11-12 10:20
+        function formatDateTime(value) {
+            if (!value) return '-';
+
+            let d;
+
+            if (value instanceof Date) {
+                d = value;
+            } else if (typeof value === 'number') {
+                // ms / s 둘 다 대충 대응
+                d = new Date(value < 1e12 ? value * 1000 : value);
+            } else {
+                // 문자열: "2025-11-12T10:20:00", "2025-11-12 10:20:00", "2025-11-12T10:20:00+09:00" 등
+                const s = String(value).replace(' ', 'T');
+                const parsed = new Date(s);
+                if (isNaN(parsed.getTime())) {
+                    // 파싱 실패하면 원본 그대로
+                    return String(value);
+                }
+                d = parsed;
+            }
+
+            const y  = d.getFullYear();
+            const M  = pad2(d.getMonth() + 1);
+            const D  = pad2(d.getDate());
+            const hh = pad2(d.getHours());
+            const mm = pad2(d.getMinutes());
+
+            return `${y}-${M}-${D} ${hh}:${mm}`;
+        }
+    })();
+</script>
+
+{{>layouts/footer}}

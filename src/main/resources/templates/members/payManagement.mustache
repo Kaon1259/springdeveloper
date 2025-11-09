@@ -45,10 +45,14 @@
 
                 <!-- 🔼 상단: 제목 + 월 내비 (스크롤 시 상단 고정) -->
                 <div class="d-flex flex-wrap justify-content-between align-items-center mb-2 gap-2 sticky-pay-header">
-                    <div>
-                        <span class="fw-bold h5 mb-0" id="pageTitle">급여 관리</span>
-                        <span id="selectedMemberName" class="ms-2 text-primary fw-semibold"></span>
-                        <span id="selectedMemberStatus" class="badge bg-secondary ms-2 d-none">-</span>
+                    <div class="d-flex flex-wrap align-items-center gap-2">
+                        <div>
+                            <span class="fw-bold h5 mb-0" id="pageTitle">급여 관리</span>
+                            <span id="selectedMemberName" class="ms-2 text-primary fw-semibold"></span>
+                            <span id="selectedMemberStatus" class="badge bg-secondary ms-2 d-none">-</span>
+                        </div>
+                        <!-- ✅ 급여 저장 상태 배지 -->
+                        <span id="payrollStatusBadge" class="badge ms-2 d-none">-</span>
                     </div>
 
                     <!-- 월단위 내비 -->
@@ -177,7 +181,7 @@
     /* ✅ 급여관리(이름) + 월 내비 상단 고정 – 항상 플로팅 */
     .sticky-pay-header {
         position: sticky;
-        top: 70px;              /* 상단 navbar(약 56px) + 여유 */
+        top: 70px;
         z-index: 1030;
         background:#ffffff;
         padding-top: .25rem;
@@ -191,39 +195,39 @@
         padding:4px 2px;
     }
 
-    /* 날짜 칸: 항상 연회색 배경 + 하단 경계선 */
     .day-cell-date {
         font-weight:600;
-        background:#f8f9fa;          /* 연회색 */
+        background:#f8f9fa;
         border-bottom:1px solid #dee2e6;
     }
 
-    /* 근무시간 칸(아래줄) 기본 */
     .day-cell-time {
         background:#ffffff;
     }
 
-    /* 달 밖(이전/다음달) - 날짜줄/시간줄 공통 글자색만 흐리게 */
     .day-outside {
         color:#adb5bd;
     }
-    /* 달 밖 + 근무시간줄만 살짝 회색 배경 */
     .day-cell-time.day-outside {
         background:#fcfcfc;
     }
 
-    /* 주말 강조는 "근무시간 줄"에만 적용 */
     .day-cell-time.day-weekend {
         background:#fff8f0;
     }
 
-    /* 요약 숫자 오른쪽 정렬 */
     #summaryHourlyWage,
     #summaryMonthWorkTime,
     #summaryMonthWorkPay,
     #summaryMonthJuhyuPay,
     #summaryMonthTotal {
         text-align:right;
+    }
+
+    /* ✅ 다음 액션 하이라이트용 */
+    .pay-action-next {
+        box-shadow: 0 0 0 2px rgba(13,110,253,.35);
+        transform: translateY(-1px);
     }
 </style>
 
@@ -241,6 +245,32 @@
     </div>
 </div>
 
+<!-- ✅ 지급완료 일자 선택 모달 -->
+<div class="modal fade" id="paidDateModal" tabindex="-1" aria-labelledby="paidDateModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="paidDateModalLabel">지급완료 일자</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="닫기"></button>
+            </div>
+            <div class="modal-body">
+                <label for="paidDateInput" class="form-label small">지급완료 일자</label>
+                <input type="date" class="form-control" id="paidDateInput">
+                <div class="invalid-feedback">
+                    지급완료 일자를 선택해 주세요.
+                </div>
+                <div class="form-text">
+                    기본값은 오늘입니다.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">취소</button>
+                <button type="button" class="btn btn-sm btn-primary" id="btnPaidDateConfirm">저장</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- 서버에서 내려준 멤버 JSON -->
 <script id="membersData" type="application/json">
 {{{membersJson}}}
@@ -249,7 +279,7 @@
 <script>
     (function() {
         const API_BASE_ACTUAL = '/api/schedule';   // GET /{memberId}/{startIso}/{endIso}
-        const PAYROLL_SAVE_API = '/api/payroll/month'; // 급여 저장/확정/지급 API
+        const PAYROLL_SAVE_API = '/api/payroll/month'; // POST /api/payroll/month + GET /api/payroll/month/{memberId}/{year}/{month}
 
         // 좌측
         const statusSelect         = document.getElementById('statusSelect');
@@ -260,6 +290,7 @@
         const pageTitle            = document.getElementById('pageTitle');
         const selectedMemberNameEl = document.getElementById('selectedMemberName');
         const selectedMemberStatus = document.getElementById('selectedMemberStatus');
+        const payrollStatusBadge   = document.getElementById('payrollStatusBadge');
         const monthRangeLabel      = document.getElementById('monthRangeLabel');
         const btnMonthPrev         = document.getElementById('btnMonthPrev');
         const btnMonthThis         = document.getElementById('btnMonthThis');
@@ -280,6 +311,11 @@
         const btnConfirm           = document.getElementById('btnConfirm');
         const btnMarkPaid          = document.getElementById('btnMarkPaid');
 
+        // 지급완료 모달
+        const paidDateModalEl      = document.getElementById('paidDateModal');
+        const paidDateInput        = document.getElementById('paidDateInput');
+        const btnPaidDateConfirm   = document.getElementById('btnPaidDateConfirm');
+
         // 토스트
         const toastEl              = document.getElementById('mainToast');
         const toastBodyEl          = document.getElementById('mainToastBody');
@@ -298,6 +334,9 @@
 
         // 최근 계산된 월 급여 데이터 (API 전송용)
         let lastPayrollPayload = null;
+
+        // 현재 저장된 급여 상태 (서버 기준) : null / 'DRAFT' / 'CONFIRMED' / 'PAID'
+        let currentPayrollStatus = null;
 
         // 상태 초기값
         if (Array.isArray(allMembers) && allMembers.length > 0) {
@@ -328,12 +367,58 @@
         btnConfirm.addEventListener('click', function () {
             savePayrollWithStatus('CONFIRMED', '급여가 확정되었습니다.');
         });
-        btnMarkPaid.addEventListener('click', function () {
-            savePayrollWithStatus('PAID', '지급완료로 처리되었습니다.');
-        });
+        btnMarkPaid.addEventListener('click', onMarkPaidClick);
+
+        // 지급완료 모달에서 "저장" 클릭
+        if (btnPaidDateConfirm) {
+            btnPaidDateConfirm.addEventListener('click', function () {
+                if (!paidDateInput) return;
+                const dateValue = paidDateInput.value;
+                if (!dateValue) {
+                    paidDateInput.classList.add('is-invalid');
+                    return;
+                }
+                paidDateInput.classList.remove('is-invalid');
+
+                // 선택한 날짜로 지급완료 저장
+                savePayrollWithStatus('PAID', '지급완료로 처리되었습니다.', dateValue);
+
+                if (window.bootstrap && bootstrap.Modal && paidDateModalEl) {
+                    const modalInstance = bootstrap.Modal.getOrCreateInstance(paidDateModalEl);
+                    modalInstance.hide();
+                }
+            });
+        }
 
         // 초기 실행
         handleStatusChange();
+
+        // ===== 지급완료 버튼 클릭 시: 모달 띄우기 =====
+        function onMarkPaidClick() {
+            if (!currentMember) {
+                showToast('먼저 근무자를 선택해주세요.', 'danger');
+                return;
+            }
+            if (!lastPayrollPayload) {
+                showToast('급여 데이터가 없습니다. 먼저 월 데이터를 불러와주세요.', 'warning');
+                return;
+            }
+
+            if (!paidDateModalEl || !paidDateInput || !window.bootstrap || !bootstrap.Modal) {
+                // 모달이 없거나 부트스트랩 사용 불가 시, 기존처럼 바로 저장
+                savePayrollWithStatus('PAID', '지급완료로 처리되었습니다.');
+                return;
+            }
+
+            // 기본값: 오늘 날짜
+            const today = new Date();
+            paidDateInput.value = toIso(today); // yyyy-MM-dd 형식
+
+            paidDateInput.classList.remove('is-invalid');
+
+            const modalInstance = bootstrap.Modal.getOrCreateInstance(paidDateModalEl);
+            modalInstance.show();
+        }
 
         // ===== 상태 변경 시 멤버 리스트 갱신 =====
         function handleStatusChange() {
@@ -366,15 +451,15 @@
                         const color = colorForMember(m);
 
                         li.innerHTML = `
-                    <span class="left d-inline-flex align-items-center gap-2">
-                        <span class="dot" style="background:${color}"></span>
-                        <span class="fw-semibold">${escapeHtml(m.name ?? '-')}</span>
-                        <span class="text-muted small">${escapeHtml(m.phone ?? '')}</span>
-                    </span>
-                    <button type="button"
-                            class="btn btn-sm btn-outline-primary view-btn"
-                            data-id="${String(m.id)}">상세</button>
-                `;
+                        <span class="left d-inline-flex align-items-center gap-2">
+                            <span class="dot" style="background:${color}"></span>
+                            <span class="fw-semibold">${escapeHtml(m.name ?? '-')}</span>
+                            <span class="text-muted small">${escapeHtml(m.phone ?? '')}</span>
+                        </span>
+                        <button type="button"
+                                class="btn btn-sm btn-outline-primary view-btn"
+                                data-id="${String(m.id)}">상세</button>
+                    `;
                         memberList.appendChild(li);
                     });
 
@@ -407,6 +492,7 @@
         function selectMember(member) {
             currentMember = member;
             selectedMemberId = member.id;
+            currentPayrollStatus = null;  // 멤버 변경 시 상태 초기화
             updateMemberListActive();
             renderMemberHeader(member);
             reloadForCurrentMember();
@@ -425,6 +511,7 @@
                 selectedMemberStatus.classList.add('d-none');
                 selectedMemberStatus.textContent = '-';
                 selectedMemberStatus.className = 'badge bg-secondary d-none';
+                updatePayrollStatusUI(null); // 급여 상태도 리셋
                 return;
             }
             pageTitle.textContent = '급여 관리';
@@ -439,6 +526,9 @@
             selectedMemberStatus.classList.remove('d-none');
             selectedMemberStatus.textContent = member.status || '-';
             selectedMemberStatus.className = `badge ${badgeMap[member.status] || 'bg-secondary'} ms-2`;
+
+            // 급여 상태 배지는 currentPayrollStatus 기준
+            updatePayrollStatusUI(currentPayrollStatus);
         }
 
         function clearRight() {
@@ -450,6 +540,7 @@
             summaryMonthJuhyuPay.textContent = '-';
             summaryMonthTotal.textContent    = '-';
             lastPayrollPayload = null;
+            currentPayrollStatus = null;
             renderMemberHeader(null);
         }
 
@@ -491,14 +582,43 @@
             }
 
             renderMonthPayTable(member, ms, me, dayMap);
+
+            // ✅ 월 급여 저장 상태 조회
+            await loadPayrollStatus(member, ms);
+        }
+
+        // ✅ 서버에 저장된 급여 상태 조회 (GET /api/payroll/month/{memberId}/{year}/{month})
+        async function loadPayrollStatus(member, monthStartDate) {
+            const year  = monthStartDate.getFullYear();
+            const month = monthStartDate.getMonth() + 1;
+
+            try {
+                const url = `${PAYROLL_SAVE_API}/${encodeURIComponent(member.id)}/${year}/${month}`;
+                const resp = await fetch(url, { headers: { 'Accept': 'application/json' } });
+
+                if (!resp.ok) {
+                    // 404 등 → 저장된 급여 없음
+                    currentPayrollStatus = null;
+                    updatePayrollStatusUI(null);
+                    return;
+                }
+
+                const data = await resp.json();
+                const status = (data && data.status) ? String(data.status).toUpperCase() : null;
+                currentPayrollStatus = status || null;
+                updatePayrollStatusUI(currentPayrollStatus);
+            } catch (e) {
+                console.error('loadPayrollStatus error', e);
+                currentPayrollStatus = null;
+                updatePayrollStatusUI(null);
+            }
         }
 
         function renderMonthPayTable(member, ms, me, dayMap) {
             monthPayBody.innerHTML = '';
 
             const wage = (typeof member?.hourlyWage === 'number') ? member.hourlyWage : null;
-            summaryHourlyWage.textContent =
-                    (wage != null) ? krw(wage) : '-';
+            summaryHourlyWage.textContent = (wage != null) ? krw(wage) : '-';
 
             let monthMinutes = 0;
             let monthJuhyuMinutes = 0;
@@ -582,15 +702,15 @@
                 // 두 줄짜리 주차 블록
                 const trDates = document.createElement('tr');
                 trDates.innerHTML = `
-                <th scope="row" rowspan="2">
-                    ${++weekIndex}주차<br>
-                    <small class="text-muted">(${weekLabelRange})</small>
-                </th>
-                ${dateTds.join('')}
-                <td class="text-end" rowspan="2">${weekWorkLabel}</td>
-                <td class="text-end" rowspan="2">${weekJuhyuCellHtml}</td>
-                <td class="text-end" rowspan="2">${weekPayLabel}</td>
-            `;
+                    <th scope="row" rowspan="2">
+                        ${++weekIndex}주차<br>
+                        <small class="text-muted">(${weekLabelRange})</small>
+                    </th>
+                    ${dateTds.join('')}
+                    <td class="text-end" rowspan="2">${weekWorkLabel}</td>
+                    <td class="text-end" rowspan="2">${weekJuhyuCellHtml}</td>
+                    <td class="text-end" rowspan="2">${weekPayLabel}</td>
+                `;
 
                 const trTimes = document.createElement('tr');
                 trTimes.innerHTML = timeTds.join('');
@@ -634,8 +754,10 @@
             }
         }
 
-        // ===== 급여 저장/확정/지급 API 호출 =====
-        async function savePayrollWithStatus(status, successMessage) {
+        // ===== 급여 저장/확정/지급 API 호출 (POST /api/payroll/month) =====
+        // status: 'DRAFT' | 'CONFIRMED' | 'PAID'
+        // paidDate: 'yyyy-MM-dd' (지급완료 시에만 사용)
+        async function savePayrollWithStatus(status, successMessage, paidDate) {
             if (!currentMember) {
                 showToast('먼저 근무자를 선택해주세요.', 'danger');
                 return;
@@ -649,6 +771,12 @@
                 ...lastPayrollPayload,
                 status: status   // DRAFT / CONFIRMED / PAID
             };
+
+            // ✅ 지급완료일이 넘어온 경우, payload에 포함
+            if (status === 'PAID' && paidDate) {
+                // 백엔드 DTO에 맞게 key 이름 조정 (예: paidAt, paidDate 등)
+                payload.paidDate = paidDate;
+            }
 
             try {
                 const resp = await fetch(PAYROLL_SAVE_API, {
@@ -667,11 +795,90 @@
                     return;
                 }
 
+                // ✅ 저장 후 다시 상태 조회해서 상단 배지 + 버튼 활성/하이라이트 갱신
+                await loadPayrollStatus(currentMember, currentMonthStart);
+
                 showToast(successMessage || '처리되었습니다.', 'success');
             } catch (e) {
                 console.error('payroll save fetch error', e);
                 showToast('통신 오류가 발생했습니다.', 'danger');
             }
+        }
+
+        // ===== 급여 상태 배지 + 버튼 하이라이트/활성화 =====
+        function updatePayrollStatusUI(status) {
+            if (!payrollStatusBadge) return;
+
+            const upper = status ? String(status).toUpperCase() : null;
+
+            const labelMap = {
+                DRAFT: '임시저장',
+                CONFIRMED: '확정',
+                PAID: '지급완료'
+            };
+            const classMap = {
+                DRAFT: 'bg-secondary',
+                CONFIRMED: 'bg-info',
+                PAID: 'bg-success'
+            };
+
+            // 1) 배지
+            if (!upper) {
+                // 저장된 급여가 없는 상태
+                payrollStatusBadge.className = 'badge ms-2 bg-light text-muted';
+                payrollStatusBadge.textContent = '미저장';
+                payrollStatusBadge.classList.remove('d-none');
+            } else {
+                payrollStatusBadge.className = `badge ms-2 ${classMap[upper] || 'bg-secondary'}`;
+                payrollStatusBadge.textContent = labelMap[upper] || upper;
+                payrollStatusBadge.classList.remove('d-none');
+            }
+
+            // 2) 버튼 disabled / enabled
+            btnSaveDraft.disabled = false;
+            btnConfirm.disabled   = false;
+            btnMarkPaid.disabled  = false;
+
+            if (!upper) {
+                // 저장내용 없음 → 임시저장만 가능
+                btnSaveDraft.disabled = false;
+                btnConfirm.disabled   = true;
+                btnMarkPaid.disabled  = true;
+            } else if (upper === 'DRAFT') {
+                // 임시저장 상태 → 확정 가능
+                btnSaveDraft.disabled = false;
+                btnConfirm.disabled   = false;
+                btnMarkPaid.disabled  = true;
+            } else if (upper === 'CONFIRMED') {
+                // 확정 상태 → 지급완료만 가능
+                btnSaveDraft.disabled = true;
+                btnConfirm.disabled   = true;
+                btnMarkPaid.disabled  = false;
+            } else if (upper === 'PAID') {
+                // 지급완료 → 더 이상 수정 불가
+                btnSaveDraft.disabled = true;
+                btnConfirm.disabled   = true;
+                btnMarkPaid.disabled  = true;
+            }
+
+            // 3) 다음 액션 하이라이트
+            [btnSaveDraft, btnConfirm, btnMarkPaid].forEach(btn => {
+                btn.classList.remove('pay-action-next');
+            });
+
+            if (!upper) {
+                btnSaveDraft.classList.add('pay-action-next');
+                return;
+            }
+            if (upper === 'DRAFT') {
+                btnConfirm.classList.add('pay-action-next');
+                return;
+            }
+            if (upper === 'CONFIRMED') {
+                btnMarkPaid.classList.add('pay-action-next');
+                return;
+            }
+            // PAID는 하이라이트 없음 (완료 상태)
         }
 
         // ===== 토스트 헬퍼 =====

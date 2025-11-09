@@ -8,6 +8,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import ymsoft.springdeveloper.com.springdeveloper.dto.MemberDto;
 import ymsoft.springdeveloper.com.springdeveloper.service.WorkScheduleService;
@@ -19,6 +20,7 @@ import java.util.List;
 
 @Slf4j
 @Controller
+@RequestMapping("/payment")
 @RequiredArgsConstructor
 public class PaymentController {
     @Autowired
@@ -26,7 +28,7 @@ public class PaymentController {
 
     private final ObjectMapper objectMapper; // ✅ 스프링이 모듈 등록된 ObjectMapper를 주입
 
-    @GetMapping("/payment")
+    @GetMapping("")
     public String payment(
             @RequestParam(required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate month, // ✅ 월 기준 앵커(임의의 월 내 날짜)
@@ -71,5 +73,20 @@ public class PaymentController {
         model.addAttribute("pageTitle", "월/주 실 근무시간 대시보드");
 
         return "members/payManagement"; // 머스태시 템플릿
+    }
+
+    @GetMapping("/payid")
+    public String payid(Model model) throws Exception {
+        List<MemberDto> members = memService.findAll();
+        log.info("/paid/ members: {}", members);
+        model.addAttribute("members", members);
+
+        String membersJson = objectMapper.writeValueAsString(members);
+        log.info("membersJson: {}", membersJson);
+        model.addAttribute("membersJson", membersJson);
+
+        // 5) 페이지 타이틀
+        model.addAttribute("pageTitle", "월/주 실 근무시간 대시보드");
+        return "members/payidManagement";
     }
 }

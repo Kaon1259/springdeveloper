@@ -329,10 +329,9 @@
     .cell.muted { background:#fcfcfc; color:#96a0aa; }
     .cell.today { outline:2px solid #51cf66; outline-offset:2px; }
 
-    /* ✅ 오른쪽 상단 탭 + 주/월 내비 sticky */
     #rightTopBar {
         position: sticky;
-        top: var(--topbar-offset, 56px);
+        top: 68px;        /* 원래 var(--topbar-offset, 56px) */
         z-index: 40;
         background:#fff;
     }
@@ -340,7 +339,7 @@
     /* ✅ 메인 카드 헤더 sticky (선택 멤버/상태) */
     .main-header {
         position: sticky;
-        top: var(--main-header-offset, 88px);
+        top: 108px;        /* 원래 var(--main-header-offset, 88px) – 필요에 따라 90~110px 정도 조정 */
         z-index: 30;
         background:#fff;
     }
@@ -348,7 +347,7 @@
     /* ✅ 주간/요약 테이블 헤더 sticky (시간/요일 줄) */
     .sticky-sub-header th {
         position: sticky;
-        top: var(--sub-header-offset, 120px);
+        top: 148px;       /* 원래 var(--sub-header-offset, 120px) – 위 값에 맞춰 약간 더 내려줌 */
         z-index: 20;
         background:#f8f9fa;
     }
@@ -418,9 +417,7 @@
         const viewWeekSummary=document.getElementById('viewWeekSummary');
         const viewMonthCalendar=document.getElementById('viewMonthCalendar');
 
-        // ✅ sticky 관련 DOM
-        const rightTopBar = document.getElementById('rightTopBar');
-        const mainHeaderEl = document.querySelector('.main-header');
+        // ✅ sticky 대상 thead만 잡는다
         const weekGridHead = document.querySelector('#tableWeek10m thead');
         const weekSummaryHead = document.querySelector('#tableWeekSummary thead');
 
@@ -464,25 +461,6 @@
         statusSelect.addEventListener('change', handleStatusChange);
         memberList.addEventListener('click', onMemberListClick);
 
-        // sticky offset 계산
-        function computeStickyOffsets(){
-            const fixedHeader = document.querySelector('.navbar.fixed-top, .fixed-top, header.sticky-top');
-            const navH = fixedHeader ? fixedHeader.getBoundingClientRect().height : 0;
-
-            const topBarH  = rightTopBar  ? rightTopBar.getBoundingClientRect().height : 0;
-            const cardH    = mainHeaderEl ? mainHeaderEl.getBoundingClientRect().height : 0;
-
-            const topbarOffset  = navH;
-            const mainHeaderOff = navH + topBarH;
-            const subHeaderOff  = navH + topBarH + cardH;
-
-            document.documentElement.style.setProperty('--topbar-offset',      topbarOffset  + 'px');
-            document.documentElement.style.setProperty('--main-header-offset', mainHeaderOff + 'px');
-            document.documentElement.style.setProperty('--sub-header-offset',  subHeaderOff  + 'px');
-        }
-        computeStickyOffsets();
-        window.addEventListener('resize', computeStickyOffsets);
-
         // 시작
         handleStatusChange();
 
@@ -515,13 +493,13 @@
                         li.dataset.memberId=String(m.id);
                         const color=colorForMember(m);
                         li.innerHTML=`
-                    <span class="left d-inline-flex align-items-center gap-2">
-                        <span class="dot" style="background:${color}"></span>
-                        <span class="fw-semibold">${escapeHtml(m.name ?? '-')}</span>
-                        <span class="text-muted small">${escapeHtml(m.phone ?? '')}</span>
-                    </span>
-                    <button type="button" class="btn btn-sm btn-outline-primary view-btn" data-id="${String(m.id)}">상세</button>
-                `;
+                        <span class="left d-inline-flex align-items-center gap-2">
+                            <span class="dot" style="background:${color}"></span>
+                            <span class="fw-semibold">${escapeHtml(m.name ?? '-')}</span>
+                            <span class="text-muted small">${escapeHtml(m.phone ?? '')}</span>
+                        </span>
+                        <button type="button" class="btn btn-sm btn-outline-primary view-btn" data-id="${String(m.id)}">상세</button>
+                    `;
                         memberList.appendChild(li);
                     });
 
@@ -647,8 +625,6 @@
                     weekSummaryHead.classList.add('sticky-sub-header');
                 }
             }
-
-            computeStickyOffsets();
         }
 
         // ===== 월 내비: 리로드 없이 작동 =====
