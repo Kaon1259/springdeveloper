@@ -183,13 +183,6 @@ public class MemberController {
         model.addAttribute("monthPrevUrl", "/members/showworkmonthdashboard?month=" + prevMonthAnchor);
         model.addAttribute("monthNextUrl", "/members/showworkmonthdashboard?month=" + nextMonthAnchor);
 
-        // (선택) 과거 주간 템플릿과의 호환이 필요하면 week* 키도 같이 내려줄 수 있습니다.
-        // model.addAttribute("weekRangeLabel", String.format("%s ~ %s",
-        //         startOfMonth.with(java.time.DayOfWeek.MONDAY).format(leftFmt),
-        //         startOfMonth.with(java.time.DayOfWeek.MONDAY).plusDays(6).format(rightFmt)));
-        // model.addAttribute("weekPrevUrl", "/members/showworkmonthdashboard?month=" + prevMonthAnchor);
-        // model.addAttribute("weekNextUrl", "/members/showworkmonthdashboard?month=" + nextMonthAnchor);
-
         // 4) 멤버 목록 (좌측 리스트 & 우측 표의 데이터 소스)
         List<MemberDto> members = memService.findAll();
         log.info("showworkmonthdashboard members: {}", members);
