@@ -121,7 +121,7 @@
                     <a class="btn btn-sm btn-outline-secondary" id="btnWeekNext" href="{{weekNextUrl}}">다음 주 ▶</a>
                 </div>
 
-                <!-- 월간 내비 (월 보기에만 표시) -->
+                <!-- 월간 내비 (월 보기에만 표시): 한 줄(왼쪽 기간, 오른쪽 버튼 3개) -->
                 <div id="navMonth" class="d-none w-100">
                     <div class="d-flex justify-content-between align-items-center w-100 gap-2">
                         <span id="monthRangeLabel" class="small text-muted">0000.00.01 ~ 00.00</span>
@@ -193,18 +193,10 @@
                                     <td class="text-end">기준 시급</td>
                                     <th class="text-end" id="hourlyWageCellW">-</th>
                                 </tr>
-                                <!-- 🔽 주간 주휴수당 -->
-                                <tr>
-                                    <th>주간 주휴수당</th>
-                                    <td></td>
-                                    <td class="text-end small text-muted">실근무 ≥ 15시간인 주에 한해<br>(주간 실근무 ÷ 5시간)</td>
-                                    <th class="text-end" id="weekJuhyuPayCell">-</th>
-                                </tr>
-                                <!-- 🔽 주간 예상 급여(실근무+주휴) -->
                                 <tr class="table-secondary">
                                     <th>예상 급여</th>
                                     <td></td>
-                                    <td class="text-end">주간 실근무 + 주휴수당</td>
+                                    <td class="text-end">주간 실근무 × 시급</td>
                                     <th class="text-end text-primary" id="weekPayCell">-</th>
                                 </tr>
                                 <tr>
@@ -222,7 +214,7 @@
                     <div id="viewMonthCalendar" class="d-none">
                         <div class="calendar-grid" id="calendarGrid"></div>
 
-                        <!-- 월 합계/급여(+주휴) -->
+                        <!-- 월 합계/급여 -->
                         <div class="mt-3">
                             <div class="d-flex justify-content-between">
                                 <div class="small text-muted">월 합계(실근무)</div>
@@ -233,18 +225,13 @@
                                 <div id="hourlyWageCellM">-</div>
                             </div>
                             <div class="d-flex justify-content-between">
-                                <div class="small text-muted">월 주휴수당(주별 합산)</div>
-                                <div class="fw-semibold" id="monthJuhyuPayCell">-</div>
-                            </div>
-                            <div class="d-flex justify-content-between">
-                                <div class="small text-muted">월 예상 급여(실근무+주휴)</div>
+                                <div class="small text-muted">월 예상 급여</div>
                                 <div class="text-primary fw-semibold" id="monthPayCell">-</div>
                             </div>
                         </div>
 
                         <div class="small text-muted mt-2">
-                            * 날짜 칸에 실 근무 구간 칩과 일 합계가 표시됩니다.<br>
-                            * 월 주휴수당은 해당 월에 포함된 각 <b>주(월~일)</b>의 실근무시간 기준으로 산정됩니다.
+                            * 날짜 칸에 실 근무 구간 칩과 일 합계가 표시됩니다.
                         </div>
                     </div>
 
@@ -334,8 +321,8 @@
         const HOUR_START=6, HOUR_END=22, STEP_MIN=10, SLOTS_PER_HOUR=60/STEP_MIN;
         const VIEW_PARAM='view', VIEW_STORAGE_KEY='schedule:view', DEFAULT_VIEW='weekGrid';
 
-        const API_BASE_PLAN   = '/api/schedule/work';   // 주간 "계획" API
-        const API_BASE_ACTUAL = '/api/schedule';        // 주간/월간 "실제" API
+        const API_BASE_PLAN   = '/api/schedule/work';   // ✅ 주간 "계획" API
+        const API_BASE_ACTUAL = '/api/schedule';        // ✅ 주간/월간 "실제" API
 
         // 좌측 DOM
         const statusSelect=document.getElementById('statusSelect');
@@ -371,7 +358,6 @@
         const weekActualTotalCell=document.getElementById('weekActualTotalCell');
         const weekDeltaCell=document.getElementById('weekDeltaCell');
         const weekPayCell=document.getElementById('weekPayCell');
-        const weekJuhyuPayCell=document.getElementById('weekJuhyuPayCell');
         const hourlyWageCellW=document.getElementById('hourlyWageCellW');
 
         const calendarGrid=document.getElementById('calendarGrid');
@@ -381,7 +367,6 @@
         const btnMonthThis=document.getElementById('btnMonthThis');
         const btnMonthNext=document.getElementById('btnMonthNext');
         const monthActualTotalCell=document.getElementById('monthActualTotalCell');
-        const monthJuhyuPayCell=document.getElementById('monthJuhyuPayCell');
         const monthPayCell=document.getElementById('monthPayCell');
         const hourlyWageCellM=document.getElementById('hourlyWageCellM');
 
@@ -521,40 +506,40 @@
             renderWeekHeadDates(weekDates);
             buildWeekGrid10m();
 
-            // 1) 주간 계획
+            // ✅ 1) 주간 "계획" (plan) API 호출
             let planMap = {};
             try{
                 const url = `${API_BASE_PLAN}/${encodeURIComponent(member.id)}/${weekStartIso}/${weekEndIso}`;
                 const resp = await fetch(url, { headers:{'Accept':'application/json'} });
                 if(resp.ok){
                     const data = await resp.json();
-                    planMap = normalizeDays(data);
+                    planMap = normalizeActualDays(data); // days -> {date:{segments,minutes}}
                 }
             }catch(e){
                 console.error('plan fetch error', e);
             }
 
-            // 2) 주간 실제
+            // ✅ 2) 주간 "실제" (actual) API 호출
             let actualMap = {};
             try{
                 const url=`${API_BASE_ACTUAL}/${encodeURIComponent(member.id)}/${weekStartIso}/${weekEndIso}`;
                 const resp=await fetch(url,{headers:{'Accept':'application/json'}});
                 if(resp.ok){
                     const data=await resp.json();
-                    actualMap = normalizeDays(data);
+                    actualMap = normalizeActualDays(data);
                 }
             }catch(e){
                 console.error('actual fetch error', e);
             }
 
-            // 3) 그리드 칠하기
+            // ✅ 3) 10분 그리드에 계획/실제 칠하기
             paintPlanFromMap(planMap, weekDates);
             paintActualFromMap(actualMap, weekDates);
 
-            // 4) 주간 요약표
+            // ✅ 4) 주간 요약표 렌더 (계획/실제 둘 다 API 기반)
             await renderWeekSummary(member, weekDates, planMap, actualMap);
 
-            // 5) 월간 달력
+            // ✅ 5) 월간 달력(실제만) 렌더
             const baseDate = parseIsoDate(weekStartIso);
             await renderMonthCalendar(member, baseDate);
 
@@ -652,13 +637,7 @@
             }
         }
 
-        function rowToHm(rIdx){
-            const absMin = HOUR_START*60 + rIdx*STEP_MIN;
-            const h = Math.floor(absMin/60), m = absMin%60;
-            return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
-        }
-
-        // 계획 칠하기
+        // ✅ 계획: API map 기반으로 칠하기
         function paintPlanFromMap(planMap, weekDates){
             for(let dayIdx=0; dayIdx<7; dayIdx++){
                 const iso = weekDates[dayIdx];
@@ -679,7 +658,7 @@
             }
         }
 
-        // 실제 칠하기
+        // ✅ 실제: API map 기반으로 칠하기
         function paintActualFromMap(actualMap, weekDates){
             for(let dayIdx=0; dayIdx<7; dayIdx++){
                 const iso = weekDates[dayIdx];
@@ -700,7 +679,13 @@
             }
         }
 
-        // ===== 주간 요약 (주간 주휴수당 포함) =====
+        function rowToHm(rIdx){
+            const absMin = HOUR_START*60 + rIdx*STEP_MIN;
+            const h = Math.floor(absMin/60), m = absMin%60;
+            return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+        }
+
+        // ===== 주간 요약 =====
         async function renderWeekSummary(member, weekDates, planMap, actualMap){
             const DOW = ['일','월','화','수','목','금','토'];
 
@@ -741,19 +726,11 @@
 
             const wage = (typeof member?.hourlyWage === 'number') ? member.hourlyWage : null;
             hourlyWageCellW.textContent = (wage!=null) ? krw(wage) : '-';
-
-            // ✅ 주간 주휴수당 분 단위 → 금액
-            const juhyuMinutesWeek = calcWeeklyJuhyuMinutes(wActual); // wActual: 이 주 전체 실근무 분
-            const juhyuPayWeek = (wage!=null) ? Math.round((juhyuMinutesWeek/60)*wage) : null;
-            weekJuhyuPayCell.textContent = (juhyuPayWeek!=null) ? krw(juhyuPayWeek) : '-';
-
-            // 기본 주간 급여(실근무) + 주휴수당
-            const basePayWeek = (wage!=null) ? Math.round((wActual/60)*wage) : null;
-            const totalPayWeek = (basePayWeek!=null && juhyuPayWeek!=null) ? basePayWeek + juhyuPayWeek : null;
-            weekPayCell.textContent = (totalPayWeek!=null) ? krw(totalPayWeek) : '-';
+            const pay = (wage!=null) ? Math.round((wActual/60)*wage) : null;
+            weekPayCell.textContent = (pay!=null) ? krw(pay) : '-';
         }
 
-        // ===== 월간 달력 (실제 근무 + 주별 주휴수당 합산) =====
+        // ===== 월간 달력 (실제 근무만) =====
         async function renderMonthCalendar(member, baseDate){
             const ms = new Date(baseDate.getFullYear(), baseDate.getMonth(), 1);
             const me = new Date(baseDate.getFullYear(), baseDate.getMonth()+1, 0);
@@ -773,7 +750,7 @@
             try {
                 const url = `${API_BASE_ACTUAL}/${encodeURIComponent(member.id)}/${monthStartIso}/${monthEndIso}`;
                 const resp = await fetch(url, { headers: { 'Accept': 'application/json' } });
-                if (resp.ok) { actualMap = normalizeDays(await resp.json()); }
+                if (resp.ok) { actualMap = normalizeActualDays(await resp.json()); }
             } catch (e) { console.error(e); }
 
             calendarGrid.innerHTML = '';
@@ -794,20 +771,11 @@
             }
 
             let monthMinutes = 0;
-            const weeklyMinutesMap = {}; // weekStartIso -> 그 주(월~일) 중, 이 달에 속한 일자들의 분 합
-
             for (let d = new Date(ms); d <= me; d.setDate(d.getDate()+1)) {
                 const iso = toIso(d);
                 const dow = d.getDay();
                 const a = actualMap[iso] || {segments:[], minutes:0};
-                const dayMinutes = a.minutes || 0;
-                monthMinutes += dayMinutes;
-
-                // ✅ 주(월~일) 단위로 분 합산
-                if (dayMinutes > 0){
-                    const weekStartIso = toIso(toMonday(d)); // 이 날짜가 속한 주의 월요일
-                    weeklyMinutesMap[weekStartIso] = (weeklyMinutesMap[weekStartIso] || 0) + dayMinutes;
-                }
+                monthMinutes += (a.minutes||0);
 
                 const cell = document.createElement('div');
                 cell.className = 'cell';
@@ -823,30 +791,16 @@
                     <span class="dow-mini">${DOW_HEAD[dow]}</span>
                 </div>
                 <div class="segments">${chipsHtml}</div>
-                <div class="day-total">${formatMins(dayMinutes)}</div>
+                <div class="day-total">${formatMins(a.minutes||0)}</div>
             `;
                 calendarGrid.appendChild(cell);
             }
 
-            // ✅ 이 달에 포함된 각 "주"에 대해, 실근무 ≥ 15시간인 경우에만 주휴수당 발생
-            let monthJuhyuMinutes = 0;
-            Object.values(weeklyMinutesMap).forEach(weekMinutes=>{
-                monthJuhyuMinutes += calcWeeklyJuhyuMinutes(weekMinutes);
-            });
-
             monthActualTotalCell.textContent = formatMins(monthMinutes);
             const wage = (typeof member?.hourlyWage==='number') ? member?.hourlyWage : null;
             hourlyWageCellM.textContent = (wage!=null) ? krw(wage) : '-';
-
-            let basePay = null, juhyuPay = null, totalPay = null;
-            if (wage != null){
-                basePay = Math.round((monthMinutes/60)*wage);
-                juhyuPay = Math.round((monthJuhyuMinutes/60)*wage);
-                totalPay = basePay + juhyuPay;
-            }
-
-            monthJuhyuPayCell.textContent = (juhyuPay!=null) ? krw(juhyuPay) : '-';
-            monthPayCell.textContent      = (totalPay!=null) ? krw(totalPay) : '-';
+            const monthPay = (wage!=null) ? Math.round((monthMinutes/60)*wage) : null;
+            monthPayCell.textContent = (monthPay!=null) ? krw(monthPay) : '-';
         }
 
         function getCurrentMonthStart(){
@@ -906,11 +860,9 @@
             weekActualTotalCell.textContent='0시간';
             weekDeltaCell.textContent='0분';
             weekPayCell.textContent='-';
-            weekJuhyuPayCell.textContent='-';
             hourlyWageCellW.textContent='-';
 
             monthActualTotalCell.textContent='0시간';
-            monthJuhyuPayCell.textContent='-';
             monthPayCell.textContent='-';
             hourlyWageCellM.textContent='-';
             monthRangeLabel.textContent='0000.00.01 ~ 00.00';
@@ -937,7 +889,7 @@
         function krw(v){ return new Intl.NumberFormat('ko-KR',{style:'currency',currency:'KRW',maximumFractionDigits:0}).format(v); }
 
         // ✅ 계획/실제 공통 normalizer (days 배열 -> date별 {segments, minutes})
-        function normalizeDays(apiData){
+        function normalizeActualDays(apiData){
             const map = {};
             const arr = Array.isArray(apiData?.days) ? apiData.days : [];
             arr.forEach(d=>{
@@ -958,13 +910,6 @@
             if(!hm||typeof hm!=='string') return {h:0,m:0};
             const [h,m] = hm.split(':').map(n=>parseInt(n,10));
             return {h:isNaN(h)?0:h, m:isNaN(m)?0:m};
-        }
-
-        // ✅ 주간 주휴수당 "분" 계산: 1주 실근무가 15시간(900분) 이상일 때만, 주휴시간 = 주간 실근무 ÷ 5
-        function calcWeeklyJuhyuMinutes(weeklyMinutes){
-            if(!weeklyMinutes || weeklyMinutes < 15*60) return 0;
-            // weeklyMinutes / 5 = (weeklyHours/40)*8h와 동일
-            return Math.round(weeklyMinutes / 5);
         }
 
         function chipHtml(color, start, end){
