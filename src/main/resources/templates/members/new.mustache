@@ -327,55 +327,88 @@
 
         /* ===== 전화번호 자동 포맷 ===== */
         const phone = document.getElementById('phone');
+
+        // "숫자만" → "010-1234-5678" 형태로 변환
         function formatPhone(raw) {
-            let v = String(raw || '').replace(/\D/g, '');
+            let v = String(raw || '').replace(/\D/g, ''); // 숫자만 남기기
             if (!v) return '';
+
+            // 02 지역번호 처리
             if (v.startsWith('02')) {
                 if (v.length <= 2) return v;
-                // if (v.length <= 6) return v.replace(/(02)(\\d{0,4})/, '$1-$2');
-                // return v.replace(/(02)(\\d{3,4})(\\d{0,4}).*/, '$1-$2-$3');
-                if (v.length <= 6) return v.replace(/(02)(\d{0,4})/, '$1-$2');
+                if (v.length <= 6) {
+                    // 02-1234
+                    return v.replace(/(02)(\d{0,4})/, '$1-$2');
+                }
+                // 02-123-4567 or 02-1234-5678
                 return v.replace(/(02)(\d{3,4})(\d{0,4}).*/, '$1-$2-$3');
-            } else {
-                if (v.length <= 3) return v;
-                // if (v.length <= 7) return v.replace(/(0\\d{2})(\\d{0,4})/, '$1-$2');
-                // return v.replace(/(0\\d{2})(\\d{3,4})(\\d{0,4}).*/, '$1-$2-$3');
-                if (v.length <= 7) return v.replace(/(0\\d{2})(\\d{0,4})/, '$1-$2');
-                return v.replace(/(0\\d{2})(\\d{3,4})(\\d{0,4}).*/, '$1-$2-$3');
             }
-        }
-        // function isValidPhone(s){ return /^(0\\d{1,2})-\\d{3,4}-\\d{4}$/.test(s); }
-        function isValidPhone(s){ return /^(0\d{1,2})-\d{3,4}-\d{4}$/.test(s); }
 
-        phone.addEventListener('input', () => {
-            const pos = phone.selectionStart ?? 0;
-            const before = phone.value.length;
-            phone.value = formatPhone(phone.value);
-            const after = phone.value.length;
-            const delta = after - before;
-            const next = Math.max(0, pos + delta);
-            phone.setSelectionRange(next, next);
-            phone.setCustomValidity('');
-        });
-        phone.addEventListener('blur', () => {
-            phone.value = formatPhone(phone.value);
-            if (phone.value && !isValidPhone(phone.value)) {
-                phone.setCustomValidity('예: 010-1234-5678 형식으로 입력하세요.');
-            } else { phone.setCustomValidity(''); }
-        });
+            // 그 외 휴대폰/지역번호 (010,031 등)
+            if (v.length <= 3) return v;
+            if (v.length <= 7) {
+                // 010-1234
+                return v.replace(/(0\d{2})(\d{0,4})/, '$1-$2');
+            }
+            // 010-123-4567 or 010-1234-5678
+            return v.replace(/(0\d{2})(\d{3,4})(\d{0,4}).*/, '$1-$2-$3');
+        }
+
+        // 패턴 검증
+        function isValidPhone(s) {
+            return /^(0\d{1,2})-\d{3,4}-\d{4}$/.test(s);
+        }
+
+        if (phone) {
+            // 입력 중 자동 포맷 + 커서 위치 유지
+            phone.addEventListener('input', () => {
+                const prev = phone.value;
+                const cursor = phone.selectionStart ?? prev.length;
+
+                const formatted = formatPhone(prev);
+                phone.value = formatted;
+
+                const diff = formatted.length - prev.length;
+                const nextPos = Math.max(0, cursor + diff);
+                try {
+                    phone.setSelectionRange(nextPos, nextPos);
+                } catch (e) {
+                    // 일부 브라우저에서 selectionRange 안될 때 무시
+                }
+                phone.setCustomValidity('');
+            });
+
+            // 포커스 아웃 시 최종 포맷 + 검증
+            phone.addEventListener('blur', () => {
+                phone.value = formatPhone(phone.value);
+                if (phone.value && !isValidPhone(phone.value)) {
+                    phone.setCustomValidity('예: 010-1234-5678 형식으로 입력하세요.');
+                } else {
+                    phone.setCustomValidity('');
+                }
+            });
+        }
 
         /* ===== 계좌: 숫자만 허용 ===== */
         const bankAccount = document.getElementById('bankAccount');
-        bankAccount.addEventListener('input', () => {
-            const pos = bankAccount.selectionStart ?? 0;
-            const before = bankAccount.value.length;
-            bankAccount.value = bankAccount.value.replace(/\\D/g, '').slice(0, 20);
-            const after = bankAccount.value.length;
-            const delta = after - before;
-            const next = Math.max(0, pos + delta);
-            bankAccount.setSelectionRange(next, next);
-            bankAccount.setCustomValidity('');
-        });
+        if (bankAccount) {
+            bankAccount.addEventListener('input', () => {
+                const prev = bankAccount.value;
+                const cursor = bankAccount.selectionStart ?? prev.length;
+
+                // 숫자만 남기고 최대 20자리
+                const cleaned = prev.replace(/\D/g, '').slice(0, 20);
+                bankAccount.value = cleaned;
+
+                const diff = cleaned.length - prev.length;
+                const nextPos = Math.max(0, cursor + diff);
+                try {
+                    bankAccount.setSelectionRange(nextPos, nextPos);
+                } catch (e) {}
+
+                bankAccount.setCustomValidity('');
+            });
+        }
 
         /* ===== 시급 변경 시 미리보기 갱신 ===== */
         const hourlyWage = document.getElementById('hourlyWage');
@@ -526,10 +559,10 @@
                     const endMin   = START_MIN + (eIdxInclusive+1)*STEP_MIN; // 다음 슬롯 시작 = 구간 끝
                     const tr = document.createElement('tr');
                     tr.innerHTML = `
-                    <td data-day="${day}">${dayMap[day]}(${day})</td>
-                    <td data-start="${minToHM(startMin)}">${minToHM(startMin)}</td>
-                    <td data-end="${minToHM(endMin)}">${minToHM(endMin)}</td>
-                `;
+                        <td data-day="${day}">${dayMap[day]}(${day})</td>
+                        <td data-start="${minToHM(startMin)}">${minToHM(startMin)}</td>
+                        <td data-end="${minToHM(endMin)}">${minToHM(endMin)}</td>
+                    `;
                     schedulePreviewBody.appendChild(tr);
                 });
             });
@@ -552,7 +585,6 @@
         }
 
         /* ===== 적용: 미리보기 → 뷰/히든필드 ===== */
-        // const applyBtn = document.getElementById('applySchedule');
         applyBtn.addEventListener('click', ()=>{
             const previewRows = Array.from(schedulePreviewBody.querySelectorAll('tr')).filter(tr=>tr.querySelector('td[data-day]'));
             viewTableBody.innerHTML = '';
@@ -574,9 +606,9 @@
         function appendViewRow(day,start,end){
             const tr = document.createElement('tr');
             tr.innerHTML = `
-            <td data-day="${day}">${dayMap[day]}(${day})</td>
-            <td data-start="${start}">${start}</td>
-            <td data-end="${end}">${end}</td>`;
+                <td data-day="${day}">${dayMap[day]}(${day})</td>
+                <td data-start="${start}">${start}</td>
+                <td data-end="${end}">${end}</td>`;
             viewTableBody.appendChild(tr);
         }
         function addViewPlaceholder(){
@@ -667,22 +699,26 @@
         /* ===== 제출 전 최종 검증 ===== */
         form.addEventListener('submit', (e)=>{
             // 전화번호
-            phone.value = formatPhone(phone.value);
-            if(!isValidPhone(phone.value)){
-                e.preventDefault();
-                phone.setCustomValidity('예: 010-1234-5678 형식으로 입력하세요.');
-                phone.reportValidity();
-                return;
-            } else { phone.setCustomValidity(''); }
+            if (phone) {
+                phone.value = formatPhone(phone.value);
+                if(!isValidPhone(phone.value)){
+                    e.preventDefault();
+                    phone.setCustomValidity('예: 010-1234-5678 형식으로 입력하세요.');
+                    phone.reportValidity();
+                    return;
+                } else { phone.setCustomValidity(''); }
+            }
 
             // 계좌
-            const acct = (bankAccount.value||'').replace(/\\D/g,'');
-            if(acct.length<8 || acct.length>20){
-                e.preventDefault();
-                bankAccount.setCustomValidity('계좌번호는 숫자 8~20자리로 입력하세요 (하이픈 없이).');
-                bankAccount.reportValidity();
-                return;
-            } else { bankAccount.setCustomValidity(''); }
+            if (bankAccount) {
+                const acct = (bankAccount.value||'').replace(/\D/g,'');
+                if(acct.length<8 || acct.length>20){
+                    e.preventDefault();
+                    bankAccount.setCustomValidity('계좌번호는 숫자 8~20자리로 입력하세요 (하이픈 없이).');
+                    bankAccount.reportValidity();
+                    return;
+                } else { bankAccount.setCustomValidity(''); }
+            }
 
             // 보건증 경고
             if(healthYes.checked){
