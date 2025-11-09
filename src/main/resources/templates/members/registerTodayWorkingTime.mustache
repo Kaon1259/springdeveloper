@@ -126,6 +126,21 @@
         box-shadow: 0 0 0 3px rgba(13,110,253,.15) inset;
         background:#f0f6ff;
     }
+
+    #tableWrapper {
+        max-height: 70vh;    /* 필요하면 60vh, 80vh 등으로 조정 */
+        overflow-y: auto;    /* 세로 스크롤 생성 */
+        overflow-x: auto;    /* 가로 스크롤도 유지 */
+        position: relative;  /* sticky 기준 컨테이너로 명시 */
+    }
+
+    /* ✅ 테이블 헤더(시간 | 스케줄 | 실제 | 1시간 단위) 스크롤 시 고정 */
+    #table10m thead th {
+        position: sticky;
+        top: 0;            /* 카드 헤더 바로 아래에 붙이고 싶으면 0으로 두세요 */
+        z-index: 5;
+        background: #f8fafc;
+    }
 </style>
 
 <script id="membersData" type="application/json">
@@ -157,6 +172,7 @@
 
         const thSchedule = document.getElementById('thSchedule');
 
+        /* ===== 토스트 ===== */
         function showToast(message, toastType = 'primary') {
             const existing = document.getElementById('toastBox');
             if (existing) {
@@ -204,6 +220,7 @@
             }
         }
 
+        /* ===== 데이터/상태 ===== */
         let allMembers=[];
         try{
             allMembers = JSON.parse(document.getElementById('membersData').textContent || '[]');
@@ -253,6 +270,7 @@
 
         handleStatusChange();
 
+        /* ===== 좌측: 상태 변경 ===== */
         function handleStatusChange(){
             const status = statusSelect.value;
             const filtered = (allMembers || []).filter(m => m.status === status);
@@ -318,6 +336,7 @@
             window.location.assign(`/members/${encodeURIComponent(id)}/edit`);
         }
 
+        /* ===== 멤버 선택 ===== */
         function pickMember(m){
             if(!m) return;
             selectedMemberId = m.id;
@@ -363,6 +382,7 @@
             loadDayForMember(m);
         }
 
+        /* ===== 스케줄/실제 로딩 ===== */
         function loadDayForMember(member){
             const date = fmtDateYYYYMMDD(currentDate);
 
@@ -382,6 +402,7 @@
                     .catch(console.error);
         }
 
+        /* ===== 테이블 생성 ===== */
         function buildTenMinuteTable(){
             tbody10m.innerHTML='';
 
@@ -443,7 +464,7 @@
             updateActualSummary();
         }
 
-        // 스케줄(주황)
+        /* ===== 스케줄(주황) 적용 ===== */
         function applyScheduleSegments(segments){
             const scheduleSlots = Array.from(tbody10m.querySelectorAll('.slot-10m.schedule'));
 
@@ -452,7 +473,6 @@
                     thSchedule.textContent = '(계획된 일정 없음)';
                     thSchedule.classList.add('text-danger');
                 }
-                // ✅ 일정 없으면 테이블 맨 위로
                 scrollToTopOfTable();
                 return;
             }
@@ -479,7 +499,7 @@
             }
         }
 
-        // 실제(초록)
+        /* ===== 실제(초록) 적용 ===== */
         function applyActualSegments(segments){
             const slots=Array.from(tbody10m.querySelectorAll('.slot-10m.actual'));
             segments.forEach(seg=>{
@@ -492,7 +512,7 @@
             updateActualSummary();
         }
 
-        // ✅ 일정 있을 때: 첫 시작 위치로 스크롤
+        /* ===== 스크롤 유틸 ===== */
         function scrollToSchedule(firstStartMin){
             const base = HOUR_START * 60;
             const idxRaw = (firstStartMin - base) / STEP_MIN;
@@ -507,7 +527,6 @@
             });
         }
 
-        // ✅ 일정 없을 때: 테이블 첫 줄로 스크롤
         function scrollToTopOfTable(){
             const firstRow = tbody10m.querySelector('tr');
             if (!firstRow) return;
@@ -517,6 +536,7 @@
             });
         }
 
+        /* ===== 저장 ===== */
         function saveActual(){
             if(!selectedMemberId){
                 alert('알바생을 선택하세요.');
@@ -567,6 +587,7 @@
             }
         }
 
+        /* ===== 날짜 네비 하이라이트 ===== */
         function setDayNavActive(which){
             const all = [btnDayPrev, btnDayToday, btnDayNext];
             all.forEach(btn => {
@@ -584,6 +605,7 @@
             }
         }
 
+        /* ===== 유틸 ===== */
         function toggleActual(div,on){ on?div.classList.add('on'):div.classList.remove('on'); }
 
         function hmToMin(hm){ const[a,b]=hm.split(':').map(Number); return a*60+b; }
@@ -617,7 +639,7 @@
         }
         function fmtDateDisplay(d){
             const iso = fmtDateYYYYMMDD(d);
-            const dow = DOW_KO[d.getDay()];
+            const dow = DOW_KO[d.getDay()];   // ✅ 여기 수정
             return `${iso} (${dow})`;
         }
         function stripTime(d){

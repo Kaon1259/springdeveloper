@@ -50,8 +50,12 @@
         <!-- ============ 오른쪽: 주간 타임테이블 (좌: 계획 / 우: 실제) ============ -->
         <div class="col-12 col-lg-7">
             <div class="card">
-                <div class="card-header fw-bold d-flex align-items-center justify-content-between">
-                    <span>주간 타임테이블 (월~일)</span>
+                <!-- ✅ 헤더를 sticky로 만들기 위해 week-header 클래스 추가 + 이름/상태 배치 -->
+                <div class="card-header fw-bold d-flex align-items-center justify-content-between week-header">
+                    <span class="d-flex align-items-center">
+                        <span id="weekHeaderTitle">주간(월~일) 타임테이블</span>
+                        <span id="weekHeaderStatus" class="badge bg-secondary ms-2 d-none">-</span>
+                    </span>
                     <div class="small text-muted">
                         <span id="weekRangeLabel">{{weekRangeLabel}}</span>
                         <a class="ms-2 btn btn-sm btn-outline-secondary" href="{{weekPrevUrl}}">◀ 이전 주</a>
@@ -60,11 +64,7 @@
                 </div>
 
                 <div class="card-body">
-                    <!-- 선택 멤버 타이틀/상태 -->
-                    <div class="d-flex align-items-center justify-content-between mb-2">
-                        <div class="h5 mb-0" id="selectedMemberTitle">-</div>
-                        <span id="selectedMemberStatus" class="badge bg-secondary">-</span>
-                    </div>
+                    <!-- ⛔ 기존: 선택 멤버 타이틀/상태 라인 삭제됨 -->
 
                     <!-- 요일별: 계획(좌) / 실제(우) -->
                     <div class="table-responsive">
@@ -145,6 +145,14 @@
         box-shadow: 0 0 0 3px rgba(13,110,253,.15) inset;
         background:#f0f6ff;
     }
+
+    /* ✅ 주간 헤더 sticky */
+    .week-header {
+        position: sticky;
+        top: var(--week-header-offset, 0);
+        z-index: 25;
+        background: #fff;
+    }
 </style>
 
 <!-- 컨트롤러에서 내려준 JSON -->
@@ -167,21 +175,24 @@
         const memberList = document.getElementById('memberList');
         const memberCountBadge = document.getElementById('memberCountBadge');
 
-        // right table
         const workTableBody = document.getElementById('workTableBody');
-        const selectedMemberTitle = document.getElementById('selectedMemberTitle');
-        const selectedMemberStatus = document.getElementById('selectedMemberStatus');
         const weekPlannedTotalCell = document.getElementById('weekPlannedTotalCell');
         const weekActualTotalCell = document.getElementById('weekActualTotalCell');
         const weekDeltaCell = document.getElementById('weekDeltaCell');
         const hourlyWageCell = document.getElementById('hourlyWageCell');
         const weekPayCell = document.getElementById('weekPayCell');
 
-        // 주 범위
         const weekRangeLabelEl = document.getElementById('weekRangeLabel');
+
+        // ✅ 새로 추가된 헤더 DOM
+        const weekHeaderTitle  = document.getElementById('weekHeaderTitle');
+        const weekHeaderStatus = document.getElementById('weekHeaderStatus');
+        const weekHeaderEl     = document.querySelector('.week-header');
+
+        // 주 범위
         const { weekStartIso, weekEndIso } = parseWeekRange(weekRangeLabelEl?.textContent || '');
 
-        // 요일(월~일)
+        // 요일(월~일 표시용) - 실제는 date에서 day() 쓰지만 레이블용
         const DOW = ['일','월','화','수','목','금','토'];
 
         // API
@@ -190,6 +201,16 @@
 
         // 선택 상태
         let selectedMemberId = null;
+
+        // ✅ 헤더 sticky offset 계산 (네비게이션 높이 고려)
+        function computeWeekHeaderOffset() {
+            const fixedHeader = document.querySelector('.navbar.fixed-top, .fixed-top, header.sticky-top');
+            const navH = fixedHeader ? fixedHeader.getBoundingClientRect().height : 0;
+            const top = navH; // 네비게이션 바로 아래에 붙이기
+            document.documentElement.style.setProperty('--week-header-offset', top + 'px');
+        }
+        computeWeekHeaderOffset();
+        window.addEventListener('resize', computeWeekHeaderOffset);
 
         // 초기 상태
         if (Array.isArray(allMembers) && allMembers.length > 0) {
@@ -279,16 +300,28 @@
             updateMemberListActive();
         }
 
-        // ✅ 멤버 선택 공통 처리: active + 우측 갱신
+        // ✅ 멤버 선택 공통 처리: active + 우측 헤더/테이블 갱신
         async function pickMember(m) {
             if (!m) return;
             selectedMemberId = m.id;
 
             updateMemberListActive();
 
-            selectedMemberTitle.textContent = m?.name ? `${m.name} — 주간 근무(계획/실제)` : '-';
-            selectedMemberStatus.textContent = m?.status || '-';
-            selectedMemberStatus.className = `badge ${statusClass(m?.status)}`;
+            const baseTitle = '주간(월~일) 타임테이블';
+            if (m?.name) {
+                weekHeaderTitle.textContent = `${baseTitle} (${m.name})`;
+            } else {
+                weekHeaderTitle.textContent = baseTitle;
+            }
+
+            if (m?.status) {
+                weekHeaderStatus.textContent = m.status;
+                weekHeaderStatus.className = `badge ${statusClass(m.status)} ms-2`;
+                weekHeaderStatus.classList.remove('d-none');
+            } else {
+                weekHeaderStatus.textContent = '-';
+                weekHeaderStatus.className = 'badge bg-secondary ms-2 d-none';
+            }
 
             await loadAndRenderWeek(m);
         }
@@ -335,7 +368,7 @@
                 throw new Error(`planned API ${resp.status} ${text}`);
             }
             const data = await resp.json();
-            return normalizeDays(data);  // { days:[{date, segments, minutes?}, ...] }
+            return normalizeDays(data);  // { date -> {segments, minutes} }
         }
 
         // 계획/실제 공통 응답 정규화
@@ -356,14 +389,15 @@
         function renderWeekTableRows(member, plannedMap, actualMap) {
             const rows = [];
             let wPlanned = 0, wActual = 0;
-            const colorPlan = '#0d6efd';               // 계획 칩
-            const colorActual = colorForMember(member); // 실제 칩
+            const colorPlan   = '#0d6efd';                // 계획 칩
+            const colorActual = colorForMember(member);   // 실제 칩
 
             const start = new Date(weekStartIso);
             for (let i=0;i<7;i++){
                 const d = new Date(start); d.setDate(start.getDate()+i);
                 const iso = toIso(d);
-                const dayLabel = DOW[d.getDay()];
+                const dow = d.getDay();
+                const dayLabel = DOW[dow];
 
                 const p = plannedMap[iso] || {segments:[], minutes:0};
                 const a = actualMap[iso]  || {segments:[], minutes:0};
@@ -407,14 +441,16 @@
 
         function clearWorkTable() {
             workTableBody.innerHTML = '';
-            selectedMemberTitle.textContent = '-';
-            selectedMemberStatus.textContent = '-';
-            selectedMemberStatus.className = 'badge bg-secondary';
             weekPlannedTotalCell.textContent = '0시간';
             weekActualTotalCell.textContent = '0시간';
             weekDeltaCell.textContent = '0분';
             hourlyWageCell.textContent = '-';
             weekPayCell.textContent = '-';
+
+            const baseTitle = '주간(월~일) 타임테이블';
+            weekHeaderTitle.textContent = baseTitle;
+            weekHeaderStatus.textContent = '-';
+            weekHeaderStatus.className = 'badge bg-secondary ms-2 d-none';
 
             // 좌측 active 제거
             selectedMemberId = null;

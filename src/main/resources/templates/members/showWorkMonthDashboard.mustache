@@ -42,16 +42,18 @@
                     </div>
                 </div>
 
-                <!-- ✅ 아르바이트 정보 패널 전체 삭제됨 -->
-
             </div>
         </div>
 
         <!-- ============ 오른쪽: 월간 캘린더 (실 근무) ============ -->
         <div class="col-12 col-lg-7">
             <div class="card">
-                <div class="card-header fw-bold d-flex align-items-center justify-content-between">
-                    <span>월간 캘린더 (실 근무)</span>
+                <!-- ✅ sticky로 만들기 위해 month-header 클래스 추가 -->
+                <div class="card-header fw-bold d-flex align-items-center justify-content-between month-header">
+                    <span class="d-flex align-items-center">
+                        <span id="calendarTitle">월간 캘린더</span>
+                        <span id="headerStatusBadge" class="badge bg-secondary ms-2 d-none">-</span>
+                    </span>
                     <div class="small text-muted">
                         <span id="monthRangeLabel">{{monthRangeLabel}}</span>
                         <a class="ms-2 btn btn-sm btn-outline-secondary" href="{{monthPrevUrl}}">◀ 이전 달</a>
@@ -60,12 +62,6 @@
                 </div>
 
                 <div class="card-body">
-                    <!-- 선택 멤버 타이틀/상태 -->
-                    <div class="d-flex align-items-center justify-content-between mb-2">
-                        <div class="h5 mb-0" id="selectedMemberTitle">-</div>
-                        <span id="selectedMemberStatus" class="badge bg-secondary">-</span>
-                    </div>
-
                     <!-- 달력 -->
                     <div class="calendar">
                         <div class="calendar-grid" id="calendarGrid">
@@ -104,7 +100,6 @@
         border:1px solid #e9ecef; border-radius:14px; padding:4px 8px; background:#fff;
     }
 
-    /* ✅ 이름 옆 동그라미/칩 안 동그라미 공통 스타일 */
     .dot {
         width:10px;
         height:10px;
@@ -121,11 +116,18 @@
     .member-chip:hover { background:#f8f9fa; }
     .member-chip .left { display:inline-flex; align-items:center; gap:8px; }
 
-    /* ✅ 좌측 선택된 알바생 하이라이트 */
     .member-chip.active {
         border-color: rgba(13,110,253,.45);
         box-shadow: 0 0 0 3px rgba(13,110,253,.15) inset;
         background:#f0f6ff;
+    }
+
+    /* ✅ 월간 캘린더 헤더도 sticky */
+    .month-header {
+        position: sticky;
+        top: var(--calendar-header-offset, 0);
+        z-index: 25;
+        background: #fff;
     }
 
     /* ===== Calendar ===== */
@@ -140,6 +142,12 @@
         color: #6c757d;
         padding: 6px 0;
         border-bottom: 1px dashed #e9ecef;
+
+        /* ✅ 스크롤 시 요일 헤더 고정 (헤더 아래) */
+        position: sticky;
+        top: var(--calendar-dow-offset, 0);
+        z-index: 20;
+        background: #fff;
     }
     .calendar-grid .cell {
         border: 1px solid #e9ecef;
@@ -196,13 +204,14 @@
         const memberCountBadge = document.getElementById('memberCountBadge');
 
         // ===== DOM: 우측(월간) =====
-        const selectedMemberTitle = document.getElementById('selectedMemberTitle');
-        const selectedMemberStatus = document.getElementById('selectedMemberStatus');
+        const calendarTitle = document.getElementById('calendarTitle');
+        const headerStatusBadge = document.getElementById('headerStatusBadge');
         const monthRangeLabelEl = document.getElementById('monthRangeLabel');
         const calendarGrid = document.getElementById('calendarGrid');
         const monthActualTotalCell = document.getElementById('monthActualTotalCell');
         const monthPayCell = document.getElementById('monthPayCell');
         const hourlyWageCell = document.getElementById('hourlyWageCell');
+        const monthHeaderEl = document.querySelector('.month-header');
 
         // 상수/유틸
         const API_BASE = '/api/schedule'; // GET /api/schedule/{memberId}/{startIso}/{endIso}
@@ -210,6 +219,25 @@
 
         // 현재 선택된 멤버 id
         let selectedMemberId = null;
+
+        // ✅ 헤더 + 요일 sticky offset 계산
+        function computeCalendarOffsets() {
+            // 상단 네비바 높이
+            const fixedHeader = document.querySelector('.navbar.fixed-top, .fixed-top, header.sticky-top');
+            const navH = fixedHeader ? fixedHeader.getBoundingClientRect().height : 0;
+            const headerOffset = navH; // 네비바 바로 아래에 카드 헤더
+
+            document.documentElement.style.setProperty('--calendar-header-offset', (headerOffset) + 'px');
+
+            // 요일 헤더는 카드 헤더 바로 아래에 위치
+            if (monthHeaderEl) {
+                const headerHeight = monthHeaderEl.getBoundingClientRect().height;
+                const dowOffset = headerOffset + headerHeight;
+                document.documentElement.style.setProperty('--calendar-dow-offset', (dowOffset) + 'px');
+            }
+        }
+        computeCalendarOffsets();
+        window.addEventListener('resize', computeCalendarOffsets);
 
         // 초기 상태 지정
         if (Array.isArray(allMembers) && allMembers.length > 0) {
@@ -296,22 +324,34 @@
                 memberList.appendChild(li);
             }
 
-            // 현재 선택 상태 반영
             updateMemberListActive();
         }
 
-        // ✅ 공통 멤버 선택 처리
+        // 공통 멤버 선택 처리
         async function pickMember(m) {
             if (!m) return;
             selectedMemberId = m.id;
 
-            // 좌측 하이라이트
             updateMemberListActive();
 
-            // 우측 타이틀/상태
-            selectedMemberTitle.textContent = m?.name ? `${m.name} — 월간 실근무` : '-';
-            selectedMemberStatus.textContent = m?.status || '-';
-            selectedMemberStatus.className = `badge ${statusClass(m?.status)}`;
+            // 헤더 타이틀/상태 뱃지 갱신
+            if (m?.name) {
+                calendarTitle.textContent = `월간 캘린더 (${m.name})`;
+            } else {
+                calendarTitle.textContent = '월간 캘린더';
+            }
+
+            if (m?.status) {
+                headerStatusBadge.textContent = m.status;
+                headerStatusBadge.className = `badge ${statusClass(m.status)} ms-2`;
+                headerStatusBadge.classList.remove('d-none');
+            } else {
+                headerStatusBadge.textContent = '-';
+                headerStatusBadge.className = 'badge bg-secondary ms-2 d-none';
+            }
+
+            // 타이틀 길이에 따라 헤더 높이가 변할 수 있으니 다시 계산
+            computeCalendarOffsets();
 
             // 달력 렌더
             await loadAndRenderMonth(m);
@@ -425,11 +465,11 @@
             monthActualTotalCell.textContent = '0시간';
             monthPayCell.textContent = '-';
             hourlyWageCell.textContent = '-';
-            selectedMemberTitle.textContent = '-';
-            selectedMemberStatus.textContent = '-';
-            selectedMemberStatus.className = 'badge bg-secondary';
 
-            // 좌측 하이라이트 제거
+            calendarTitle.textContent = '월간 캘린더';
+            headerStatusBadge.textContent = '-';
+            headerStatusBadge.className = 'badge bg-secondary ms-2 d-none';
+
             Array.from(memberList.querySelectorAll('.member-chip')).forEach(li=>{
                 li.classList.remove('active');
             });
@@ -504,7 +544,12 @@
         }
         function escapeHtml(s){
             if(s==null) return '';
-            return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&quot;').replace(/'/g,'&#39;');
+            return String(s)
+                    .replace(/&/g,'&amp;')
+                    .replace(/</g,'&lt;')
+                    .replace(/>/g,'&gt;')
+                    .replace(/"/g,'&quot;')
+                    .replace(/'/g,'&#39;');
         }
     })();
 </script>

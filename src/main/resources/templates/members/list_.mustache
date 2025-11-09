@@ -122,11 +122,15 @@
                 </div>
 
                 <!-- 월간 내비 (월 보기에만 표시) -->
-                <div id="navMonth" class="d-none d-flex align-items-center small text-muted gap-2">
-                    <span id="monthRangeLabel">0000.00.01 ~ 00.00</span>
-                    <a class="btn btn-sm btn-outline-secondary" id="btnMonthPrev" href="#">◀ 이전 달</a>
-                    <a class="btn btn-sm btn-outline-secondary" id="btnMonthThis" href="#">이번 달</a>
-                    <a class="btn btn-sm btn-outline-secondary" id="btnMonthNext" href="#">다음 달 ▶</a>
+                <div id="navMonth" class="d-none w-100">
+                    <div class="d-flex justify-content-between align-items-center w-100 gap-2">
+                        <span id="monthRangeLabel" class="small text-muted">0000.00.01 ~ 00.00</span>
+                        <div class="d-flex gap-2">
+                            <a class="btn btn-sm btn-outline-secondary" id="btnMonthPrev" href="#">◀ 이전 달</a>
+                            <a class="btn btn-sm btn-outline-secondary" id="btnMonthThis" href="#">이번 달</a>
+                            <a class="btn btn-sm btn-outline-secondary" id="btnMonthNext" href="#">다음 달 ▶</a>
+                        </div>
+                    </div>
                     <!-- 상태 보관용(표시 안 함) -->
                     <span id="monthLabel" class="d-none">0000.00</span>
                 </div>
