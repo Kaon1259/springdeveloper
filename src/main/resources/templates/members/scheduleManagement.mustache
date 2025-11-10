@@ -298,15 +298,15 @@
     /* ===== 상태별 월간 근무 테이블 (사각형 크기 축소 버전) ===== */
     .status-month-table .legend {
         display: inline-block;
-        width: 9px;    /* 기존 14px → 절반 크기 */
-        height: 9px;   /* 기존 14px → 절반 크기 */
+        width: 9px;
+        height: 9px;
         border-radius: 2px;
         border: 1px solid #ccc;
         margin: 0 auto;
         vertical-align: middle;
     }
     .status-month-table td {
-        padding: 0.15rem 0.2rem; /* 세로 여백도 절반으로 줄임 */
+        padding: 0.15rem 0.2rem;
     }
     .status-month-table th {
         padding: 0.25rem 0.35rem;
@@ -479,6 +479,9 @@
         let dragging = false;
         let dragAdding = true;
 
+        // 상태별 월간 표 비동기 렌더 버전 관리
+        let statusMonthRenderSeq = 0;
+
         // ✅ 네비게이션바 + 카드헤더 높이 계산하여 sticky 위치 보정
         function updateMonthHeaderOffset() {
             if (!monthCardHeader) return;
@@ -571,7 +574,12 @@
             if(!filtered.length){
                 memberPills.innerHTML = `<span class="text-muted small">해당 상태의 아르바이트생이 없습니다.</span>`;
                 selectMember(null);
-                renderStatusMonthTable(); // 빈 상태 반영
+
+                // 상태별 월간 표도 초기화
+                if (statusMonthHeadRow && statusMonthBody) {
+                    statusMonthHeadRow.innerHTML = '';
+                    statusMonthBody.innerHTML = '';
+                }
                 return;
             }
 
@@ -605,8 +613,8 @@
                         memberPills.appendChild(row);
                     });
 
+            // 여기서 selectMember → renderMonthCalendar → renderStatusMonthTable 흐름으로 연결
             selectMember(toSelect, {keepCalendar:true});
-            renderStatusMonthTable();
         }
 
         function selectMember(m, opts={keepCalendar:false}){
@@ -650,6 +658,9 @@
         async function renderStatusMonthTable(){
             if(!statusMonthHeadRow || !statusMonthBody) return;
 
+            // 이 호출에 대한 시퀀스 번호
+            const mySeq = ++statusMonthRenderSeq;
+
             statusMonthHeadRow.innerHTML = '';
             statusMonthBody.innerHTML = '';
 
@@ -664,8 +675,9 @@
             const msIso = toIso(ms);
             const meIso = toIso(me);
 
-            // 헤더
             const DOW_HEAD = ['일','월','화','수','목','금','토'];
+
+            // 헤더
             let headHtml = `<th style="min-width:120px;">근로자</th>`;
             for(let d=1; d<=daysInMonth; d++){
                 const dateObj = new Date(ms.getFullYear(), ms.getMonth(), d);
@@ -689,6 +701,11 @@
                     console.error(e);
                 }
             }));
+
+            // 이 사이에 더 최신 렌더 요청이 들어왔으면 결과 무시
+            if (mySeq !== statusMonthRenderSeq) {
+                return;
+            }
 
             members.forEach(m=>{
                 const color = colorForMember(m);
@@ -714,7 +731,7 @@
                 tr.dataset.memberId = String(m.id);
                 tr.innerHTML =
                         `<th scope="row" class="member-name-cell">
-                        <span class="legend" style="background:${color};border-color:${color};"></span>
+                        <span class="legend" style="background:${color};border-color:${color}"></span>
                         <span class="ms-1">${escapeHtml(m.name ?? '-')}</span>
                      </th>
                      ${cellsHtml}
