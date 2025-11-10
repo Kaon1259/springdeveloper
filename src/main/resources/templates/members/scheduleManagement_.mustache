@@ -46,33 +46,7 @@
         </div>
     </div>
 
-    <!-- ============ NEW: 상태별 월간 근무 캘린더 ============ -->
-    <div class="card mb-3">
-        <div class="card-header fw-bold">
-            상태별 월간 근무 캘린더
-        </div>
-        <div class="card-body">
-            <div class="small text-muted mb-2">
-                현재 선택된 상태의 아르바이트생들이 이 달에 근무하는 날짜를 한눈에 볼 수 있습니다.
-            </div>
-            <div class="table-responsive">
-                <table class="table table-bordered table-sm align-middle text-center status-month-table" id="statusMonthTable">
-                    <thead>
-                    <tr id="statusMonthHeadRow"></tr>
-                    </thead>
-                    <tbody id="statusMonthBody">
-                    <!-- JS 렌더 -->
-                    </tbody>
-                </table>
-            </div>
-            <div class="small text-muted mt-1">
-                행을 클릭하면 해당 근로자가 아래 월간 일정 영역에 선택됩니다.
-                (선택된 근로자는 이 표에서 <strong>하이라이트</strong> 됩니다.)
-            </div>
-        </div>
-    </div>
-
-    <!-- ============ 하단: 월간 타임테이블 (개별 근로자) ============ -->
+    <!-- ============ 하단: 월간 타임테이블 ============ -->
     <div class="card">
         <!-- ✅ 네비게이션바 높이를 고려하는 sticky 헤더 -->
         <div id="monthCardHeader"
@@ -214,11 +188,6 @@
         font-size:.8rem;
     }
 
-    /* 급여/일정 테이블 래퍼 – sticky 기준 컨테이너 */
-    .pay-right-wrapper {
-        position: relative;
-    }
-
     /* ✅ 카드 헤더: 네비게이션바 아래에서 sticky */
     #monthCardHeader {
         position: sticky;
@@ -246,7 +215,7 @@
         border-bottom:1px dashed #e9ecef;
     }
 
-    /* 날짜 그리드 (개별 근로자 월 캘린더) */
+    /* 날짜 그리드 */
     .calendar-grid {
         display:grid;
         grid-template-columns:repeat(7,1fr);
@@ -273,47 +242,6 @@
     .cell.today { outline:2px solid #51cf66; outline-offset:2px; }
     .cell.selected { box-shadow:0 0 0 3px rgba(13,110,253,.25) inset; }
     .btn-edit-inline { padding:1px 6px; font-size:.75rem; line-height:1.1; border-radius:10px; }
-
-    /* ===== NEW: 상태별 월간 근무 테이블 ===== */
-    .status-month-table th,
-    .status-month-table td {
-        font-size:.75rem;
-        padding:.25rem .35rem;
-        white-space:nowrap;
-    }
-    .status-month-table thead th {
-        position: sticky;
-        top: 0;
-        z-index: 5;
-        background: #f8f9fa;
-    }
-    .status-month-table .member-name-cell {
-        text-align:left;
-        white-space:nowrap;
-    }
-    .status-month-table tr.table-active {
-        background: rgba(13,110,253,.06);
-    }
-
-    /* ===== 상태별 월간 근무 테이블 (사각형 크기 축소 버전) ===== */
-    .status-month-table .legend {
-        display: inline-block;
-        width: 9px;    /* 기존 14px → 절반 크기 */
-        height: 9px;   /* 기존 14px → 절반 크기 */
-        border-radius: 2px;
-        border: 1px solid #ccc;
-        margin: 0 auto;
-        vertical-align: middle;
-    }
-    .status-month-table td {
-        padding: 0.15rem 0.2rem; /* 세로 여백도 절반으로 줄임 */
-    }
-    .status-month-table th {
-        padding: 0.25rem 0.35rem;
-    }
-    .status-month-table tr.table-active {
-        background: rgba(13,110,253,.08);
-    }
 
     /* ===== 모달 ===== */
     .modal {
@@ -429,10 +357,6 @@
 
         const monthCardHeader = document.getElementById('monthCardHeader');
 
-        // NEW: 상태별 월간 근무 테이블 DOM
-        const statusMonthHeadRow = document.getElementById('statusMonthHeadRow');
-        const statusMonthBody    = document.getElementById('statusMonthBody');
-
         // 편집 모달
         const editModal = document.getElementById('editModal');
         const editTitleDate = document.getElementById('editTitleDate');
@@ -456,9 +380,6 @@
 
         let currentMember = null;
         let currentMonthStart = firstDayOfMonth(new Date());
-
-        // 현재 상태에 해당하는 멤버 목록 (새 테이블에서도 사용)
-        let currentStatusMembers = [];
 
         // 달력 선택 상태
         let selectedCellEl = null;
@@ -558,7 +479,6 @@
         function renderMembersByStatus(){
             const status = statusSelect.value;
             const filtered = (allMembers||[]).filter(m=>m.status===status);
-            currentStatusMembers = filtered;
 
             statusCountBadge.textContent = `${filtered.length}명`;
             if(statusCountBadgeTop){
@@ -571,7 +491,6 @@
             if(!filtered.length){
                 memberPills.innerHTML = `<span class="text-muted small">해당 상태의 아르바이트생이 없습니다.</span>`;
                 selectMember(null);
-                renderStatusMonthTable(); // 빈 상태 반영
                 return;
             }
 
@@ -606,7 +525,6 @@
                     });
 
             selectMember(toSelect, {keepCalendar:true});
-            renderStatusMonthTable();
         }
 
         function selectMember(m, opts={keepCalendar:false}){
@@ -620,7 +538,6 @@
 
             updateSelectedBadgeAndName();
             clearSelectedCell();
-            renderStatusMonthHighlight();
 
             if(currentMember){
                 renderMonthCalendar(currentMember, currentMonthStart);
@@ -646,102 +563,7 @@
             selectedMemberStatusRight.className = `badge ${badgeMap[currentMember.status]||'bg-secondary'} ms-2`;
         }
 
-        // ===== NEW: 상태별 월간 근무 표 렌더 =====
-        async function renderStatusMonthTable(){
-            if(!statusMonthHeadRow || !statusMonthBody) return;
-
-            statusMonthHeadRow.innerHTML = '';
-            statusMonthBody.innerHTML = '';
-
-            const members = currentStatusMembers || [];
-            if(!members.length){
-                return;
-            }
-
-            const ms = firstDayOfMonth(currentMonthStart);
-            const me = lastDayOfMonth(currentMonthStart);
-            const daysInMonth = me.getDate();
-            const msIso = toIso(ms);
-            const meIso = toIso(me);
-
-            // 헤더
-            const DOW_HEAD = ['일','월','화','수','목','금','토'];
-            let headHtml = `<th style="min-width:120px;">근로자</th>`;
-            for(let d=1; d<=daysInMonth; d++){
-                const dateObj = new Date(ms.getFullYear(), ms.getMonth(), d);
-                const dow = dateObj.getDay();
-                const dowLabel = DOW_HEAD[dow];
-                headHtml += `<th class="small">${d}<br><span class="text-muted">${dowLabel}</span></th>`;
-            }
-            headHtml += `<th style="min-width:90px;">합계</th>`;
-            statusMonthHeadRow.innerHTML = headHtml;
-
-            // 각 멤버별 dayMap 조회
-            const memberDayMaps = {};
-            await Promise.all(members.map(async m=>{
-                try{
-                    const url = `${API_ENDPOINT}/${encodeURIComponent(m.id)}/${msIso}/${meIso}`;
-                    const resp = await fetch(url, { headers: { 'Accept':'application/json' } });
-                    if(!resp.ok) return;
-                    const data = await resp.json();
-                    memberDayMaps[m.id] = normalizeActualDays(data);
-                }catch(e){
-                    console.error(e);
-                }
-            }));
-
-            members.forEach(m=>{
-                const color = colorForMember(m);
-                const dayMap = memberDayMaps[m.id] || {};
-                let rowMinutes = 0;
-                let cellsHtml = '';
-
-                for(let d=1; d<=daysInMonth; d++){
-                    const dateObj = new Date(ms.getFullYear(), ms.getMonth(), d);
-                    const iso = toIso(dateObj);
-                    const info = dayMap[iso] || {minutes:0};
-                    const mins = info.minutes || 0;
-                    rowMinutes += mins;
-
-                    if(mins > 0){
-                        cellsHtml += `<td><span class="legend" style="background:${color};border-color:${color};"></span></td>`;
-                    }else{
-                        cellsHtml += `<td class="text-muted">-</td>`;
-                    }
-                }
-
-                const tr = document.createElement('tr');
-                tr.dataset.memberId = String(m.id);
-                tr.innerHTML =
-                        `<th scope="row" class="member-name-cell">
-                        <span class="legend" style="background:${color};border-color:${color};"></span>
-                        <span class="ms-1">${escapeHtml(m.name ?? '-')}</span>
-                     </th>
-                     ${cellsHtml}
-                     <td class="text-end small">${formatMins(rowMinutes)}</td>`;
-
-                // 행 클릭 -> 해당 근로자를 선택
-                tr.addEventListener('click', ()=>{
-                    selectMember(m);
-                });
-
-                statusMonthBody.appendChild(tr);
-            });
-
-            renderStatusMonthHighlight();
-        }
-
-        function renderStatusMonthHighlight(){
-            if(!statusMonthBody) return;
-            const rows = statusMonthBody.querySelectorAll('tr');
-            rows.forEach(tr=>{
-                const mid = tr.dataset.memberId;
-                const active = currentMember && String(currentMember.id) === String(mid);
-                tr.classList.toggle('table-active', !!active);
-            });
-        }
-
-        // ===== 개별 근로자 월 캘린더 =====
+        // ===== 달력 =====
         async function renderMonthCalendar(member, baseDate){
             const ms = firstDayOfMonth(baseDate);
             const me = lastDayOfMonth(baseDate);
@@ -830,9 +652,6 @@
                 calendarGrid.classList.remove('d-none');
                 calendarDowRow.classList.remove('d-none');
             }
-
-            // 월이 바뀌었을 수 있으니 상태별 캘린더도 다시 그림
-            renderStatusMonthTable();
         }
 
         function onSelectCell(cellEl, dateIso, segments){
@@ -879,13 +698,11 @@
             currentMonthStart = firstDayOfMonth(new Date(currentMonthStart.getFullYear(), currentMonthStart.getMonth()+offset, 1));
             clearSelectedCell();
             if(currentMember){ renderMonthCalendar(currentMember, currentMonthStart); }
-            else { renderStatusMonthTable(); }
         }
         function goToThisMonth(){
             currentMonthStart = firstDayOfMonth(new Date());
             clearSelectedCell();
             if(currentMember){ renderMonthCalendar(currentMember, currentMonthStart); }
-            else { renderStatusMonthTable(); }
         }
 
         // ===== 편집 모달 =====
@@ -951,6 +768,7 @@
 
                 const th = document.createElement('th');
                 th.className = 'timecell';
+                // 30분 간격만 라벨 표시
                 th.textContent = (m%30===0) ? hmLabel : '';
                 tr.appendChild(th);
 
@@ -1082,7 +900,7 @@
             if(!hm) return 0;
             const parts = String(hm).split(':').map(n=>parseInt(n,10));
             const h = parts[0] || 0;
-            const m = parts[1] || 0;
+            const m = parts[1] || 0; // 초는 무시
             return h*60 + m;
         }
         function minToHm(min){ const h=Math.floor(min/60), m=min%60; return `${pad2(h)}:${pad2(m)}`; }

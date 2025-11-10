@@ -1,126 +1,121 @@
 {{>layouts/header}}
 
 <main class="container my-4">
-    <div class="row g-3">
-        <!-- ============ 왼쪽: 상태 선택 + 알바생 리스트(색 점) ============ -->
-        <div class="col-12 col-lg-5">
-            <div class="d-grid gap-3 sticky-lg-top" style="top: 12px;">
 
-                <!-- 상태 선택 + 알바생 리스트업 -->
-                <div class="card">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <span class="fw-bold">아르바이트 상태별 보기</span>
-                        <a href="/members/new" class="btn btn-sm btn-primary">추가등록</a>
-                    </div>
-                    <div class="card-body">
-                        <div class="row g-2 align-items-center">
-                            <div class="col-12">
-                                <label for="statusSelect" class="form-label small text-muted">상태</label>
-                                <select id="statusSelect" class="form-select">
-                                    <option value="WORKING" selected>근무중</option>
-                                    <option value="WAITING">시작전</option>
-                                    <option value="RESTING">휴식중</option>
-                                    <option value="PAUSED">일시중지</option>
-                                    <option value="RESIGNED">퇴사</option>
-                                </select>
-                                <div class="form-text">상태를 변경하면 좌측 리스트와 우측 타임테이블이 함께 갱신됩니다.</div>
-                            </div>
-                        </div>
-
-                        <hr>
-
-                        <!-- 알바생 리스트 -->
-                        <div>
-                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                <div class="small text-muted">알바생 목록</div>
-                                <span id="memberCountBadge" class="badge bg-light text-dark">0명</span>
-                            </div>
-                            <ul id="memberList" class="list-group list-group-flush">
-                                <!-- JS 렌더 -->
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- ✅ 좌측 아르바이트 정보 카드 제거됨 -->
-
-            </div>
+    <!-- ============ 상단: 상태 선택(왼쪽) + 알바생 이름 칩(오른쪽, 같은 라인) ============ -->
+    <div class="card mb-3">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <span class="fw-bold">아르바이트 상태별 보기</span>
+            <a href="/members/new" class="btn btn-sm btn-primary">추가등록</a>
         </div>
-
-        <!-- ============ 오른쪽: 주간 타임테이블 (좌: 계획 / 우: 실제) ============ -->
-        <div class="col-12 col-lg-7">
-            <div class="card">
-                <!-- ✅ 헤더를 sticky로 만들기 위해 week-header 클래스 추가 + 이름/상태 배치 -->
-                <div class="card-header fw-bold d-flex align-items-center justify-content-between week-header">
-                    <span class="d-flex align-items-center">
-                        <span id="weekHeaderTitle">주간(월~일) 타임테이블</span>
-                        <span id="weekHeaderStatus" class="badge bg-secondary ms-2 d-none">-</span>
-                    </span>
-                    <div class="small text-muted">
-                        <span id="weekRangeLabel">{{weekRangeLabel}}</span>
-                        <a class="ms-2 btn btn-sm btn-outline-secondary" href="{{weekPrevUrl}}">◀ 이전 주</a>
-                        <a class="ms-1 btn btn-sm btn-outline-secondary" href="{{weekNextUrl}}">다음 주 ▶</a>
+        <div class="card-body">
+            <div class="row g-3 align-items-center">
+                <!-- 왼쪽: 상태 선택 -->
+                <div class="col-12 col-md-4">
+                    <label for="statusSelect" class="form-label small text-muted">상태</label>
+                    <select id="statusSelect" class="form-select form-select-sm">
+                        <option value="WORKING" selected>근무중</option>
+                        <option value="WAITING">시작전</option>
+                        <option value="RESTING">휴식중</option>
+                        <option value="PAUSED">일시중지</option>
+                        <option value="RESIGNED">퇴사</option>
+                    </select>
+                    <div class="form-text">
+                        상태를 변경하면 오른쪽 알바생 목록과 아래 타임테이블이 함께 갱신됩니다.
                     </div>
                 </div>
 
-                <div class="card-body">
-                    <!-- ⛔ 기존: 선택 멤버 타이틀/상태 라인 삭제됨 -->
+                <!-- 오른쪽: 같은 라인에서 이름 칩을 가로로 나열 -->
+                <div class="col-12 col-md-8">
+                    <div class="d-flex align-items-center flex-wrap gap-2">
+                        <span class="small text-muted me-1">알바생</span>
 
-                    <!-- 요일별: 계획(좌) / 실제(우) -->
-                    <div class="table-responsive">
-                        <table class="table table-bordered align-middle" id="workTable">
-                            <thead class="table-light">
-                            <tr>
-                                <th style="width:110px;">요일</th>
-                                <th>계획 근무기간 (API /work)</th>
-                                <th>실 근무시간 (실데이터)</th>
-                                <th style="width:120px;" class="text-end">실 합계</th>
-                            </tr>
-                            </thead>
-                            <tbody id="workTableBody">
-                            <!-- JS가 7행 생성 -->
-                            </tbody>
-                            <tfoot>
-                            <tr>
-                                <th>합계(계획)</th>
-                                <td class="text-end fw-semibold" id="weekPlannedTotalCell">0시간</td>
-                                <td class="text-muted">계획 미 반영</td>
-                                <th></th>
-                            </tr>
-                            <tr class="highlight-row">
-                                <th>합계(실제)</th>
-                                <td></td>
-                                <td class="text-end fw-semibold" colspan="2" id="weekActualTotalCell">0시간</td>
-                            </tr>
-                            <tr>
-                                <th>시급</th>
-                                <td></td>
-                                <td class="text-end">기준 시급</td>
-                                <th class="text-end" id="hourlyWageCell">-</th>
-                            </tr>
-                            <tr class="highlight-row">
-                                <th>예상 급여</th>
-                                <td></td>
-                                <td class="text-end">주간 실근무 × 시급</td>
-                                <th class="text-end text-primary" id="weekPayCell">-</th>
-                            </tr>
-                            <tr>
-                                <th>실제-계획</th>
-                                <td></td>
-                                <td class="text-end">플러스면 초과근무</td>
-                                <th class="text-end" id="weekDeltaCell">0분</th>
-                            </tr>
-                            </tfoot>
-                        </table>
+                        <!-- 이름 칩들이 가로로 나열되는 영역 -->
+                        <div id="memberList"
+                             class="d-flex flex-wrap gap-2 flex-grow-1 member-pill-container">
+                            <!-- JS 렌더 -->
+                        </div>
+
+                        <!-- 맨 오른쪽 인원수 배지 -->
+                        <span id="memberCountBadge" class="badge bg-light text-dark ms-auto">0명</span>
                     </div>
-
-                    <div class="small text-muted">
-                        * 계획은 <code>/api/schedule/work/{memberId}/{start}/{end}</code> 기반이고, 실제는 일자별 실근무 데이터(API) 기반입니다.
+                    <div class="small text-muted mt-1">
+                        · 이름을 클릭하면 아래 주간 타임테이블이 해당 알바생 기준으로 바뀝니다.
                     </div>
                 </div>
             </div>
         </div>
     </div>
+
+    <!-- ============ 하단: 주간 타임테이블 (계획 / 실제) ============ -->
+    <div class="card">
+        <!-- sticky 헤더 유지 -->
+        <div class="card-header fw-bold d-flex align-items-center justify-content-between week-header">
+            <span class="d-flex align-items-center">
+                <span id="weekHeaderTitle">주간(월~일) 타임테이블</span>
+                <span id="weekHeaderStatus" class="badge bg-secondary ms-2 d-none">-</span>
+            </span>
+            <div class="small text-muted">
+                <span id="weekRangeLabel">{{weekRangeLabel}}</span>
+                <a class="ms-2 btn btn-sm btn-outline-secondary" href="{{weekPrevUrl}}">◀ 이전 주</a>
+                <a class="ms-1 btn btn-sm btn-outline-secondary" href="{{weekNextUrl}}">다음 주 ▶</a>
+            </div>
+        </div>
+
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered align-middle" id="workTable">
+                    <thead class="table-light">
+                    <tr>
+                        <th style="width:110px;">요일</th>
+                        <th>계획 근무기간 (API /work)</th>
+                        <th>실 근무시간 (실데이터)</th>
+                        <th style="width:120px;" class="text-end">실 합계</th>
+                    </tr>
+                    </thead>
+                    <tbody id="workTableBody">
+                    <!-- JS가 7행 생성 -->
+                    </tbody>
+                    <tfoot>
+                    <tr>
+                        <th>합계(계획)</th>
+                        <td class="text-end fw-semibold" id="weekPlannedTotalCell">0시간</td>
+                        <td class="text-muted">계획 미 반영</td>
+                        <th></th>
+                    </tr>
+                    <tr class="highlight-row">
+                        <th>합계(실제)</th>
+                        <td></td>
+                        <td class="text-end fw-semibold" colspan="2" id="weekActualTotalCell">0시간</td>
+                    </tr>
+                    <tr>
+                        <th>시급</th>
+                        <td></td>
+                        <td class="text-end">기준 시급</td>
+                        <th class="text-end" id="hourlyWageCell">-</th>
+                    </tr>
+                    <tr class="highlight-row">
+                        <th>예상 급여</th>
+                        <td></td>
+                        <td class="text-end">주간 실근무 × 시급</td>
+                        <th class="text-end text-primary" id="weekPayCell">-</th>
+                    </tr>
+                    <tr>
+                        <th>실제-계획</th>
+                        <td></td>
+                        <td class="text-end">플러스면 초과근무</td>
+                        <th class="text-end" id="weekDeltaCell">0분</th>
+                    </tr>
+                    </tfoot>
+                </table>
+            </div>
+
+            <div class="small text-muted">
+                * 계획은 <code>/api/schedule/work/{memberId}/{start}/{end}</code> 기반이고, 실제는 일자별 실근무 데이터(API) 기반입니다.
+            </div>
+        </div>
+    </div>
+
 </main>
 
 <style>
@@ -130,23 +125,53 @@
     }
     .chip .dot { width:10px; height:10px; border-radius:50%; border:1px solid rgba(0,0,0,.08); }
 
-    .member-chip {
-        display:flex; align-items:center; justify-content:space-between; gap:8px;
-        padding:8px 10px; border-radius:10px; background:#fff; border:1px solid #eee; margin-bottom:6px; cursor:pointer;
-        transition: background .15s, border-color .15s, box-shadow .15s;
+    /* ===== 상단: 오른쪽 이름 칩 영역 ===== */
+    .member-pill-container {
+        min-height: 32px;
     }
-    .member-chip:hover { background:#f8f9fa; }
-    .member-chip .left { display:inline-flex; align-items:center; gap:8px; }
-    .member-chip .dot { width:10px; height:10px; border-radius:50%; border:1px solid rgba(0,0,0,.08); }
 
-    /* ✅ 선택된 멤버 하이라이트 */
-    .member-chip.active {
-        border-color: rgba(13,110,253,.45);
-        box-shadow: 0 0 0 3px rgba(13,110,253,.15) inset;
+    .member-pill {
+        display:inline-flex;
+        align-items:center;
+        gap:4px;
+        padding:2px 8px;
+        border-radius:999px;
+        border:1px solid #e9ecef;
+        background:#fff;
+        font-size:.8rem;
+        cursor:pointer;
+        white-space:nowrap;
+        transition: background .15s, box-shadow .15s, border-color .15s;
+    }
+    .member-pill:hover {
+        background:#f8f9fa;
+    }
+
+    .member-pill-dot {
+        width:10px;
+        height:10px;
+        border-radius:50%;
+        border:1px solid rgba(0,0,0,.08);
+        flex:0 0 10px;
+    }
+
+    .member-pill-name {
+        font-weight:600;
+    }
+
+    .member-pill-meta {
+        font-size:.7rem;
+        color:#6c757d;
+    }
+
+    /* 선택된 멤버 하이라이트 */
+    .member-pill.active {
+        border-color: rgba(13,110,253,.6);
+        box-shadow: 0 0 0 2px rgba(13,110,253,.15);
         background:#f0f6ff;
     }
 
-    /* ✅ 주간 헤더 sticky */
+    /* 주간 헤더 sticky (상단 네비 아래에 달라붙도록) */
     .week-header {
         position: sticky;
         top: var(--week-header-offset, 0);
@@ -171,42 +196,37 @@
 <script>
     (function() {
         // ===== DOM =====
-        const statusSelect = document.getElementById('statusSelect');
-        const memberList = document.getElementById('memberList');
-        const memberCountBadge = document.getElementById('memberCountBadge');
+        const statusSelect        = document.getElementById('statusSelect');
+        const memberList          = document.getElementById('memberList');
+        const memberCountBadge    = document.getElementById('memberCountBadge');
 
-        const workTableBody = document.getElementById('workTableBody');
-        const weekPlannedTotalCell = document.getElementById('weekPlannedTotalCell');
+        const workTableBody       = document.getElementById('workTableBody');
+        const weekPlannedTotalCell= document.getElementById('weekPlannedTotalCell');
         const weekActualTotalCell = document.getElementById('weekActualTotalCell');
-        const weekDeltaCell = document.getElementById('weekDeltaCell');
-        const hourlyWageCell = document.getElementById('hourlyWageCell');
-        const weekPayCell = document.getElementById('weekPayCell');
+        const weekDeltaCell       = document.getElementById('weekDeltaCell');
+        const hourlyWageCell      = document.getElementById('hourlyWageCell');
+        const weekPayCell         = document.getElementById('weekPayCell');
 
-        const weekRangeLabelEl = document.getElementById('weekRangeLabel');
+        const weekRangeLabelEl    = document.getElementById('weekRangeLabel');
 
-        // ✅ 새로 추가된 헤더 DOM
-        const weekHeaderTitle  = document.getElementById('weekHeaderTitle');
-        const weekHeaderStatus = document.getElementById('weekHeaderStatus');
-        const weekHeaderEl     = document.querySelector('.week-header');
+        const weekHeaderTitle     = document.getElementById('weekHeaderTitle');
+        const weekHeaderStatus    = document.getElementById('weekHeaderStatus');
 
         // 주 범위
         const { weekStartIso, weekEndIso } = parseWeekRange(weekRangeLabelEl?.textContent || '');
 
-        // 요일(월~일 표시용) - 실제는 date에서 day() 쓰지만 레이블용
         const DOW = ['일','월','화','수','목','금','토'];
 
-        // API
         const API_BASE_ACTUAL = '/api/schedule';       // 실제 근무 주간 API
         const API_BASE_PLAN   = '/api/schedule/work';  // 계획 근무 주간 API
 
-        // 선택 상태
         let selectedMemberId = null;
 
-        // ✅ 헤더 sticky offset 계산 (네비게이션 높이 고려)
+        // 헤더 sticky offset (상단 navbar 높이 고려)
         function computeWeekHeaderOffset() {
             const fixedHeader = document.querySelector('.navbar.fixed-top, .fixed-top, header.sticky-top');
             const navH = fixedHeader ? fixedHeader.getBoundingClientRect().height : 0;
-            const top = navH; // 네비게이션 바로 아래에 붙이기
+            const top = navH;
             document.documentElement.style.setProperty('--week-header-offset', top + 'px');
         }
         computeWeekHeaderOffset();
@@ -226,13 +246,13 @@
 
         // ===== Handlers =====
         async function handleStatusChange() {
-            const status = statusSelect.value;
+            const status   = statusSelect.value;
             const filtered = (allMembers || []).filter(m => m.status === status);
 
             renderMemberList(filtered);
 
             if (filtered.length) {
-                // 이전에 선택한 멤버가 필터 안에 있으면 유지, 아니면 첫 번째 선택
+                // 이전 선택 유지, 없으면 첫 번째 선택
                 const keep = filtered.find(m => String(m.id) === String(selectedMemberId)) || filtered[0];
                 await pickMember(keep);
             } else {
@@ -242,19 +262,12 @@
         }
 
         async function onMemberListClick(e) {
-            const btn = e.target.closest('.view-btn');
-            if (btn) {
-                e.stopPropagation();
-                const id = btn.getAttribute('data-id');
-                if (id) window.location.assign(`/members/${encodeURIComponent(id)}/edit`);
-                return;
-            }
-            const li = e.target.closest('li.member-chip');
-            if (!li) return;
+            const pill = e.target.closest('.member-pill');
+            if (!pill) return;
 
-            const id = li.getAttribute('data-member-id');
+            const id      = pill.getAttribute('data-member-id');
             const members = getCurrentFilteredMembers();
-            const target = members.find(m => String(m.id) === String(id));
+            const target  = members.find(m => String(m.id) === String(id));
             if (target) {
                 await pickMember(target);
             }
@@ -265,42 +278,53 @@
             return (allMembers || []).filter(m => m.status === status);
         }
 
-        // ===== 좌측 리스트 렌더링 =====
+        // ===== 알바생 이름 칩 렌더링 (상태 선택 오른쪽, 같은 라인) =====
         function renderMemberList(members) {
             memberList.innerHTML = '';
             memberCountBadge.textContent = `${members.length}명`;
+
+            if (!members.length) {
+                const span = document.createElement('span');
+                span.className = 'text-muted small';
+                span.textContent = '해당 상태의 알바생이 없습니다.';
+                memberList.appendChild(span);
+                return;
+            }
 
             members
                     .slice()
                     .sort((a,b)=>(a.name||'').localeCompare(b.name||'','ko'))
                     .forEach(m=>{
-                        const li = document.createElement('li');
-                        li.className = 'list-group-item member-chip';
-                        li.dataset.memberId = String(m.id);
-                        const color = colorForMember(m);
-                        li.innerHTML = `
-        <span class="left">
-          <span class="dot" style="background:${color}"></span>
-          <span class="fw-semibold">${escapeHtml(m.name ?? '-')}</span>
-          <span class="text-muted small">${escapeHtml(m.phone ?? '')}</span>
-        </span>
-        <button type="button" class="btn btn-sm btn-outline-primary view-btn" data-id="${String(m.id)}">상세</button>
-      `;
-                        memberList.appendChild(li);
+                        const memberName  = escapeHtml(m.name ?? '-');
+                        const memberPhone = escapeHtml(m.phone ?? '');
+                        const memberCode  = escapeHtml(m.code ?? m.memberCode ?? '');
+                        const color       = colorForMember(m);
+
+                        const pill = document.createElement('span');
+                        pill.className = 'member-pill';
+                        pill.dataset.memberId = String(m.id);
+
+                        pill.innerHTML = `
+                        <span class="member-pill-dot" style="background:${color}"></span>
+                        <span class="member-pill-name">${memberName}</span>
+                        ${
+                                memberPhone || memberCode
+                                        ? `<span class="member-pill-meta">
+                                     ${memberPhone ? memberPhone : ''}
+                                     ${memberPhone && memberCode ? ' · ' : ''}
+                                     ${memberCode ? memberCode : ''}
+                                   </span>`
+                                        : ''
+                        }
+                    `;
+
+                        memberList.appendChild(pill);
                     });
 
-            if (!members.length) {
-                const li = document.createElement('li');
-                li.className = 'list-group-item';
-                li.textContent = '해당 상태의 알바생이 없습니다.';
-                memberList.appendChild(li);
-            }
-
-            // 현재 선택된 멤버 active 표시
             updateMemberListActive();
         }
 
-        // ✅ 멤버 선택 공통 처리: active + 우측 헤더/테이블 갱신
+        // 멤버 선택 공통 처리
         async function pickMember(m) {
             if (!m) return;
             selectedMemberId = m.id;
@@ -327,14 +351,13 @@
         }
 
         function updateMemberListActive() {
-            Array.from(memberList.querySelectorAll('.member-chip')).forEach(li => {
-                li.classList.toggle('active', li.dataset.memberId === String(selectedMemberId));
+            Array.from(memberList.querySelectorAll('.member-pill')).forEach(pill => {
+                pill.classList.toggle('active', pill.dataset.memberId === String(selectedMemberId));
             });
         }
 
-        // ===== Right: 계획(좌) + 실제(우) =====
+        // ===== 하단: 계획 + 실제 =====
         async function loadAndRenderWeek(member) {
-            // 1) 계획
             let plannedMap = {};
             try {
                 plannedMap = await fetchPlannedWeek(member.id);
@@ -343,10 +366,9 @@
                 plannedMap = {};
             }
 
-            // 2) 실제
             let actualMap = {};
             try {
-                const url = `${API_BASE_ACTUAL}/${encodeURIComponent(member.id)}/${weekStartIso}/${weekEndIso}`;
+                const url  = `${API_BASE_ACTUAL}/${encodeURIComponent(member.id)}/${weekStartIso}/${weekEndIso}`;
                 const resp = await fetch(url, { headers: { 'Accept': 'application/json' } });
                 if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
                 const data = await resp.json();
@@ -359,26 +381,24 @@
             renderWeekTableRows(member, plannedMap, actualMap);
         }
 
-        // 계획 주간 데이터 호출
         async function fetchPlannedWeek(memberId) {
-            const url = `${API_BASE_PLAN}/${encodeURIComponent(memberId)}/${weekStartIso}/${weekEndIso}`;
+            const url  = `${API_BASE_PLAN}/${encodeURIComponent(memberId)}/${weekStartIso}/${weekEndIso}`;
             const resp = await fetch(url, { headers: { 'Accept': 'application/json' } });
             if (!resp.ok) {
                 const text = await resp.text().catch(()=> '');
                 throw new Error(`planned API ${resp.status} ${text}`);
             }
             const data = await resp.json();
-            return normalizeDays(data);  // { date -> {segments, minutes} }
+            return normalizeDays(data);
         }
 
-        // 계획/실제 공통 응답 정규화
         function normalizeDays(apiData){
             const map = {};
             const arr = Array.isArray(apiData?.days) ? apiData.days : [];
             arr.forEach(d=>{
-                const date = String(d.date);
+                const date     = String(d.date);
                 const segments = Array.isArray(d.segments) ? d.segments : [];
-                const minutes = (typeof d.minutes==='number')
+                const minutes  = (typeof d.minutes==='number')
                         ? d.minutes
                         : segments.reduce((acc,s)=>acc+diffMinutes(s.start,s.end),0);
                 map[date] = { segments, minutes };
@@ -387,14 +407,14 @@
         }
 
         function renderWeekTableRows(member, plannedMap, actualMap) {
-            const rows = [];
+            const rows   = [];
             let wPlanned = 0, wActual = 0;
-            const colorPlan   = '#0d6efd';                // 계획 칩
-            const colorActual = colorForMember(member);   // 실제 칩
+            const colorPlan   = '#0d6efd';
+            const colorActual = colorForMember(member);
 
             const start = new Date(weekStartIso);
             for (let i=0;i<7;i++){
-                const d = new Date(start); d.setDate(start.getDate()+i);
+                const d   = new Date(start); d.setDate(start.getDate()+i);
                 const iso = toIso(d);
                 const dow = d.getDay();
                 const dayLabel = DOW[dow];
@@ -425,37 +445,39 @@
 
             workTableBody.innerHTML = rows.join('');
 
-            // 푸터 요약
             weekPlannedTotalCell.textContent = formatMins(wPlanned);
             weekActualTotalCell.textContent  = formatMins(wActual);
             weekDeltaCell.textContent        = deltaString(wActual - wPlanned);
 
             const wage = (typeof member?.hourlyWage === 'number') ? member.hourlyWage : null;
             hourlyWageCell.textContent =
-                    (wage!=null) ? new Intl.NumberFormat('ko-KR',{style:'currency',currency:'KRW',maximumFractionDigits:0}).format(wage) : '-';
+                    (wage!=null)
+                            ? new Intl.NumberFormat('ko-KR',{style:'currency',currency:'KRW',maximumFractionDigits:0}).format(wage)
+                            : '-';
 
             const pay = (wage!=null) ? Math.round((wActual/60)*wage) : null;
             weekPayCell.textContent =
-                    (pay!=null) ? new Intl.NumberFormat('ko-KR',{style:'currency',currency:'KRW',maximumFractionDigits:0}).format(pay) : '-';
+                    (pay!=null)
+                            ? new Intl.NumberFormat('ko-KR',{style:'currency',currency:'KRW',maximumFractionDigits:0}).format(pay)
+                            : '-';
         }
 
         function clearWorkTable() {
             workTableBody.innerHTML = '';
             weekPlannedTotalCell.textContent = '0시간';
-            weekActualTotalCell.textContent = '0시간';
-            weekDeltaCell.textContent = '0분';
-            hourlyWageCell.textContent = '-';
-            weekPayCell.textContent = '-';
+            weekActualTotalCell.textContent  = '0시간';
+            weekDeltaCell.textContent        = '0분';
+            hourlyWageCell.textContent       = '-';
+            weekPayCell.textContent          = '-';
 
             const baseTitle = '주간(월~일) 타임테이블';
-            weekHeaderTitle.textContent = baseTitle;
-            weekHeaderStatus.textContent = '-';
-            weekHeaderStatus.className = 'badge bg-secondary ms-2 d-none';
+            weekHeaderTitle.textContent      = baseTitle;
+            weekHeaderStatus.textContent     = '-';
+            weekHeaderStatus.className       = 'badge bg-secondary ms-2 d-none';
 
-            // 좌측 active 제거
             selectedMemberId = null;
-            Array.from(memberList.querySelectorAll('.member-chip')).forEach(li=>{
-                li.classList.remove('active');
+            Array.from(memberList.querySelectorAll('.member-pill')).forEach(pill=>{
+                pill.classList.remove('active');
             });
         }
 
@@ -464,7 +486,7 @@
             // "YYYY.MM.DD ~ MM.DD"
             const m = String(label).match(/(\d{4})\.(\d{2})\.(\d{2})/);
             if (!m) {
-                const today = new Date();
+                const today  = new Date();
                 const monday = toMonday(today);
                 return { weekStartIso: toIso(monday), weekEndIso: toIso(addDays(monday,6)) };
             }
@@ -500,12 +522,31 @@
             return `${sign}${body}`;
         }
 
-        // ===== 스타일/유틸 =====
+        // ✅ "HH:MM:SS" → "HH:MM" 으로 잘라서 표시하는 함수
+        function displayHm(value){
+            if(!value) return '';
+            const parts = String(value).split(':');
+            const h = parseInt(parts[0], 10) || 0;
+            const m = parseInt(parts[1], 10) || 0;
+            return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+        }
+
+        // ===== 유틸 =====
+        // ✅ 여기에서도 displayHm 사용
         function chipHtml(color, start, end){
-            return `<span class="chip"><span class="dot" style="background:${color}"></span><span class="small">${start} ~ ${end}</span></span>`;
+            return `<span class="chip">
+                        <span class="dot" style="background:${color}"></span>
+                        <span class="small">${displayHm(start)} ~ ${displayHm(end)}</span>
+                    </span>`;
         }
         function statusClass(s){
-            const map = {WORKING:'bg-success',WAITING:'bg-secondary',RESTING:'bg-info',PAUSED:'bg-warning',RESIGNED:'bg-danger'};
+            const map = {
+                WORKING:'bg-success',
+                WAITING:'bg-secondary',
+                RESTING:'bg-info',
+                PAUSED:'bg-warning',
+                RESIGNED:'bg-danger'
+            };
             return map[s] || 'bg-secondary';
         }
         function colorForMember(m){
@@ -527,7 +568,12 @@
         }
         function escapeHtml(s){
             if(s==null) return '';
-            return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+            return String(s)
+                    .replace(/&/g,'&amp;')
+                    .replace(/</g,'&lt;')
+                    .replace(/>/g,'&gt;')
+                    .replace(/"/g,'&quot;')
+                    .replace(/'/g,'&#39;');
         }
     })();
 </script>

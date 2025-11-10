@@ -1,94 +1,93 @@
 {{>layouts/header}}
 
 <main class="container my-4">
-    <div class="row g-3">
-        <!-- ============ 왼쪽: 상태 선택 + 알바생 리스트(색 점) ============ -->
-        <div class="col-12 col-lg-5">
-            <div class="d-grid gap-3 sticky-lg-top" style="top: 12px;">
 
-                <!-- 상태 선택 + 알바생 리스트업 -->
-                <div class="card">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <span class="fw-bold">아르바이트 상태별 보기</span>
-                        <a href="/members/new" class="btn btn-sm btn-primary">추가등록</a>
-                    </div>
-                    <div class="card-body">
-                        <div class="row g-2 align-items-center">
-                            <div class="col-12">
-                                <label for="statusSelect" class="form-label small text-muted">상태</label>
-                                <select id="statusSelect" class="form-select">
-                                    <option value="WORKING" selected>근무중</option>
-                                    <option value="WAITING">시작전</option>
-                                    <option value="RESTING">휴식중</option>
-                                    <option value="PAUSED">일시중지</option>
-                                    <option value="RESIGNED">퇴사</option>
-                                </select>
-                                <div class="form-text">상태를 변경하면 좌측 리스트와 우측 캘린더가 함께 갱신됩니다.</div>
-                            </div>
-                        </div>
-
-                        <hr>
-
-                        <!-- 알바생 리스트 -->
-                        <div>
-                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                <div class="small text-muted">알바생 목록</div>
-                                <span id="memberCountBadge" class="badge bg-light text-dark">0명</span>
-                            </div>
-                            <ul id="memberList" class="list-group list-group-flush">
-                                <!-- JS 렌더 -->
-                            </ul>
-                        </div>
+    <!-- ============ 상단: 상태 선택(왼쪽) + 알바생 이름 칩(오른쪽, 같은 라인) ============ -->
+    <div class="card mb-3">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <span class="fw-bold">아르바이트 상태별 보기</span>
+            <a href="/members/new" class="btn btn-sm btn-primary">추가등록</a>
+        </div>
+        <div class="card-body">
+            <div class="row g-3 align-items-center">
+                <!-- 왼쪽: 상태 선택 -->
+                <div class="col-12 col-md-4">
+                    <label for="statusSelect" class="form-label small text-muted">상태</label>
+                    <select id="statusSelect" class="form-select form-select-sm">
+                        <option value="WORKING" selected>근무중</option>
+                        <option value="WAITING">시작전</option>
+                        <option value="RESTING">휴식중</option>
+                        <option value="PAUSED">일시중지</option>
+                        <option value="RESIGNED">퇴사</option>
+                    </select>
+                    <div class="form-text">
+                        상태를 변경하면 오른쪽 알바생 목록과 하단 캘린더가 함께 갱신됩니다.
                     </div>
                 </div>
 
+                <!-- 오른쪽: 같은 라인에서 이름 칩을 가로로 나열 -->
+                <div class="col-12 col-md-8">
+                    <div class="d-flex align-items-center flex-wrap gap-2">
+                        <span class="small text-muted me-1">알바생</span>
+
+                        <!-- 이름 칩들이 가로로 나열되는 영역 -->
+                        <div id="memberList"
+                             class="d-flex flex-wrap gap-2 flex-grow-1 member-pill-container">
+                            <!-- JS 렌더 -->
+                        </div>
+
+                        <!-- 맨 오른쪽 인원수 배지 -->
+                        <span id="memberCountBadge" class="badge bg-light text-dark ms-auto">0명</span>
+                    </div>
+                    <div class="small text-muted mt-1">
+                        · 이름을 클릭하면 아래 월간 캘린더가 해당 알바생 기준으로 바뀝니다.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ 하단: 월간 캘린더 (실 근무) ============ -->
+    <div class="card">
+        <!-- sticky 헤더 -->
+        <div class="card-header fw-bold d-flex align-items-center justify-content-between month-header">
+            <span class="d-flex align-items-center">
+                <span id="calendarTitle">월간 캘린더</span>
+                <span id="headerStatusBadge" class="badge bg-secondary ms-2 d-none">-</span>
+            </span>
+            <div class="small text-muted">
+                <span id="monthRangeLabel">{{monthRangeLabel}}</span>
+                <a class="ms-2 btn btn-sm btn-outline-secondary" href="{{monthPrevUrl}}">◀ 이전 달</a>
+                <a class="ms-1 btn btn-sm btn-outline-secondary" href="{{monthNextUrl}}">다음 달 ▶</a>
             </div>
         </div>
 
-        <!-- ============ 오른쪽: 월간 캘린더 (실 근무) ============ -->
-        <div class="col-12 col-lg-7">
-            <div class="card">
-                <!-- ✅ sticky로 만들기 위해 month-header 클래스 추가 -->
-                <div class="card-header fw-bold d-flex align-items-center justify-content-between month-header">
-                    <span class="d-flex align-items-center">
-                        <span id="calendarTitle">월간 캘린더</span>
-                        <span id="headerStatusBadge" class="badge bg-secondary ms-2 d-none">-</span>
-                    </span>
-                    <div class="small text-muted">
-                        <span id="monthRangeLabel">{{monthRangeLabel}}</span>
-                        <a class="ms-2 btn btn-sm btn-outline-secondary" href="{{monthPrevUrl}}">◀ 이전 달</a>
-                        <a class="ms-1 btn btn-sm btn-outline-secondary" href="{{monthNextUrl}}">다음 달 ▶</a>
-                    </div>
+        <div class="card-body">
+            <!-- 달력 -->
+            <div class="calendar">
+                <div class="calendar-grid" id="calendarGrid">
+                    <!-- JS 렌더: 요일 헤더, 공백, 날짜 셀, 주 합계 바 -->
                 </div>
+            </div>
 
-                <div class="card-body">
-                    <!-- 달력 -->
-                    <div class="calendar">
-                        <div class="calendar-grid" id="calendarGrid">
-                            <!-- JS 렌더: 요일 헤더, 공백, 날짜 셀, 주 합계 바 -->
-                        </div>
-                    </div>
-
-                    <!-- 월 합계/급여 -->
-                    <div class="mt-3">
-                        <div class="d-flex justify-content-between">
-                            <div class="small text-muted">월 합계(실근무)</div>
-                            <div class="fw-semibold" id="monthActualTotalCell">0시간</div>
-                        </div>
-                        <div class="d-flex justify-content-between">
-                            <div class="small text-muted">시급</div>
-                            <div id="hourlyWageCell">-</div>
-                        </div>
-                        <div class="d-flex justify-content-between">
-                            <div class="small text-muted">월 예상 급여</div>
-                            <div class="text-primary fw-semibold" id="monthPayCell">-</div>
-                        </div>
-                    </div>
-
-                    <div class="small text-muted mt-2">
-                        * 날짜 칸에 실 근무 구간 칩과 일 합계가 표시됩니다. 주의 마지막(토요일 또는 월말)에 ‘주 합계/예상 급여’ 바가 들어갑니다.
-                    </div>
+            <!-- 월 합계/급여 -->
+            <div class="mt-3">
+                <div class="d-flex justify-content-between">
+                    <div class="small text-muted">월 합계(실근무)</div>
+                    <div class="fw-semibold" id="monthActualTotalCell">0시간</div>
                 </div>
+                <div class="d-flex justify-content-between">
+                    <div class="small text-muted">시급</div>
+                    <div id="hourlyWageCell">-</div>
+                </div>
+                <div class="d-flex justify-content-between">
+                    <div class="small text-muted">월 예상 급여</div>
+                    <div class="text-primary fw-semibold" id="monthPayCell">-</div>
+                </div>
+            </div>
+
+            <div class="small text-muted mt-2">
+                * 날짜 칸에 실 근무 구간 칩과 일 합계가 표시됩니다. 주의 마지막(토요일 또는 월말)에 ‘주 합계/예상 급여’ 바가 들어갑니다.
             </div>
         </div>
     </div>
@@ -99,7 +98,12 @@
         display:inline-flex; align-items:center; gap:6px;
         border:1px solid #e9ecef; border-radius:14px; padding:4px 8px; background:#fff;
     }
+    .chip .dot {
+        width:10px; height:10px; border-radius:50%;
+        border:1px solid rgba(0,0,0,.08);
+    }
 
+    /* 이전 member-chip용 점 */
     .dot {
         width:10px;
         height:10px;
@@ -108,21 +112,52 @@
         flex:0 0 auto;
     }
 
-    .member-chip {
-        display:flex; align-items:center; justify-content:space-between; gap:8px;
-        padding:8px 10px; border-radius:10px; background:#fff; border:1px solid #eee; margin-bottom:6px; cursor:pointer;
-        transition: background .15s, border-color .15s, box-shadow .15s;
+    /* ===== 상단: 오른쪽 이름 칩 영역 ===== */
+    .member-pill-container {
+        min-height: 32px;
     }
-    .member-chip:hover { background:#f8f9fa; }
-    .member-chip .left { display:inline-flex; align-items:center; gap:8px; }
 
-    .member-chip.active {
-        border-color: rgba(13,110,253,.45);
-        box-shadow: 0 0 0 3px rgba(13,110,253,.15) inset;
+    .member-pill {
+        display:inline-flex;
+        align-items:center;
+        gap:4px;
+        padding:2px 8px;
+        border-radius:999px;
+        border:1px solid #e9ecef;
+        background:#fff;
+        font-size:.8rem;
+        cursor:pointer;
+        white-space:nowrap;
+        transition: background .15s, box-shadow .15s, border-color .15s;
+    }
+    .member-pill:hover {
+        background:#f8f9fa;
+    }
+
+    .member-pill-dot {
+        width:10px;
+        height:10px;
+        border-radius:50%;
+        border:1px solid rgba(0,0,0,.08);
+        flex:0 0 10px;
+    }
+
+    .member-pill-name {
+        font-weight:600;
+    }
+
+    .member-pill-meta {
+        font-size:.7rem;
+        color:#6c757d;
+    }
+
+    .member-pill.active {
+        border-color: rgba(13,110,253,.6);
+        box-shadow: 0 0 0 2px rgba(13,110,253,.15);
         background:#f0f6ff;
     }
 
-    /* ✅ 월간 캘린더 헤더도 sticky */
+    /* 월간 캘린더 헤더 sticky */
     .month-header {
         position: sticky;
         top: var(--calendar-header-offset, 0);
@@ -143,7 +178,7 @@
         padding: 6px 0;
         border-bottom: 1px dashed #e9ecef;
 
-        /* ✅ 스크롤 시 요일 헤더 고정 (헤더 아래) */
+        /* 스크롤 시 요일 헤더 고정 (헤더 아래) */
         position: sticky;
         top: var(--calendar-dow-offset, 0);
         z-index: 20;
@@ -198,26 +233,25 @@
 
 <script>
     (function() {
-        // ===== DOM: 좌측 =====
-        const statusSelect = document.getElementById('statusSelect');
-        const memberList = document.getElementById('memberList');
-        const memberCountBadge = document.getElementById('memberCountBadge');
+        // ===== DOM: 상단 상태/목록 =====
+        const statusSelect        = document.getElementById('statusSelect');
+        const memberList          = document.getElementById('memberList');
+        const memberCountBadge    = document.getElementById('memberCountBadge');
 
-        // ===== DOM: 우측(월간) =====
-        const calendarTitle = document.getElementById('calendarTitle');
-        const headerStatusBadge = document.getElementById('headerStatusBadge');
-        const monthRangeLabelEl = document.getElementById('monthRangeLabel');
-        const calendarGrid = document.getElementById('calendarGrid');
-        const monthActualTotalCell = document.getElementById('monthActualTotalCell');
-        const monthPayCell = document.getElementById('monthPayCell');
-        const hourlyWageCell = document.getElementById('hourlyWageCell');
-        const monthHeaderEl = document.querySelector('.month-header');
+        // ===== DOM: 하단 월간 캘린더 =====
+        const calendarTitle       = document.getElementById('calendarTitle');
+        const headerStatusBadge   = document.getElementById('headerStatusBadge');
+        const monthRangeLabelEl   = document.getElementById('monthRangeLabel');
+        const calendarGrid        = document.getElementById('calendarGrid');
+        const monthActualTotalCell= document.getElementById('monthActualTotalCell');
+        const monthPayCell        = document.getElementById('monthPayCell');
+        const hourlyWageCell      = document.getElementById('hourlyWageCell');
+        const monthHeaderEl       = document.querySelector('.month-header');
 
         // 상수/유틸
         const API_BASE = '/api/schedule'; // GET /api/schedule/{memberId}/{startIso}/{endIso}
         const DOW_HEAD = ['일','월','화','수','목','금','토'];
 
-        // 현재 선택된 멤버 id
         let selectedMemberId = null;
 
         // ✅ 헤더 + 요일 sticky offset 계산
@@ -253,7 +287,7 @@
 
         // ===== Handlers =====
         async function handleStatusChange() {
-            const status = statusSelect.value;
+            const status   = statusSelect.value;
             const filtered = (allMembers || []).filter(m => m.status === status);
 
             renderMemberList(filtered);
@@ -269,20 +303,12 @@
         }
 
         async function onMemberListClick(e) {
-            const btn = e.target.closest('.view-btn');
-            if (btn) {
-                e.stopPropagation();
-                const id = btn.getAttribute('data-id');
-                if (id) window.location.assign(`/members/${encodeURIComponent(id)}/edit`);
-                return;
-            }
+            const pill = e.target.closest('.member-pill');
+            if (!pill) return;
 
-            const li = e.target.closest('li.member-chip');
-            if (!li) return;
-
-            const id = li.getAttribute('data-member-id');
+            const id      = pill.getAttribute('data-member-id');
             const members = getCurrentFilteredMembers();
-            const target = members.find(m => String(m.id) === String(id));
+            const target  = members.find(m => String(m.id) === String(id));
             if (target) {
                 await pickMember(target);
             }
@@ -293,36 +319,48 @@
             return (allMembers || []).filter(m => m.status === status);
         }
 
-        // ===== 좌측: 리스트 렌더 =====
+        // ===== 상단: 알바생 이름 칩 렌더 =====
         function renderMemberList(members) {
             memberList.innerHTML = '';
             memberCountBadge.textContent = `${members.length}명`;
+
+            if (!members.length) {
+                const span = document.createElement('span');
+                span.className = 'text-muted small';
+                span.textContent = '해당 상태의 알바생이 없습니다.';
+                memberList.appendChild(span);
+                return;
+            }
 
             members
                     .slice()
                     .sort((a,b)=>(a.name||'').localeCompare(b.name||'','ko'))
                     .forEach(m=>{
-                        const li = document.createElement('li');
-                        li.className = 'list-group-item member-chip';
-                        li.dataset.memberId = String(m.id);
-                        const color = colorForMember(m);
-                        li.innerHTML = `
-        <span class="left">
-          <span class="dot" style="background:${color}"></span>
-          <span class="fw-semibold">${escapeHtml(m.name ?? '-')}</span>
-          <span class="text-muted small">${escapeHtml(m.phone ?? '')}</span>
-        </span>
-        <button type="button" class="btn btn-sm btn-outline-primary view-btn" data-id="${String(m.id)}">상세</button>
-      `;
-                        memberList.appendChild(li);
-                    });
+                        const memberName  = escapeHtml(m.name ?? '-');
+                        const memberPhone = escapeHtml(m.phone ?? '');
+                        const memberCode  = escapeHtml(m.code ?? m.memberCode ?? '');
+                        const color       = colorForMember(m);
 
-            if (!members.length) {
-                const li = document.createElement('li');
-                li.className = 'list-group-item';
-                li.textContent = '해당 상태의 알바생이 없습니다.';
-                memberList.appendChild(li);
-            }
+                        const pill = document.createElement('span');
+                        pill.className = 'member-pill';
+                        pill.dataset.memberId = String(m.id);
+
+                        pill.innerHTML = `
+                        <span class="member-pill-dot" style="background:${color}"></span>
+                        <span class="member-pill-name">${memberName}</span>
+                        ${
+                                memberPhone || memberCode
+                                        ? `<span class="member-pill-meta">
+                                     ${memberPhone ? memberPhone : ''}
+                                     ${memberPhone && memberCode ? ' · ' : ''}
+                                     ${memberCode ? memberCode : ''}
+                                   </span>`
+                                        : ''
+                        }
+                    `;
+
+                        memberList.appendChild(pill);
+                    });
 
             updateMemberListActive();
         }
@@ -358,12 +396,12 @@
         }
 
         function updateMemberListActive() {
-            Array.from(memberList.querySelectorAll('.member-chip')).forEach(li=>{
-                li.classList.toggle('active', li.dataset.memberId === String(selectedMemberId));
+            Array.from(memberList.querySelectorAll('.member-pill')).forEach(pill=>{
+                pill.classList.toggle('active', pill.dataset.memberId === String(selectedMemberId));
             });
         }
 
-        // ===== 우측: 월간 렌더링(달력) =====
+        // ===== 하단: 월간 렌더링(달력) =====
         async function loadAndRenderMonth(member){
             const { monthStartIso, monthEndIso } = parseMonthRange(monthRangeLabelEl?.textContent || '');
 
@@ -470,8 +508,8 @@
             headerStatusBadge.textContent = '-';
             headerStatusBadge.className = 'badge bg-secondary ms-2 d-none';
 
-            Array.from(memberList.querySelectorAll('.member-chip')).forEach(li=>{
-                li.classList.remove('active');
+            Array.from(memberList.querySelectorAll('.member-pill')).forEach(pill=>{
+                pill.classList.remove('active');
             });
         }
 
@@ -492,8 +530,19 @@
         }
         function parseIsoDate(iso){ const [y,m,d]=iso.split('-').map(n=>parseInt(n,10)); return new Date(y,m-1,d); }
         function toIso(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
-        function formatMins(mins){ const h=Math.floor(mins/60), m=mins%60; return m===0?`${h}시간`:`${h}시간 ${m}분`; }
-        function krw(v){ return new Intl.NumberFormat('ko-KR',{style:'currency',currency:'KRW',maximumFractionDigits:0}).format(v); }
+        function formatMins(mins){
+            const v = Math.max(0, mins|0);
+            const h=Math.floor(v/60), m=v%60;
+            return m===0?`${h}시간`:`${h}시간 ${m}분`;
+        }
+        function krw(v){
+            if (v == null || isNaN(v)) return '-';
+            return new Intl.NumberFormat('ko-KR',{
+                style:'currency',
+                currency:'KRW',
+                maximumFractionDigits:0
+            }).format(v);
+        }
 
         // ===== 응답 정규화/보조 유틸 =====
         function normalizeActualDays(apiData){

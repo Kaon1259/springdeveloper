@@ -5,7 +5,7 @@
     <!-- ============ 상단: 아르바이트 상태별 보기 (칩 리스트) ============ -->
     <div class="card mb-3">
         <div class="card-header d-flex justify-content-between align-items-center">
-            <span class="fw-bold">아르바이트 상태별 보기</span>
+            <span class="fw-bold">아르베이트 상태별 보기</span>
             <a href="/members/new" class="btn btn-sm btn-primary">추가등록</a>
         </div>
         <div class="card-body">
@@ -95,9 +95,9 @@
                             <th>금</th>
                             <th class="bg-light">토</th>
                             <th class="bg-light">일</th>
-                            <th style="width:120px;" class="text-end">주 실근무</th>
-                            <th style="width:170px;" class="text-end">주 주휴수당<br>(근무시간/5)</th>
-                            <th style="width:130px;" class="text-end">주 근무수당</th>
+                            <th style="width:120px;" class="text-end">근무시간</th>
+                            <th style="width:170px;" class="text-end">주휴수당</th>
+                            <th style="width:130px;" class="text-end">근무수당</th>
                         </tr>
                         </thead>
                         <tbody id="monthPayBody">
@@ -270,6 +270,16 @@
     .pay-action-next {
         box-shadow: 0 0 0 2px rgba(13,110,253,.35);
         transform: translateY(-1px);
+    }
+
+    /* ✅ 근무시간(녹색), 금액(파란색) 강조 */
+    .text-time {
+        color:#198754;
+        font-weight:600;
+    }
+    .text-money {
+        color:#0d6efd;
+        font-weight:600;
     }
 </style>
 
@@ -710,12 +720,17 @@
                         inMonth && isWeekend ? 'day-weekend' : ''
                     ].filter(Boolean).join(' ');
 
-                    const timeLabel = inMonth && dayMinutes > 0
-                            ? formatMins(dayMinutes)
-                            : (inMonth ? '-' : '');
+                    let timeHtml = '';
+                    if (inMonth && dayMinutes > 0) {
+                        timeHtml = `<span class="text-time">${formatMins(dayMinutes)}</span>`;
+                    } else if (inMonth) {
+                        timeHtml = '-';
+                    } else {
+                        timeHtml = '';
+                    }
 
                     dateTds.push(`<td class="day-cell-date ${cls}">${inMonth ? dayNum : ''}</td>`);
-                    timeTds.push(`<td class="day-cell-time ${cls}">${timeLabel}</td>`);
+                    timeTds.push(`<td class="day-cell-time ${cls}">${timeHtml}</td>`);
                 }
 
                 const juhyuMinutes = calcWeeklyJuhyuMinutes(weekMinutes);
@@ -740,10 +755,18 @@
                     const weekTimeLabel  = formatMins(weekMinutes);
                     const juhyuMoneyLabel = krw(weekJuhyuPay);
                     weekJuhyuCellHtml =
-                            `(${weekTimeLabel}/5) <br>= ${juhyuTimeLabel}<br>${juhyuMoneyLabel}`;
+                            `(<span class="text-time">${weekTimeLabel}</span>/5) <br>` +
+                            `= <span class="text-time">${juhyuTimeLabel}</span><br>` +
+                            `<span class="text-money">${juhyuMoneyLabel}</span>`;
                 }
 
                 const weekPayLabel = (weekWorkPay != null) ? krw(weekWorkPay) : '-';
+
+                // ✅ 근무시간 셀: 시간 + 줄바꿈 + = 금액
+                let weekWorkCellHtml = `<span class="text-time">${weekWorkLabel}</span>`;
+                if (weekWorkPay != null) {
+                    weekWorkCellHtml += `<br><span class="text-money">= ${weekPayLabel}</span>`;
+                }
 
                 const trDates = document.createElement('tr');
                 trDates.innerHTML = `
@@ -752,9 +775,13 @@
                         <small class="text-muted">(${weekLabelRange})</small>
                     </th>
                     ${dateTds.join('')}
-                    <td class="text-end" rowspan="2">${weekWorkLabel}</td>
+                    <td class="text-end" rowspan="2">
+                        ${weekWorkCellHtml}
+                    </td>
                     <td class="text-end" rowspan="2">${weekJuhyuCellHtml}</td>
-                    <td class="text-end" rowspan="2">${weekPayLabel}</td>
+                    <td class="text-end" rowspan="2">
+                        ${weekPayLabel !== '-' ? `<span class="text-money">${weekPayLabel}</span>` : '-'}
+                    </td>
                 `;
 
                 const trTimes = document.createElement('tr');
