@@ -1,184 +1,210 @@
 {{>layouts/header}}
 
 <main class="container my-4">
-    <div class="row g-3">
-        <!-- ============ 왼쪽: 상태별 근무자 리스트 ============ -->
-        <div class="col-12 col-lg-4">
-            <div class="d-grid gap-3 sticky-lg-top" style="top:12px;">
-                <div class="card">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <span class="fw-bold">상태별 근무자</span>
-                        <a href="/members/new" class="btn btn-sm btn-primary">추가등록</a>
+
+    <!-- ============ 상단: 아르바이트 상태별 보기 (칩 리스트) ============ -->
+    <div class="card mb-3">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <span class="fw-bold">아르바이트 상태별 보기</span>
+            <a href="/members/new" class="btn btn-sm btn-primary">추가등록</a>
+        </div>
+        <div class="card-body">
+            <div class="row g-3">
+                <!-- 상태 선택 -->
+                <div class="col-12 col-md-4">
+                    <label for="statusSelect" class="form-label small text-muted">상태</label>
+                    <select id="statusSelect" class="form-select">
+                        <option value="WORKING" selected>근무중</option>
+                        <option value="WAITING">시작전</option>
+                        <option value="RESTING">휴식중</option>
+                        <option value="PAUSED">일시중지</option>
+                        <option value="RESIGNED">퇴사</option>
+                    </select>
+                    <div class="form-text">
+                        상태를 바꾸면 아래 아르바이트 목록과 지급내역이 함께 갱신됩니다.
                     </div>
-                    <div class="card-body">
-                        <div class="mb-3">
-                            <label for="statusSelect" class="form-label small text-muted">상태</label>
-                            <select id="statusSelect" class="form-select">
-                                <option value="WORKING" selected>근무중</option>
-                                <option value="WAITING">시작전</option>
-                                <option value="RESTING">휴식중</option>
-                                <option value="PAUSED">일시중지</option>
-                                <option value="RESIGNED">퇴사</option>
-                            </select>
-                            <div class="form-text">상태를 바꾸면 좌측 리스트와 우측 지급내역이 함께 갱신됩니다.</div>
-                        </div>
+                </div>
 
-                        <hr>
+                <!-- 아르바이트 리스트: 칩(Pill) UI -->
+                <div class="col-12 col-md-8">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <div class="small text-muted">아르바이트 목록</div>
+                        <span id="memberCountBadge" class="badge bg-light text-dark">0명</span>
+                    </div>
 
-                        <div>
-                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                <div class="small text-muted">근무자 목록</div>
-                                <span id="memberCountBadge" class="badge bg-light text-dark">0명</span>
-                            </div>
-                            <ul id="memberList" class="list-group list-group-flush">
-                                <!-- JS 렌더 -->
-                            </ul>
-                        </div>
+                    <div id="memberPills" class="vlist">
+                        <!-- JS 렌더 -->
+                    </div>
+
+                    <div class="small text-muted mt-2">
+                        * 각 사람 옆의 색상은 근로자의 고유 색입니다.
                     </div>
                 </div>
             </div>
         </div>
+    </div>
 
-        <!-- ============ 오른쪽: 지급된 급여 내역 (월별 / 연도별 탭) ============ -->
-        <div class="col-12 col-lg-8">
-            <div class="pay-right-wrapper">
+    <!-- ============ 하단: 지급된 급여 내역 (월별 / 연도별 탭) ============ -->
+    <div class="pay-right-wrapper">
 
-                <!-- 🔼 상단: 제목 (스크롤 시 상단 고정) -->
-                <div class="d-flex flex-wrap justify-content-between align-items-center mb-2 gap-2 sticky-pay-header">
-                    <div class="d-flex flex-wrap align-items-center gap-2">
-                        <div>
-                            <span class="fw-bold h5 mb-0" id="pageTitle">급여 지급관리</span>
-                            <span id="selectedMemberName" class="ms-2 text-primary fw-semibold"></span>
-                            <span id="selectedMemberStatus" class="badge bg-secondary ms-2 d-none">-</span>
-                        </div>
-                    </div>
+        <!-- 🔼 상단: 제목 (스크롤 시 상단 고정) -->
+        <div class="d-flex flex-wrap justify-content-between align-items-center mb-2 gap-2 sticky-pay-header">
+            <div class="d-flex flex-wrap align-items-center gap-2">
+                <div>
+                    <span class="fw-bold h5 mb-0" id="pageTitle">급여 지급관리</span>
+                    <span id="selectedMemberName" class="ms-2 text-primary fw-semibold"></span>
+                    <span id="selectedMemberStatus" class="badge bg-secondary ms-2 d-none">-</span>
                 </div>
-
-                <div class="card">
-                    <div class="card-header fw-bold d-flex justify-content-between align-items-center">
-                        <span>지급된 급여 내역</span>
-                        <div class="d-flex align-items-center gap-3">
-                            <span id="payHistoryCount" class="badge bg-light text-dark">0건</span>
-
-                            <!-- 🔁 월별 / 연도별 탭 -->
-                            <ul class="nav nav-pills nav-pills-sm" id="payViewTabs">
-                                <li class="nav-item">
-                                    <button class="nav-link active" type="button" data-view="MONTH">월별</button>
-                                </li>
-                                <li class="nav-item">
-                                    <button class="nav-link" type="button" data-view="YEAR">연도별</button>
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
-                    <div class="card-body">
-
-                        <!-- 안내 -->
-                        <div class="small text-muted mb-2">
-                            좌측에서 근무자를 선택하면, <b>지급완료된 월급 내역</b>과 <b>연도별 합산 내역</b>을 볼 수 있습니다.<br>
-                            하단에는 지금까지 지급한 <b>실근무시간 / 주휴수당시간 / 근무수당 / 주휴수당 / 총 지급액</b>이 합산됩니다.
-                        </div>
-
-                        <!-- 📊 월별 / 연도별 지급내역 테이블 -->
-                        <div class="table-responsive">
-
-                            <!-- 📅 월별 뷰 -->
-                            <div id="payViewMonth">
-                                <table class="table table-bordered align-middle text-center" id="payHistoryTableMonth">
-                                    <thead class="table-light">
-                                    <tr>
-                                        <th style="width:90px;">연도-월</th>
-                                        <th style="width:160px;">지급일</th>
-                                        <th style="width:80px;">상태</th>
-                                        <th style="width:110px;">시급</th>
-                                        <th style="width:120px;">실근무</th>
-                                        <th style="width:120px;">주휴수당 시간</th>
-                                        <th style="width:140px;" class="text-end">근무수당</th>
-                                        <th style="width:140px;" class="text-end">주휴수당</th>
-                                        <th style="width:160px;" class="text-end">총 지급액</th>
-                                    </tr>
-                                    </thead>
-                                    <tbody id="payHistoryBodyMonth">
-                                    <!-- JS 렌더 -->
-                                    </tbody>
-                                </table>
-                            </div>
-
-                            <!-- 📆 연도별 뷰 -->
-                            <div id="payViewYear" class="d-none">
-                                <table class="table table-bordered align-middle text-center" id="payHistoryTableYear">
-                                    <thead class="table-light">
-                                    <tr>
-                                        <th style="width:100px;">연도</th>
-                                        <th style="width:140px;">실근무시간 합계</th>
-                                        <th style="width:150px;">주휴수당 시간 합계</th>
-                                        <th style="width:150px;" class="text-end">근무수당 합계</th>
-                                        <th style="width:150px;" class="text-end">주휴수당 합계</th>
-                                        <th style="width:180px;" class="text-end">총 지급액 합계</th>
-                                    </tr>
-                                    </thead>
-                                    <tbody id="payHistoryBodyYear">
-                                    <!-- JS 렌더 -->
-                                    </tbody>
-                                </table>
-                            </div>
-
-                        </div>
-
-                        <!-- 합계 영역 -->
-                        <div class="mt-3">
-                            <div class="d-flex justify-content-between">
-                                <div class="small text-muted">총 실근무 시간</div>
-                                <div class="fw-semibold" id="summaryTotalWorkTime">0시간</div>
-                            </div>
-                            <div class="d-flex justify-content-between">
-                                <div class="small text-muted">총 주휴수당 시간</div>
-                                <div class="fw-semibold" id="summaryTotalJuhyuTime">0시간</div>
-                            </div>
-                            <div class="d-flex justify-content-between">
-                                <div class="small text-muted">총 근무수당</div>
-                                <div class="fw-semibold" id="summaryTotalWorkPay">-</div>
-                            </div>
-                            <div class="d-flex justify-content-between">
-                                <div class="small text-muted">총 주휴수당</div>
-                                <div class="fw-semibold" id="summaryTotalJuhyuPay">-</div>
-                            </div>
-                            <hr class="my-2">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div class="small fw-bold">총 지급액 (근무수당 + 주휴수당)</div>
-                                <div class="fw-bold text-primary" id="summaryTotalPay">-</div>
-                            </div>
-                        </div>
-
-                        <div class="small text-muted mt-3">
-                            * "급여 관리" 화면에서 <b>지급완료</b>로 처리된 월급만 이 화면에 표시됩니다.<br>
-                            * 연도별 내역은 월별 지급 내역을 연도 단위로 합산한 값입니다.
-                        </div>
-                    </div>
-                </div>
-
             </div>
         </div>
+
+        <div class="card">
+            <div class="card-header fw-bold d-flex justify-content-between align-items-center">
+                <span>지급된 급여 내역</span>
+                <div class="d-flex align-items-center gap-3">
+                    <span id="payHistoryCount" class="badge bg-light text-dark">0건</span>
+
+                    <!-- 🔁 월별 / 연도별 탭 -->
+                    <ul class="nav nav-pills nav-pills-sm" id="payViewTabs">
+                        <li class="nav-item">
+                            <button class="nav-link active" type="button" data-view="MONTH">월별</button>
+                        </li>
+                        <li class="nav-item">
+                            <button class="nav-link" type="button" data-view="YEAR">연도별</button>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <div class="card-body">
+
+                <!-- 안내 -->
+                <div class="small text-muted mb-2">
+                    위에서 근무자를 선택하면, <b>지급완료된 월급 내역</b>과 <b>연도별 합산 내역</b>을 볼 수 있습니다.<br>
+                    하단에는 지금까지 지급한 <b>실근무시간 / 주휴수당시간 / 근무수당 / 주휴수당 / 총 지급액</b>이 합산됩니다.
+                </div>
+
+                <!-- 📊 월별 / 연도별 지급내역 테이블 -->
+                <div class="table-responsive">
+
+                    <!-- 📅 월별 뷰 -->
+                    <div id="payViewMonth">
+                        <table class="table table-bordered align-middle text-center" id="payHistoryTableMonth">
+                            <thead class="table-light">
+                            <tr>
+                                <th style="width:90px;">연도-월</th>
+                                <th style="width:160px;">지급일</th>
+                                <th style="width:80px;">상태</th>
+                                <th style="width:110px;">시급</th>
+                                <th style="width:120px;">실근무</th>
+                                <th style="width:120px;">주휴수당 시간</th>
+                                <th style="width:140px;" class="text-end">근무수당</th>
+                                <th style="width:140px;" class="text-end">주휴수당</th>
+                                <th style="width:160px;" class="text-end">총 지급액</th>
+                            </tr>
+                            </thead>
+                            <tbody id="payHistoryBodyMonth">
+                            <!-- JS 렌더 -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- 📆 연도별 뷰 -->
+                    <div id="payViewYear" class="d-none">
+                        <table class="table table-bordered align-middle text-center" id="payHistoryTableYear">
+                            <thead class="table-light">
+                            <tr>
+                                <th style="width:100px;">연도</th>
+                                <th style="width:140px;">실근무시간 합계</th>
+                                <th style="width:150px;">주휴수당 시간 합계</th>
+                                <th style="width:150px;" class="text-end">근무수당 합계</th>
+                                <th style="width:150px;" class="text-end">주휴수당 합계</th>
+                                <th style="width:180px;" class="text-end">총 지급액 합계</th>
+                            </tr>
+                            </thead>
+                            <tbody id="payHistoryBodyYear">
+                            <!-- JS 렌더 -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                </div>
+
+                <!-- 합계 영역 -->
+                <div class="mt-3">
+                    <div class="d-flex justify-content-between">
+                        <div class="small text-muted">총 실근무 시간</div>
+                        <div class="fw-semibold" id="summaryTotalWorkTime">0시간</div>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <div class="small text-muted">총 주휴수당 시간</div>
+                        <div class="fw-semibold" id="summaryTotalJuhyuTime">0시간</div>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <div class="small text-muted">총 근무수당</div>
+                        <div class="fw-semibold" id="summaryTotalWorkPay">-</div>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <div class="small text-muted">총 주휴수당</div>
+                        <div class="fw-semibold" id="summaryTotalJuhyuPay">-</div>
+                    </div>
+                    <hr class="my-2">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="small fw-bold">총 지급액 (근무수당 + 주휴수당)</div>
+                        <div class="fw-bold text-primary" id="summaryTotalPay">-</div>
+                    </div>
+                </div>
+
+                <div class="small text-muted mt-3">
+                    * "급여 관리" 화면에서 <b>지급완료</b>로 처리된 월급만 이 화면에 표시됩니다.<br>
+                    * 연도별 내역은 월별 지급 내역을 연도 단위로 합산한 값입니다.
+                </div>
+            </div>
+        </div>
+
     </div>
 </main>
 
 <style>
-    /* 좌측 멤버 리스트 chip 스타일 */
-    .member-chip {
-        display:flex; align-items:center; justify-content:space-between;
-        gap:8px; padding:8px 10px; border-radius:10px;
-        background:#fff; border:1px solid #eee; margin-bottom:6px; cursor:pointer;
-        transition: background .15s, border-color .15s, box-shadow .15s;
+    /* ===== 상단 아르바이트 리스트: 칩 스타일 ===== */
+    .vlist {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
     }
-    .member-chip:hover { background:#f8f9fa; }
-    .member-chip .dot {
-        width:10px; height:10px; border-radius:50%;
-        border:1px solid rgba(0,0,0,.08);
+    .pill {
+        display:flex;
+        align-items:center;
+        gap:8px;
+        padding:8px 10px;
+        border-radius:999px;
+        border:1px solid #e9ecef;
+        background:#fff;
+        cursor:pointer;
+        font-size:.9rem;
+        transition: background .15s, box-shadow .15s, border-color .15s;
     }
-    .member-chip.active {
+    .pill:hover {
+        background:#fafafa;
+        border-color:#dee2e6;
+    }
+    .pill.active {
         border-color: rgba(13,110,253,.45);
         box-shadow: 0 0 0 3px rgba(13,110,253,.15) inset;
         background:#f0f6ff;
+    }
+    .pill .dot {
+        width:12px;
+        height:12px;
+        border-radius:50%;
+        border:1px solid rgba(0,0,0,.08);
+        flex:0 0 12px;
+    }
+    .pill .name {
+        font-weight:600;
+    }
+    .pill .meta {
+        color:#6c757d;
+        font-size:.8rem;
     }
 
     /* 우측 전체 래퍼 – sticky 기준 컨테이너 */
@@ -235,9 +261,9 @@
         // GET /api/payroll/member/{memberId}
         const PAYROLL_MEMBER_API = '/api/payroll/member';
 
-        // 좌측
+        // 상단 상태/리스트
         const statusSelect         = document.getElementById('statusSelect');
-        const memberList           = document.getElementById('memberList');
+        const memberPills          = document.getElementById('memberPills');
         const memberCountBadge     = document.getElementById('memberCountBadge');
 
         // 우측 상단
@@ -287,7 +313,6 @@
 
         // 이벤트 바인딩
         statusSelect.addEventListener('change', handleStatusChange);
-        memberList.addEventListener('click', onMemberListClick);
 
         // 우측 탭 클릭
         payViewTabs.forEach(btn => {
@@ -314,73 +339,59 @@
         // 초기 실행
         handleStatusChange();
 
-        // ===== 상태 변경 시 멤버 리스트 갱신 =====
+        // ===== 상태 변경 시 멤버 칩 리스트 갱신 =====
         function handleStatusChange() {
             const status = statusSelect.value;
             const filtered = (allMembers || []).filter(m => m.status === status);
+            renderMembersByStatus(filtered);
+        }
 
-            renderMemberList(filtered);
+        function renderMembersByStatus(members) {
+            memberPills.innerHTML = '';
+            memberCountBadge.textContent = members.length + '명';
 
-            if (filtered.length) {
-                const keep = filtered.find(m => String(m.id) === String(selectedMemberId)) || filtered[0];
-                selectMember(keep);
-            } else {
+            if (!members.length) {
+                memberPills.innerHTML = `<span class="text-muted small">해당 상태의 아르바이트생이 없습니다.</span>`;
                 selectedMemberId = null;
                 currentMember = null;
                 clearRight();
+                return;
             }
-        }
 
-        function renderMemberList(members) {
-            memberList.innerHTML = '';
-            memberCountBadge.textContent = members.length + '명';
+            // 선택 유지 or 첫 번째
+            let toSelect = null;
+            if (currentMember && members.some(m => String(m.id) === String(currentMember.id))) {
+                toSelect = members.find(m => String(m.id) === String(currentMember.id));
+            } else {
+                toSelect = members[0];
+            }
 
             members
                     .slice()
                     .sort((a,b) => (a.name||'').localeCompare(b.name||'', 'ko'))
                     .forEach(m => {
-                        const li = document.createElement('li');
-                        li.className = 'list-group-item member-chip';
-                        li.dataset.memberId = String(m.id);
-                        const color = colorForMember(m);
+                        const btn = document.createElement('button');
+                        btn.type = 'button';
+                        btn.className = 'pill';
+                        btn.dataset.memberId = String(m.id);
 
-                        li.innerHTML = `
-                        <span class="left d-inline-flex align-items-center gap-2">
-                            <span class="dot" style="background:${color}"></span>
-                            <span class="fw-semibold">${escapeHtml(m.name ?? '-')}</span>
-                            <span class="text-muted small">${escapeHtml(m.phone ?? '')}</span>
-                        </span>
-                        <button type="button"
-                                class="btn btn-sm btn-outline-primary view-btn"
-                                data-id="${String(m.id)}">상세</button>
+                        const color = colorForMember(m);
+                        btn.innerHTML = `
+                        <span class="dot" style="background:${color}"></span>
+                        <span class="name">${escapeHtml(m.name ?? '-')}</span>
+                        <span class="meta">${escapeHtml(m.phone ?? '')}</span>
                     `;
-                        memberList.appendChild(li);
+
+                        btn.addEventListener('click', (e) => {
+                            e.preventDefault();
+                            selectMember(m);
+                        });
+
+                        memberPills.appendChild(btn);
                     });
 
-            if (!members.length) {
-                const li = document.createElement('li');
-                li.className = 'list-group-item';
-                li.textContent = '해당 상태의 근무자가 없습니다.';
-                memberList.appendChild(li);
-            }
-
-            updateMemberListActive();
-        }
-
-        function onMemberListClick(e) {
-            const btn = e.target.closest('.view-btn');
-            if (btn) {
-                const id = btn.getAttribute('data-id');
-                if (id) window.location.assign(`/members/${encodeURIComponent(id)}/edit`);
-                return;
-            }
-
-            const li = e.target.closest('li.member-chip');
-            if (!li) return;
-            const id = li.dataset.memberId;
-            const members = (allMembers || []).filter(m => m.status === statusSelect.value);
-            const target = members.find(m => String(m.id) === String(id));
-            if (target) selectMember(target);
+            // 선택 반영
+            selectMember(toSelect);
         }
 
         function selectMember(member) {
@@ -392,8 +403,8 @@
         }
 
         function updateMemberListActive() {
-            Array.from(memberList.querySelectorAll('.member-chip')).forEach(li => {
-                li.classList.toggle('active', li.dataset.memberId === String(selectedMemberId));
+            Array.from(memberPills.querySelectorAll('.pill')).forEach(el => {
+                el.classList.toggle('active', el.dataset.memberId === String(selectedMemberId));
             });
         }
 
@@ -505,16 +516,16 @@
                 lastMonthlyCount = 0;
                 lastYearlyCount  = 0;
 
-                summaryTotalWorkTime.textContent = '0시간';
+                summaryTotalWorkTime.textContent  = '0시간';
                 summaryTotalJuhyuTime.textContent = '0시간';
-                summaryTotalWorkPay.textContent  = '-';
-                summaryTotalJuhyuPay.textContent = '-';
-                summaryTotalPay.textContent      = '-';
+                summaryTotalWorkPay.textContent   = '-';
+                summaryTotalJuhyuPay.textContent  = '-';
+                summaryTotalPay.textContent       = '-';
 
                 return;
             }
 
-            // payYear, payMonth 기준 최신순 정렬 (최근 지급이 위로 오도록)
+            // payYear, payMonth 기준 최신순 정렬
             list.sort((a, b) => {
                 const ay = a.payYear || 0, by = b.payYear || 0;
                 const am = a.payMonth || 0, bm = b.payMonth || 0;
@@ -528,14 +539,12 @@
             let totalJuhyuPay = 0;
             let totalPay = 0;
 
-            // 연도별 합계를 위한 맵
             const yearMap = {}; // { [year]: { workMinutes, juhyuMinutes, workPay, juhyuPay, totalPay } }
 
             const monthRows = list.map(item => {
                 const year  = item.payYear ?? '-';
                 const month = item.payMonth != null ? pad2(item.payMonth) : '--';
 
-                // 지급일
                 const rawPaidDate = item.paidDate;
                 const paidDate = rawPaidDate ? formatDateTime(rawPaidDate) : '-';
 
@@ -553,7 +562,6 @@
                 totalJuhyuPay     += juhyuPay;
                 totalPay          += total;
 
-                // 연도별 합산
                 if (item.payYear != null) {
                     const y = item.payYear;
                     if (!yearMap[y]) {
@@ -602,7 +610,7 @@
             lastMonthlyCount = list.length;
 
             // 연도별 테이블 렌더링
-            const years = Object.keys(yearMap).map(y => Number(y)).sort((a,b) => b - a); // 최신 연도 위
+            const years = Object.keys(yearMap).map(y => Number(y)).sort((a,b) => b - a);
             if (years.length === 0) {
                 payHistoryBodyYear.innerHTML = `
                     <tr>
@@ -637,7 +645,7 @@
                 payHistoryCount.textContent = `${lastYearlyCount}건`;
             }
 
-            // 합계 반영 (전체 기간 기준)
+            // 합계 반영
             summaryTotalWorkTime.textContent  = formatMins(totalWorkMinutes);
             summaryTotalJuhyuTime.textContent = formatMins(totalJuhyuMinutes);
             summaryTotalWorkPay.textContent   = totalWorkPay  ? krw(totalWorkPay)  : '-';
@@ -733,14 +741,11 @@
             if (value instanceof Date) {
                 d = value;
             } else if (typeof value === 'number') {
-                // ms / s 둘 다 대충 대응
                 d = new Date(value < 1e12 ? value * 1000 : value);
             } else {
-                // 문자열: "2025-11-12T10:20:00", "2025-11-12 10:20:00", "2025-11-12T10:20:00+09:00" 등
                 const s = String(value).replace(' ', 'T');
                 const parsed = new Date(s);
                 if (isNaN(parsed.getTime())) {
-                    // 파싱 실패하면 원본 그대로
                     return String(value);
                 }
                 d = parsed;

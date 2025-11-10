@@ -106,7 +106,7 @@
 
         <!-- ============ 오른쪽 ============ -->
         <div class="col-12 col-lg-7">
-            <!-- 🔼 상단(카드 바깥): 뷰 전환 탭 + 주/월 내비 (sticky 대상) -->
+            <!-- 🔼 상단(카드 바깥): 뷰 전환 탭 + 주/월 내비 -->
             <div id="rightTopBar" class="d-flex flex-wrap justify-content-between align-items-center mb-2 gap-2 w-100">
                 <div id="viewTabsTop" class="btn-group btn-group-sm" role="group" aria-label="view switch">
                     <button type="button" class="btn btn-outline-primary" data-view="weekGrid">주간스케줄</button>
@@ -133,7 +133,6 @@
             </div>
 
             <div class="card">
-                <!-- ✅ 메인 카드 헤더도 sticky 대상으로 사용 -->
                 <div class="card-header main-header fw-bold d-flex justify-content-between align-items-center">
                     <span id="selectedMemberTitle">주간 10분 단위 타임테이블 (월~일)</span>
                     <span id="selectedMemberStatus" class="badge bg-secondary d-none">-</span>
@@ -144,8 +143,7 @@
                     <div id="viewWeekGrid">
                         <div class="table-responsive">
                             <table class="table table-bordered align-middle text-center timetable-week-10m mb-2" id="tableWeek10m">
-                                <!-- 🔽 주간 스케줄 헤더 thead - JS에서 sticky-sub-header 토글 -->
-                                <thead class="table-light js-weekgrid-head">
+                                <thead class="table-light">
                                 <tr id="theadWeek">
                                     <th style="width:80px;">시간</th>
                                     <th>월</th><th>화</th><th>수</th><th>목</th><th>금</th><th>토</th><th>일</th>
@@ -164,8 +162,7 @@
                     <div id="viewWeekSummary" class="d-none">
                         <div class="table-responsive">
                             <table class="table table-bordered align-middle" id="tableWeekSummary">
-                                <!-- 🔽 주간 요약 헤더 thead - JS에서 sticky-sub-header 토글 -->
-                                <thead class="table-light js-weeksummary-head">
+                                <thead class="table-light">
                                 <tr>
                                     <th style="width:110px;">요일</th>
                                     <th>계획 근무기간</th>
@@ -192,14 +189,12 @@
                                     <td class="text-end">기준 시급</td>
                                     <th class="text-end" id="hourlyWageCellW">-</th>
                                 </tr>
-                                <!-- 🔽 주간 주휴수당 -->
                                 <tr>
                                     <th>주간 주휴수당</th>
                                     <td></td>
                                     <td class="text-end small text-muted">실근무 ≥ 15시간인 주에 한해<br>(주간 실근무 ÷ 5시간)</td>
                                     <th class="text-end" id="weekJuhyuPayCell">-</th>
                                 </tr>
-                                <!-- 🔽 주간 예상 급여(실근무+주휴) -->
                                 <tr class="table-secondary">
                                     <th>예상 급여</th>
                                     <td></td>
@@ -303,13 +298,13 @@
 
     .calendar-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:8px; }
 
-    /* ✅ 월간 요일줄 sticky */
+    /* ✅ 월간 요일줄 sticky - 단순 top:0 */
     .calendar-grid .dow {
         text-align:center; font-weight:600; color:#6c757d;
         padding:6px 0; border-bottom:1px dashed #e9ecef;
         position: sticky;
-        top: var(--sub-header-offset, 120px);
-        z-index: 15;
+        top: 0;
+        z-index: 5;
         background:#fff;
     }
     .calendar-grid .cell {
@@ -329,26 +324,24 @@
     .cell.muted { background:#fcfcfc; color:#96a0aa; }
     .cell.today { outline:2px solid #51cf66; outline-offset:2px; }
 
+    /* 오른쪽 상단 탭: 필요하면 sticky, 아니면 그냥 static 해도 됨 */
     #rightTopBar {
-        position: sticky;
-        top: 68px;        /* 원래 var(--topbar-offset, 56px) */
-        z-index: 40;
-        background:#fff;
+        position: static;
     }
 
-    /* ✅ 메인 카드 헤더 sticky (선택 멤버/상태) */
+    /* 메인 카드 헤더: sticky 빼서 단순하게 */
     .main-header {
-        position: sticky;
-        top: 108px;        /* 원래 var(--main-header-offset, 88px) – 필요에 따라 90~110px 정도 조정 */
-        z-index: 30;
+        position: static;
         background:#fff;
+        z-index: 1;
     }
 
-    /* ✅ 주간/요약 테이블 헤더 sticky (시간/요일 줄) */
-    .sticky-sub-header th {
+    /* ✅ 주간/요약 테이블 헤더 sticky – top:0으로 단순 */
+    #tableWeek10m thead th,
+    #tableWeekSummary thead th {
         position: sticky;
-        top: 148px;       /* 원래 var(--sub-header-offset, 120px) – 위 값에 맞춰 약간 더 내려줌 */
-        z-index: 20;
+        top: 0;
+        z-index: 3;
         background:#f8f9fa;
     }
 </style>
@@ -416,10 +409,6 @@
         const viewWeekGrid=document.getElementById('viewWeekGrid');
         const viewWeekSummary=document.getElementById('viewWeekSummary');
         const viewMonthCalendar=document.getElementById('viewMonthCalendar');
-
-        // ✅ sticky 대상 thead만 잡는다
-        const weekGridHead = document.querySelector('#tableWeek10m thead');
-        const weekSummaryHead = document.querySelector('#tableWeekSummary thead');
 
         // 상태
         let currentMember=null;
@@ -493,13 +482,13 @@
                         li.dataset.memberId=String(m.id);
                         const color=colorForMember(m);
                         li.innerHTML=`
-                        <span class="left d-inline-flex align-items-center gap-2">
-                            <span class="dot" style="background:${color}"></span>
-                            <span class="fw-semibold">${escapeHtml(m.name ?? '-')}</span>
-                            <span class="text-muted small">${escapeHtml(m.phone ?? '')}</span>
-                        </span>
-                        <button type="button" class="btn btn-sm btn-outline-primary view-btn" data-id="${String(m.id)}">상세</button>
-                    `;
+                    <span class="left d-inline-flex align-items-center gap-2">
+                        <span class="dot" style="background:${color}"></span>
+                        <span class="fw-semibold">${escapeHtml(m.name ?? '-')}</span>
+                        <span class="text-muted small">${escapeHtml(m.phone ?? '')}</span>
+                    </span>
+                    <button type="button" class="btn btn-sm btn-outline-primary view-btn" data-id="${String(m.id)}">상세</button>
+                `;
                         memberList.appendChild(li);
                     });
 
@@ -613,18 +602,6 @@
             viewWeekGrid.classList.toggle('d-none', view!=='weekGrid');
             viewWeekSummary.classList.toggle('d-none', view!=='weekSummary');
             viewMonthCalendar.classList.toggle('d-none', view!=='monthCalendar');
-
-            // ✅ 활성 뷰에만 sticky-sub-header 적용
-            if (weekGridHead && weekSummaryHead) {
-                weekGridHead.classList.remove('sticky-sub-header');
-                weekSummaryHead.classList.remove('sticky-sub-header');
-
-                if (view === 'weekGrid') {
-                    weekGridHead.classList.add('sticky-sub-header');
-                } else if (view === 'weekSummary') {
-                    weekSummaryHead.classList.add('sticky-sub-header');
-                }
-            }
         }
 
         // ===== 월 내비: 리로드 없이 작동 =====
@@ -977,7 +954,6 @@
         function deltaString(min){ const sign = min>0?'+':min<0?'-':''; const v=Math.abs(min); const h=Math.floor(v/60), m=v%60; return `${sign}${h}시간${m?` ${m}분`:''}`; }
         function krw(v){ return new Intl.NumberFormat('ko-KR',{style:'currency',currency:'KRW',maximumFractionDigits:0}).format(v); }
 
-        // ✅ 계획/실제 공통 normalizer (days 배열 -> date별 {segments, minutes})
         function normalizeDays(apiData){
             const map = {};
             const arr = Array.isArray(apiData?.days) ? apiData.days : [];
@@ -1001,7 +977,6 @@
             return {h:isNaN(h)?0:h, m:isNaN(m)?0:m};
         }
 
-        // ✅ 주간 주휴수당 "분" 계산
         function calcWeeklyJuhyuMinutes(weeklyMinutes){
             if(!weeklyMinutes || weeklyMinutes < 15*60) return 0;
             return Math.round(weeklyMinutes / 5);
@@ -1037,7 +1012,6 @@
                     .replace(/'/g,'&#39;');
         }
 
-        // 등록일 헬퍼
         function getCreatedAt(m){
             const v = m?.created_at ?? m?.createdAt ?? null;
             if(v==null) return null;
@@ -1061,6 +1035,7 @@
             const m=pad2(d.getMinutes());
             return `${y}-${M}-${D} ${h}:${m}`;
         }
+
     })();
 </script>
 

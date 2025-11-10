@@ -81,7 +81,8 @@ public class MemberController {
         LocalDate today = LocalDate.now();
 
         // 1) 기존처럼 전체 멤버 조회 (MemberDto 사용)
-        List<MemberDto> members = memService.findAll();
+        //List<MemberDto> members = memService.findAll();
+        List<MemberDto> members = memService.findByStatus(Member.Status.WORKING);
 
         // 2) 오늘 실제 근무 일정 조회 (WorkSchedule)
         //   -> WorkScheduleService / Repository에서 가져오도록 가정
@@ -211,6 +212,21 @@ public class MemberController {
         model.addAttribute("membersJson", objectMapper.writeValueAsString(members));
 
         return "members/scheduleManagement";
+    }
+
+    //금주 근무 현황
+    @GetMapping("/members/schedulemanagementbyweek")
+    public String thisWeekMembersByWeek(Model model) throws Exception {
+        List<MemberDto> members = memService.findAll();
+        log.info("schedulemanagementbyweek: {}", members);
+
+        // 2️⃣ members (뷰용 리스트)
+        model.addAttribute("members", members);
+
+        log.info(objectMapper.writeValueAsString(members));
+        model.addAttribute("membersJson", objectMapper.writeValueAsString(members));
+
+        return "members/scheduleManagementByWeek";
     }
 
     //금일 실 근무 시간 등록

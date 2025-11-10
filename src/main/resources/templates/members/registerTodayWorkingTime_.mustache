@@ -1,0 +1,690 @@
+{{>layouts/header}}
+
+<main class="container my-4">
+    <div class="row g-3">
+        <!-- ============ 왼쪽: 상태 선택 + 알바생 리스트(색 점) ============ -->
+        <div class="col-12 col-lg-5">
+            <div class="d-grid gap-3 sticky-lg-top" style="top:12px;">
+
+                <!-- 상태 선택 + 알바생 리스트업 -->
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span class="fw-bold">아르바이트 상태별 보기</span>
+                        <a href="/members/new" class="btn btn-sm btn-primary">추가등록</a>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-2 align-items-center">
+                            <!-- 상태 -->
+                            <div class="col-12">
+                                <label for="statusSelect" class="form-label small text-muted">상태</label>
+                                <select id="statusSelect" class="form-select">
+                                    <option value="WORKING" selected>근무중</option>
+                                    <option value="WAITING">시작전</option>
+                                    <option value="RESTING">휴식중</option>
+                                    <option value="PAUSED">일시중지</option>
+                                    <option value="RESIGNED">퇴사</option>
+                                </select>
+                                <div class="form-text">상태를 변경하면 좌측 리스트와 우측 타임테이블이 함께 갱신됩니다.</div>
+                            </div>
+                        </div>
+
+                        <hr>
+
+                        <!-- 알바생 리스트 (색 점 + 이름 + 상세보기 버튼) -->
+                        <div>
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <div class="small text-muted">알바생 목록</div>
+                                <span id="memberCountBadge" class="badge bg-light text-dark">0명</span>
+                            </div>
+                            <ul id="memberList" class="list-group list-group-flush">
+                                <!-- JS로 상태별 전원 렌더링 -->
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- ============ 오른쪽: 일간 10분 단위 타임테이블(실제 선택/저장) ============ -->
+        <div class="col-12 col-lg-7">
+            <div class="card">
+                <div class="card-header fw-bold d-flex justify-content-between align-items-center">
+                    <span>일간 10분 단위 타임테이블</span>
+                    <div class="d-flex flex-column align-items-end">
+                        <small class="text-muted" id="selectedMemberTitle">선택된 알바생 없음</small>
+                        <small class="text-muted" id="currentDateLabel"></small>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
+                        <div class="small text-muted">
+                            알바생을 좌측 목록에서 선택하세요. 스케줄은 <b>주황</b>, 실제는 <b>10분 단위</b>로 선택합니다.
+                        </div>
+
+                        <!-- 오른쪽: 작업 버튼 + 날짜 네비 -->
+                        <div class="d-flex align-items-center gap-2 flex-wrap w-100">
+                            <!-- 좌측: 작업 버튼들 -->
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-outline-secondary btn-sm" id="btnClearActual" disabled>실제 초기화</button>
+                                <button class="btn btn-outline-primary btn-sm" id="btnSelectAllActual" disabled>전체선택(실제)</button>
+                                <button class="btn btn-success btn-sm" id="btnSaveActual" disabled>저장</button>
+                            </div>
+
+                            <!-- 우측 끝: 날짜 이동 버튼 그룹 -->
+                            <div class="btn-group btn-group-sm ms-auto" role="group" aria-label="day navigation">
+                                <button type="button" class="btn btn-outline-secondary" id="btnDayPrev">D-1</button>
+                                <button type="button" class="btn btn-outline-secondary" id="btnDayToday">오늘</button>
+                                <button type="button" class="btn btn-outline-secondary" id="btnDayNext">D+1</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="table-responsive" id="tableWrapper">
+                        <table class="table table-bordered align-middle text-center timetable-10m mb-2" id="table10m">
+                            <thead>
+                            <tr>
+                                <th style="width:80px;">시간</th>
+                                <th id="thSchedule" style="width:40%;">스케줄</th>
+                                <th style="width:40%;">실제</th>
+                                <th style="width:140px;">1시간 단위</th>
+                            </tr>
+                            </thead>
+                            <tbody id="tbody10m"></tbody>
+                        </table>
+                    </div>
+
+                    <div>
+                        <div class="small text-muted mb-1">실제 선택 구간</div>
+                        <div id="actualSummary" class="small">-</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<style>
+    .slot-10m {height:16px; border:1px solid #eef2f6; border-radius:3px; background:#fff; cursor:pointer;}
+    .slot-10m.schedule.on {background:rgba(255,159,67,.35);border-color:rgba(255,159,67,.65);}
+    .slot-10m.actual.on {background:rgba(25,135,84,.25);border-color:rgba(25,135,84,.35);}
+    .hour-select-cell .btn {width:100%;}
+    .timecell {font-variant-numeric: tabular-nums;}
+
+    .member-chip {
+        display:flex; align-items:center; justify-content:space-between;
+        gap:8px; padding:8px 10px; border-radius:10px; background:#fff;
+        border:1px solid #eee; margin-bottom:6px; cursor:pointer;
+        transition: background .15s, border-color .15s, box-shadow .15s;
+    }
+    .member-chip:hover { background:#f8f9fa; }
+    .member-chip .left { display:inline-flex; align-items:center; gap:8px; }
+    .dot { width:12px; height:12px; border-radius:50%; border:1px solid rgba(0,0,0,.08); }
+
+    .member-chip.active {
+        border-color: rgba(13,110,253,.45);
+        box-shadow: 0 0 0 3px rgba(13,110,253,.15) inset;
+        background:#f0f6ff;
+    }
+
+    #tableWrapper {
+        max-height: 70vh;    /* 필요하면 60vh, 80vh 등으로 조정 */
+        overflow-y: auto;    /* 세로 스크롤 생성 */
+        overflow-x: auto;    /* 가로 스크롤도 유지 */
+        position: relative;  /* sticky 기준 컨테이너로 명시 */
+    }
+
+    /* ✅ 테이블 헤더(시간 | 스케줄 | 실제 | 1시간 단위) 스크롤 시 고정 */
+    #table10m thead th {
+        position: sticky;
+        top: 0;            /* 카드 헤더 바로 아래에 붙이고 싶으면 0으로 두세요 */
+        z-index: 5;
+        background: #f8fafc;
+    }
+</style>
+
+<script id="membersData" type="application/json">
+{{{membersJson}}}
+</script>
+
+<script>
+    (function(){
+        const HOUR_START=6, HOUR_END=22, STEP_MIN=10, SLOTS_PER_HOUR=6;
+
+        // 좌측
+        const statusSelect = document.getElementById('statusSelect');
+        const memberList = document.getElementById('memberList');
+        const memberCountBadge = document.getElementById('memberCountBadge');
+
+        // 우측
+        const tbody10m = document.getElementById('tbody10m');
+        const selectedMemberTitle = document.getElementById('selectedMemberTitle');
+        const currentDateLabel = document.getElementById('currentDateLabel');
+
+        const btnClearActual = document.getElementById('btnClearActual');
+        const btnSelectAllActual = document.getElementById('btnSelectAllActual');
+        const btnSaveActual = document.getElementById('btnSaveActual');
+        const actualSummary = document.getElementById('actualSummary');
+
+        const btnDayPrev = document.getElementById('btnDayPrev');
+        const btnDayToday = document.getElementById('btnDayToday');
+        const btnDayNext = document.getElementById('btnDayNext');
+
+        const thSchedule = document.getElementById('thSchedule');
+
+        /* ===== 토스트 ===== */
+        function showToast(message, toastType = 'primary') {
+            const existing = document.getElementById('toastBox');
+            if (existing) {
+                try {
+                    bootstrap.Alert.getOrCreateInstance(existing).close();
+                } catch (e) {
+                    existing.remove();
+                }
+            }
+
+            const div = document.createElement('div');
+            div.id = 'toastBox';
+            div.className = `alert alert-${toastType} alert-dismissible fade show shadow-sm`;
+            div.setAttribute('role', 'alert');
+            div.style.position   = 'fixed';
+            div.style.left       = '50%';
+            div.style.top        = '20px';
+            div.style.transform  = 'translateX(-50%)';
+            div.style.minWidth   = '250px';
+            div.style.maxWidth   = '90vw';
+            div.style.zIndex     = '2000';
+            div.style.textAlign  = 'center';
+
+            const textNode = document.createTextNode(message + ' ');
+            div.appendChild(textNode);
+
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'btn-close';
+            btn.setAttribute('data-bs-dismiss', 'alert');
+            btn.setAttribute('aria-label', 'Close');
+            div.appendChild(btn);
+
+            document.body.appendChild(div);
+
+            try {
+                const alertInstance = bootstrap.Alert.getOrCreateInstance(div);
+                setTimeout(() => {
+                    alertInstance.close();
+                }, 3000);
+            } catch (e) {
+                setTimeout(() => {
+                    if (div.parentNode) div.parentNode.removeChild(div);
+                }, 3000);
+            }
+        }
+
+        /* ===== 데이터/상태 ===== */
+        let allMembers=[];
+        try{
+            allMembers = JSON.parse(document.getElementById('membersData').textContent || '[]');
+        }catch(e){
+            allMembers = [];
+        }
+
+        let selectedMemberId = null;
+        let dragging = false, dragSelecting = true;
+        let currentDate = stripTime(new Date());
+        const DOW_KO = ['일','월','화','수','목','금','토'];
+
+        window.addEventListener('mouseup', () => {
+            if(dragging){
+                dragging = false;
+                updateActualSummary();
+            }
+        });
+
+        if(Array.isArray(allMembers) && allMembers.length > 0){
+            statusSelect.value = allMembers[0].status || 'WORKING';
+        }
+        refreshCurrentDateLabel();
+        setDayNavActive('today');
+
+        statusSelect.addEventListener('change', handleStatusChange);
+        memberList.addEventListener('click', onMemberListClick);
+
+        btnDayPrev.addEventListener('click', () => {
+            currentDate = addDays(currentDate, -1);
+            refreshCurrentDateLabel();
+            setDayNavActive('prev');
+            reloadForCurrentSelection();
+        });
+        btnDayToday.addEventListener('click', () => {
+            currentDate = stripTime(new Date());
+            refreshCurrentDateLabel();
+            setDayNavActive('today');
+            reloadForCurrentSelection();
+        });
+        btnDayNext.addEventListener('click', () => {
+            currentDate = addDays(currentDate, 1);
+            refreshCurrentDateLabel();
+            setDayNavActive('next');
+            reloadForCurrentSelection();
+        });
+
+        handleStatusChange();
+
+        /* ===== 좌측: 상태 변경 ===== */
+        function handleStatusChange(){
+            const status = statusSelect.value;
+            const filtered = (allMembers || []).filter(m => m.status === status);
+            renderMemberList(filtered);
+
+            if(filtered.length){
+                const keep = filtered.find(m => String(m.id) === String(selectedMemberId)) || filtered[0];
+                pickMember(keep);
+            }else{
+                resetRightPanel();
+            }
+        }
+
+        function renderMemberList(members){
+            memberList.innerHTML = '';
+            memberCountBadge.textContent = `${members.length}명`;
+
+            members
+                    .slice()
+                    .sort((a,b)=>(a.name||'').localeCompare(b.name||'','ko'))
+                    .forEach(m=>{
+                        const li = document.createElement('li');
+                        li.className='list-group-item member-chip';
+                        li.dataset.memberId=String(m.id);
+
+                        const color = colorForMember(m);
+                        li.innerHTML = `
+          <span class="left">
+            <span class="dot" style="background:${color}"></span>
+            <span class="fw-semibold">${escapeHtml(m.name ?? '-')}</span>
+            <span class="text-muted small">${escapeHtml(m.phone ?? '')}</span>
+          </span>
+          <button type="button"
+                  class="btn btn-sm btn-outline-primary view-btn"
+                  data-id="${String(m.id)}"
+                  aria-label="상세보기">
+            상세
+          </button>
+        `;
+
+                        li.addEventListener('click', ()=> pickMember(m) );
+                        memberList.appendChild(li);
+                    });
+
+            if(!members.length){
+                const li=document.createElement('li');
+                li.className='list-group-item';
+                li.textContent='해당 상태의 알바생이 없습니다.';
+                memberList.appendChild(li);
+            }
+
+            Array.from(memberList.querySelectorAll('.member-chip')).forEach(li=>{
+                li.classList.toggle('active', li.dataset.memberId === String(selectedMemberId));
+            });
+        }
+
+        function onMemberListClick(e){
+            const btn = e.target.closest('.view-btn');
+            if(!btn) return;
+            e.stopPropagation();
+            const id = btn.getAttribute('data-id');
+            if(!id) return;
+            window.location.assign(`/members/${encodeURIComponent(id)}/edit`);
+        }
+
+        /* ===== 멤버 선택 ===== */
+        function pickMember(m){
+            if(!m) return;
+            selectedMemberId = m.id;
+
+            Array.from(memberList.querySelectorAll('.member-chip')).forEach(li =>{
+                li.classList.toggle('active', li.dataset.memberId === String(selectedMemberId));
+            });
+
+            selectedMemberTitle.textContent = `${m.name} — 일간 타임테이블`;
+
+            buildTenMinuteTable();
+            loadDayForMember(m);
+
+            btnClearActual.disabled = false;
+            btnSelectAllActual.disabled = false;
+            btnSaveActual.disabled = false;
+
+            btnClearActual.onclick = ()=>{
+                tbody10m.querySelectorAll('.slot-10m.actual.on').forEach(el=>el.classList.remove('on'));
+                updateActualSummary();
+            };
+            btnSelectAllActual.onclick = ()=>{
+                const actualSlots   = Array.from(tbody10m.querySelectorAll('.slot-10m.actual'));
+                const scheduleSlots = Array.from(tbody10m.querySelectorAll('.slot-10m.schedule'));
+                for(let i=0;i<actualSlots.length;i++){
+                    if(scheduleSlots[i].classList.contains('on')) actualSlots[i].classList.add('on');
+                    else actualSlots[i].classList.remove('on');
+                }
+                updateActualSummary();
+            };
+            btnSaveActual.onclick = saveActual;
+        }
+
+        function reloadForCurrentSelection(){
+            if(!selectedMemberId){
+                buildTenMinuteTable();
+                return;
+            }
+            const m = (allMembers||[]).find(x=>String(x.id)===String(selectedMemberId));
+            if(!m) return;
+            selectedMemberTitle.textContent = `${m.name} — 일간 타임테이블`;
+            buildTenMinuteTable();
+            loadDayForMember(m);
+        }
+
+        /* ===== 스케줄/실제 로딩 ===== */
+        function loadDayForMember(member){
+            const date = fmtDateYYYYMMDD(currentDate);
+
+            fetch(`/api/schedule/work/${member.id}/${date}`)
+                    .then(res=>res && res.ok ? res.json() : null)
+                    .then(data=>{
+                        const segs = (data && Array.isArray(data.segments)) ? data.segments : [];
+                        applyScheduleSegments(segs);
+                        return fetch(`/api/schedule/${member.id}/${date}`);
+                    })
+                    .then(res=>res && res.ok ? res.json() : null)
+                    .then(data=>{
+                        if(data && Array.isArray(data.segments) && data.segments.length){
+                            applyActualSegments(data.segments);
+                        }
+                    })
+                    .catch(console.error);
+        }
+
+        /* ===== 테이블 생성 ===== */
+        function buildTenMinuteTable(){
+            tbody10m.innerHTML='';
+
+            if (thSchedule) {
+                thSchedule.textContent = '스케줄';
+                thSchedule.classList.remove('text-danger');
+            }
+
+            const slots=[];
+            for(let h=HOUR_START;h<HOUR_END;h++){
+                for(let m=0;m<60;m+=STEP_MIN){
+                    slots.push({h,m,hm:`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`});
+                }
+            }
+
+            for(let i=0;i<slots.length;i++){
+                const slot=slots[i];
+                const tr=document.createElement('tr');
+                tr.innerHTML=`
+        <td class="timecell">${slot.hm}</td>
+        <td><div class="slot-10m schedule" data-index="${i}"></div></td>
+        <td><div class="slot-10m actual" data-index="${i}"></div></td>
+      `;
+                if(slot.m===0){
+                    const td=document.createElement('td');
+                    td.className='hour-select-cell';
+                    td.rowSpan=SLOTS_PER_HOUR;
+                    td.innerHTML=`<button class="btn btn-outline-dark btn-sm hour-toggle" data-hour="${slot.h}">${String(slot.h).padStart(2,'0')}:00 선택</button>`;
+                    tr.appendChild(td);
+                }
+                tbody10m.appendChild(tr);
+            }
+
+            const actualSlots=Array.from(tbody10m.querySelectorAll('.slot-10m.actual'));
+            actualSlots.forEach(div=>{
+                div.addEventListener('mousedown',e=>{
+                    e.preventDefault(); dragging=true;
+                    dragSelecting=!div.classList.contains('on');
+                    toggleActual(div,dragSelecting);
+                });
+                div.addEventListener('mouseenter',()=>{ if(dragging) toggleActual(div,dragSelecting); });
+            });
+
+            tbody10m.querySelectorAll('.hour-toggle').forEach(btn=>{
+                btn.addEventListener('click',()=>{
+                    const h=parseInt(btn.dataset.hour);
+                    const s=(h-HOUR_START)*SLOTS_PER_HOUR, e=s+SLOTS_PER_HOUR;
+                    let allOn=true;
+                    for(let i=s;i<e;i++){
+                        if(!actualSlots[i].classList.contains('on')){ allOn=false; break; }
+                    }
+                    for(let i=s;i<e;i++){
+                        allOn?actualSlots[i].classList.remove('on'):actualSlots[i].classList.add('on');
+                    }
+                    updateActualSummary();
+                });
+            });
+
+            updateActualSummary();
+        }
+
+        /* ===== 스케줄(주황) 적용 ===== */
+        function applyScheduleSegments(segments){
+            const scheduleSlots = Array.from(tbody10m.querySelectorAll('.slot-10m.schedule'));
+
+            if (!Array.isArray(segments) || segments.length === 0) {
+                if (thSchedule) {
+                    thSchedule.textContent = '(계획된 일정 없음)';
+                    thSchedule.classList.add('text-danger');
+                }
+                scrollToTopOfTable();
+                return;
+            }
+
+            if (thSchedule) {
+                thSchedule.textContent = '스케줄';
+                thSchedule.classList.remove('text-danger');
+            }
+
+            let firstStartMin = Infinity;
+
+            segments.forEach(seg=>{
+                const s = hmToMin(seg.start), e = hmToMin(seg.end);
+                if (s < firstStartMin) firstStartMin = s;
+
+                scheduleSlots.forEach((d,i)=>{
+                    const t = hmToMin(indexToHM(i));
+                    if(t>=s && t<e) d.classList.add('on');
+                });
+            });
+
+            if (firstStartMin !== Infinity) {
+                scrollToSchedule(firstStartMin);
+            }
+        }
+
+        /* ===== 실제(초록) 적용 ===== */
+        function applyActualSegments(segments){
+            const slots=Array.from(tbody10m.querySelectorAll('.slot-10m.actual'));
+            segments.forEach(seg=>{
+                const s=hmToMin(seg.start), e=hmToMin(seg.end);
+                slots.forEach((d,i)=>{
+                    const t=hmToMin(indexToHM(i));
+                    if(t>=s && t<e) d.classList.add('on');
+                });
+            });
+            updateActualSummary();
+        }
+
+        /* ===== 스크롤 유틸 ===== */
+        function scrollToSchedule(firstStartMin){
+            const base = HOUR_START * 60;
+            const idxRaw = (firstStartMin - base) / STEP_MIN;
+            const idx = Math.max(0, Math.floor(idxRaw));
+
+            const target = tbody10m.querySelector(`.slot-10m.schedule[data-index="${idx}"]`);
+            if (!target) return;
+
+            target.scrollIntoView({
+                behavior: 'smooth',
+                block: 'center'
+            });
+        }
+
+        function scrollToTopOfTable(){
+            const firstRow = tbody10m.querySelector('tr');
+            if (!firstRow) return;
+            firstRow.scrollIntoView({
+                behavior: 'smooth',
+                block: 'start'
+            });
+        }
+
+        /* ===== 저장 ===== */
+        function saveActual(){
+            if(!selectedMemberId){
+                alert('알바생을 선택하세요.');
+                return;
+            }
+            const ranges = getSelectedRanges();
+            const payload = {
+                memberId: selectedMemberId,
+                date: fmtDateYYYYMMDD(currentDate),
+                segments: ranges
+            };
+            if(!confirm('실제 근무한 구간을 저장하시겠습니까?')) return;
+
+            fetch('/api/schedule/save',{
+                method:'POST',
+                headers:{'Content-Type':'application/json'},
+                body:JSON.stringify(payload)
+            })
+                    .then(r=>r.json())
+                    .then(result=>{
+                        if(result.success){
+                            showToast('✅ 저장되었습니다.', 'success');
+                        }else{
+                            showToast('⚠️ 실패: ' + (result.message || '오류가 발생했습니다.'), 'danger');
+                        }
+                    })
+                    .catch(()=>{
+                        showToast('❌ 저장 중 오류가 발생했습니다.', 'danger');
+                    });
+        }
+
+        function resetRightPanel(){
+            selectedMemberId=null;
+            selectedMemberTitle.textContent='선택된 알바생 없음';
+            tbody10m.innerHTML='';
+            btnClearActual.disabled=true;
+            btnSelectAllActual.disabled=true;
+            btnSaveActual.disabled=true;
+            actualSummary.textContent='-';
+
+            Array.from(memberList.querySelectorAll('.member-chip')).forEach(li=>{
+                li.classList.remove('active');
+            });
+
+            if (thSchedule) {
+                thSchedule.textContent = '스케줄';
+                thSchedule.classList.remove('text-danger');
+            }
+        }
+
+        /* ===== 날짜 네비 하이라이트 ===== */
+        function setDayNavActive(which){
+            const all = [btnDayPrev, btnDayToday, btnDayNext];
+            all.forEach(btn => {
+                btn.classList.remove('btn-primary','active','text-white');
+                btn.classList.add('btn-outline-secondary');
+            });
+            let target = null;
+            if(which === 'prev') target = btnDayPrev;
+            else if(which === 'today') target = btnDayToday;
+            else if(which === 'next') target = btnDayNext;
+
+            if(target){
+                target.classList.remove('btn-outline-secondary');
+                target.classList.add('btn-primary','active','text-white');
+            }
+        }
+
+        /* ===== 유틸 ===== */
+        function toggleActual(div,on){ on?div.classList.add('on'):div.classList.remove('on'); }
+
+        function hmToMin(hm){ const[a,b]=hm.split(':').map(Number); return a*60+b; }
+        function indexToHM(i){
+            const t=(HOUR_START*60)+i*STEP_MIN;
+            return `${String(Math.floor(t/60)).padStart(2,'0')}:${String(t%60).padStart(2,'0')}`;
+        }
+        function getSelectedRanges(){
+            const s=Array.from(tbody10m.querySelectorAll('.slot-10m.actual'));
+            const idx=s.map((d,i)=>d.classList.contains('on')?i:null).filter(i=>i!=null);
+            if(!idx.length) return [];
+            const r=[]; let a=idx[0], p=idx[0];
+            for(let i=1;i<idx.length;i++){
+                if(idx[i]===p+1) p=idx[i];
+                else { r.push([a,p]); a=idx[i]; p=idx[i]; }
+            }
+            r.push([a,p]);
+            return r.map(([a,b])=>({start:indexToHM(a), end:addMinutes(indexToHM(b),STEP_MIN)}));
+        }
+        function addMinutes(hm,mins){
+            const[h,m]=hm.split(':').map(Number);
+            const t=h*60+m+mins;
+            return `${String(Math.floor(t/60)).padStart(2,'0')}:${String(t%60).padStart(2,'0')}`;
+        }
+        function updateActualSummary(){
+            const s=getSelectedRanges();
+            actualSummary.textContent = s.length ? s.map(r=>`${r.start}~${r.end}`).join(', ') : '-';
+        }
+        function fmtDateYYYYMMDD(d){
+            return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+        }
+        function fmtDateDisplay(d){
+            const iso = fmtDateYYYYMMDD(d);
+            const dow = DOW_KO[d.getDay()];   // ✅ 여기 수정
+            return `${iso} (${dow})`;
+        }
+        function stripTime(d){
+            return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+        }
+        function addDays(d, n){
+            const x = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+            x.setDate(x.getDate()+n);
+            return x;
+        }
+        function refreshCurrentDateLabel(){
+            currentDateLabel.textContent = fmtDateDisplay(currentDate);
+        }
+
+        function colorForMember(m){
+            const key = (m.id != null ? String(m.id) : (m.name || 'x'));
+            const h = seededHash(key) % 360, s=65, l=55;
+            return hslToHex(h,s,l);
+        }
+        function seededHash(str){
+            let h=2166136261>>>0;
+            for(let i=0;i<str.length;i++){
+                h^=str.charCodeAt(i);
+                h=(h*16777619)>>>0;
+            }
+            return h>>>0;
+        }
+        function hslToHex(h,s,l){
+            s/=100; l/=100;
+            const k=n=>(n+h/30)%12, a=s*Math.min(l,1-l);
+            const f=n=>l-a*Math.max(-1,Math.min(k(n)-3,Math.min(9-k(n),1)));
+            const toHex=x=>Math.round(255*x).toString(16).padStart(2,'0');
+            return `#${toHex(f(0))}${toHex(f(8))}${toHex(f(4))}`;
+        }
+        function escapeHtml(s){
+            if(s==null) return '';
+            return String(s)
+                    .replace(/&/g,'&amp;')
+                    .replace(/</g,'&lt;')
+                    .replace(/>/g,'&gt;')
+                    .replace(/"/g,'&quot;')
+                    .replace(/'/g,'&#39;');
+        }
+
+    })();
+</script>
+
+{{>layouts/footer}}
