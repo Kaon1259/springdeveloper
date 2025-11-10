@@ -1,10 +1,15 @@
 package ymsoft.springdeveloper.com.springdeveloper.entity;
 
 import jakarta.persistence.*;
+import lombok.*;
 import ymsoft.springdeveloper.com.springdeveloper.enums.PayrollStatus;
 
 import java.time.LocalDateTime;
 
+@Getter @Setter
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
 @Entity
 @Table(
         name = "PAYROLL_MONTH",
@@ -18,8 +23,8 @@ public class PayrollMonth {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "member_id", nullable = false)
-    private Long memberId;
+//    @Column(name = "member_id", nullable = false)
+//    private Long memberId;
 
     @Column(name = "pay_year", nullable = false)
     private Integer payYear;
@@ -61,47 +66,8 @@ public class PayrollMonth {
     @Column(name = "updated_at", insertable = false)
     private LocalDateTime updatedAt;
 
-    // --- getter / setter 생략 가능(롬복 쓰면 @Data/@Getter 등) ---
-
-    public Long getId() { return id; }
-
-    public Long getMemberId() { return memberId; }
-    public void setMemberId(Long memberId) { this.memberId = memberId; }
-
-    public Integer getPayYear() { return payYear; }
-    public void setPayYear(Integer payYear) { this.payYear = payYear; }
-
-    public Integer getPayMonth() { return payMonth; }
-    public void setPayMonth(Integer payMonth) { this.payMonth = payMonth; }
-
-    public Integer getHourlyWage() { return hourlyWage; }
-    public void setHourlyWage(Integer hourlyWage) { this.hourlyWage = hourlyWage; }
-
-    public Integer getMonthWorkMinutes() { return monthWorkMinutes; }
-    public void setMonthWorkMinutes(Integer monthWorkMinutes) { this.monthWorkMinutes = monthWorkMinutes; }
-
-    public Integer getMonthJuhyuMinutes() { return monthJuhyuMinutes; }
-    public void setMonthJuhyuMinutes(Integer monthJuhyuMinutes) { this.monthJuhyuMinutes = monthJuhyuMinutes; }
-
-    public Long getMonthWorkPay() { return monthWorkPay; }
-    public void setMonthWorkPay(Long monthWorkPay) { this.monthWorkPay = monthWorkPay; }
-
-    public Long getMonthJuhyuPay() { return monthJuhyuPay; }
-    public void setMonthJuhyuPay(Long monthJuhyuPay) { this.monthJuhyuPay = monthJuhyuPay; }
-
-    public Long getMonthTotalPay() { return monthTotalPay; }
-    public void setMonthTotalPay(Long monthTotalPay) { this.monthTotalPay = monthTotalPay; }
-
-    public PayrollStatus getStatus() { return status; }
-    public void setStatus(PayrollStatus status) { this.status = status; }
-
-    public LocalDateTime getConfirmedAt() { return confirmedAt; }
-    public void setConfirmedAt(LocalDateTime confirmedAt) { this.confirmedAt = confirmedAt; }
-
-    public LocalDateTime getPaidAt() { return paidAt; }
-    public void setPaidAt(LocalDateTime paidAt) { this.paidAt = paidAt; }
-
-    public LocalDateTime getCreatedAt() { return createdAt; }
-    public LocalDateTime getUpdatedAt() { return updatedAt; }
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "member_id")
+    private Member member;
 }
 

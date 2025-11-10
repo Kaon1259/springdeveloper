@@ -89,4 +89,19 @@ public class PaymentController {
         model.addAttribute("pageTitle", "월/주 실 근무시간 대시보드");
         return "members/payidManagement";
     }
+
+    @GetMapping("/payiddashboard")
+    public String payidDashboard(Model model) throws Exception {
+        List<MemberDto> members = memService.findAll();
+        log.info("/paid/ members: {}", members);
+        model.addAttribute("members", members);
+
+        String membersJson = objectMapper.writeValueAsString(members);
+        log.info("membersJson: {}", membersJson);
+        model.addAttribute("membersJson", membersJson);
+
+        // 5) 페이지 타이틀
+        model.addAttribute("pageTitle", "월/주 실 근무시간 대시보드");
+        return "members/payidManagementDashboard";
+    }
 }

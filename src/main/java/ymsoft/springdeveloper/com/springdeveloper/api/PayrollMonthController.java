@@ -5,7 +5,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ymsoft.springdeveloper.com.springdeveloper.dto.MemberMonthPayrollResponse;
+import ymsoft.springdeveloper.com.springdeveloper.dto.MonthlyPayrollDto;
 import ymsoft.springdeveloper.com.springdeveloper.dto.PayrollMonthRequest;
+import ymsoft.springdeveloper.com.springdeveloper.dto.YearlyPayrollDto;
 import ymsoft.springdeveloper.com.springdeveloper.entity.PayrollMonth;
 import ymsoft.springdeveloper.com.springdeveloper.enums.PayrollStatus;
 import ymsoft.springdeveloper.com.springdeveloper.service.PayrollMonthService;
@@ -43,6 +45,14 @@ public class PayrollMonthController {
         return ResponseEntity.ok().body(saved.getId());
     }
 
+    @GetMapping("/monthly")
+    public ResponseEntity<List<MonthlyPayrollDto>> getMonthlyPayroll(
+            @RequestParam int year,
+            @RequestParam int month
+    ) {
+        List<MonthlyPayrollDto> list = payrollMonthService.getMonthlyPayroll(year, month);
+        return ResponseEntity.ok(list);
+    }
 
     @GetMapping("/month/{memberId}/{year}/{month}")
     public ResponseEntity<?> getPayrollMonth(
@@ -64,5 +74,13 @@ public class PayrollMonthController {
         log.info("Get payrolls of member id: {}", memberId);
 
         return payrollMonthService.getPayrollsForMember(memberId, status);
+    }
+
+    @GetMapping("/yearly")
+    public ResponseEntity<List<YearlyPayrollDto>> getYearlyPayroll(
+            @RequestParam int year
+    ) {
+        List<YearlyPayrollDto> result = payrollMonthService.getYearlyPayroll(year);
+        return ResponseEntity.ok(result);
     }
 }

@@ -3,9 +3,7 @@ package ymsoft.springdeveloper.com.springdeveloper.service;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ymsoft.springdeveloper.com.springdeveloper.dto.MemberMonthPayrollResponse;
-import ymsoft.springdeveloper.com.springdeveloper.dto.PayrollMonthRequest;
-import ymsoft.springdeveloper.com.springdeveloper.dto.PayrollMonthResponse;
+import ymsoft.springdeveloper.com.springdeveloper.dto.*;
 import ymsoft.springdeveloper.com.springdeveloper.entity.PayrollMonth;
 import ymsoft.springdeveloper.com.springdeveloper.enums.PayrollStatus;
 import ymsoft.springdeveloper.com.springdeveloper.repository.PayrollMonthRepository;
@@ -13,6 +11,7 @@ import ymsoft.springdeveloper.com.springdeveloper.repository.PayrollMonthReposit
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class PayrollMonthService {
@@ -36,7 +35,8 @@ public class PayrollMonthService {
 
         // 신규면 기본키/키 필드 세팅
         if (entity.getId() == null) {
-            entity.setMemberId(req.getMemberId());
+        //    entity.setMemberId(req.getMemberId());
+            entity.setMember(entity.getMember());
             entity.setPayYear(req.getPayYear());
             entity.setPayMonth(req.getPayMonth());
         }
@@ -122,6 +122,48 @@ public class PayrollMonthService {
         return entities.stream()
                 .map(MemberMonthPayrollResponse::from)
                 .toList();
+    }
+
+
+    /**
+     * 특정 연월 기준으로 근무자별 급여 요약 목록 조회
+     */
+    public List<MonthlyPayrollDto> getMonthlyPayroll(int year, int month) {
+        List<PayrollMonth> entities = payrollMonthRepository.findByPayYearAndPayMonth(year, month);
+
+        return entities.stream()
+                .map(p -> MonthlyPayrollDto.builder()
+                        .memberId(p.getMember().getId())
+                        .memberName(p.getMember().getName())
+                        .memberPhone(p.getMember().getPhone())
+
+                        .workMinutes(p.getMonthWorkMinutes())
+                        .juhyuMinutes(p.getMonthJuhyuMinutes())
+                        .hourlyWage(p.getHourlyWage())
+                        .workPay(p.getMonthWorkPay().intValue())
+                        .juhyuPay(p.getMonthJuhyuPay().intValue())
+                        .totalPay(p.getMonthWorkPay().intValue() + p.getMonthJuhyuPay().intValue())
+
+                        .status(p.getStatus().name())
+                        .createdAt(formatDate(p.getCreatedAt()))
+                        .confirmedAt(formatDate(p.getConfirmedAt()))
+                        .paidAt(formatDate(p.getPaidAt()))
+                        .build()
+                )
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * 연도별 근무자 급여 합계 조회
+     */
+    public List<YearlyPayrollDto> getYearlyPayroll(int year) {
+        // 필요하면 year 유효성 체크 (예: 과거/미래 제한) 추가 가능
+        return payrollMonthRepository.findYearlySummaryByYear(year);
+    }
+
+    private String formatDate(LocalDateTime t) {
+        if (t == null) return null;
+        return t.toString(); // ISO 문자열로 반환
     }
 }
 

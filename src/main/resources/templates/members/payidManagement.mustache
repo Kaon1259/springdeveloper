@@ -39,7 +39,7 @@
             </div>
         </div>
 
-        <!-- ============ 오른쪽: 지급된 급여 내역 ============ -->
+        <!-- ============ 오른쪽: 지급된 급여 내역 (월별 / 연도별 탭) ============ -->
         <div class="col-12 col-lg-8">
             <div class="pay-right-wrapper">
 
@@ -56,37 +56,73 @@
 
                 <div class="card">
                     <div class="card-header fw-bold d-flex justify-content-between align-items-center">
-                        <span>지급된 급여 내역 (월별)</span>
-                        <span id="payHistoryCount" class="badge bg-light text-dark">0건</span>
+                        <span>지급된 급여 내역</span>
+                        <div class="d-flex align-items-center gap-3">
+                            <span id="payHistoryCount" class="badge bg-light text-dark">0건</span>
+
+                            <!-- 🔁 월별 / 연도별 탭 -->
+                            <ul class="nav nav-pills nav-pills-sm" id="payViewTabs">
+                                <li class="nav-item">
+                                    <button class="nav-link active" type="button" data-view="MONTH">월별</button>
+                                </li>
+                                <li class="nav-item">
+                                    <button class="nav-link" type="button" data-view="YEAR">연도별</button>
+                                </li>
+                            </ul>
+                        </div>
                     </div>
                     <div class="card-body">
 
                         <!-- 안내 -->
                         <div class="small text-muted mb-2">
-                            좌측에서 근무자를 선택하면, <b>지급완료된 월급 내역</b>을 보여줍니다.<br>
+                            좌측에서 근무자를 선택하면, <b>지급완료된 월급 내역</b>과 <b>연도별 합산 내역</b>을 볼 수 있습니다.<br>
                             하단에는 지금까지 지급한 <b>실근무시간 / 주휴수당시간 / 근무수당 / 주휴수당 / 총 지급액</b>이 합산됩니다.
                         </div>
 
-                        <!-- 지급내역 테이블 -->
+                        <!-- 📊 월별 / 연도별 지급내역 테이블 -->
                         <div class="table-responsive">
-                            <table class="table table-bordered align-middle text-center" id="payHistoryTable">
-                                <thead class="table-light">
-                                <tr>
-                                    <th style="width:90px;">연도-월</th>
-                                    <th style="width:160px;">지급일</th>
-                                    <th style="width:80px;">상태</th>
-                                    <th style="width:110px;">시급</th>
-                                    <th style="width:120px;">실근무</th>
-                                    <th style="width:120px;">주휴수당 시간</th>
-                                    <th style="width:140px;" class="text-end">근무수당</th>
-                                    <th style="width:140px;" class="text-end">주휴수당</th>
-                                    <th style="width:160px;" class="text-end">총 지급액</th>
-                                </tr>
-                                </thead>
-                                <tbody id="payHistoryBody">
-                                <!-- JS 렌더 -->
-                                </tbody>
-                            </table>
+
+                            <!-- 📅 월별 뷰 -->
+                            <div id="payViewMonth">
+                                <table class="table table-bordered align-middle text-center" id="payHistoryTableMonth">
+                                    <thead class="table-light">
+                                    <tr>
+                                        <th style="width:90px;">연도-월</th>
+                                        <th style="width:160px;">지급일</th>
+                                        <th style="width:80px;">상태</th>
+                                        <th style="width:110px;">시급</th>
+                                        <th style="width:120px;">실근무</th>
+                                        <th style="width:120px;">주휴수당 시간</th>
+                                        <th style="width:140px;" class="text-end">근무수당</th>
+                                        <th style="width:140px;" class="text-end">주휴수당</th>
+                                        <th style="width:160px;" class="text-end">총 지급액</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody id="payHistoryBodyMonth">
+                                    <!-- JS 렌더 -->
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <!-- 📆 연도별 뷰 -->
+                            <div id="payViewYear" class="d-none">
+                                <table class="table table-bordered align-middle text-center" id="payHistoryTableYear">
+                                    <thead class="table-light">
+                                    <tr>
+                                        <th style="width:100px;">연도</th>
+                                        <th style="width:140px;">실근무시간 합계</th>
+                                        <th style="width:150px;">주휴수당 시간 합계</th>
+                                        <th style="width:150px;" class="text-end">근무수당 합계</th>
+                                        <th style="width:150px;" class="text-end">주휴수당 합계</th>
+                                        <th style="width:180px;" class="text-end">총 지급액 합계</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody id="payHistoryBodyYear">
+                                    <!-- JS 렌더 -->
+                                    </tbody>
+                                </table>
+                            </div>
+
                         </div>
 
                         <!-- 합계 영역 -->
@@ -116,7 +152,7 @@
 
                         <div class="small text-muted mt-3">
                             * "급여 관리" 화면에서 <b>지급완료</b>로 처리된 월급만 이 화면에 표시됩니다.<br>
-                            * 실근무/주휴수당 시간은 각 월의 합산값이며, 금액은 당시 시급 기준으로 계산된 값입니다.
+                            * 연도별 내역은 월별 지급 내역을 연도 단위로 합산한 값입니다.
                         </div>
                     </div>
                 </div>
@@ -168,10 +204,14 @@
     #summaryTotalPay {
         text-align:right;
     }
+
+    .toast-top-center {
+        margin-top: 70px; /* 상단 네비바 아래쪽 여백 */
+    }
 </style>
 
 <!-- ✅ 부트스트랩 토스트 영역 -->
-<div class="position-fixed bottom-0 end-0 p-3" style="z-index:1080;">
+<div class="position-fixed top-0 start-50 translate-middle-x p-3 toast-top-center" style="z-index:1080;">
     <div id="mainToast" class="toast align-items-center text-bg-success border-0" role="alert"
          aria-live="assertive" aria-atomic="true">
         <div class="d-flex">
@@ -205,8 +245,14 @@
         const selectedMemberNameEl = document.getElementById('selectedMemberName');
         const selectedMemberStatus = document.getElementById('selectedMemberStatus');
 
+        // 우측 탭
+        const payViewTabs          = document.querySelectorAll('#payViewTabs .nav-link');
+        const payViewMonthEl       = document.getElementById('payViewMonth');
+        const payViewYearEl        = document.getElementById('payViewYear');
+
         // 지급 내역 테이블
-        const payHistoryBody       = document.getElementById('payHistoryBody');
+        const payHistoryBodyMonth  = document.getElementById('payHistoryBodyMonth');
+        const payHistoryBodyYear   = document.getElementById('payHistoryBodyYear');
         const payHistoryCount      = document.getElementById('payHistoryCount');
 
         // 합계 영역
@@ -230,6 +276,9 @@
 
         let currentMember = null;
         let selectedMemberId = null;
+        let currentPayView = 'MONTH'; // 'MONTH' | 'YEAR'
+        let lastMonthlyCount = 0;
+        let lastYearlyCount  = 0;
 
         // 상태 초기값
         if (Array.isArray(allMembers) && allMembers.length > 0) {
@@ -239,6 +288,28 @@
         // 이벤트 바인딩
         statusSelect.addEventListener('change', handleStatusChange);
         memberList.addEventListener('click', onMemberListClick);
+
+        // 우측 탭 클릭
+        payViewTabs.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const view = btn.dataset.view; // MONTH | YEAR
+                if (!view) return;
+                currentPayView = view;
+
+                payViewTabs.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+
+                if (view === 'MONTH') {
+                    payViewMonthEl.classList.remove('d-none');
+                    payViewYearEl.classList.add('d-none');
+                    payHistoryCount.textContent = `${lastMonthlyCount}건`;
+                } else {
+                    payViewYearEl.classList.remove('d-none');
+                    payViewMonthEl.classList.add('d-none');
+                    payHistoryCount.textContent = `${lastYearlyCount}건`;
+                }
+            });
+        });
 
         // 초기 실행
         handleStatusChange();
@@ -350,8 +421,11 @@
         }
 
         function clearRight() {
-            payHistoryBody.innerHTML = '';
-            payHistoryCount.textContent = '0건';
+            payHistoryBodyMonth.innerHTML = '';
+            payHistoryBodyYear.innerHTML  = '';
+            payHistoryCount.textContent   = '0건';
+            lastMonthlyCount = 0;
+            lastYearlyCount  = 0;
 
             summaryTotalWorkTime.textContent = '0시간';
             summaryTotalJuhyuTime.textContent = '0시간';
@@ -369,12 +443,15 @@
                 return;
             }
 
-            payHistoryBody.innerHTML = `
+            payHistoryBodyMonth.innerHTML = `
                 <tr>
                     <td colspan="9" class="text-center text-muted">불러오는 중...</td>
                 </tr>
             `;
+            payHistoryBodyYear.innerHTML = '';
             payHistoryCount.textContent = '0건';
+            lastMonthlyCount = 0;
+            lastYearlyCount  = 0;
 
             let list = [];
             try {
@@ -403,17 +480,30 @@
 
         // ===== 지급내역 테이블 + 합계 렌더 =====
         function renderPayrollList(member, list) {
-            payHistoryBody.innerHTML = '';
+            payHistoryBodyMonth.innerHTML = '';
+            payHistoryBodyYear.innerHTML  = '';
 
             if (!Array.isArray(list) || list.length === 0) {
-                payHistoryBody.innerHTML = `
+                const emptyMonth = `
                     <tr>
                         <td colspan="9" class="text-center text-muted">
                             지급완료된 급여 내역이 없습니다.
                         </td>
                     </tr>
                 `;
+                const emptyYear = `
+                    <tr>
+                        <td colspan="6" class="text-center text-muted">
+                            연도별로 집계할 급여 내역이 없습니다.
+                        </td>
+                    </tr>
+                `;
+                payHistoryBodyMonth.innerHTML = emptyMonth;
+                payHistoryBodyYear.innerHTML  = emptyYear;
+
                 payHistoryCount.textContent = '0건';
+                lastMonthlyCount = 0;
+                lastYearlyCount  = 0;
 
                 summaryTotalWorkTime.textContent = '0시간';
                 summaryTotalJuhyuTime.textContent = '0시간';
@@ -438,11 +528,14 @@
             let totalJuhyuPay = 0;
             let totalPay = 0;
 
-            const rows = list.map(item => {
+            // 연도별 합계를 위한 맵
+            const yearMap = {}; // { [year]: { workMinutes, juhyuMinutes, workPay, juhyuPay, totalPay } }
+
+            const monthRows = list.map(item => {
                 const year  = item.payYear ?? '-';
                 const month = item.payMonth != null ? pad2(item.payMonth) : '--';
 
-                // ✅ 지급일 포맷팅: 2025-11-12 10:20
+                // 지급일
                 const rawPaidDate = item.paidDate;
                 const paidDate = rawPaidDate ? formatDateTime(rawPaidDate) : '-';
 
@@ -459,6 +552,25 @@
                 totalWorkPay      += workPay;
                 totalJuhyuPay     += juhyuPay;
                 totalPay          += total;
+
+                // 연도별 합산
+                if (item.payYear != null) {
+                    const y = item.payYear;
+                    if (!yearMap[y]) {
+                        yearMap[y] = {
+                            workMinutes: 0,
+                            juhyuMinutes: 0,
+                            workPay: 0,
+                            juhyuPay: 0,
+                            totalPay: 0
+                        };
+                    }
+                    yearMap[y].workMinutes  += workMinutes;
+                    yearMap[y].juhyuMinutes += juhyuMinutes;
+                    yearMap[y].workPay      += workPay;
+                    yearMap[y].juhyuPay     += juhyuPay;
+                    yearMap[y].totalPay     += total;
+                }
 
                 const hourly = (typeof item.hourlyWage === 'number')
                         ? krw(item.hourlyWage)
@@ -486,10 +598,46 @@
                 `;
             });
 
-            payHistoryBody.innerHTML = rows.join('');
-            payHistoryCount.textContent = `${list.length}건`;
+            payHistoryBodyMonth.innerHTML = monthRows.join('');
+            lastMonthlyCount = list.length;
 
-            // 합계 반영
+            // 연도별 테이블 렌더링
+            const years = Object.keys(yearMap).map(y => Number(y)).sort((a,b) => b - a); // 최신 연도 위
+            if (years.length === 0) {
+                payHistoryBodyYear.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="text-center text-muted">
+                            연도별로 집계할 급여 내역이 없습니다.
+                        </td>
+                    </tr>
+                `;
+                lastYearlyCount = 0;
+            } else {
+                const yearRows = years.map(y => {
+                    const aggr = yearMap[y];
+                    return `
+                        <tr>
+                            <td>${y}</td>
+                            <td>${formatMins(aggr.workMinutes)}</td>
+                            <td>${formatMins(aggr.juhyuMinutes)}</td>
+                            <td class="text-end">${aggr.workPay ? krw(aggr.workPay) : '-'}</td>
+                            <td class="text-end">${aggr.juhyuPay ? krw(aggr.juhyuPay) : '-'}</td>
+                            <td class="text-end fw-semibold">${aggr.totalPay ? krw(aggr.totalPay) : '-'}</td>
+                        </tr>
+                    `;
+                });
+                payHistoryBodyYear.innerHTML = yearRows.join('');
+                lastYearlyCount = years.length;
+            }
+
+            // 현재 뷰에 맞게 건수 표시
+            if (currentPayView === 'MONTH') {
+                payHistoryCount.textContent = `${lastMonthlyCount}건`;
+            } else {
+                payHistoryCount.textContent = `${lastYearlyCount}건`;
+            }
+
+            // 합계 반영 (전체 기간 기준)
             summaryTotalWorkTime.textContent  = formatMins(totalWorkMinutes);
             summaryTotalJuhyuTime.textContent = formatMins(totalJuhyuMinutes);
             summaryTotalWorkPay.textContent   = totalWorkPay  ? krw(totalWorkPay)  : '-';

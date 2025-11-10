@@ -1,0 +1,791 @@
+{{>layouts/header}}
+
+<main class="container my-4">
+
+    <!-- 🔼 상단: 뷰 전환 탭 (월별 / 연도별) -->
+    <ul class="nav nav-pills mb-3" id="payViewTabs">
+        <li class="nav-item">
+            <button class="nav-link active" data-view="MONTH" type="button">
+                월별 지급현황
+            </button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link" data-view="YEAR" type="button">
+                연도별 지급현황
+            </button>
+        </li>
+    </ul>
+
+    <!-- ================== 🗓 월별 지급현황 뷰 ================== -->
+    <section id="viewMonth">
+
+        <!-- 상단: 월 선택 + 네비게이션 -->
+        <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+            <div class="d-flex flex-wrap align-items-center gap-2">
+                <button class="btn btn-outline-secondary btn-sm" id="prevMonthBtn">◀ 이전달</button>
+                <button class="btn btn-outline-secondary btn-sm" id="thisMonthBtn">이번달</button>
+                <button class="btn btn-outline-secondary btn-sm" id="nextMonthBtn">다음달 ▶</button>
+
+                <input type="month" id="monthPicker"
+                       class="form-control form-control-sm ms-1"
+                       style="width:170px;">
+            </div>
+            <div class="text-end">
+                <div class="fw-bold h5 mb-0">월별 임금 지급 현황</div>
+                <div class="small text-muted" id="monthLabelSub"></div>
+            </div>
+        </div>
+
+        <!-- 안내 문구 -->
+        <div class="small text-muted mb-3">
+            선택한 <b>연-월</b> 기준으로 <b>임시저장 / 확정 / 지급완료</b> 상태의 근무자를 모두 표시합니다.<br>
+            지급완료된 행은 <span class="badge bg-primary">연파랑색</span>으로 강조됩니다.
+        </div>
+
+        <!-- 📊 월별 근무자 타임테이블 -->
+        <div class="table-responsive">
+            <table class="table table-bordered align-middle text-center" id="monthlyPayTable">
+                <thead class="table-light">
+                <tr>
+                    <th style="width:220px;">근무자</th>
+                    <th style="width:120px;">실근무시간</th>
+                    <th style="width:130px;">주휴수당 시간</th>
+                    <th style="width:100px;">시급</th>
+                    <th style="width:130px;" class="text-end">실근무 급여</th>
+                    <th style="width:130px;" class="text-end">주휴 수당</th>
+                    <th style="width:150px;" class="text-end">전체 금액</th>
+                    <th style="width:90px;">상태</th>
+                    <th style="width:170px;">처리일자</th>
+                </tr>
+                </thead>
+                <tbody id="monthlyPayBody">
+                <!-- JS 렌더 -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- 📌 월별 요약 영역 -->
+        <div class="mt-4 p-3 bg-light rounded">
+            <div class="d-flex justify-content-between mb-1">
+                <span class="small text-muted">총 실근무시간</span>
+                <span class="fw-semibold" id="sumWorkTime">-</span>
+            </div>
+            <div class="d-flex justify-content-between mb-1">
+                <span class="small text-muted">총 주휴수당시간</span>
+                <span class="fw-semibold" id="sumJuhyuTime">-</span>
+            </div>
+            <div class="d-flex justify-content-between mb-1">
+                <span class="small text-muted">총 실근무 급여</span>
+                <span class="fw-semibold" id="sumWorkPay">-</span>
+            </div>
+            <div class="d-flex justify-content-between mb-2">
+                <span class="small text-muted">총 주휴 수당</span>
+                <span class="fw-semibold" id="sumJuhyuPay">-</span>
+            </div>
+            <hr class="my-2">
+            <div class="d-flex justify-content-between align-items-center">
+                <span class="small fw-bold">총 지급 금액 (실근무 급여 + 주휴 수당)</span>
+                <span class="fw-bold text-primary" id="sumTotalPay">-</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- ================== 📅 연도별 지급현황 뷰 ================== -->
+    <section id="viewYear" class="d-none mt-4">
+
+        <!-- 상단: 연도 선택 + 네비게이션 -->
+        <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+            <div class="d-flex flex-wrap align-items-center gap-2">
+                <button class="btn btn-outline-secondary btn-sm" id="prevYearBtn">◀ 이전해</button>
+                <button class="btn btn-outline-secondary btn-sm" id="thisYearBtn">올해</button>
+                <button class="btn btn-outline-secondary btn-sm" id="nextYearBtn">다음해 ▶</button>
+
+                <input type="number" id="yearInput"
+                       class="form-control form-control-sm ms-1"
+                       style="width:120px;"
+                       min="2000" max="2100">
+            </div>
+            <div class="text-end">
+                <div class="fw-bold h5 mb-0">연도별 임금 지급 현황</div>
+                <div class="small text-muted" id="yearLabelSub"></div>
+            </div>
+        </div>
+
+        <!-- 안내 문구 -->
+        <div class="small text-muted mb-3">
+            선택한 <b>연도 전체</b> 기준으로 근무자별 <b>실근무/주휴수당/급여합계</b>를 표시합니다.<br>
+            연도 합계는 각 월의 지급 내역을 합산한 값입니다.
+        </div>
+
+        <!-- 📊 연도별 근무자 테이블 -->
+        <div class="table-responsive">
+            <table class="table table-bordered align-middle text-center" id="yearlyPayTable">
+                <thead class="table-light">
+                <tr>
+                    <th style="width:220px;">근무자</th>
+                    <th style="width:120px;">연간 실근무시간</th>
+                    <th style="width:130px;">연간 주휴수당 시간</th>
+                    <th style="width:100px;">기준 시급</th>
+                    <th style="width:130px;" class="text-end">연간 실근무 급여</th>
+                    <th style="width:130px;" class="text-end">연간 주휴 수당</th>
+                    <th style="width:150px;" class="text-end">연간 전체 금액</th>
+                    <th style="width:120px;">비고</th>
+                </tr>
+                </thead>
+                <tbody id="yearlyPayBody">
+                <!-- JS 렌더 -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- 📌 연도별 요약 영역 -->
+        <div class="mt-4 p-3 bg-light rounded">
+            <div class="d-flex justify-content-between mb-1">
+                <span class="small text-muted">연간 총 실근무시간</span>
+                <span class="fw-semibold" id="yearSumWorkTime">-</span>
+            </div>
+            <div class="d-flex justify-content-between mb-1">
+                <span class="small text-muted">연간 총 주휴수당시간</span>
+                <span class="fw-semibold" id="yearSumJuhyuTime">-</span>
+            </div>
+            <div class="d-flex justify-content-between mb-1">
+                <span class="small text-muted">연간 총 실근무 급여</span>
+                <span class="fw-semibold" id="yearSumWorkPay">-</span>
+            </div>
+            <div class="d-flex justify-content-between mb-2">
+                <span class="small text-muted">연간 총 주휴 수당</span>
+                <span class="fw-semibold" id="yearSumJuhyuPay">-</span>
+            </div>
+            <hr class="my-2">
+            <div class="d-flex justify-content-between align-items-center">
+                <span class="small fw-bold">연간 총 지급 금액 (실근무 급여 + 주휴 수당)</span>
+                <span class="fw-bold text-primary" id="yearSumTotalPay">-</span>
+            </div>
+        </div>
+    </section>
+
+</main>
+
+<!-- 💄 스타일 -->
+<style>
+    /* 상태 색상 점 (첫 컬럼용) */
+    .status-dot {
+        display:inline-block;
+        width:10px;
+        height:10px;
+        border-radius:50%;
+        margin-right:6px;
+        border:1px solid rgba(0,0,0,.08);
+    }
+    .status-dot-draft { background:#ced4da; }      /* 임시저장 - 회색 */
+    .status-dot-confirmed { background:#ffe08a; }  /* 확정 - 노랑 */
+    .status-dot-paid { background:#4dabf7; }       /* 지급완료 - 파랑 */
+
+    /* 행 배경색 */
+    #monthlyPayBody tr.draft-row {
+        background-color:#f8f9fa;
+    }
+    #monthlyPayBody tr.confirmed-row {
+        background-color:#fff8e1;
+    }
+    #monthlyPayBody tr.paid-row {
+        background-color:#e8f2ff; /* 연파랑 */
+    }
+
+    /* 이름 영역 정렬 */
+    .member-cell {
+        text-align:left;
+        white-space:nowrap;
+    }
+    .member-name {
+        font-weight:600;
+    }
+    .member-meta {
+        font-size:.75rem;
+        color:#6c757d;
+    }
+
+    /* 토스트 상단 중앙 여백 */
+    .toast-top-center {
+        margin-top: 70px; /* 상단 네비바 아래쪽 여백 */
+    }
+</style>
+
+<!-- ✅ 부트스트랩 토스트 영역 (상단 중앙 배치 + 3초 자동 닫힘 + X 텍스트 버튼) -->
+<div class="position-fixed top-0 start-50 translate-middle-x p-3 toast-top-center" style="z-index:1080;">
+    <div id="mainToast"
+         class="toast align-items-center text-bg-success border-0"
+         role="alert"
+         aria-live="assertive"
+         aria-atomic="true"
+         data-bs-delay="3000"
+         data-bs-autohide="true">
+        <div class="d-flex align-items-center">
+            <div class="toast-body" id="mainToastBody">
+                처리되었습니다.
+            </div>
+            <!-- X 텍스트 닫기 버튼 -->
+            <button type="button"
+                    class="btn btn-sm btn-link fw-bold text-dark ms-2"
+                    data-bs-dismiss="toast"
+                    aria-label="Close"
+                    style="text-decoration:none;font-size:1.2rem;line-height:1;">
+                ×
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    (function() {
+        // 📡 API URL
+        const MONTHLY_API = '/api/payroll/monthly';
+        const YEARLY_API  = '/api/payroll/yearly';
+
+        // 🔁 탭
+        const tabButtons = document.querySelectorAll('#payViewTabs .nav-link');
+        const viewMonthSection = document.getElementById('viewMonth');
+        const viewYearSection  = document.getElementById('viewYear');
+
+        // 월별 요소
+        const monthPicker   = document.getElementById('monthPicker');
+        const monthLabelSub = document.getElementById('monthLabelSub');
+        const prevMonthBtn  = document.getElementById('prevMonthBtn');
+        const thisMonthBtn  = document.getElementById('thisMonthBtn');
+        const nextMonthBtn  = document.getElementById('nextMonthBtn');
+
+        const monthlyTbody  = document.getElementById('monthlyPayBody');
+
+        const sumWorkTime   = document.getElementById('sumWorkTime');
+        const sumJuhyuTime  = document.getElementById('sumJuhyuTime');
+        const sumWorkPay    = document.getElementById('sumWorkPay');
+        const sumJuhyuPay   = document.getElementById('sumJuhyuPay');
+        const sumTotalPay   = document.getElementById('sumTotalPay');
+
+        // 연도별 요소
+        const yearInput     = document.getElementById('yearInput');
+        const yearLabelSub  = document.getElementById('yearLabelSub');
+        const prevYearBtn   = document.getElementById('prevYearBtn');
+        const thisYearBtn   = document.getElementById('thisYearBtn');
+        const nextYearBtn   = document.getElementById('nextYearBtn');
+
+        const yearlyTbody   = document.getElementById('yearlyPayBody');
+
+        const yearSumWorkTime  = document.getElementById('yearSumWorkTime');
+        const yearSumJuhyuTime = document.getElementById('yearSumJuhyuTime');
+        const yearSumWorkPay   = document.getElementById('yearSumWorkPay');
+        const yearSumJuhyuPay  = document.getElementById('yearSumJuhyuPay');
+        const yearSumTotalPay  = document.getElementById('yearSumTotalPay');
+
+        // 토스트
+        const toastEl       = document.getElementById('mainToast');
+        const toastBodyEl   = document.getElementById('mainToastBody');
+
+        // 공통: 오늘 기준
+        const now = new Date();
+        const initYm  = `${now.getFullYear()}-${pad2(now.getMonth()+1)}`;
+        const initYear = now.getFullYear();
+
+        // 초기 셋업 - 월별
+        monthPicker.value = initYm;
+        updateMonthLabel();
+
+        // 초기 셋업 - 연도별
+        yearInput.value = initYear;
+        updateYearLabel();
+
+        // 탭 변경 이벤트
+        tabButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const view = btn.dataset.view;
+                tabButtons.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+
+                if (view === 'MONTH') {
+                    viewMonthSection.classList.remove('d-none');
+                    viewYearSection.classList.add('d-none');
+                    // 월별 데이터 로딩
+                    loadMonthlyData();
+                } else {
+                    viewYearSection.classList.remove('d-none');
+                    viewMonthSection.classList.add('d-none');
+                    // 연도별 데이터 로딩
+                    loadYearlyData();
+                }
+            });
+        });
+
+        // 월별 이벤트
+        prevMonthBtn.addEventListener('click', () => shiftMonth(-1));
+        nextMonthBtn.addEventListener('click', () => shiftMonth(1));
+        thisMonthBtn.addEventListener('click', () => {
+            const today = new Date();
+            monthPicker.value = `${today.getFullYear()}-${pad2(today.getMonth()+1)}`;
+            updateMonthLabel();
+            loadMonthlyData();
+        });
+        monthPicker.addEventListener('change', () => {
+            updateMonthLabel();
+            loadMonthlyData();
+        });
+
+        // 연도별 이벤트
+        prevYearBtn.addEventListener('click', () => shiftYear(-1));
+        nextYearBtn.addEventListener('click', () => shiftYear(1));
+        thisYearBtn.addEventListener('click', () => {
+            const year = new Date().getFullYear();
+            yearInput.value = year;
+            updateYearLabel();
+            loadYearlyData();
+        });
+        yearInput.addEventListener('change', () => {
+            updateYearLabel();
+            loadYearlyData();
+        });
+
+        // 초기: 월별 탭 기준 데이터 로딩
+        loadMonthlyData();
+
+        // ====== 월 이동 ======
+        function shiftMonth(diff) {
+            const cur = monthPicker.value || initYm;
+            const d = new Date(cur + '-01T00:00:00');
+            if (isNaN(d.getTime())) return;
+            d.setMonth(d.getMonth() + diff);
+            monthPicker.value = `${d.getFullYear()}-${pad2(d.getMonth()+1)}`;
+            updateMonthLabel();
+            loadMonthlyData();
+        }
+
+        function updateMonthLabel() {
+            const [y, m] = (monthPicker.value || '').split('-');
+            if (y && m) {
+                monthLabelSub.textContent = `${y}년 ${Number(m)}월 기준`;
+            } else {
+                monthLabelSub.textContent = '';
+            }
+        }
+
+        // ====== 연도 이동 ======
+        function shiftYear(diff) {
+            let year = Number(yearInput.value) || initYear;
+            year += diff;
+            yearInput.value = year;
+            updateYearLabel();
+            loadYearlyData();
+        }
+
+        function updateYearLabel() {
+            const year = Number(yearInput.value) || initYear;
+            yearLabelSub.textContent = `${year}년 전체 지급현황`;
+        }
+
+        // ====== 월별 데이터 로드 ======
+        async function loadMonthlyData() {
+            const [yearStr, monthStr] = (monthPicker.value || '').split('-');
+            const year  = Number(yearStr) || now.getFullYear();
+            const month = Number(monthStr) || (now.getMonth()+1);
+
+            monthlyTbody.innerHTML = `
+                <tr>
+                    <td colspan="9" class="text-center text-muted">
+                        데이터를 불러오는 중입니다...
+                    </td>
+                </tr>
+            `;
+
+            try {
+                const url = `${MONTHLY_API}?year=${encodeURIComponent(year)}&month=${encodeURIComponent(month)}`;
+                const resp = await fetch(url, { headers:{ 'Accept':'application/json' } });
+
+                if (!resp.ok) {
+                    const txt = await resp.text().catch(()=> '');
+                    console.error('monthly api error', resp.status, txt);
+                    showToast('월별 임금 데이터를 불러오는 중 오류가 발생했습니다.', 'danger');
+                    monthlyTbody.innerHTML = `
+                        <tr>
+                            <td colspan="9" class="text-center text-danger">
+                                데이터를 불러오는 중 오류가 발생했습니다.
+                            </td>
+                        </tr>
+                    `;
+                    clearMonthSummary();
+                    return;
+                }
+
+                let list = await resp.json();
+                if (!Array.isArray(list)) list = [];
+
+                renderMonthlyTable(list);
+            } catch (e) {
+                console.error('monthly api fetch error', e);
+                showToast('월별 임금 데이터를 불러오는 중 통신 오류가 발생했습니다.', 'danger');
+                monthlyTbody.innerHTML = `
+                    <tr>
+                        <td colspan="9" class="text-center text-danger">
+                            통신 오류가 발생했습니다.
+                        </td>
+                    </tr>
+                `;
+                clearMonthSummary();
+            }
+        }
+
+        // ====== 연도별 데이터 로드 ======
+        async function loadYearlyData() {
+            const year = Number(yearInput.value) || now.getFullYear();
+
+            yearlyTbody.innerHTML = `
+                <tr>
+                    <td colspan="8" class="text-center text-muted">
+                        데이터를 불러오는 중입니다...
+                    </td>
+                </tr>
+            `;
+
+            try {
+                const url = `${YEARLY_API}?year=${encodeURIComponent(year)}`;
+                const resp = await fetch(url, { headers:{ 'Accept':'application/json' } });
+
+                if (!resp.ok) {
+                    const txt = await resp.text().catch(()=> '');
+                    console.error('yearly api error', resp.status, txt);
+                    showToast('연도별 임금 데이터를 불러오는 중 오류가 발생했습니다.', 'danger');
+                    yearlyTbody.innerHTML = `
+                        <tr>
+                            <td colspan="8" class="text-center text-danger">
+                                데이터를 불러오는 중 오류가 발생했습니다.
+                            </td>
+                        </tr>
+                    `;
+                    clearYearSummary();
+                    return;
+                }
+
+                let list = await resp.json();
+                if (!Array.isArray(list)) list = [];
+
+                renderYearlyTable(list);
+            } catch (e) {
+                console.error('yearly api fetch error', e);
+                showToast('연도별 임금 데이터를 불러오는 중 통신 오류가 발생했습니다.', 'danger');
+                yearlyTbody.innerHTML = `
+                    <tr>
+                        <td colspan="8" class="text-center text-danger">
+                            통신 오류가 발생했습니다.
+                        </td>
+                    </tr>
+                `;
+                clearYearSummary();
+            }
+        }
+
+        // ====== 월별 테이블 렌더링 ======
+        function renderMonthlyTable(list) {
+            monthlyTbody.innerHTML = '';
+
+            if (!Array.isArray(list) || list.length === 0) {
+                monthlyTbody.innerHTML = `
+                    <tr>
+                        <td colspan="9" class="text-center text-muted">
+                            선택한 월에 대한 임금 데이터가 없습니다.
+                        </td>
+                    </tr>
+                `;
+                clearMonthSummary();
+                return;
+            }
+
+            const statusOrder = { DRAFT:0, CONFIRMED:1, PAID:2 };
+            list.sort((a,b) => {
+                const sa = (a.status || 'DRAFT').toUpperCase();
+                const sb = (b.status || 'DRAFT').toUpperCase();
+                const diff = (statusOrder[sa] ?? 0) - (statusOrder[sb] ?? 0);
+                if (diff !== 0) return diff;
+                const na = (a.memberName || '');
+                const nb = (b.memberName || '');
+                return na.localeCompare(nb, 'ko');
+            });
+
+            let totalWorkMin   = 0;
+            let totalJuhyuMin  = 0;
+            let totalWorkPay   = 0;
+            let totalJuhyuPay  = 0;
+            let totalPay       = 0;
+
+            const rows = list.map(item => {
+                const workMinutes  = item.workMinutes  || 0;
+                const juhyuMinutes = item.juhyuMinutes || 0;
+                const workPay      = item.workPay      || 0;
+                const juhyuPay     = item.juhyuPay     || 0;
+                const total        = item.totalPay     || (workPay + juhyuPay);
+
+                totalWorkMin   += workMinutes;
+                totalJuhyuMin  += juhyuMinutes;
+                totalWorkPay   += workPay;
+                totalJuhyuPay  += juhyuPay;
+                totalPay       += total;
+
+                const status = (item.status || 'DRAFT').toUpperCase();
+
+                const statusLabelMap = {
+                    DRAFT:     '임시저장',
+                    CONFIRMED: '확정',
+                    PAID:      '지급완료'
+                };
+                const badgeClassMap = {
+                    DRAFT:     'bg-secondary',
+                    CONFIRMED: 'bg-warning text-dark',
+                    PAID:      'bg-success'
+                };
+                const rowClassMap = {
+                    DRAFT:     'draft-row',
+                    CONFIRMED: 'confirmed-row',
+                    PAID:      'paid-row'
+                };
+
+                const statusLabel  = statusLabelMap[status] || status;
+                const badgeClass   = badgeClassMap[status] || 'bg-secondary';
+                const rowClass     = rowClassMap[status] || '';
+                const dotClass     =
+                        status === 'PAID'      ? 'status-dot-paid' :
+                                status === 'CONFIRMED' ? 'status-dot-confirmed' : 'status-dot-draft';
+
+                let rawDate = null;
+                if (status === 'DRAFT') {
+                    rawDate = item.savedAt || item.createdAt || null;
+                } else if (status === 'CONFIRMED') {
+                    rawDate = item.confirmedAt || null;
+                } else if (status === 'PAID') {
+                    rawDate = item.paidAt || null;
+                }
+                const dateStr = rawDate ? formatDateTime(rawDate) : '-';
+
+                const hourly = (typeof item.hourlyWage === 'number') ? item.hourlyWage : 0;
+
+                const memberName  = escapeHtml(item.memberName || '-');
+                const memberPhone = escapeHtml(item.memberPhone || '');
+                const memberCode  = escapeHtml(item.memberCode || '');
+
+                return `
+                    <tr class="${rowClass}">
+                        <td class="member-cell">
+                            <span class="status-dot ${dotClass}"></span>
+                            <span class="member-name">${memberName}</span>
+                            ${
+                        (memberPhone || memberCode)
+                                ? `<div class="member-meta">
+                                           ${memberPhone ? memberPhone : ''}
+                                           ${memberPhone && memberCode ? ' · ' : ''}
+                                           ${memberCode ? memberCode : ''}
+                                       </div>`
+                                : ''
+                }
+                        </td>
+                        <td>${formatMins(workMinutes)}</td>
+                        <td>${formatMins(juhyuMinutes)}</td>
+                        <td class="text-end">${hourly ? krw(hourly) : '-'}</td>
+                        <td class="text-end">${workPay ? krw(workPay) : '-'}</td>
+                        <td class="text-end">${juhyuPay ? krw(juhyuPay) : '-'}</td>
+                        <td class="text-end fw-semibold">${total ? krw(total) : '-'}</td>
+                        <td><span class="badge ${badgeClass}">${statusLabel}</span></td>
+                        <td>${dateStr}</td>
+                    </tr>
+                `;
+            });
+
+            monthlyTbody.innerHTML = rows.join('');
+
+            sumWorkTime.textContent  = formatMins(totalWorkMin);
+            sumJuhyuTime.textContent = formatMins(totalJuhyuMin);
+            sumWorkPay.textContent   = totalWorkPay   ? krw(totalWorkPay)   : '-';
+            sumJuhyuPay.textContent  = totalJuhyuPay  ? krw(totalJuhyuPay)  : '-';
+            sumTotalPay.textContent  = totalPay       ? krw(totalPay)       : '-';
+        }
+
+        function clearMonthSummary() {
+            sumWorkTime.textContent  = '-';
+            sumJuhyuTime.textContent = '-';
+            sumWorkPay.textContent   = '-';
+            sumJuhyuPay.textContent  = '-';
+            sumTotalPay.textContent  = '-';
+        }
+
+        // ====== 연도별 테이블 렌더링 ======
+        function renderYearlyTable(list) {
+            yearlyTbody.innerHTML = '';
+
+            if (!Array.isArray(list) || list.length === 0) {
+                yearlyTbody.innerHTML = `
+                    <tr>
+                        <td colspan="8" class="text-center text-muted">
+                            선택한 연도에 대한 임금 데이터가 없습니다.
+                        </td>
+                    </tr>
+                `;
+                clearYearSummary();
+                return;
+            }
+
+            list.sort((a,b) => {
+                const na = (a.memberName || '');
+                const nb = (b.memberName || '');
+                return na.localeCompare(nb, 'ko');
+            });
+
+            let totalWorkMin   = 0;
+            let totalJuhyuMin  = 0;
+            let totalWorkPay   = 0;
+            let totalJuhyuPay  = 0;
+            let totalPay       = 0;
+
+            const rows = list.map(item => {
+                const workMinutes  = item.workMinutes  || 0;
+                const juhyuMinutes = item.juhyuMinutes || 0;
+                const workPay      = item.workPay      || 0;
+                const juhyuPay     = item.juhyuPay     || 0;
+                const total        = item.totalPay     || (workPay + juhyuPay);
+
+                totalWorkMin   += workMinutes;
+                totalJuhyuMin  += juhyuMinutes;
+                totalWorkPay   += workPay;
+                totalJuhyuPay  += juhyuPay;
+                totalPay       += total;
+
+                const hourly    = (typeof item.hourlyWage === 'number') ? item.hourlyWage : 0;
+                const memberName  = escapeHtml(item.memberName || '-');
+                const memberPhone = escapeHtml(item.memberPhone || '');
+                const memberCode  = escapeHtml(item.memberCode || '');
+
+                return `
+                    <tr>
+                        <td class="member-cell">
+                            <span class="member-name">${memberName}</span>
+                            ${
+                        (memberPhone || memberCode)
+                                ? `<div class="member-meta">
+                                           ${memberPhone ? memberPhone : ''}
+                                           ${memberPhone && memberCode ? ' · ' : ''}
+                                           ${memberCode ? memberCode : ''}
+                                       </div>`
+                                : ''
+                }
+                        </td>
+                        <td>${formatMins(workMinutes)}</td>
+                        <td>${formatMins(juhyuMinutes)}</td>
+                        <td class="text-end">${hourly ? krw(hourly) : '-'}</td>
+                        <td class="text-end">${workPay ? krw(workPay) : '-'}</td>
+                        <td class="text-end">${juhyuPay ? krw(juhyuPay) : '-'}</td>
+                        <td class="text-end fw-semibold">${total ? krw(total) : '-'}</td>
+                        <td>-</td>
+                    </tr>
+                `;
+            });
+
+            yearlyTbody.innerHTML = rows.join('');
+
+            yearSumWorkTime.textContent  = formatMins(totalWorkMin);
+            yearSumJuhyuTime.textContent = formatMins(totalJuhyuMin);
+            yearSumWorkPay.textContent   = totalWorkPay   ? krw(totalWorkPay)   : '-';
+            yearSumJuhyuPay.textContent  = totalJuhyuPay  ? krw(totalJuhyuPay)  : '-';
+            yearSumTotalPay.textContent  = totalPay       ? krw(totalPay)       : '-';
+        }
+
+        function clearYearSummary() {
+            yearSumWorkTime.textContent  = '-';
+            yearSumJuhyuTime.textContent = '-';
+            yearSumWorkPay.textContent   = '-';
+            yearSumJuhyuPay.textContent  = '-';
+            yearSumTotalPay.textContent  = '-';
+        }
+
+        // ====== 토스트 ======
+        function showToast(message, type) {
+            if (!toastEl || !toastBodyEl) return;
+            toastBodyEl.textContent = message;
+
+            toastEl.classList.remove('text-bg-success','text-bg-danger','text-bg-warning','text-bg-info');
+            if (type === 'danger') {
+                toastEl.classList.add('text-bg-danger');
+            } else if (type === 'warning') {
+                toastEl.classList.add('text-bg-warning');
+            } else if (type === 'info') {
+                toastEl.classList.add('text-bg-info');
+            } else {
+                toastEl.classList.add('text-bg-success');
+            }
+
+            if (window.bootstrap && bootstrap.Toast) {
+                const t = bootstrap.Toast.getOrCreateInstance(toastEl, {
+                    delay: 3000,
+                    autohide: true
+                });
+                t.show();
+            } else {
+                toastEl.style.display = 'block';
+                setTimeout(() => {
+                    toastEl.style.display = 'none';
+                }, 3000);
+            }
+        }
+
+        // ====== 유틸 ======
+        function pad2(n) {
+            return String(n).padStart(2, '0');
+        }
+
+        function formatMins(mins) {
+            const v = Math.max(0, mins|0);
+            const h = Math.floor(v / 60);
+            const m = v % 60;
+            return m === 0 ? `${h}시간` : `${h}시간 ${m}분`;
+        }
+
+        function krw(v) {
+            if (v == null || isNaN(v)) return '-';
+            return new Intl.NumberFormat('ko-KR', {
+                style: 'currency',
+                currency: 'KRW',
+                maximumFractionDigits: 0
+            }).format(v);
+        }
+
+        // 2025-11-12 10:20 형태
+        function formatDateTime(value) {
+            if (!value) return '-';
+
+            let d;
+            if (value instanceof Date) {
+                d = value;
+            } else if (typeof value === 'number') {
+                d = new Date(value < 1e12 ? value * 1000 : value);
+            } else {
+                const s = String(value).replace(' ', 'T');
+                const parsed = new Date(s);
+                if (isNaN(parsed.getTime())) return String(value);
+                d = parsed;
+            }
+
+            const y  = d.getFullYear();
+            const M  = pad2(d.getMonth()+1);
+            const D  = pad2(d.getDate());
+            const hh = pad2(d.getHours());
+            const mm = pad2(d.getMinutes());
+
+            return `${y}-${M}-${D} ${hh}:${mm}`;
+        }
+
+        function escapeHtml(s) {
+            if (s == null) return '';
+            return String(s)
+                    .replace(/&/g,'&amp;')
+                    .replace(/</g,'&lt;')
+                    .replace(/>/g,'&gt;')
+                    .replace(/"/g,'&quot;')
+                    .replace(/'/g,'&#39;');
+        }
+
+    })();
+</script>
+
+{{>layouts/footer}}
