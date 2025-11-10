@@ -57,7 +57,7 @@
             <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
                 <div class="small text-muted">
                     위의 아르바이트생 중 한 명을 선택하세요. <br class="d-sm-none">
-                    선택 단위: <b>10분 / 30분 / 1시간</b> 버튼으로 바꿀 수 있습니다.
+                    아래 표의 한 칸은 <b>10분 / 30분 / 1시간</b> 단위로 변경할 수 있습니다.
                 </div>
 
                 <div class="d-flex flex-wrap align-items-center gap-2 ms-auto">
@@ -87,7 +87,7 @@
 
             <!-- 타임테이블 -->
             <div class="table-responsive" id="tableWrapper">
-                <table class="table table-bordered align-middle text-center timetable-10m mb-2" id="table10m">
+                <table class="table table-bordered align-middle text-center mb-2" id="table10m">
                     <thead>
                     <tr>
                         <th style="width:80px;">시간</th>
@@ -194,10 +194,8 @@
 <script>
     (function(){
         const HOUR_START = 6;
-        const HOUR_END   = 22;
-        const STEP_MIN   = 10;
-        const SLOTS_PER_HOUR = 60 / STEP_MIN; // 6
-        const DOW_KO = ['일','월','화','수','목','금','토'];
+        const HOUR_END   = 22;   // exclusive
+        const DOW_KO     = ['일','월','화','수','목','금','토'];
 
         // ===== 상단 DOM =====
         const statusSelect       = document.getElementById('statusSelect');
@@ -220,7 +218,7 @@
 
         const thSchedule         = document.getElementById('thSchedule');
 
-        // 단위 변경 버튼
+        // 선택 단위 버튼
         const btnRes10           = document.getElementById('btnRes10');
         const btnRes30           = document.getElementById('btnRes30');
         const btnRes60           = document.getElementById('btnRes60');
@@ -282,13 +280,13 @@
             allMembers = [];
         }
 
-        let selectedMemberId = null;
-        let currentDate = stripTime(new Date());
-        let dragging = false;
-        let dragSelecting = true;
-        let currentResolution = 10; // 10 / 30 / 60
+        let selectedMemberId   = null;
+        let currentDate        = stripTime(new Date());
+        let dragging           = false;
+        let dragSelecting      = true;
+        let currentResolution  = 10;   // 10 / 30 / 60 (분 단위)
 
-        // 전역 mouseup: 드래그 종료
+        // mouseup: 드래그 종료
         window.addEventListener('mouseup', () => {
             if (dragging) {
                 dragging = false;
@@ -296,7 +294,7 @@
             }
         });
 
-        // 초기 상태값
+        // 초기 상태 선택
         if (Array.isArray(allMembers) && allMembers.length > 0) {
             statusSelect.value = allMembers[0].status || 'WORKING';
         }
@@ -326,7 +324,7 @@
             reloadForCurrentSelection();
         });
 
-        // 단위 버튼 클릭
+        // 단위 버튼
         resolutionButtons.forEach(btn => {
             if (!btn) return;
             btn.addEventListener('click', () => {
@@ -395,15 +393,15 @@
             if (!m) return;
             selectedMemberId = m.id;
 
-            // 칩 active 처리
+            // 칩 active
             Array.from(memberPills.querySelectorAll('.pill')).forEach(el => {
                 el.classList.toggle('active', el.dataset.memberId === String(selectedMemberId));
             });
 
             selectedMemberTitle.textContent = `${m.name} — 일간 타임테이블`;
 
-            buildTenMinuteTable();     // 테이블 구조 새로 만들고
-            loadDayForMember(m);       // 스케줄/실제 데이터 로드
+            buildTimeTable();     // 현재 해상도 기준으로 테이블 구성
+            loadDayForMember(m);  // 스케줄/실제 데이터 로딩
 
             btnClearActual.disabled     = false;
             btnSelectAllActual.disabled = false;
@@ -432,23 +430,22 @@
         }
 
         function reloadForCurrentSelection() {
-            if (!selectedMemberId) {
-                buildTenMinuteTable();
-                return;
-            }
+            buildTimeTable();
+            if (!selectedMemberId) return;
             const m = (allMembers || []).find(x => String(x.id) === String(selectedMemberId));
             if (!m) return;
             selectedMemberTitle.textContent = `${m.name} — 일간 타임테이블`;
-            buildTenMinuteTable();
             loadDayForMember(m);
         }
 
-        // ===== 선택 단위 변경 =====
+        // ===== 해상도 변경 (10 / 30 / 60) =====
         function setResolution(res) {
             if (![10,30,60].includes(res)) res = 10;
+            if (currentResolution === res) return;
+
             currentResolution = res;
 
-            // 버튼 스타일
+            // 버튼 스타일 변경
             resolutionButtons.forEach(btn => {
                 if (!btn) return;
                 const bRes = Number(btn.dataset.res || '10');
@@ -460,32 +457,33 @@
                     btn.classList.add('btn-outline-secondary');
                 }
             });
+
+            // 테이블 재구성 + 데이터 다시 반영
+            reloadForCurrentSelection();
         }
 
         // ===== 스케줄/실제 로딩 =====
         function loadDayForMember(member) {
             const date = fmtDateYYYYMMDD(currentDate);
 
-            // 스케줄(계획) 불러오기
             fetch(`/api/schedule/work/${member.id}/${date}`)
                     .then(res => res && res.ok ? res.json() : null)
                     .then(data => {
                         const segs = (data && Array.isArray(data.segments)) ? data.segments : [];
-                        applyScheduleSegments(segs);
-                        // 실제 불러오기
+                        applySegmentsToSlots('.slot-10m.schedule', segs);
                         return fetch(`/api/schedule/${member.id}/${date}`);
                     })
                     .then(res => res && res.ok ? res.json() : null)
                     .then(data => {
                         if (data && Array.isArray(data.segments) && data.segments.length) {
-                            applyActualSegments(data.segments);
+                            applySegmentsToSlots('.slot-10m.actual', data.segments);
                         }
                     })
                     .catch(console.error);
         }
 
-        // ===== 10분 단위 테이블 생성 =====
-        function buildTenMinuteTable() {
+        // ===== 현재 해상도 기준 테이블 빌드 =====
+        function buildTimeTable() {
             tbody10m.innerHTML = '';
 
             if (thSchedule) {
@@ -493,58 +491,54 @@
                 thSchedule.classList.remove('text-danger');
             }
 
-            const slots = [];
-            for (let h=HOUR_START; h<HOUR_END; h++) {
-                for (let m=0; m<60; m += STEP_MIN) {
-                    slots.push({
-                        h,
-                        m,
-                        hm: `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`
-                    });
-                }
-            }
+            const step = currentResolution;
+            const slotsPerHour = 60 / step; // 10분=6, 30분=2, 60분=1
 
-            for (let i=0; i<slots.length; i++) {
-                const slot = slots[i];
-                const tr   = document.createElement('tr');
+            let globalIndex = 0;
 
-                tr.innerHTML = `
-                    <td class="timecell">${slot.hm}</td>
-                    <td><div class="slot-10m schedule" data-index="${i}"></div></td>
-                    <td><div class="slot-10m actual" data-index="${i}"></div></td>
-                `;
+            for (let h = HOUR_START; h < HOUR_END; h++) {
+                for (let m = 0; m < 60; m += step) {
+                    const hm = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+                    const tr = document.createElement('tr');
 
-                // 1시간 단위 선택 버튼 (rowSpan=6)
-                if (slot.m === 0) {
-                    const td = document.createElement('td');
-                    td.className = 'hour-select-cell';
-                    td.rowSpan   = SLOTS_PER_HOUR;
-                    td.innerHTML = `
-                        <button class="btn btn-outline-dark btn-sm hour-toggle"
-                                data-hour="${slot.h}">
-                            ${String(slot.h).padStart(2,'0')}:00 선택
-                        </button>
+                    tr.innerHTML = `
+                        <td class="timecell">${hm}</td>
+                        <td><div class="slot-10m schedule" data-index="${globalIndex}"></div></td>
+                        <td><div class="slot-10m actual" data-index="${globalIndex}"></div></td>
                     `;
-                    tr.appendChild(td);
-                }
 
-                tbody10m.appendChild(tr);
+                    // 1시간 단위 버튼: 해당 시간의 첫 행에만
+                    if (m === 0) {
+                        const td = document.createElement('td');
+                        td.className = 'hour-select-cell';
+                        td.rowSpan   = slotsPerHour;
+                        td.innerHTML = `
+                            <button class="btn btn-outline-dark btn-sm hour-toggle"
+                                    data-hour="${h}">
+                                ${String(h).padStart(2,'0')}:00 선택
+                            </button>
+                        `;
+                        tr.appendChild(td);
+                    }
+
+                    tbody10m.appendChild(tr);
+                    globalIndex++;
+                }
             }
 
+            // 실제 영역 마우스 이벤트
             const actualSlots = Array.from(tbody10m.querySelectorAll('.slot-10m.actual'));
-
-            // 실제 영역 클릭/드래그
             actualSlots.forEach(div => {
                 div.addEventListener('mousedown', e => {
                     e.preventDefault();
                     dragging = true;
                     const isOn = div.classList.contains('on');
                     dragSelecting = !isOn;
-                    toggleActualBlock(div, dragSelecting);
+                    toggleActual(div, dragSelecting);
                 });
                 div.addEventListener('mouseenter', () => {
                     if (dragging) {
-                        toggleActualBlock(div, dragSelecting);
+                        toggleActual(div, dragSelecting);
                     }
                 });
             });
@@ -552,20 +546,22 @@
             // 1시간 단위 선택 버튼
             tbody10m.querySelectorAll('.hour-toggle').forEach(btn => {
                 btn.addEventListener('click', () => {
-                    const h = parseInt(btn.dataset.hour, 10);
-                    const s = (h - HOUR_START) * SLOTS_PER_HOUR;
-                    const e = s + SLOTS_PER_HOUR;
+                    const hour = parseInt(btn.dataset.hour, 10);
+                    const startIndex = (hour - HOUR_START) * slotsPerHour;
+                    const endIndex   = startIndex + slotsPerHour;
 
                     let allOn = true;
-                    for (let i=s;i<e;i++) {
+                    for (let i=startIndex; i<endIndex; i++) {
                         if (!actualSlots[i].classList.contains('on')) {
                             allOn = false;
                             break;
                         }
                     }
-                    for (let i=s;i<e;i++) {
-                        if (allOn) actualSlots[i].classList.remove('on');
-                        else       actualSlots[i].classList.add('on');
+                    for (let i=startIndex; i<endIndex; i++) {
+                        const el = actualSlots[i];
+                        if (!el) continue;
+                        if (allOn) el.classList.remove('on');
+                        else       el.classList.add('on');
                     }
                     updateActualSummary();
                 });
@@ -574,12 +570,12 @@
             updateActualSummary();
         }
 
-        // ===== 스케줄(주황) 적용 =====
-        function applyScheduleSegments(segments) {
-            const scheduleSlots = Array.from(tbody10m.querySelectorAll('.slot-10m.schedule'));
+        // ===== segments -> 슬롯 표시(스케줄/실제 공용) =====
+        function applySegmentsToSlots(selector, segments) {
+            const slots = Array.from(tbody10m.querySelectorAll(selector));
 
             if (!Array.isArray(segments) || segments.length === 0) {
-                if (thSchedule) {
+                if (selector === '.slot-10m.schedule' && thSchedule) {
                     thSchedule.textContent = '(계획된 일정 없음)';
                     thSchedule.classList.add('text-danger');
                 }
@@ -587,84 +583,49 @@
                 return;
             }
 
-            if (thSchedule) {
+            if (selector === '.slot-10m.schedule' && thSchedule) {
                 thSchedule.textContent = '스케줄';
                 thSchedule.classList.remove('text-danger');
             }
 
+            const step = currentResolution;
+            const dayStartMin = HOUR_START * 60;
+
             let firstStartMin = Infinity;
 
+            // 먼저 segments의 가장 이른 시작시간 찾기
             segments.forEach(seg => {
                 const s = hmToMin(seg.start);
-                const e = hmToMin(seg.end);
                 if (s < firstStartMin) firstStartMin = s;
-
-                scheduleSlots.forEach((d,i) => {
-                    const t = hmToMin(indexToHM(i));
-                    if (t >= s && t < e) d.classList.add('on');
-                });
             });
 
-            if (firstStartMin !== Infinity) {
+            // 각 슬롯에 segments 겹치는지 체크
+            slots.forEach((slotEl, idx) => {
+                const slotStart = dayStartMin + idx * step;
+                const slotEnd   = slotStart + step;
+
+                const on = segments.some(seg => {
+                    const s = hmToMin(seg.start);
+                    const e = hmToMin(seg.end);
+                    return e > slotStart && s < slotEnd;   // 겹치면 true
+                });
+
+                if (on) slotEl.classList.add('on');
+            });
+
+            // 스케줄이면 첫 시작 근처로 스크롤
+            if (selector === '.slot-10m.schedule' && firstStartMin !== Infinity) {
                 scrollToSchedule(firstStartMin);
-            }
-        }
-
-        // ===== 실제(초록) 적용 =====
-        function applyActualSegments(segments) {
-            const actualSlots = Array.from(tbody10m.querySelectorAll('.slot-10m.actual'));
-            segments.forEach(seg => {
-                const s = hmToMin(seg.start);
-                const e = hmToMin(seg.end);
-                actualSlots.forEach((d,i) => {
-                    const t = hmToMin(indexToHM(i));
-                    if (t >= s && t < e) d.classList.add('on');
-                });
-            });
-            updateActualSummary();
-        }
-
-        // ===== 10/30/60분 블록 토글 =====
-        function toggleActualBlock(div, on) {
-            const idx = Number(div.dataset.index || '0');
-            const actualSlots = Array.from(tbody10m.querySelectorAll('.slot-10m.actual'));
-
-            let startIdx = idx;
-            let endIdx   = idx + 1;
-
-            const hourIndex  = Math.floor(idx / SLOTS_PER_HOUR);      // 0,1,2,...
-            const slotInHour = idx % SLOTS_PER_HOUR;                  // 0~5
-
-            if (currentResolution === 10) {
-                // 단일 10분
-                startIdx = idx;
-                endIdx   = idx + 1;
-            } else if (currentResolution === 30) {
-                // 30분 = 10분 3개
-                const blockInHour = Math.floor(slotInHour / 3);       // 0 or 1
-                const blockStartInHour = blockInHour * 3;             // 0 or 3
-                startIdx = hourIndex * SLOTS_PER_HOUR + blockStartInHour;
-                endIdx   = startIdx + 3;
-            } else if (currentResolution === 60) {
-                // 1시간 = 10분 6개
-                startIdx = hourIndex * SLOTS_PER_HOUR;
-                endIdx   = startIdx + SLOTS_PER_HOUR;
-            }
-
-            for (let i=startIdx; i<endIdx; i++) {
-                const el = actualSlots[i];
-                if (!el) continue;
-                if (on) el.classList.add('on');
-                else    el.classList.remove('on');
             }
         }
 
         // ===== 스크롤 유틸 =====
         function scrollToSchedule(firstStartMin) {
-            const base  = HOUR_START * 60;
-            const idxRaw= (firstStartMin - base) / STEP_MIN;
-            const idx   = Math.max(0, Math.floor(idxRaw));
-            const target= tbody10m.querySelector(`.slot-10m.schedule[data-index="${idx}"]`);
+            const step        = currentResolution;
+            const dayStartMin = HOUR_START * 60;
+            const idxRaw      = (firstStartMin - dayStartMin) / step;
+            const idx         = Math.max(0, Math.floor(idxRaw));
+            const target      = tbody10m.querySelector(`.slot-10m.schedule[data-index="${idx}"]`);
             if (!target) return;
 
             target.scrollIntoView({
@@ -752,18 +713,27 @@
             }
         }
 
-        // ===== 유틸 =====
+        // ===== 공통 유틸 =====
+        function toggleActual(div, on) {
+            if (on) div.classList.add('on');
+            else    div.classList.remove('on');
+        }
+
         function hmToMin(hm) {
             const [a,b] = hm.split(':').map(Number);
             return a*60 + b;
         }
+
         function indexToHM(i) {
-            const t = (HOUR_START*60) + i*STEP_MIN;
+            const step = currentResolution;
+            const t = (HOUR_START*60) + i*step;
             const h = Math.floor(t/60);
             const m = t % 60;
             return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
         }
+
         function getSelectedRanges() {
+            const step  = currentResolution;
             const slots = Array.from(tbody10m.querySelectorAll('.slot-10m.actual'));
             const idx   = slots.map((d,i)=>d.classList.contains('on')?i:null).filter(i=>i!=null);
             if (!idx.length) return [];
@@ -784,12 +754,13 @@
 
             return ranges.map(([s,e]) => ({
                 start: indexToHM(s),
-                end  : addMinutes(indexToHM(e), STEP_MIN)
+                end  : addMinutes(indexToHM(e), step)
             }));
         }
+
         function addMinutes(hm, mins) {
             const [h,m] = hm.split(':').map(Number);
-            const t = h*60 + m + mins;
+            const t  = h*60 + m + mins;
             const hh = Math.floor(t/60);
             const mm = t % 60;
             return `${String(hh).padStart(2,'0')}:${String(mm).padStart(2,'0')}`;
