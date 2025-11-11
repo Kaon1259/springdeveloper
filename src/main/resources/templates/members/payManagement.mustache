@@ -45,7 +45,7 @@
         </div>
     </div>
 
-    <!-- ============ 하단: 월단위 급여 테이블 ============ -->
+    <!-- ============ 하단: "선택 월 실제 일정" 스타일의 월단위 급여 테이블 ============ -->
     <div class="pay-right-wrapper">
 
         <!-- 🔼 상단: 제목 + 월 내비 (스크롤 시 상단 고정) -->
@@ -82,7 +82,7 @@
                     <b>월 합계 / 실수령액</b>이 계산됩니다.
                 </div>
 
-                <!-- 월단위 캘린더 모양 테이블 -->
+                <!-- ✅ "선택 월 실제 일정" 스타일: 주별 1행 + 일자셀 안에 라운드 Rect 2개 -->
                 <div class="table-responsive">
                     <table class="table table-bordered align-middle text-center" id="monthPayTable">
                         <thead class="table-light">
@@ -230,31 +230,74 @@
         padding-bottom: .25rem;
     }
 
-    /* ✅ 주차 행: 위 행 = 날짜(연회색), 아래 행 = 근무시간 */
-    .day-cell-date,
-    .day-cell-time {
-        font-size:.8rem;
-        padding:4px 2px;
+    /* ===== 일자 셀 안 라운드 Rect 두 개 ===== */
+    .day-cell {
+        padding: 4px 4px;
+        font-size: .8rem;
+        line-height: 1.3;
+        vertical-align: top;
     }
 
-    .day-cell-date {
-        font-weight:600;
+    .day-rect-wrap {
+        display:flex;
+        flex-direction:column;
+        gap:4px;
+        min-height: 52px;  /* 약간 높이 확보 */
+    }
+
+    .day-rect {
+        border-radius:8px;
+        border:1px solid #dee2e6;
+        padding:3px 6px;
         background:#f8f9fa;
-        border-bottom:1px solid #dee2e6;
+        text-align:left;
     }
 
-    .day-cell-time {
+    .day-rect-top {
+        /* 위 Rect(실제 일정) */
+    }
+    .day-rect-bottom {
+        /* 아래 Rect(근무시간) */
+    }
+
+    .day-date {
+        font-weight: 600;
+        font-size: .78rem;
+        color:#495057;
+        margin-right: 4px;
+        flex:0 0 auto;
+    }
+
+    .day-rect-body {
+        flex:1 1 auto;
+        text-align:left;
+    }
+
+    .seg-chip {
+        display:inline-block;
+        padding:1px 6px;
+        margin:1px 2px 1px 0;
+        border-radius:999px;
+        border:1px solid #e9ecef;
         background:#ffffff;
+        font-size:.7rem;
+        white-space:nowrap;
     }
 
     .day-outside {
         color:#adb5bd;
+        background:#f8f9fa;
     }
-    .day-cell-time.day-outside {
-        background:#fcfcfc;
+    .day-outside .day-rect {
+        background:#f8f9fa;
+        opacity:0.7;
     }
 
-    .day-cell-time.day-weekend {
+    .day-weekend {
+        /* 토/일 셀 배경 */
+        background:#fff8f0;
+    }
+    .day-weekend .day-rect {
         background:#fff8f0;
     }
 
@@ -675,6 +718,12 @@
             }
         }
 
+        /**
+         * ✅ 핵심: 각 요일 셀 안에 라운드 Rect 2개
+         *  - 실제 일정 O / 근무시간 O  → 위: 일정, 아래: 근무시간
+         *  - 실제 일정 X / 근무시간 X → Rect 1개, 안에 '-'
+         *  - 실제 일정 X / 근무시간 O → Rect 2개, 위는 "실제 일정 없음", 아래는 근무시간
+         */
         function renderMonthPayTable(member, ms, me, dayMap) {
             monthPayBody.innerHTML = '';
 
@@ -684,6 +733,7 @@
             let monthMinutes = 0;
             let monthJuhyuMinutes = 0;
 
+            // 월 전체를 포함하는 주(월~일) 목록 계산
             const weeks = [];
             let wStart = toMonday(ms);
             const monthEnd = new Date(me);
@@ -697,8 +747,7 @@
             weeks.forEach(weekStart => {
                 const weekEnd = addDays(weekStart, 6);
 
-                const dateTds = [];
-                const timeTds = [];
+                const dayCells = [];
                 let weekMinutes = 0;
 
                 for (let i=0;i<7;i++){
@@ -707,6 +756,7 @@
                     const inMonth = (dayDate >= ms && dayDate <= me);
                     const info    = inMonth ? (dayMap[iso] || { segments:[], minutes:0 }) : { segments:[], minutes:0 };
                     const dayMinutes = info.minutes || 0;
+                    const segments = Array.isArray(info.segments) ? info.segments : [];
 
                     if (inMonth) {
                         weekMinutes  += dayMinutes;
@@ -715,22 +765,68 @@
 
                     const dayNum    = dayDate.getDate();
                     const isWeekend = (i >= 5);
-                    const cls = [
-                        !inMonth ? 'day-outside' : '',
-                        inMonth && isWeekend ? 'day-weekend' : ''
-                    ].filter(Boolean).join(' ');
 
-                    let timeHtml = '';
-                    if (inMonth && dayMinutes > 0) {
-                        timeHtml = `<span class="text-time">${formatMins(dayMinutes)}</span>`;
-                    } else if (inMonth) {
-                        timeHtml = '-';
-                    } else {
-                        timeHtml = '';
+                    const clsArr = ['day-cell'];
+                    if (!inMonth) clsArr.push('day-outside');
+                    if (inMonth && isWeekend) clsArr.push('day-weekend');
+                    const cls = clsArr.join(' ');
+
+                    if (!inMonth) {
+                        // 월 밖인 날은 그냥 빈 셀 처리
+                        dayCells.push(`<td class="${cls}"></td>`);
+                        continue;
                     }
 
-                    dateTds.push(`<td class="day-cell-date ${cls}">${inMonth ? dayNum : ''}</td>`);
-                    timeTds.push(`<td class="day-cell-time ${cls}">${timeHtml}</td>`);
+                    const hasSeg  = segments.length > 0;
+                    const hasTime = dayMinutes > 0;
+
+                    // 위 Rect(실제 일정) 내용
+                    let topBodyHtml = '';
+                    if (hasSeg) {
+                        topBodyHtml = segments.map(s =>
+                                `<span class="seg-chip">${displayHm(s.start)}~${displayHm(s.end)}</span>`
+                        ).join(' ');
+                    } else if (hasTime) {
+                        topBodyHtml = `<span class="text-muted small">실제 일정 없음</span>`;
+                    } else {
+                        topBodyHtml = `<span class="text-muted small">-</span>`;
+                    }
+
+                    // 아래 Rect(근무시간) 내용
+                    const timeLabel = hasTime ? formatMins(dayMinutes) : '0시간';
+                    let bottomRectHtml = '';
+
+                    if (hasTime || hasSeg) {
+                        // 실제 일정이 있거나, 근무시간이 있는 경우에는 2번째 Rect를 보여준다.
+                        // (요구사항: "실제 일정 없는데 근무시간 있으면 Rect 2개 + 아래에 근무시간만")
+                        bottomRectHtml = `
+                            <div class="day-rect day-rect-bottom">
+                                <div class="text-end">
+                                    ${hasTime ? `<span class="text-time">${timeLabel}</span>` : `<span class="text-muted small">${timeLabel}</span>`}
+                                </div>
+                            </div>
+                        `;
+                    } else {
+                        // 실제 일정도 없고 근무시간도 없는 경우: Rect 하나만 (위 Rect) 사용
+                        bottomRectHtml = '';
+                    }
+
+                    const cellHtml = `
+                        <td class="${cls}">
+                            <div class="day-rect-wrap">
+                                <div class="day-rect day-rect-top">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <span class="day-date">${dayNum}</span>
+                                        <div class="day-rect-body">
+                                            ${topBodyHtml}
+                                        </div>
+                                    </div>
+                                </div>
+                                ${bottomRectHtml}
+                            </div>
+                        </td>
+                    `;
+                    dayCells.push(cellHtml);
                 }
 
                 const juhyuMinutes = calcWeeklyJuhyuMinutes(weekMinutes);
@@ -762,35 +858,31 @@
 
                 const weekPayLabel = (weekWorkPay != null) ? krw(weekWorkPay) : '-';
 
-                // ✅ 근무시간 셀: 시간 + 줄바꿈 + = 금액
                 let weekWorkCellHtml = `<span class="text-time">${weekWorkLabel}</span>`;
                 if (weekWorkPay != null) {
                     weekWorkCellHtml += `<br><span class="text-money">= ${weekPayLabel}</span>`;
                 }
 
-                const trDates = document.createElement('tr');
-                trDates.innerHTML = `
-                    <th scope="row" rowspan="2">
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <th scope="row" class="align-middle">
                         ${++weekIndex}주차<br>
                         <small class="text-muted">(${weekLabelRange})</small>
                     </th>
-                    ${dateTds.join('')}
-                    <td class="text-end" rowspan="2">
+                    ${dayCells.join('')}
+                    <td class="text-end align-middle">
                         ${weekWorkCellHtml}
                     </td>
-                    <td class="text-end" rowspan="2">${weekJuhyuCellHtml}</td>
-                    <td class="text-end" rowspan="2">
+                    <td class="text-end align-middle">${weekJuhyuCellHtml}</td>
+                    <td class="text-end align-middle">
                         ${weekPayLabel !== '-' ? `<span class="text-money">${weekPayLabel}</span>` : '-'}
                     </td>
                 `;
 
-                const trTimes = document.createElement('tr');
-                trTimes.innerHTML = timeTds.join('');
-
-                monthPayBody.appendChild(trDates);
-                monthPayBody.appendChild(trTimes);
+                monthPayBody.appendChild(tr);
             });
 
+            // 월 합계
             summaryMonthWorkTime.textContent = formatMins(monthMinutes);
 
             let monthWorkPay = null;
@@ -1031,6 +1123,14 @@
             if (!hm || typeof hm !== 'string') return {h:0,m:0};
             const [h,m] = hm.split(':').map(n=>parseInt(n,10));
             return {h: isNaN(h)?0:h, m: isNaN(m)?0:m};
+        }
+
+        function displayHm(value) {
+            if (!value) return '';
+            const parts = String(value).split(':');
+            const h = parseInt(parts[0], 10) || 0;
+            const m = parseInt(parts[1], 10) || 0;
+            return `${pad2(h)}:${pad2(m)}`;
         }
 
         function calcWeeklyJuhyuMinutes(weeklyMinutes) {

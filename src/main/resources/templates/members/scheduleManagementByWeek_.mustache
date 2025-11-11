@@ -252,9 +252,9 @@
         line-height: 1.1;
     }
 
-    /* 오늘 컬럼: 녹색 외곽선 + 모서리 라운드 + 매우 연한 배경 */
+    /* 오늘 컬럼: 녹색 외곽선 + 모서리 라운드 + 훨씬 연한 배경 */
     #weekStaffTable .today-col {
-        background-color: rgba(40,167,69,0.02);
+        background-color: rgba(40,167,69,0.02);  /* 🔧 0.04 → 0.02 */
         border-left: 2px solid #28a745 !important;
         border-right: 2px solid #28a745 !important;
     }
@@ -269,7 +269,16 @@
         border-bottom-right-radius: 10px;
     }
 
-    /* ✅ 선택된 아르바이트생 태그만 살짝 강조 */
+    /* ✅ 선택된 아르바이트생 근무 슬롯: 라운드 렉트앵글 느낌 */
+    .staff-cell.selected-member-cell {
+        position: relative;
+        background-color: #e7f1ff !important;
+        box-shadow: inset 0 0 0 1px rgba(13,110,253,.25);
+        border-radius: 8px;                /* 🔧 둥근 사각형 */
+        padding-top: 4px;
+        padding-bottom: 4px;
+    }
+
     .staff-tag.selected-member-tag {
         background: rgba(13,110,253,.10);
         border-color: rgba(13,110,253,.7);
@@ -331,7 +340,7 @@
         height: 18px;
         cursor: pointer;
         background: #ffffff;
-        border-radius: 6px;
+        border-radius: 6px;   /* 둥근 사각형 */
         margin: 1px 0;
     }
     .slot-10m:hover {
@@ -727,6 +736,8 @@
                         const tagsDiv = document.createElement('div');
                         tagsDiv.className = 'staff-tags';
 
+                        let hasSelected = false;
+
                         memberIdSet.forEach(memberId => {
                             const mObj = members.find(x => String(x.id) === String(memberId));
                             if (!mObj) return;
@@ -736,6 +747,7 @@
 
                             if (selectedMember && String(mObj.id) === String(selectedMember.id)) {
                                 tag.classList.add('selected-member-tag');
+                                hasSelected = true;
                             }
 
                             tag.title =
@@ -746,6 +758,10 @@
                             `;
                             tagsDiv.appendChild(tag);
                         });
+
+                        if (hasSelected) {
+                            cell.classList.add('selected-member-cell');
+                        }
 
                         cell.appendChild(tagsDiv);
                     }

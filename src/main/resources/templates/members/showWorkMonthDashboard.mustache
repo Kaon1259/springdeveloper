@@ -21,7 +21,7 @@
                         <option value="RESIGNED">퇴사</option>
                     </select>
                     <div class="form-text">
-                        상태를 변경하면 오른쪽 알바생 목록과 하단 캘린더가 함께 갱신됩니다.
+                        상태를 변경하면 오른쪽 알바생 목록과 하단 캘린더 테이블이 함께 갱신됩니다.
                     </div>
                 </div>
 
@@ -87,10 +87,60 @@
             </div>
 
             <div class="small text-muted mt-2">
-                * 날짜 칸에 실 근무 구간 칩과 일 합계가 표시됩니다. 주의 마지막(토요일 또는 월말)에 ‘주 합계/예상 급여’ 바가 들어갑니다.
+                * 날짜 칸에 실제 근무 구간 칩과 일 합계가 표시됩니다. 주의 마지막(토요일 또는 월말)에 ‘주 합계/예상 급여’ 바가 들어갑니다.<br>
+                * 근무시간이 있는 날짜 셀을 클릭하면 날짜 옆에 ‘조정’ 버튼이 나타나며, 버튼을 누르면 해당 일자의 근무시간을 상세 조정할 수 있습니다.
             </div>
         </div>
     </div>
+
+    <!-- ============ 일자 근무시간 조정 팝업 ============ -->
+    <div id="dayAdjustModal" class="day-modal-backdrop d-none">
+        <div class="day-modal">
+            <div class="day-modal-header">
+                <div>
+                    <div class="small text-muted">선택 일자</div>
+                    <div class="fw-semibold" id="dayModalDateLabel">-</div>
+                </div>
+                <button type="button" class="btn-close btn-sm" id="btnDayModalClose" aria-label="Close"></button>
+            </div>
+            <div class="day-modal-body">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <div class="btn-group btn-group-sm" id="daySlotButtons" role="group" aria-label="슬롯 단위 선택">
+                        <button type="button" class="btn btn-outline-secondary" data-slot="10">10분</button>
+                        <button type="button" class="btn btn-outline-secondary active" data-slot="30">30분</button>
+                        <button type="button" class="btn btn-outline-secondary" data-slot="60">1시간</button>
+                    </div>
+                    <div class="small text-muted">
+                        시간 슬롯을 드래그해서 실제 근무시간을 선택/해제할 수 있습니다. (06:00 ~ 22:00)
+                    </div>
+                </div>
+
+                <div class="row g-3">
+                    <div class="col-12 col-md-5">
+                        <div class="small text-muted mb-1">실제 계획 일정</div>
+                        <div id="dayPlanBox" class="day-plan-box">
+                            <!-- 계획 일정 칩 렌더 -->
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-7">
+                        <div class="small text-muted mb-1">실제 근무시간 (드래그로 선택)</div>
+                        <div class="day-grid-wrapper">
+                            <table>
+                                <tbody id="dayGridBody">
+                                <!-- JS 렌더 -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="day-modal-footer">
+                <button type="button" class="btn btn-sm btn-secondary me-2" id="btnDayModalCancel">닫기</button>
+                <button type="button" class="btn btn-sm btn-primary" id="btnDayModalSave">저장</button>
+            </div>
+        </div>
+    </div>
+
 </main>
 
 <style>
@@ -193,14 +243,49 @@
         display: flex;
         flex-direction: column;
         gap: 6px;
+        cursor: default;
     }
     .cell .date-head {
         display: flex; align-items: center; justify-content: space-between;
         font-weight: 600; font-size: .95rem;
+        gap: 4px;
+    }
+    .cell .date-head .left-date {
+        display:flex;
+        align-items:center;
+        gap:4px;
     }
     .cell .date-head .dow-mini { color:#6c757d; font-weight: 500; font-size: .85rem; }
-    .cell .segments { display: flex; flex-wrap: wrap; gap: 6px; }
-    .cell .day-total { margin-top: auto; text-align: right; font-size: .875rem; color:#212529; }
+
+    /* ✅ 날짜 셀 내부를 2개의 라운드 렉트로 분리 */
+    .cell-rect {
+        border-radius: 8px;
+        padding: 4px 6px;
+        min-height: 36px;
+    }
+    /* 위: 실제 일정 (녹색 외곽선) - 더 연하게 조정 */
+    .cell-rect-top {
+        border: 1px solid rgba(25,135,84,0.5);
+        background: rgba(25,135,84,0.04);
+    }
+    /* 아래: 실제 근무시간 */
+    .cell-rect-bottom {
+        border: 1px solid #e9ecef;
+        background: #fcfcfc;
+    }
+
+    .cell .segments {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        align-items: flex-start;
+    }
+    .cell .day-total {
+        text-align: right;
+        font-size: .875rem;
+        color:#212529;
+    }
+
     .cell.muted { background: #fcfcfc; color:#96a0aa; }
     .cell.today { outline: 2px solid #51cf66; outline-offset: 2px; }
 
@@ -216,6 +301,133 @@
     }
     .week-summary .label { font-weight: 600; color:#495057; }
     .week-summary .value { font-weight: 600; }
+
+    /* 날짜 셀 선택 시 표시되는 조정 버튼 */
+    .btn-day-adjust {
+        padding: 0 6px;
+        font-size: .7rem;
+        line-height: 1.3;
+    }
+
+    /* ===== 일자 근무시간 조정 모달 ===== */
+    .day-modal-backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(15,23,42,0.45);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1050;
+    }
+    .day-modal-backdrop.d-none {
+        display: none;
+    }
+    .day-modal {
+        width: min(900px, 100% - 32px);
+        max-height: 90vh;
+        background: #fff;
+        border-radius: 12px;
+        box-shadow: 0 20px 40px rgba(15,23,42,0.35);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+    .day-modal-header {
+        padding: 10px 14px;
+        border-bottom: 1px solid #e5e7eb;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        background: #f8fafc;
+    }
+    .day-modal-body {
+        padding: 12px 14px;
+        overflow: auto;
+    }
+    .day-modal-footer {
+        padding: 10px 14px;
+        border-top: 1px solid #e5e7eb;
+        display: flex;
+        justify-content: flex-end;
+        background: #f9fafb;
+    }
+
+    .day-plan-box {
+        border: 1px solid #e5e7eb;
+        border-radius: 10px;
+        padding: 8px;
+        min-height: 80px;
+        background: #f9fafb;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        align-items: flex-start;
+    }
+
+    .day-grid-wrapper {
+        border: 1px solid #e5e7eb;
+        border-radius: 10px;
+        overflow: hidden;
+        background: #fff;
+    }
+    .day-grid-wrapper table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        table-layout: fixed;
+    }
+    .day-grid-wrapper th {
+        width: 60px;
+        text-align: center;
+        font-size: .8rem;
+        color: #6b7280;
+        padding: 2px 4px;
+        background: #f9fafb;
+    }
+    .day-grid-wrapper td {
+        padding: 0;
+    }
+
+    /* ✅ 각 시간 슬롯을 라운드 렉트앵글로 + 계획/차이 색상 구분 */
+    .day-slot {
+        height: 22px;
+        border-radius: 4px;                 /* 라운드 모서리 */
+        border: 1px solid #eef2f6;
+        background: #ffffff;
+        cursor: pointer;
+        transition: background .15s ease, box-shadow .15s ease, border-color .15s ease;
+    }
+    .day-slot:hover {
+        background: #f8fbff;
+    }
+
+    /* 왼쪽 근무시간(계획)과 겹치는 기본 슬롯 – 계획 구간(연한 초록) */
+    .day-slot.plan-slot {
+        background: rgba(25,135,84,0.05);
+        border-color: rgba(25,135,84,0.30);
+    }
+
+    /* 계획 범위 안의 선택 슬롯 – 초록 */
+    .day-slot.selected {
+        background: rgba(25,135,84,0.18);
+        box-shadow: inset 0 0 0 1px rgba(25,135,84,0.25);
+    }
+
+    /* 계획과 다른(추가) 선택 슬롯 – 파란색 */
+    .day-slot.selected.selected-diff {
+        background: rgba(13,110,253,0.16);
+        box-shadow: inset 0 0 0 1px rgba(13,110,253,0.45);
+        border-color: rgba(13,110,253,0.55);
+    }
+
+    .row-hour-start td,
+    .row-hour-start th {
+        border-top: 2px solid #e5e7eb !important;
+    }
+    .timecell {
+        font-variant-numeric: tabular-nums;
+    }
 </style>
 
 <!-- 컨트롤러에서 내려준 JSON -->
@@ -248,11 +460,31 @@
         const hourlyWageCell      = document.getElementById('hourlyWageCell');
         const monthHeaderEl       = document.querySelector('.month-header');
 
-        // 상수/유틸
-        const API_BASE = '/api/schedule'; // GET /api/schedule/{memberId}/{startIso}/{endIso}
-        const DOW_HEAD = ['일','월','화','수','목','금','토'];
+        // ===== DOM: 일자 조정 모달 =====
+        const dayAdjustModal      = document.getElementById('dayAdjustModal');
+        const dayModalDateLabel   = document.getElementById('dayModalDateLabel');
+        const dayPlanBox          = document.getElementById('dayPlanBox');
+        const dayGridBody         = document.getElementById('dayGridBody');
+        const daySlotButtons      = document.getElementById('daySlotButtons');
+        const btnDayModalClose    = document.getElementById('btnDayModalClose');
+        const btnDayModalCancel   = document.getElementById('btnDayModalCancel');
+        const btnDayModalSave     = document.getElementById('btnDayModalSave');
 
-        let selectedMemberId = null;
+        // 상수/유틸
+        const API_BASE   = '/api/schedule';              // GET /api/schedule/{memberId}/{startIso}/{endIso}
+        const API_UPDATE = '/api/schedule/work/update';  // POST { memberId, date, segments[] }
+        const DOW_HEAD   = ['일','월','화','수','목','금','토'];
+
+        const HOUR_START = 6;
+        const HOUR_END   = 22;
+
+        let selectedMemberId    = null;
+        let selectedDateIso     = null;   // 월간 캘린더에서 선택된 날짜
+        let dayGridStepMinutes  = 30;     // ✅ 팝업 내 기본 단위: 30분
+
+        let currentDayGridDate    = null;
+        let currentDayGridMember  = null;
+        let currentDayPlanSegments= [];
 
         // ✅ 헤더 + 요일 sticky offset 계산
         function computeCalendarOffsets() {
@@ -282,6 +514,48 @@
         statusSelect.addEventListener('change', handleStatusChange);
         memberList.addEventListener('click', onMemberListClick);
 
+        // 모달 버튼
+        if (btnDayModalClose)  btnDayModalClose.addEventListener('click', closeDayModal);
+        if (btnDayModalCancel) btnDayModalCancel.addEventListener('click', closeDayModal);
+
+        // 슬롯 단위 버튼
+        if (daySlotButtons) {
+            daySlotButtons.querySelectorAll('button[data-slot]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const mins = parseInt(btn.dataset.slot, 10);
+                    if (!mins) return;
+                    dayGridStepMinutes = mins;
+
+                    daySlotButtons.querySelectorAll('button[data-slot]').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+
+                    buildDayGrid();
+                    hydrateDayGrid({ segments: currentDayPlanSegments });
+                });
+            });
+        }
+
+        // 모달 저장
+        if (btnDayModalSave) {
+            btnDayModalSave.addEventListener('click', onSaveDayGrid);
+        }
+
+        // 바깥(백드롭) 클릭 시 닫기
+        if (dayAdjustModal) {
+            dayAdjustModal.addEventListener('click', (e) => {
+                if (e.target === dayAdjustModal) {
+                    closeDayModal();
+                }
+            });
+        }
+
+        // ESC로 닫기
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && !dayAdjustModal.classList.contains('d-none')) {
+                closeDayModal();
+            }
+        });
+
         // 시작
         handleStatusChange();
 
@@ -310,6 +584,7 @@
             const members = getCurrentFilteredMembers();
             const target  = members.find(m => String(m.id) === String(id));
             if (target) {
+                selectedDateIso = null; // 멤버 바뀌면 선택 일자 초기화
                 await pickMember(target);
             }
         }
@@ -460,20 +735,39 @@
 
                 const cell = document.createElement('div');
                 cell.className = 'cell';
+                cell.dataset.date = iso;
+                cell.dataset.hasWork = (a.minutes||0) > 0 ? '1' : '0';
                 if (iso === todayIso) cell.classList.add('today');
 
                 const chipsHtml = (a.segments?.length)
                         ? a.segments.map(s=>chipHtml(colorForMember(member), s.start, s.end)).join(' ')
-                        : '<span class="text-muted small">—</span>';
+                        : '<span class="text-muted small"></span>';
+
+                const totalLabel = formatMins(a.minutes||0);
+
+                // 선택된 날짜면 조정 버튼 노출 (근무시간이 있는 경우만)
+                const showAdjust = (selectedDateIso === iso) && (a.minutes || 0) > 0;
+                const adjustBtnHtml = showAdjust
+                        ? `<button type="button" class="btn btn-xs btn-outline-secondary btn-day-adjust" data-date="${iso}">조정</button>`
+                        : '';
 
                 cell.innerHTML = `
-        <div class="date-head">
-          <span>${iso.split('-')[2]}일</span>
-          <span class="dow-mini">${DOW_HEAD[dow]}</span>
-        </div>
-        <div class="segments">${chipsHtml}</div>
-        <div class="day-total">${formatMins(a.minutes||0)}</div>
-      `;
+                    <div class="date-head">
+                      <span class="left-date">
+                        <span>${iso.split('-')[2]}일</span>
+                        <span class="dow-mini">${DOW_HEAD[dow]}</span>
+                      </span>
+                      ${adjustBtnHtml}
+                    </div>
+                    <!-- ✅ 위: 실제 일정 박스 (연한 녹색 외곽선 라운드렉트) -->
+                    <div class="cell-rect cell-rect-top">
+                      <div class="segments">${chipsHtml}</div>
+                    </div>
+                    <!-- ✅ 아래: 실제 근무시간 박스 -->
+                    <div class="cell-rect cell-rect-bottom">
+                      <div class="day-total">${totalLabel}</div>
+                    </div>
+                `;
                 calendarGrid.appendChild(cell);
 
                 const isWeekEnd = (dow === 6); // 토요일
@@ -484,9 +778,9 @@
                     wk.className = 'week-summary';
                     const weekPay = (wage!=null) ? Math.round((weekMinutes/60)*wage) : null;
                     wk.innerHTML = `
-          <span class="label">주 ${++weekIndex} 합계</span>
-          <span class="value">${formatMins(weekMinutes)} · ${weekPay!=null ? krw(weekPay) : '-'}</span>
-        `;
+                        <span class="label">주 ${++weekIndex} 합계</span>
+                        <span class="value">${formatMins(weekMinutes)} · ${weekPay!=null ? krw(weekPay) : '-'}</span>
+                    `;
                     calendarGrid.appendChild(wk);
                     weekMinutes = 0;
                 }
@@ -496,6 +790,38 @@
             monthActualTotalCell.textContent = formatMins(monthMinutes);
             const monthPay = (wage!=null) ? Math.round((monthMinutes/60)*wage) : null;
             monthPayCell.textContent = (monthPay!=null) ? krw(monthPay) : '-';
+
+            // 5) 날짜 셀/조정 버튼 이벤트 핸들러 연결
+            attachCalendarCellHandlers(member, startIso, endIso, actualMap);
+        }
+
+        function attachCalendarCellHandlers(member, startIso, endIso, actualMap) {
+            // 셀 클릭 시 선택 날짜 변경 (근무시간 있는 셀만)
+            Array.from(calendarGrid.querySelectorAll('.cell[data-date]')).forEach(cell => {
+                const iso = cell.dataset.date;
+                const hasWork = cell.dataset.hasWork === '1';
+                if (!hasWork) return;
+
+                cell.style.cursor = 'pointer';
+
+                cell.addEventListener('click', (e) => {
+                    // 조정 버튼은 별도 처리
+                    if (e.target.closest('.btn-day-adjust')) return;
+
+                    selectedDateIso = iso;
+                    renderMonthCalendar(member, startIso, endIso, actualMap);
+                });
+            });
+
+            // 조정 버튼 클릭 시 모달 오픈
+            Array.from(calendarGrid.querySelectorAll('.btn-day-adjust')).forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const iso = btn.dataset.date;
+                    const dayObj = actualMap[iso] || {segments:[], minutes:0};
+                    openDayModal(member, iso, dayObj);
+                });
+            });
         }
 
         function clearCalendar(){
@@ -511,6 +837,234 @@
             Array.from(memberList.querySelectorAll('.member-pill')).forEach(pill=>{
                 pill.classList.remove('active');
             });
+        }
+
+        // ===== 일자 조정 모달 관련 =====
+        function openDayModal(member, iso, dayObj) {
+            currentDayGridDate    = iso;
+            currentDayGridMember  = member;
+            currentDayPlanSegments= Array.isArray(dayObj?.segments) ? dayObj.segments : [];
+
+            const d = parseIsoDate(iso);
+            const dowLabel = DOW_HEAD[d.getDay()] || '';
+            dayModalDateLabel.textContent = `${iso} (${dowLabel})`;
+
+            // 왼쪽: 계획 일정 칩 렌더
+            if (currentDayPlanSegments.length > 0) {
+                dayPlanBox.innerHTML = currentDayPlanSegments
+                        .map(s => chipHtml(colorForMember(member), s.start, s.end))
+                        .join(' ');
+            } else {
+                dayPlanBox.innerHTML = '<span class="text-muted small">등록된 계획 일정이 없습니다.</span>';
+            }
+
+            // 그리드 생성 + 현재 구간 반영 (우선은 저장된 구간을 그대로 실제 근무로 사용)
+            buildDayGrid();
+            hydrateDayGrid({ segments: currentDayPlanSegments });
+
+            dayAdjustModal.classList.remove('d-none');
+        }
+
+        function closeDayModal() {
+            dayAdjustModal.classList.add('d-none');
+        }
+
+        function buildDayGrid() {
+            if (!dayGridBody) return;
+            dayGridBody.innerHTML = '';
+
+            const startMin = HOUR_START * 60;
+            const endMin   = HOUR_END   * 60;
+            const totalRows = (endMin - startMin) / dayGridStepMinutes;
+
+            for (let idx=0; idx<totalRows; idx++) {
+                const tMin = startMin + idx * dayGridStepMinutes;
+                const h = Math.floor(tMin / 60);
+                const m = tMin % 60;
+                const hmLabel = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+
+                const tr = document.createElement('tr');
+                if (m === 0) tr.classList.add('row-hour-start');
+
+                const th = document.createElement('th');
+                th.className = 'timecell';
+                th.textContent = (m % 30 === 0) ? hmLabel : '';
+                tr.appendChild(th);
+
+                const td = document.createElement('td');
+                const div = document.createElement('div');
+                div.className = 'day-slot';
+                div.dataset.idx = String(idx);
+                div.dataset.plan = '0';
+                td.appendChild(div);
+                tr.appendChild(td);
+
+                dayGridBody.appendChild(tr);
+            }
+
+            attachDayGridDragHandlers();
+        }
+
+        let dayGridDragging  = false;
+        let dayGridDragAdding= true;
+
+        function attachDayGridDragHandlers() {
+            if (!dayGridBody) return;
+            const slots = dayGridBody.querySelectorAll('.day-slot');
+
+            slots.forEach(slot => {
+                slot.addEventListener('mousedown', (e) => {
+                    e.preventDefault();
+                    dayGridDragging  = true;
+                    dayGridDragAdding= !slot.classList.contains('selected');
+                    toggleDaySlot(slot, dayGridDragAdding);
+                });
+                slot.addEventListener('mouseenter', () => {
+                    if (!dayGridDragging) return;
+                    toggleDaySlot(slot, dayGridDragAdding);
+                });
+            });
+
+            window.addEventListener('mouseup', () => {
+                if (dayGridDragging) dayGridDragging = false;
+            });
+        }
+
+        // ✅ 선택/해제 시 계획(plan) 여부에 따라 파란색/초록색 클래스를 조정
+        function toggleDaySlot(el, on) {
+            if (on) {
+                el.classList.add('selected');
+            } else {
+                el.classList.remove('selected');
+            }
+
+            const isPlan = el.dataset.plan === '1';
+
+            if (el.classList.contains('selected') && !isPlan) {
+                el.classList.add('selected-diff');
+            } else {
+                el.classList.remove('selected-diff');
+            }
+        }
+
+        function hydrateDayGrid(dayObj) {
+            if (!dayGridBody) return;
+
+            // ✅ 모든 슬롯 초기화
+            dayGridBody.querySelectorAll('.day-slot').forEach(el => {
+                el.classList.remove('selected', 'selected-diff', 'plan-slot');
+                el.dataset.plan = '0';
+            });
+
+            const segments = Array.isArray(dayObj?.segments) ? dayObj.segments : [];
+            if (!segments.length) return;
+
+            const startMin = HOUR_START * 60;
+            const endMin   = HOUR_END   * 60;
+            const totalRows= (endMin - startMin) / dayGridStepMinutes;
+
+            // ✅ 왼쪽 근무시간(계획) 기준 구간을 표시 + 기본 선택
+            segments.forEach(seg => {
+                const segStartMin = hmToMin(seg.start);
+                const segEndMin   = hmToMin(seg.end);
+
+                const a = Math.max(startMin, segStartMin);
+                const b = Math.min(endMin,   segEndMin);
+                if (a >= b) return;
+
+                const sIdx = Math.floor((a - startMin) / dayGridStepMinutes);
+                const eIdx = Math.ceil ((b - startMin) / dayGridStepMinutes) - 1;
+
+                for (let idx = Math.max(0, sIdx); idx <= Math.min(totalRows-1, eIdx); idx++) {
+                    const slot = dayGridBody.querySelector(`.day-slot[data-idx="${idx}"]`);
+                    if (!slot) continue;
+
+                    // 계획 구간 마킹
+                    slot.dataset.plan = '1';
+                    slot.classList.add('plan-slot');
+
+                    // 기본은 "계획 = 실제"로 선택 상태 (초록)
+                    toggleDaySlot(slot, true);
+                }
+            });
+        }
+
+        function collectDaySegmentsFromGrid() {
+            if (!dayGridBody) return [];
+            const startMin = HOUR_START * 60;
+
+            const indexes = [];
+            dayGridBody.querySelectorAll('.day-slot.selected').forEach(slot => {
+                const idx = parseInt(slot.dataset.idx, 10);
+                if (!isNaN(idx)) indexes.push(idx);
+            });
+
+            const merged = mergeConsecutive(indexes);
+            return merged.map(([sIdx, eIdx]) => {
+                const stMin = startMin + sIdx * dayGridStepMinutes;
+                const edMin = startMin + (eIdx + 1) * dayGridStepMinutes;
+                return {
+                    start: minToHm(stMin),
+                    end:   minToHm(edMin)
+                };
+            });
+        }
+
+        async function onSaveDayGrid() {
+            if (!currentDayGridMember || !currentDayGridDate) {
+                alert('선택된 일자 또는 아르바이트생 정보가 없습니다.');
+                return;
+            }
+
+            const segments = collectDaySegmentsFromGrid();
+
+            const payload = {
+                memberId: currentDayGridMember.id,
+                date:     currentDayGridDate,
+                segments: segments
+            };
+
+            try {
+                const resp = await fetch(API_UPDATE, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                });
+                if (!resp.ok) {
+                    const txt = await resp.text().catch(()=> '');
+                    alert(`저장 실패: ${resp.status} ${txt}`);
+                    return;
+                }
+
+                alert('해당 일자의 근무시간이 저장되었습니다.');
+                closeDayModal();
+
+                // 저장 후 월간 캘린더 갱신
+                const members = getCurrentFilteredMembers();
+                const member  = members.find(m => String(m.id) === String(currentDayGridMember.id));
+                if (member) {
+                    const { monthStartIso, monthEndIso } = parseMonthRange(monthRangeLabelEl?.textContent || '');
+                    let actualMap = {};
+                    try {
+                        const url = `${API_BASE}/${encodeURIComponent(member.id)}/${monthStartIso}/${monthEndIso}`;
+                        const resp2 = await fetch(url, { headers: { 'Accept': 'application/json' } });
+                        if (resp2.ok) {
+                            const data2 = await resp2.json();
+                            actualMap = normalizeActualDays(data2);
+                        }
+                    } catch(e){}
+
+                    // 방금 조정한 날짜를 유지하면서 다시 렌더
+                    selectedDateIso = currentDayGridDate;
+                    renderMonthCalendar(member, monthStartIso, monthEndIso, actualMap);
+                }
+            } catch (e) {
+                console.error(e);
+                alert('저장 중 오류가 발생했습니다.');
+            }
         }
 
         // ===== 날짜/시간 유틸 =====
@@ -566,6 +1120,26 @@
             if(!hm||typeof hm!=='string') return {h:0,m:0};
             const [h,m] = hm.split(':').map(n=>parseInt(n,10));
             return {h:isNaN(h)?0:h, m:isNaN(m)?0:m};
+        }
+        function hmToMin(hm){
+            const {h,m} = parseHm(hm);
+            return h*60 + m;
+        }
+        function minToHm(min){
+            const h = Math.floor(min/60);
+            const m = min%60;
+            return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+        }
+        function mergeConsecutive(arr){
+            const out=[]; if(!arr || !arr.length) return out;
+            arr.sort((a,b)=>a-b);
+            let s=arr[0], p=arr[0];
+            for(let i=1;i<arr.length;i++){
+                if(arr[i]===p+1){ p=arr[i]; continue; }
+                out.push([s,p]); s=p=arr[i];
+            }
+            out.push([s,p]);
+            return out;
         }
         function chipHtml(color, start, end){
             return `<span class="chip"><span class="dot" style="background:${color}"></span><span class="small">${start} ~ ${end}</span></span>`;
