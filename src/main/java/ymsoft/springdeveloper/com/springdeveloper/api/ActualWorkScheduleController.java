@@ -42,6 +42,16 @@ public class ActualWorkScheduleController {
         return ResponseEntity.ok(res);
     }
 
+    @PostMapping("/update")
+    public ResponseEntity<Void> updateActualWork(@Valid @RequestBody UpdateWorkScheduleRequest request) {
+
+        log.info("Received update request for memberId={}, date={}", request.getMemberId(), request.getDate());
+        service.updateActualWorkSchedule(request);
+
+        log.info("Return for Update request for memberId={}, date={}", request.getMemberId(), request.getDate());
+        return ResponseEntity.ok().build();
+    }
+
     @PostMapping("/actual-bulk-register")
     public ResponseEntity<Map<String, Object>> saveActualBulk(
             @RequestBody @Valid ActualWorkScheduleBulkDto request

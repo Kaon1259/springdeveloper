@@ -1,8 +1,11 @@
 package ymsoft.springdeveloper.com.springdeveloper.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.extern.slf4j.Slf4j;
 import ymsoft.springdeveloper.com.springdeveloper.dto.DayWorkDto;
+import ymsoft.springdeveloper.com.springdeveloper.dto.UpdateWorkScheduleRequest;
 import ymsoft.springdeveloper.com.springdeveloper.dto.WeekWorkResponse;
 import ymsoft.springdeveloper.com.springdeveloper.dto.WorkSegmentDto;
 import ymsoft.springdeveloper.com.springdeveloper.entity.ActualWorkSchedule;
@@ -14,10 +17,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -90,6 +92,93 @@ public class ActualWorkScheduleService {
     public List<ActualWorkSchedule> getRecent(Long memberId) {
         return repository.findByMemberIdOrderByWorkDateDesc(memberId);
     }
+
+    @Transactional
+    public void updateActualWorkSchedule(UpdateWorkScheduleRequest request) {
+
+        Long memberId = request.getMemberId();
+        LocalDate workDate = request.getDate();
+        List<UpdateWorkScheduleRequest.SegmentDto> segments = request.getSegments();
+        log.info("updateActualWorkSchedule: {}", segments.toString());
+
+        // 1) segments 검증 및 totalMinutes 계산
+        Integer totalMinutes = 0;
+        if (segments != null && !segments.isEmpty()) {
+            // 시작/끝 검증 + LocalTime 변환 리스트 생성
+            List<SegmentWithTime> timeSegments = segments.stream()
+                    .map(s -> {
+                        LocalTime start = LocalTime.parse(s.getStart()); // "HH:mm"
+                        LocalTime end   = LocalTime.parse(s.getEnd());
+                        if (!end.isAfter(start)) {
+                            throw new IllegalArgumentException(
+                                    "end는 start보다 이후여야 합니다: " +
+                                            s.getStart() + " ~ " + s.getEnd()
+                            );
+                        }
+                        return new SegmentWithTime(start, end);
+                    })
+                    .sorted(Comparator.comparing(SegmentWithTime::start))
+                    .toList();
+
+            // 겹치는지 검증
+            for (int i = 1; i < timeSegments.size(); i++) {
+                SegmentWithTime prev = timeSegments.get(i - 1);
+                SegmentWithTime cur  = timeSegments.get(i);
+                if (!cur.start().isAfter(prev.end())) {
+                    throw new IllegalArgumentException(
+                            "근무 구간이 서로 겹칩니다: " +
+                                    prev.start() + "~" + prev.end() + " / " +
+                                    cur.start() + "~" + cur.end()
+                    );
+                }
+            }
+
+            // 총 근무 시간 분(minute) 계산
+            for (SegmentWithTime s : timeSegments) {
+                totalMinutes += (int) Duration.between(s.start(), s.end()).toMinutes();
+            }
+        } else {
+            // segments 비어 있으면 휴무로 간주
+            totalMinutes = 0;
+        }
+
+        // 2) segments를 JSON 문자열로 직렬화
+        String segmentsJson;
+        try {
+            // 프론트가 보내준 구조 그대로 저장
+            segmentsJson = objectMapper.writeValueAsString(
+                    segments == null ? List.of() : segments
+            );
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("segments 직렬화 실패", e);
+        }
+
+        // 3) memberId + workDate 기준으로 upsert
+        Optional<ActualWorkSchedule> optional = repository
+                .findByMemberIdAndWorkDate(memberId, workDate);
+
+        final Integer totalMinutesFinal = totalMinutes;
+
+        ActualWorkSchedule entity = optional
+                .map(existing -> {
+                    existing.setSegmentsJson(segmentsJson);
+                    existing.setTotalMinutes(totalMinutesFinal);
+                    return existing;
+                })
+                .orElseGet(() -> ActualWorkSchedule.builder()
+                        .memberId(memberId)
+                        .workDate(workDate)
+                        .segmentsJson(segmentsJson)
+                        .totalMinutes(totalMinutesFinal)
+                        .build());
+
+        repository.save(entity);
+    }
+
+    /**
+     * 검증과 계산용 내부 타입
+     */
+    private record SegmentWithTime(LocalTime start, LocalTime end) {}
 
 
     private List<WorkSegmentDto> parseSegments(String json) {

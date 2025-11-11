@@ -87,7 +87,7 @@
             </div>
 
             <div class="small text-muted mt-2">
-                * 날짜 칸에 실제 근무 구간 칩과 일 합계가 표시됩니다. 주의 마지막(토요일 또는 월말)에 ‘주 합계/예상 급여’ 바가 들어갑니다.<br>
+                * 날짜 칸에 스케줄, 실제 근무시간, 일별 근무시간 합계가 순서대로 표시됩니다.<br>
                 * 근무시간이 있는 날짜 셀을 클릭하면 날짜 옆에 ‘조정’ 버튼이 나타나며, 버튼을 누르면 해당 일자의 근무시간을 상세 조정할 수 있습니다.
             </div>
         </div>
@@ -153,7 +153,6 @@
         border:1px solid rgba(0,0,0,.08);
     }
 
-    /* 이전 member-chip용 점 */
     .dot {
         width:10px;
         height:10px;
@@ -228,7 +227,6 @@
         padding: 6px 0;
         border-bottom: 1px dashed #e9ecef;
 
-        /* 스크롤 시 요일 헤더 고정 (헤더 아래) */
         position: sticky;
         top: var(--calendar-dow-offset, 0);
         z-index: 20;
@@ -257,18 +255,27 @@
     }
     .cell .date-head .dow-mini { color:#6c757d; font-weight: 500; font-size: .85rem; }
 
-    /* ✅ 날짜 셀 내부를 2개의 라운드 렉트로 분리 */
+    /* ✅ 날짜 셀 내부를 3개의 라운드 렉트로 분리 */
     .cell-rect {
         border-radius: 8px;
         padding: 4px 6px;
-        min-height: 36px;
+        min-height: 32px;
+        margin-top: 3px;
     }
-    /* 위: 실제 일정 (녹색 외곽선) - 더 연하게 조정 */
+
+    /* 1. 맨 위: 스케줄(계획) – 연한 초록 톤 */
     .cell-rect-top {
         border: 1px solid rgba(25,135,84,0.5);
         background: rgba(25,135,84,0.04);
     }
-    /* 아래: 실제 근무시간 */
+
+    /* 2. 두 번째: 실제 근무시간 – 중립 톤 */
+    .cell-rect-middle {
+        border: 1px solid #e9ecef;
+        background: #f8f9fa;
+    }
+
+    /* 3. 마지막: 근무시간 합계 – 살짝 강조된 배경 */
     .cell-rect-bottom {
         border: 1px solid #e9ecef;
         background: #fcfcfc;
@@ -290,7 +297,7 @@
     .cell.today { outline: 2px solid #51cf66; outline-offset: 2px; }
 
     .week-summary {
-        grid-column: 1 / -1; /* 7열 전체 span */
+        grid-column: 1 / -1;
         border: 1px dashed #e9ecef;
         border-radius: 8px;
         padding: 8px 10px;
@@ -302,7 +309,6 @@
     .week-summary .label { font-weight: 600; color:#495057; }
     .week-summary .value { font-weight: 600; }
 
-    /* 날짜 셀 선택 시 표시되는 조정 버튼 */
     .btn-day-adjust {
         padding: 0 6px;
         font-size: .7rem;
@@ -389,10 +395,9 @@
         padding: 0;
     }
 
-    /* ✅ 각 시간 슬롯을 라운드 렉트앵글로 + 계획/차이 색상 구분 */
     .day-slot {
         height: 22px;
-        border-radius: 4px;                 /* 라운드 모서리 */
+        border-radius: 4px;
         border: 1px solid #eef2f6;
         background: #ffffff;
         cursor: pointer;
@@ -402,19 +407,16 @@
         background: #f8fbff;
     }
 
-    /* 왼쪽 근무시간(계획)과 겹치는 기본 슬롯 – 계획 구간(연한 초록) */
     .day-slot.plan-slot {
         background: rgba(25,135,84,0.05);
         border-color: rgba(25,135,84,0.30);
     }
 
-    /* 계획 범위 안의 선택 슬롯 – 초록 */
     .day-slot.selected {
         background: rgba(25,135,84,0.18);
         box-shadow: inset 0 0 0 1px rgba(25,135,84,0.25);
     }
 
-    /* 계획과 다른(추가) 선택 슬롯 – 파란색 */
     .day-slot.selected.selected-diff {
         background: rgba(13,110,253,0.16);
         box-shadow: inset 0 0 0 1px rgba(13,110,253,0.45);
@@ -445,12 +447,10 @@
 
 <script>
     (function() {
-        // ===== DOM: 상단 상태/목록 =====
         const statusSelect        = document.getElementById('statusSelect');
         const memberList          = document.getElementById('memberList');
         const memberCountBadge    = document.getElementById('memberCountBadge');
 
-        // ===== DOM: 하단 월간 캘린더 =====
         const calendarTitle       = document.getElementById('calendarTitle');
         const headerStatusBadge   = document.getElementById('headerStatusBadge');
         const monthRangeLabelEl   = document.getElementById('monthRangeLabel');
@@ -460,7 +460,6 @@
         const hourlyWageCell      = document.getElementById('hourlyWageCell');
         const monthHeaderEl       = document.querySelector('.month-header');
 
-        // ===== DOM: 일자 조정 모달 =====
         const dayAdjustModal      = document.getElementById('dayAdjustModal');
         const dayModalDateLabel   = document.getElementById('dayModalDateLabel');
         const dayPlanBox          = document.getElementById('dayPlanBox');
@@ -470,32 +469,29 @@
         const btnDayModalCancel   = document.getElementById('btnDayModalCancel');
         const btnDayModalSave     = document.getElementById('btnDayModalSave');
 
-        // 상수/유틸
-        const API_BASE   = '/api/schedule';              // GET /api/schedule/{memberId}/{startIso}/{endIso}
-        const API_UPDATE = '/api/schedule/work/update';  // POST { memberId, date, segments[] }
+        const API_PLAN   = '/api/schedule/work';
+        const API_BASE   = '/api/schedule';
+        const API_UPDATE = '/api/schedule/update';
         const DOW_HEAD   = ['일','월','화','수','목','금','토'];
 
         const HOUR_START = 6;
         const HOUR_END   = 22;
 
         let selectedMemberId    = null;
-        let selectedDateIso     = null;   // 월간 캘린더에서 선택된 날짜
-        let dayGridStepMinutes  = 30;     // ✅ 팝업 내 기본 단위: 30분
+        let selectedDateIso     = null;
+        let dayGridStepMinutes  = 30;
 
         let currentDayGridDate    = null;
         let currentDayGridMember  = null;
         let currentDayPlanSegments= [];
 
-        // ✅ 헤더 + 요일 sticky offset 계산
         function computeCalendarOffsets() {
-            // 상단 네비바 높이
             const fixedHeader = document.querySelector('.navbar.fixed-top, .fixed-top, header.sticky-top');
             const navH = fixedHeader ? fixedHeader.getBoundingClientRect().height : 0;
-            const headerOffset = navH; // 네비바 바로 아래에 카드 헤더
+            const headerOffset = navH;
 
             document.documentElement.style.setProperty('--calendar-header-offset', (headerOffset) + 'px');
 
-            // 요일 헤더는 카드 헤더 바로 아래에 위치
             if (monthHeaderEl) {
                 const headerHeight = monthHeaderEl.getBoundingClientRect().height;
                 const dowOffset = headerOffset + headerHeight;
@@ -505,20 +501,16 @@
         computeCalendarOffsets();
         window.addEventListener('resize', computeCalendarOffsets);
 
-        // 초기 상태 지정
         if (Array.isArray(allMembers) && allMembers.length > 0) {
             statusSelect.value = allMembers[0].status || 'WORKING';
         }
 
-        // 이벤트 바인딩
         statusSelect.addEventListener('change', handleStatusChange);
         memberList.addEventListener('click', onMemberListClick);
 
-        // 모달 버튼
         if (btnDayModalClose)  btnDayModalClose.addEventListener('click', closeDayModal);
         if (btnDayModalCancel) btnDayModalCancel.addEventListener('click', closeDayModal);
 
-        // 슬롯 단위 버튼
         if (daySlotButtons) {
             daySlotButtons.querySelectorAll('button[data-slot]').forEach(btn => {
                 btn.addEventListener('click', () => {
@@ -535,12 +527,10 @@
             });
         }
 
-        // 모달 저장
         if (btnDayModalSave) {
             btnDayModalSave.addEventListener('click', onSaveDayGrid);
         }
 
-        // 바깥(백드롭) 클릭 시 닫기
         if (dayAdjustModal) {
             dayAdjustModal.addEventListener('click', (e) => {
                 if (e.target === dayAdjustModal) {
@@ -549,17 +539,14 @@
             });
         }
 
-        // ESC로 닫기
         window.addEventListener('keydown', (e) => {
             if (e.key === 'Escape' && !dayAdjustModal.classList.contains('d-none')) {
                 closeDayModal();
             }
         });
 
-        // 시작
         handleStatusChange();
 
-        // ===== Handlers =====
         async function handleStatusChange() {
             const status   = statusSelect.value;
             const filtered = (allMembers || []).filter(m => m.status === status);
@@ -567,7 +554,6 @@
             renderMemberList(filtered);
 
             if (filtered.length) {
-                // 이전 선택 유지, 없으면 첫 번째
                 const keep = filtered.find(m => String(m.id) === String(selectedMemberId)) || filtered[0];
                 await pickMember(keep);
             } else {
@@ -584,7 +570,7 @@
             const members = getCurrentFilteredMembers();
             const target  = members.find(m => String(m.id) === String(id));
             if (target) {
-                selectedDateIso = null; // 멤버 바뀌면 선택 일자 초기화
+                selectedDateIso = null;
                 await pickMember(target);
             }
         }
@@ -594,7 +580,6 @@
             return (allMembers || []).filter(m => m.status === status);
         }
 
-        // ===== 상단: 알바생 이름 칩 렌더 =====
         function renderMemberList(members) {
             memberList.innerHTML = '';
             memberCountBadge.textContent = `${members.length}명`;
@@ -626,10 +611,10 @@
                         ${
                                 memberPhone || memberCode
                                         ? `<span class="member-pill-meta">
-                                     ${memberPhone ? memberPhone : ''}
-                                     ${memberPhone && memberCode ? ' · ' : ''}
-                                     ${memberCode ? memberCode : ''}
-                                   </span>`
+                                 ${memberPhone ? memberPhone : ''}
+                                 ${memberPhone && memberCode ? ' · ' : ''}
+                                 ${memberCode ? memberCode : ''}
+                               </span>`
                                         : ''
                         }
                     `;
@@ -640,14 +625,12 @@
             updateMemberListActive();
         }
 
-        // 공통 멤버 선택 처리
         async function pickMember(m) {
             if (!m) return;
             selectedMemberId = m.id;
 
             updateMemberListActive();
 
-            // 헤더 타이틀/상태 뱃지 갱신
             if (m?.name) {
                 calendarTitle.textContent = `월간 캘린더 (${m.name})`;
             } else {
@@ -663,10 +646,8 @@
                 headerStatusBadge.className = 'badge bg-secondary ms-2 d-none';
             }
 
-            // 타이틀 길이에 따라 헤더 높이가 변할 수 있으니 다시 계산
             computeCalendarOffsets();
 
-            // 달력 렌더
             await loadAndRenderMonth(m);
         }
 
@@ -676,127 +657,172 @@
             });
         }
 
-        // ===== 하단: 월간 렌더링(달력) =====
-        async function loadAndRenderMonth(member){
+        // ======================== 수정된 부분 시작 =========================
+
+        async function loadAndRenderMonth(member) {
             const { monthStartIso, monthEndIso } = parseMonthRange(monthRangeLabelEl?.textContent || '');
 
+            let planMap = {};
             let actualMap = {};
+
             try {
-                const url = `${API_BASE}/${encodeURIComponent(member.id)}/${monthStartIso}/${monthEndIso}`;
-                const resp = await fetch(url, { headers: { 'Accept': 'application/json' } });
-                if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-                const data = await resp.json();
-                actualMap = normalizeActualDays(data); // 'YYYY-MM-DD' -> {segments, minutes}
+                // 계획 일정 조회
+                const planUrl = `${API_PLAN}/${encodeURIComponent(member.id)}/${monthStartIso}/${monthEndIso}`;
+                const planResp = await fetch(planUrl, { headers: { 'Accept': 'application/json' } });
+                if (planResp.ok) {
+                    const planData = await planResp.json();
+                    planMap = normalizeActualDays(planData);
+                }
             } catch (err) {
-                console.error('monthly worklogs fetch error:', err);
-                actualMap = {};
+                console.error('plan fetch error:', err);
             }
 
-            renderMonthCalendar(member, monthStartIso, monthEndIso, actualMap);
+            try {
+                // 실제 근무시간 조회
+                const actUrl = `${API_BASE}/${encodeURIComponent(member.id)}/${monthStartIso}/${monthEndIso}`;
+                const actResp = await fetch(actUrl, { headers: { 'Accept': 'application/json' } });
+                if (actResp.ok) {
+                    const actData = await actResp.json();
+                    actualMap = normalizeActualDays(actData);
+                }
+            } catch (err) {
+                console.error('actual fetch error:', err);
+            }
+
+            // 계획 + 실제 병합
+            const mergedMap = mergePlanAndActual(planMap, actualMap);
+
+            renderMonthCalendar(member, monthStartIso, monthEndIso, mergedMap);
         }
 
-        function renderMonthCalendar(member, startIso, endIso, actualMap){
+// 계획 + 실제 일정 병합
+        function mergePlanAndActual(planMap, actualMap) {
+            const merged = {};
+            const allDates = new Set([...Object.keys(planMap), ...Object.keys(actualMap)]);
+            allDates.forEach(date => {
+                merged[date] = {
+                    planSegments: planMap[date]?.segments || [],
+                    actualSegments: actualMap[date]?.segments || [],
+                    minutes: actualMap[date]?.minutes || 0
+                };
+            });
+            return merged;
+        }
+
+        function renderMonthCalendar(member, startIso, endIso, dayMap) {
             calendarGrid.innerHTML = '';
 
             const wage = (typeof member?.hourlyWage === 'number') ? member.hourlyWage : null;
-            hourlyWageCell.textContent = (wage!=null) ? krw(wage) : '-';
+            hourlyWageCell.textContent = (wage != null) ? krw(wage) : '-';
 
-            // 1) 요일 헤더(일~토)
-            DOW_HEAD.forEach(label=>{
+            // 요일 헤더
+            DOW_HEAD.forEach(label => {
                 const h = document.createElement('div');
                 h.className = 'dow';
                 h.textContent = label;
                 calendarGrid.appendChild(h);
             });
 
-            // 2) 월 매트릭스/프리픽스
             const start = parseIsoDate(startIso);
             const end   = parseIsoDate(endIso);
             const todayIso = toIso(new Date());
-            const firstDow = start.getDay(); // 0=일
-            for (let i=0; i<firstDow; i++){
+            const firstDow = start.getDay();
+            for (let i = 0; i < firstDow; i++) {
                 const blank = document.createElement('div');
                 blank.className = 'cell muted';
                 calendarGrid.appendChild(blank);
             }
 
-            // 3) 날짜 셀 + 주 합계 바
             let monthMinutes = 0;
             let weekMinutes = 0;
             let weekIndex = 0;
 
-            for (let d = new Date(start); d <= end; d.setDate(d.getDate()+1)) {
+            for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
                 const iso = toIso(d);
-                const dow = d.getDay(); // 0=일 ~ 6=토
-                const a = actualMap[iso] || {segments:[], minutes:0};
+                const dow = d.getDay();
+                const a = dayMap[iso] || { planSegments: [], actualSegments: [], minutes: 0 };
 
-                monthMinutes += (a.minutes||0);
-                weekMinutes  += (a.minutes||0);
+                monthMinutes += (a.minutes || 0);
+                weekMinutes  += (a.minutes || 0);
 
                 const cell = document.createElement('div');
                 cell.className = 'cell';
                 cell.dataset.date = iso;
-                cell.dataset.hasWork = (a.minutes||0) > 0 ? '1' : '0';
+                cell.dataset.hasWork = (a.minutes || 0) > 0 ? '1' : '0';
                 if (iso === todayIso) cell.classList.add('today');
 
-                const chipsHtml = (a.segments?.length)
-                        ? a.segments.map(s=>chipHtml(colorForMember(member), s.start, s.end)).join(' ')
-                        : '<span class="text-muted small"></span>';
+                const planChips   = a.planSegments.length
+                        ? a.planSegments.map(s => chipHtml('#198754', s.start, s.end)).join(' ')
+                        : '<span class="text-muted small">-</span>';
 
-                const totalLabel = formatMins(a.minutes||0);
+                const actualChips = a.actualSegments.length
+                        ? a.actualSegments.map(s => chipHtml(colorForMember(member), s.start, s.end)).join(' ')
+                        : '<span class="text-muted small">-</span>';
 
-                // 선택된 날짜면 조정 버튼 노출 (근무시간이 있는 경우만)
-                const showAdjust = (selectedDateIso === iso) && (a.minutes || 0) > 0;
+                const totalLabel = formatMins(a.minutes || 0);
+
+                // ✅ 수정: planSegments가 있어도 버튼 보이도록 조건 변경 + 버튼 이름 변경
+                const showAdjust =
+                        (selectedDateIso === iso) && (
+                                (a.minutes || 0) > 0 || (a.planSegments?.length ?? 0) > 0
+                        );
                 const adjustBtnHtml = showAdjust
-                        ? `<button type="button" class="btn btn-xs btn-outline-secondary btn-day-adjust" data-date="${iso}">조정</button>`
+                        ? `<button type="button" class="btn btn-xs btn-outline-secondary btn-day-adjust" data-date="${iso}">근무시간조정</button>`
                         : '';
 
+
                 cell.innerHTML = `
-                    <div class="date-head">
-                      <span class="left-date">
-                        <span>${iso.split('-')[2]}일</span>
-                        <span class="dow-mini">${DOW_HEAD[dow]}</span>
-                      </span>
-                      ${adjustBtnHtml}
-                    </div>
-                    <!-- ✅ 위: 실제 일정 박스 (연한 녹색 외곽선 라운드렉트) -->
-                    <div class="cell-rect cell-rect-top">
-                      <div class="segments">${chipsHtml}</div>
-                    </div>
-                    <!-- ✅ 아래: 실제 근무시간 박스 -->
-                    <div class="cell-rect cell-rect-bottom">
-                      <div class="day-total">${totalLabel}</div>
-                    </div>
-                `;
+            <div class="date-head">
+                <span class="left-date">
+                    <span>${iso.split('-')[2]}일</span>
+                    <span class="dow-mini">${DOW_HEAD[dow]}</span>
+                </span>
+                ${adjustBtnHtml}
+            </div>
+
+            <!-- 1. 계획 일정 -->
+            <div class="cell-rect cell-rect-top">
+                <div class="segments">${planChips}</div>
+            </div>
+
+            <!-- 2. 실제 근무 -->
+            <div class="cell-rect cell-rect-middle">
+                <div class="segments">${actualChips}</div>
+            </div>
+
+            <!-- 3. 합계 -->
+            <div class="cell-rect cell-rect-bottom">
+                <div class="day-total">${totalLabel}</div>
+            </div>
+        `;
                 calendarGrid.appendChild(cell);
 
-                const isWeekEnd = (dow === 6); // 토요일
+                const isWeekEnd = (dow === 6);
                 const isLastDay = (iso === endIso);
 
                 if (isWeekEnd || isLastDay) {
                     const wk = document.createElement('div');
                     wk.className = 'week-summary';
-                    const weekPay = (wage!=null) ? Math.round((weekMinutes/60)*wage) : null;
+                    const weekPay = (wage != null) ? Math.round((weekMinutes / 60) * wage) : null;
                     wk.innerHTML = `
-                        <span class="label">주 ${++weekIndex} 합계</span>
-                        <span class="value">${formatMins(weekMinutes)} · ${weekPay!=null ? krw(weekPay) : '-'}</span>
-                    `;
+                <span class="label">주 ${++weekIndex} 합계</span>
+                <span class="value">${formatMins(weekMinutes)} · ${weekPay != null ? krw(weekPay) : '-'}</span>
+            `;
                     calendarGrid.appendChild(wk);
                     weekMinutes = 0;
                 }
             }
 
-            // 4) 월 합계/급여
             monthActualTotalCell.textContent = formatMins(monthMinutes);
-            const monthPay = (wage!=null) ? Math.round((monthMinutes/60)*wage) : null;
-            monthPayCell.textContent = (monthPay!=null) ? krw(monthPay) : '-';
+            const monthPay = (wage != null) ? Math.round((monthMinutes / 60) * wage) : null;
+            monthPayCell.textContent = (monthPay != null) ? krw(monthPay) : '-';
 
-            // 5) 날짜 셀/조정 버튼 이벤트 핸들러 연결
-            attachCalendarCellHandlers(member, startIso, endIso, actualMap);
+            attachCalendarCellHandlers(member, startIso, endIso, dayMap);
         }
 
+// ======================== 수정된 부분 끝 =========================
+
         function attachCalendarCellHandlers(member, startIso, endIso, actualMap) {
-            // 셀 클릭 시 선택 날짜 변경 (근무시간 있는 셀만)
             Array.from(calendarGrid.querySelectorAll('.cell[data-date]')).forEach(cell => {
                 const iso = cell.dataset.date;
                 const hasWork = cell.dataset.hasWork === '1';
@@ -805,15 +831,12 @@
                 cell.style.cursor = 'pointer';
 
                 cell.addEventListener('click', (e) => {
-                    // 조정 버튼은 별도 처리
                     if (e.target.closest('.btn-day-adjust')) return;
-
                     selectedDateIso = iso;
                     renderMonthCalendar(member, startIso, endIso, actualMap);
                 });
             });
 
-            // 조정 버튼 클릭 시 모달 오픈
             Array.from(calendarGrid.querySelectorAll('.btn-day-adjust')).forEach(btn => {
                 btn.addEventListener('click', (e) => {
                     e.stopPropagation();
@@ -839,34 +862,68 @@
             });
         }
 
-        // ===== 일자 조정 모달 관련 =====
         function openDayModal(member, iso, dayObj) {
             currentDayGridDate    = iso;
             currentDayGridMember  = member;
-            currentDayPlanSegments= Array.isArray(dayObj?.segments) ? dayObj.segments : [];
+            currentDayPlanSegments = Array.isArray(dayObj?.planSegments)
+                    ? dayObj.planSegments
+                    : [];
+
+            const actualSegments = Array.isArray(dayObj?.actualSegments)
+                    ? dayObj.actualSegments
+                    : [];
 
             const d = parseIsoDate(iso);
             const dowLabel = DOW_HEAD[d.getDay()] || '';
             dayModalDateLabel.textContent = `${iso} (${dowLabel})`;
 
-            // 왼쪽: 계획 일정 칩 렌더
+            // ✅ 왼쪽: 계획 일정 칩
             if (currentDayPlanSegments.length > 0) {
                 dayPlanBox.innerHTML = currentDayPlanSegments
-                        .map(s => chipHtml(colorForMember(member), s.start, s.end))
+                        .map(s => chipHtml('#198754', s.start, s.end))
                         .join(' ');
             } else {
                 dayPlanBox.innerHTML = '<span class="text-muted small">등록된 계획 일정이 없습니다.</span>';
             }
 
-            // 그리드 생성 + 현재 구간 반영 (우선은 저장된 구간을 그대로 실제 근무로 사용)
+            // ✅ 오른쪽: 실제 근무시간 슬롯 초기화 + 선택 반영
             buildDayGrid();
-            hydrateDayGrid({ segments: currentDayPlanSegments });
+            hydrateDayGrid({ segments: actualSegments }); // 실제 근무시간 표시
+
+            // 계획 구간(녹색 tone) 표시 겹치기
+            if (currentDayPlanSegments.length > 0) {
+                overlayPlanOnGrid(currentDayPlanSegments);
+            }
 
             dayAdjustModal.classList.remove('d-none');
         }
 
+
         function closeDayModal() {
             dayAdjustModal.classList.add('d-none');
+        }
+
+        function overlayPlanOnGrid(planSegments) {
+            const startMin = HOUR_START * 60;
+            const endMin   = HOUR_END   * 60;
+            const totalRows= (endMin - startMin) / dayGridStepMinutes;
+
+            planSegments.forEach(seg => {
+                const segStartMin = hmToMin(seg.start);
+                const segEndMin   = hmToMin(seg.end);
+                const a = Math.max(startMin, segStartMin);
+                const b = Math.min(endMin, segEndMin);
+                if (a >= b) return;
+
+                const sIdx = Math.floor((a - startMin) / dayGridStepMinutes);
+                const eIdx = Math.ceil ((b - startMin) / dayGridStepMinutes) - 1;
+
+                for (let idx = Math.max(0, sIdx); idx <= Math.min(totalRows-1, eIdx); idx++) {
+                    const slot = dayGridBody.querySelector(`.day-slot[data-idx="${idx}"]`);
+                    if (!slot) continue;
+                    slot.classList.add('plan-slot'); // 계획시간 표시용 class
+                }
+            });
         }
 
         function buildDayGrid() {
@@ -930,7 +987,6 @@
             });
         }
 
-        // ✅ 선택/해제 시 계획(plan) 여부에 따라 파란색/초록색 클래스를 조정
         function toggleDaySlot(el, on) {
             if (on) {
                 el.classList.add('selected');
@@ -950,7 +1006,6 @@
         function hydrateDayGrid(dayObj) {
             if (!dayGridBody) return;
 
-            // ✅ 모든 슬롯 초기화
             dayGridBody.querySelectorAll('.day-slot').forEach(el => {
                 el.classList.remove('selected', 'selected-diff', 'plan-slot');
                 el.dataset.plan = '0';
@@ -963,7 +1018,6 @@
             const endMin   = HOUR_END   * 60;
             const totalRows= (endMin - startMin) / dayGridStepMinutes;
 
-            // ✅ 왼쪽 근무시간(계획) 기준 구간을 표시 + 기본 선택
             segments.forEach(seg => {
                 const segStartMin = hmToMin(seg.start);
                 const segEndMin   = hmToMin(seg.end);
@@ -979,11 +1033,9 @@
                     const slot = dayGridBody.querySelector(`.day-slot[data-idx="${idx}"]`);
                     if (!slot) continue;
 
-                    // 계획 구간 마킹
                     slot.dataset.plan = '1';
                     slot.classList.add('plan-slot');
 
-                    // 기본은 "계획 = 실제"로 선택 상태 (초록)
                     toggleDaySlot(slot, true);
                 }
             });
@@ -1033,6 +1085,7 @@
                     },
                     body: JSON.stringify(payload)
                 });
+
                 if (!resp.ok) {
                     const txt = await resp.text().catch(()=> '');
                     alert(`저장 실패: ${resp.status} ${txt}`);
@@ -1042,34 +1095,23 @@
                 alert('해당 일자의 근무시간이 저장되었습니다.');
                 closeDayModal();
 
-                // 저장 후 월간 캘린더 갱신
                 const members = getCurrentFilteredMembers();
                 const member  = members.find(m => String(m.id) === String(currentDayGridMember.id));
-                if (member) {
-                    const { monthStartIso, monthEndIso } = parseMonthRange(monthRangeLabelEl?.textContent || '');
-                    let actualMap = {};
-                    try {
-                        const url = `${API_BASE}/${encodeURIComponent(member.id)}/${monthStartIso}/${monthEndIso}`;
-                        const resp2 = await fetch(url, { headers: { 'Accept': 'application/json' } });
-                        if (resp2.ok) {
-                            const data2 = await resp2.json();
-                            actualMap = normalizeActualDays(data2);
-                        }
-                    } catch(e){}
 
-                    // 방금 조정한 날짜를 유지하면서 다시 렌더
+                if (member) {
+                    // 어떤 날짜를 선택했는지는 유지
                     selectedDateIso = currentDayGridDate;
-                    renderMonthCalendar(member, monthStartIso, monthEndIso, actualMap);
+
+                    // ★ 여기서 다시 월 전체(계획+실제)를 불러와서 렌더링
+                    await loadAndRenderMonth(member);
                 }
             } catch (e) {
                 console.error(e);
-                alert('저장 중 오류가 발생했습니다.');
+                alert('저장 중 오류가 발생했습니다.' + e.toString());
             }
         }
 
-        // ===== 날짜/시간 유틸 =====
         function parseMonthRange(label){
-            // 기대형태 예: "2025.11.01 ~ 11.30" (없으면 현재월)
             const m = String(label).match(/(\d{4})\.(\d{2})\.(\d{2})/);
             if (!m) {
                 const today = new Date();
@@ -1098,7 +1140,6 @@
             }).format(v);
         }
 
-        // ===== 응답 정규화/보조 유틸 =====
         function normalizeActualDays(apiData){
             const map = {};
             const arr = Array.isArray(apiData?.days) ? apiData.days : [];
