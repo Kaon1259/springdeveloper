@@ -17,11 +17,35 @@
 
         <div class="card-body pt-2">
 
-            <!-- 상단 컨트롤 바: 실시간 + 인원수 + 반영 버튼 -->
+            <!-- 상단 컨트롤 바 -->
             <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
-                <div class="small text-muted">
-                    <span class="fw-semibold text-secondary">실시간 근무 현황</span>
-                    <span class="text-muted ms-1">상단 요약과 테이블은 실시간으로 갱신됩니다.</span>
+                <div class="d-flex align-items-center flex-wrap gap-2">
+                    <div class="small text-muted">
+                        <span class="fw-semibold text-secondary">단위 설정</span>
+                        <span class="text-muted ms-1">슬롯 단위별로 근무 상태를 확인합니다.</span>
+                    </div>
+
+                    <!-- 단위 선택 버튼 그룹 -->
+                    <div class="btn-group btn-group-sm ms-md-2" role="group" aria-label="슬롯 단위 선택">
+                        <button type="button"
+                                class="btn btn-outline-secondary"
+                                data-step-btn
+                                data-step="10">
+                            10분
+                        </button>
+                        <button type="button"
+                                class="btn btn-outline-secondary active"
+                                data-step-btn
+                                data-step="30">
+                            30분
+                        </button>
+                        <button type="button"
+                                class="btn btn-outline-secondary"
+                                data-step-btn
+                                data-step="60">
+                            60분
+                        </button>
+                    </div>
                 </div>
 
                 <div class="d-flex align-items-center gap-2">
@@ -30,47 +54,12 @@
                         0명 근무 예정
                     </span>
                     <button id="btnRegisterActual" class="btn btn-sm btn-success px-3">
-                        실시간 반영
+                        실근무시간 등록
                     </button>
                 </div>
             </div>
 
-            <!-- 상단: 가로 캘린더 (현재 근무자 수만큼 카드) -->
-            <div id="miniCalendars" class="mini-cal-wrapper mb-4">
-                <!-- JS로 카드 렌더링 -->
-            </div>
-
-            <!-- 단위 설정 블록: 타임테이블 바로 위 -->
-            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
-                <div class="small text-muted">
-                    <span class="fw-semibold text-secondary">단위 설정</span>
-                    <span class="text-muted ms-1">슬롯 단위별로 근무 상태를 확인합니다.</span>
-                </div>
-
-                <!-- 단위 선택 버튼 그룹 -->
-                <div class="btn-group btn-group-sm" role="group" aria-label="슬롯 단위 선택">
-                    <button type="button"
-                            class="btn btn-outline-secondary"
-                            data-step-btn
-                            data-step="10">
-                        10분
-                    </button>
-                    <button type="button"
-                            class="btn btn-outline-secondary active"
-                            data-step-btn
-                            data-step="30">
-                        30분
-                    </button>
-                    <button type="button"
-                            class="btn btn-outline-secondary"
-                            data-step-btn
-                            data-step="60">
-                        60분
-                    </button>
-                </div>
-            </div>
-
-            <!-- 근무현황 테이블 -->
+            <!-- 타임테이블 -->
             <div class="table-responsive position-relative timetable-wrapper" id="ttScroll">
                 <table class="table table-sm table-bordered align-middle text-center timetable-10m mb-0" id="tt10m">
                     <thead class="table-light">
@@ -118,90 +107,11 @@
         font-variant-numeric: tabular-nums;
     }
 
-    /* ===== 상단 가로 캘린더 ===== */
-    .mini-cal-wrapper{
-        display: flex;
-        flex-wrap: wrap;
-        gap: 12px;
-    }
-    .mini-cal-card{
-        flex: 1 1 220px;
-        max-width: 260px;
-        border-radius: 14px;
-        border: 1px solid #e5e7eb;
-        background: #ffffff;
-        padding: 10px 12px;
-        box-shadow: 0 2px 4px rgba(15,23,42,.06);
-        display: flex;
-        flex-direction: column;
-        min-height: 88px;
-    }
-    .mini-cal-header{
-        display:flex;
-        align-items:center;
-        justify-content:space-between;
-        gap:8px;
-        margin-bottom:6px;
-    }
-    .mini-cal-main{
-        display:flex;
-        flex-direction:column;
-        gap:6px;
-        font-size:0.8rem;
-    }
-    .mini-cal-name{
-        display:flex;
-        align-items:center;
-        gap:6px;
-        font-weight:600;
-        font-size:0.85rem;
-    }
-    .mini-cal-dot{
-        width:10px;
-        height:10px;
-        border-radius:50%;
-        border:1px solid rgba(0,0,0,.08);
-        flex:0 0 auto;
-    }
-    .mini-cal-status{
-        font-size:0.75rem;
-        color:#6b7280;
-        white-space:nowrap;
-    }
-    .mini-cal-seg{
-        border-radius:999px;
-        padding:4px 8px;
-        background:#fff7e6;
-        border:1px solid #fed7aa;
-        display:flex;
-        align-items:center;
-        justify-content:space-between;
-        gap:6px;
-    }
-    .mini-cal-seg-time{
-        font-weight:600;
-    }
-    .mini-cal-seg-label{
-        font-size:0.75rem;
-        color:#6b7280;
-    }
-    /* 현재 근무 중인 일정 -> 깜빡이는 라운드 렉트 */
-    .mini-cal-seg-current{
-        animation: miniSegBlink 1.1s step-start infinite;
-        background:#fed7aa;
-        border-color:#f97316;
-        box-shadow:0 0 0 2px rgba(248, 113, 113, 0.4);
-    }
-    @keyframes miniSegBlink{
-        0%   { filter:brightness(1.0); box-shadow:0 0 0 0 rgba(248,113,113,0.0); }
-        50%  { filter:brightness(1.15); box-shadow:0 0 0 3px rgba(248,113,113,0.6); }
-        100% { filter:brightness(1.0); box-shadow:0 0 0 0 rgba(248,113,113,0.0); }
-    }
-
     .timetable-wrapper {
         border-radius: 0.75rem;
         border: 1px solid #edf0f4;
-        max-height: calc(100vh - 260px);
+        /* ✅ 세로 스크롤은 이 컨테이너에서 처리 */
+        max-height: calc(100vh - 260px); /* 필요하면 숫자 조정 */
         overflow-y: auto;
         overflow-x: auto;
         background: #ffffff;
@@ -247,6 +157,14 @@
         height: 3px;
         background: var(--member-color, transparent);
     }
+    .member-head.member-head-current {
+        animation: headBlink 1s step-start infinite;
+    }
+    @keyframes headBlink {
+        0%   { background-color: rgba(255, 243, 205, 0.3); }
+        50%  { background-color: rgba(255, 243, 205, 0.8); }
+        100% { background-color: rgba(255, 243, 205, 0.3); }
+    }
 
     /* 슬롯 스타일 */
     .slot-10m {
@@ -268,7 +186,7 @@
     /* Sticky header/left column */
     #tt10m thead th {
         position: sticky;
-        top: 0;
+        top: 0;           /* ✅ 컨테이너 상단에 붙음 */
         z-index: 3;
         background: #f8fafc;
         box-shadow: 0 2px 3px rgba(15, 23, 42, 0.04);
@@ -306,7 +224,7 @@
         color:#146c43;
     }
 
-    /* 테이블 안: 현재 근무 중인 스케줄 전체 구간 깜빡임 */
+    /* ✅ 현재 근무 중인 스케줄 전체 구간 깜빡임 */
     .slot-10m.current-working {
         animation: slotCurrentBlink 1s step-start infinite;
         background: rgba(255, 193, 7, 0.95) !important;
@@ -370,7 +288,6 @@
         const scrollBox = document.getElementById('ttScroll');
         const btnRegisterActual = document.getElementById('btnRegisterActual');
         const stepButtons = document.querySelectorAll('[data-step-btn]');
-        const miniCalendars = document.getElementById('miniCalendars');
 
         let allMembers = [];
         try { allMembers = JSON.parse(document.getElementById('membersData').textContent || '[]'); }
@@ -393,15 +310,13 @@
 
         /* ==== 초기 렌더링 ==== */
         renderNow();
-        renderMiniCalendars(todayMembers);
         renderTableHeader(todayMembers);
         renderTableBody();
         paintPlanned(todayMembers);
         updateDoneColors(todayMembers);
         highlightHourSum();
         updateCurrentWorkingBlink(todayMembers);
-        updateMiniCalendarState(todayMembers);   // ✅ 상태/깜빡임 초기 계산
-        // 초기에는 scrollToNowRow 호출 안 함 (위치 그대로 유지)
+        scrollToNowRow({ smooth: true });
 
         memberCountBadge.textContent = `${todayMembers.length}명 근무 예정`;
         btnRegisterActual.disabled = todayMembers.length === 0;
@@ -409,10 +324,10 @@
         /* ==== 이벤트 바인딩 ==== */
 
         window.addEventListener('load', function () {
-            // 초기 진입 시 자동 스크롤 없음
+            scrollToNowRow({ smooth: true });  // 페이지 완전히 로드된 뒤 한 번 더 맞춰주기
         });
 
-        scrollBox.addEventListener('scroll', function(){ /* 필요시 추후 사용 */ }, { passive: true });
+        scrollBox.addEventListener('scroll', function(){ /* 필요하면 추후 확장 */ }, { passive: true });
 
         /* ===== 단위 선택 버튼 ===== */
         stepButtons.forEach(btn => {
@@ -436,7 +351,6 @@
                 updateDoneColors(todayMembers);
                 highlightHourSum();
                 updateCurrentWorkingBlink(todayMembers);
-                updateMiniCalendarState(todayMembers);
                 scrollToNowRow({ smooth: true });
             });
         });
@@ -482,13 +396,13 @@
 
                 const data = await res.json().catch(() => ({}));
                 if (res.ok && (data.success === undefined || data.success === true)) {
-                    alert('✅ 실시간 반영 완료');
+                    alert('✅ 실근무시간 등록 완료');
                 } else {
-                    alert('⚠️ 반영 실패: ' + (data.message || res.statusText || '알 수 없는 오류'));
+                    alert('⚠️ 등록 실패: ' + (data.message || res.statusText || '알 수 없는 오류'));
                     console.error('Server response:', data);
                 }
             } catch (err) {
-                alert('❌ 네트워크 오류로 반영에 실패했습니다.');
+                alert('❌ 네트워크 오류로 등록에 실패했습니다.');
                 console.error(err);
             }
         });
@@ -499,7 +413,6 @@
             updateDoneColors(todayMembers);
             highlightHourSum();
             updateCurrentWorkingBlink(todayMembers);
-            updateMiniCalendarState(todayMembers);  // ✅ 상태/깜빡임 주기적 업데이트
 
             const now = new Date();
             if (now.getMinutes() !== lastMinute) {
@@ -510,89 +423,7 @@
             }
         }, 15000);
 
-        /* ===== 상단 미니 캘린더 렌더링 ===== */
-
-        function renderMiniCalendars(members){
-            miniCalendars.innerHTML = '';
-            if (!members.length){
-                miniCalendars.innerHTML = '<div class="text-muted small">금일 근무자가 없습니다.</div>';
-                return;
-            }
-
-            members.forEach(m => {
-                const segs = getSchedules(m).filter(s => s.day === DAY_KEY);
-                const color = colorMap[m.id];
-                const card = document.createElement('div');
-                card.className = 'mini-cal-card';
-                card.dataset.memberId = String(m.id);
-
-                const statusText = segs.length
-                        ? `${segs.length}개 스케줄`
-                        : '스케줄 없음';
-
-                const segHtml = segs.map(s => `
-                    <div class="mini-cal-seg"
-                         data-start="${s.start}"
-                         data-end="${s.end}">
-                        <span class="mini-cal-seg-time">${s.start} ~ ${s.end}</span>
-                        <span class="mini-cal-seg-label">예정</span>
-                    </div>
-                `).join('');
-
-                card.innerHTML = `
-                    <div class="mini-cal-header">
-                        <div class="mini-cal-name">
-                            <span class="mini-cal-dot" style="background:${color};"></span>
-                            <span>${escapeHtml(m.name || '-')}</span>
-                        </div>
-                        <div class="mini-cal-status">${statusText}</div>
-                    </div>
-                    <div class="mini-cal-main">
-                        ${segHtml || '<span class="text-muted small">등록된 스케줄이 없습니다.</span>'}
-                    </div>
-                `;
-                miniCalendars.appendChild(card);
-            });
-        }
-
-        /* ✅ 상단 캘린더: 구간별 상태(완료/진행중/예정) + 깜빡임 처리 */
-        function updateMiniCalendarState(members){
-            // 깜빡임 초기화
-            miniCalendars.querySelectorAll('.mini-cal-seg-current')
-                    .forEach(el => el.classList.remove('mini-cal-seg-current'));
-
-            const now = new Date();
-            const nowMin = now.getHours() * 60 + now.getMinutes();
-
-            members.forEach(m => {
-                const card = miniCalendars.querySelector(`.mini-cal-card[data-member-id="${CSS.escape(String(m.id))}"]`);
-                if (!card) return;
-
-                const segEls = card.querySelectorAll('.mini-cal-seg');
-                segEls.forEach(seg => {
-                    const st = parseHm(seg.dataset.start);
-                    const ed = parseHm(seg.dataset.end);
-                    const stMin = st.h*60 + st.m;
-                    const edMin = ed.h*60 + ed.m;
-
-                    let labelText = '예정';
-
-                    if (nowMin >= edMin) {
-                        labelText = '완료';
-                    } else if (nowMin >= stMin && nowMin < edMin) {
-                        labelText = '진행중';
-                        seg.classList.add('mini-cal-seg-current');
-                    } else {
-                        labelText = '예정';
-                    }
-
-                    const labelEl = seg.querySelector('.mini-cal-seg-label');
-                    if (labelEl) labelEl.textContent = labelText;
-                });
-            });
-        }
-
-        /* ===== 테이블 관련 렌더링 ===== */
+        /* ===== 헤더/바디 렌더링 ===== */
 
         function renderNow() {
             const d = new Date();
@@ -646,6 +477,8 @@
             bodyEl.innerHTML = rows.join('');
         }
 
+        /* ===== 스케줄 색칠 ===== */
+
         function paintPlanned(members) {
             members.forEach(m => {
                 const segs = getSchedules(m).filter(s => s.day === DAY_KEY);
@@ -692,11 +525,13 @@
             highlightNowRow();
         }
 
-        /* 현재 근무 중인 스케줄 전체 구간 깜빡임 (테이블 안) */
+        /* ===== 현재 근무 중인 스케줄 전체 구간 깜빡임 ===== */
         function updateCurrentWorkingBlink(members) {
             // 이전 상태 제거
             bodyEl.querySelectorAll('.slot-10m.current-working')
                     .forEach(el => el.classList.remove('current-working'));
+            headRow.querySelectorAll('.member-head-current')
+                    .forEach(el => el.classList.remove('member-head-current'));
 
             const now = new Date();
             const nowMin = now.getHours() * 60 + now.getMinutes();
@@ -708,15 +543,20 @@
                 const slots = bodyEl.querySelectorAll(`td[data-member-id="${String(m.id)}"] .slot-10m`);
                 if (!slots.length) return;
 
+                let isMemberWorkingNow = false;
+
                 segs.forEach(s => {
                     const st = parseHm(s.start);
                     const ed = parseHm(s.end);
                     const stMin = st.h * 60 + st.m;
                     const edMin = ed.h * 60 + ed.m;
 
-                    if (nowMin < stMin || nowMin >= edMin) return;
+                    if (nowMin < stMin || nowMin >= edMin) {
+                        return; // 이 스케줄은 현재시간 아님
+                    }
 
-                    // 현재 시간이 이 스케줄 안에 있으면, 해당 스케줄 전체 슬롯에 current-working 클래스
+                    // 현재시간이 이 스케줄 안에 있다면, 이 스케줄에 해당하는 슬롯 전체를 깜빡이게
+                    isMemberWorkingNow = true;
                     for (let i = 0; i < slots.length; i++) {
                         const slotStartMin = HOUR_START * 60 + i * STEP_MIN;
                         const slotEndMin   = slotStartMin + STEP_MIN;
@@ -729,6 +569,11 @@
                         }
                     }
                 });
+
+                if (isMemberWorkingNow) {
+                    const headTh = headRow.querySelector(`th[data-member-id="${CSS.escape(String(m.id))}"]`);
+                    if (headTh) headTh.classList.add('member-head-current');
+                }
             });
         }
 
