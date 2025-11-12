@@ -80,6 +80,18 @@
                                 <div class="text-muted">시급(원)</div>
                                 <div id="infoHourlyWage" class="fw-semibold">-</div>
                             </div>
+
+                            <!-- ✅ [추가] 급여지급일 / 주휴수당 적용 -->
+                            <div class="col-12">
+                                <div class="text-muted">급여지급일</div>
+                                <div id="infoPayday" class="fw-semibold">-</div>
+                            </div>
+                            <div class="col-12">
+                                <div class="text-muted">주휴수당 적용</div>
+                                <div id="infoIncludeWeekly" class="fw-semibold">-</div>
+                            </div>
+                            <!-- /추가 -->
+
                             <!-- 은행 / 계좌번호 -->
                             <div class="col-12">
                                 <div class="text-muted">은행</div>
@@ -375,6 +387,10 @@
         const infoBankAccount=document.getElementById('infoBankAccount');
         const createdAtLabel=document.getElementById('createdAtLabel');
 
+        /* ✅ 추가 DOM 참조 */
+        const infoPayday = document.getElementById('infoPayday');
+        const infoIncludeWeekly = document.getElementById('infoIncludeWeekly');
+
         // 우측 DOM
         const tbodyWeek=document.getElementById('tbodyWeek10m');
         const theadWeek=document.getElementById('theadWeek');
@@ -482,13 +498,13 @@
                         li.dataset.memberId=String(m.id);
                         const color=colorForMember(m);
                         li.innerHTML=`
-                    <span class="left d-inline-flex align-items-center gap-2">
-                        <span class="dot" style="background:${color}"></span>
-                        <span class="fw-semibold">${escapeHtml(m.name ?? '-')}</span>
-                        <span class="text-muted small">${escapeHtml(m.phone ?? '')}</span>
-                    </span>
-                    <button type="button" class="btn btn-sm btn-outline-primary view-btn" data-id="${String(m.id)}">상세</button>
-                `;
+                        <span class="left d-inline-flex align-items-center gap-2">
+                            <span class="dot" style="background:${color}"></span>
+                            <span class="fw-semibold">${escapeHtml(m.name ?? '-')}</span>
+                            <span class="text-muted small">${escapeHtml(m.phone ?? '')}</span>
+                        </span>
+                        <button type="button" class="btn btn-sm btn-outline-primary view-btn" data-id="${String(m.id)}">상세</button>
+                    `;
                         memberList.appendChild(li);
                     });
 
@@ -885,6 +901,11 @@
                     ? (m.healthCertExpiry ? `보유 (유효기간: ${m.healthCertExpiry})` : '보유')
                     : '미보유';
             infoHourlyWage.textContent=(typeof m.hourlyWage==='number') ? krw(m.hourlyWage) : '-';
+
+            /* ✅ 추가 표시 */
+            infoPayday.textContent = formatPayday(m.payday);
+            infoIncludeWeekly.textContent = yesNoLabel(m.includeWeeklyHolidayAllowance);
+
             infoBankName.textContent = m.bankName ?? '-';
             infoBankAccount.textContent = m.bankAccount ?? '-';
 
@@ -904,6 +925,11 @@
             infoStartDate.textContent='-';
             infoHealth.textContent='-';
             infoHourlyWage.textContent='-';
+
+            /* ✅ 추가 초기화 */
+            infoPayday.textContent='-';
+            infoIncludeWeekly.textContent='-';
+
             infoBankName.textContent='-';
             infoBankAccount.textContent='-';
             createdAtLabel.textContent='(등록일: -)';
@@ -1034,6 +1060,17 @@
             const h=pad2(d.getHours());
             const m=pad2(d.getMinutes());
             return `${y}-${M}-${D} ${h}:${m}`;
+        }
+
+        /* ✅ 추가 유틸: 급여지급일/주휴수당 라벨 */
+        function formatPayday(code){
+            if(code == null || String(code).trim() === '') return '-';
+            if(String(code).toUpperCase() === 'EOM') return '말일';
+            const n = parseInt(code, 10);
+            return isNaN(n) ? String(code) : `${n}일`;
+        }
+        function yesNoLabel(v){
+            return Boolean(v) ? '적용' : '미적용';
         }
 
     })();

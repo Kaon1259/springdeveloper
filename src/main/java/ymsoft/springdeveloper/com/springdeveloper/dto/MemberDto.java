@@ -52,12 +52,18 @@ public class MemberDto {
     private String bankName;
     private String bankAccount;
 
+    /** [추가] 급여지급일 코드 (예: "EOM" 또는 "1"~"31") - null 가능 */
+    private String payday;
+
+    /** [추가] 주휴수당 적용 여부 - null 가능 → Boolean.TRUE.equals(...)로 처리 */
+    private Boolean includeWeeklyHolidayAllowance;
+
     @NotNull
     private Member.Status status;           // Member 엔티티의 Status enum 사용
 
     private List<ScheduleRow> schedule = new ArrayList<>();
 
-    /** 등록일, 수정일 추가 **/
+    /** 등록일, 수정일 */
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -73,7 +79,7 @@ public class MemberDto {
 
         public String getDayLabel() {
             return switch (day) {
-                case MON ->  "(MON)월";
+                case MON -> "(MON)월";
                 case TUE -> "(TUE)화";
                 case WED -> "(WED)수";
                 case THU -> "(THU)목";
@@ -114,6 +120,10 @@ public class MemberDto {
                 .healthCertExpiry(m.getHealthCertExpiry())
                 .bankName(m.getBankName())
                 .bankAccount(m.getBankAccount())
+                // [추가 매핑]
+                .payday(m.getPayday())
+                .includeWeeklyHolidayAllowance(m.getIncludeWeeklyHolidayAllowance())
+                //
                 .status(m.getStatus())
                 .createdAt(m.getCreatedAt())
                 .updatedAt(m.getUpdatedAt())
@@ -140,15 +150,18 @@ public class MemberDto {
                 .healthCertExpiry(dto.getHealthCertExpiry())
                 .bankName(dto.getBankName())
                 .bankAccount(dto.getBankAccount())
+                // [추가 매핑]
+                .payday(dto.getPayday())
+                .includeWeeklyHolidayAllowance(Boolean.TRUE.equals(dto.getIncludeWeeklyHolidayAllowance()))
+                //
                 .status(dto.getStatus())
                 .build();
-
 
         if (dto.getSchedule() != null && !dto.getSchedule().isEmpty()) {
             log.info(dto.getSchedule().toString());
             List<ScheduleItem> items = dto.getSchedule().stream()
                     .map(r -> ScheduleItem.builder()
-                            .day(ScheduleItem.WeekDay.valueOf(r.getDay().name())) // WeekDay → ScheduleItem.Day
+                            .day(ScheduleItem.WeekDay.valueOf(r.getDay().name())) // WeekDay → ScheduleItem.WeekDay
                             .start(r.getStart())
                             .end(r.getEnd())
                             .member(member)

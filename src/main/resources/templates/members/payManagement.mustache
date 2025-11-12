@@ -73,7 +73,9 @@
         ========================================================== -->
         <div class="card mb-4" id="cardActual">
             <div class="card-header fw-bold d-flex justify-content-between align-items-center">
-                <span>실근무시간급여관리 (월단위)</span>
+                <span>
+                    실근무시간급여관리 (월단위)
+                </span>
                 <!-- 버튼 영역은 실근무쪽에만 존재 -->
                 <div class="d-flex justify-content-end gap-2">
                     <button type="button" class="btn btn-sm btn-outline-secondary" id="btnSaveDraft">
@@ -92,6 +94,7 @@
                 <div class="small text-muted mb-2">
                     선택한 근무자의 <b>월단위 실제 근무시간</b>, <b>주별 합계 / 주휴수당 / 근무수당</b>,
                     <b>월 합계 / 실수령액</b>이 계산됩니다.
+                    <b class="text-success" id="juhyuApplyText">주휴수당(적용/미적용)</b>
                 </div>
 
                 <div class="table-responsive">
@@ -141,6 +144,12 @@
                         <div class="d-flex align-items-center gap-2">
                             <div class="fw-bold text-primary" id="summaryMonthTotalActual">-</div>
                         </div>
+                    </div>
+
+                    <!-- ✅ 급여지급일 표시 (은행정보 위) -->
+                    <div class="mt-2">
+                        <span class="small text-muted">급여지급일 :</span>
+                        <span id="summaryPaydayActual" class="fw-bold text-danger">-</span>
                     </div>
 
                     <!-- 은행정보 + 지급완료일 (실근무) -->
@@ -393,6 +402,12 @@
         const paidDateLabelEl = document.getElementById('paidDateLabel');
         const paidDateValueEl = document.getElementById('paidDateValue');
 
+        // ✅ 급여지급일(실근무)
+        const summaryPaydayActual = document.getElementById('summaryPaydayActual');
+
+        // ✅ 주휴수당 적용/미적용 텍스트(초록, 굵게)
+        const juhyuApplyTextEl = document.getElementById('juhyuApplyText');
+
         // 급여 상태 버튼(실근무)
         const btnSaveDraft = document.getElementById('btnSaveDraft');
         const btnConfirm   = document.getElementById('btnConfirm');
@@ -510,6 +525,8 @@
             updateMemberListActive();
             renderMemberHeader(member);
             setBankInfo(member);
+            setPayday(member);                  // ✅ 급여지급일 표시
+            updateJuhyuApplyText(member);       // ✅ “주휴수당(적용/미적용)” 문구 반영
             reloadForCurrentMember();
         }
 
@@ -545,10 +562,36 @@
         }
 
         function setBankInfo(member) {
-            const bankName = member?.bankName?.trim() || '한국은행';
-            const bankAccount = member?.bankAccount?.trim() || '1234567';
+            const bankName = member?.bankName?.trim() || '-';
+            const bankAccount = member?.bankAccount?.trim() || '-';
             if (bankNameEl) bankNameEl.textContent = bankName;
             if (bankAccountEl) bankAccountEl.textContent = bankAccount;
+        }
+
+        // ✅ 급여지급일 표시
+        function setPayday(member) {
+            if (!summaryPaydayActual) return;
+            const v = member?.payday;
+            summaryPaydayActual.textContent = formatPayday(v);
+        }
+
+        function formatPayday(v) {
+            if (!v) return '미지정';
+            const s = String(v).trim().toUpperCase();
+            if (s === 'EOM') return '말일';
+            if (/^\d+$/.test(s)) {
+                const n = parseInt(s, 10);
+                if (n >= 1 && n <= 31) return `${n}일`;
+            }
+            return s;
+        }
+
+        // ✅ 상단 안내문 “주휴수당(적용/미적용)” 표시
+        function updateJuhyuApplyText(member) {
+            const applied = !!member?.includeWeeklyHolidayAllowance;
+            if (juhyuApplyTextEl) {
+                juhyuApplyTextEl.textContent = applied ? '주휴수당(적용)' : '주휴수당(미적용)';
+            }
         }
 
         function clearTables() {
@@ -567,6 +610,7 @@
             currentPaidDate = null;
             if (paidDateLabelEl) paidDateLabelEl.classList.add('d-none');
             if (paidDateValueEl) paidDateValueEl.textContent = '';
+            if (summaryPaydayActual) summaryPaydayActual.textContent = '-';
 
             // 계획
             monthPayBodyPlan.innerHTML = '';
@@ -577,6 +621,7 @@
             summaryMonthTotalPlan.textContent    = '-';
 
             renderMemberHeader(null);
+            if (juhyuApplyTextEl) juhyuApplyTextEl.textContent = '주휴수당(적용/미적용)';
         }
 
         function reloadForCurrentMember() {
@@ -615,8 +660,11 @@
                 console.error('loadMonthDataBoth error', e);
             }
 
-            renderMonthPayTable('actual', currentMember, ms, me, dayMapActual);
-            renderMonthPayTable('plan',   currentMember, ms, me, dayMapPlan);
+            // ✅ memberDto.includeWeeklyHolidayAllowance 플래그를 적용
+            const includeJuhyu = !!member?.includeWeeklyHolidayAllowance;
+
+            renderMonthPayTable('actual', currentMember, ms, me, dayMapActual, includeJuhyu);
+            renderMonthPayTable('plan',   currentMember, ms, me, dayMapPlan,   includeJuhyu);
 
             await loadPayrollStatus(currentMember, ms); // 실근무 저장상태
         }
@@ -646,8 +694,9 @@
          * type: 'actual' | 'plan'
          *  - actual: 실근무시간 기준(저장 payload 생성)
          *  - plan:   계획일정 기준(계산만)
+         * includeJuhyu: boolean (memberDto.includeWeeklyHolidayAllowance)
          */
-        function renderMonthPayTable(type, member, ms, me, dayMap) {
+        function renderMonthPayTable(type, member, ms, me, dayMap, includeJuhyu) {
             const isActual = (type === 'actual');
 
             // 타겟 요소 결정
@@ -740,29 +789,37 @@
                     dayCells.push(cellHtml);
                 }
 
-                const juhyuMinutes = calcWeeklyJuhyuMinutes(weekMinutes);
+                // ✅ includeJuhyu=false면 주휴수당 "전혀 계산되지 않음"
+                const juhyuMinutes = includeJuhyu ? calcWeeklyJuhyuMinutes(weekMinutes) : 0;
                 monthJuhyuMinutes += juhyuMinutes;
 
                 let weekWorkPay = null;
                 let weekJuhyuPay = null;
                 if (wage != null) {
                     weekWorkPay  = Math.round((weekMinutes/60)   * wage);
-                    weekJuhyuPay = Math.round((juhyuMinutes/60)  * wage);
+                    weekJuhyuPay = includeJuhyu ? Math.round((juhyuMinutes/60)  * wage) : 0;
                 }
 
                 const weekWorkLabel = formatMins(weekMinutes);
                 const weekLabelRange =
                         `${pad2(weekStart.getMonth()+1)}.${pad2(weekStart.getDate())} ~ ${pad2(weekEnd.getMonth()+1)}.${pad2(weekEnd.getDate())}`;
 
+                // 주휴수당 셀
                 let weekJuhyuCellHtml = '-';
-                if (juhyuMinutes > 0 && weekJuhyuPay != null) {
-                    const juhyuTimeLabel = formatMins(juhyuMinutes);
-                    const weekTimeLabel  = formatMins(weekMinutes);
-                    const juhyuMoneyLabel = krw(weekJuhyuPay);
-                    weekJuhyuCellHtml =
-                            `(<span class="text-time">${weekTimeLabel}</span>/5) <br>` +
-                            `= <span class="text-time">${juhyuTimeLabel}</span><br>` +
-                            `<span class="text-money">${juhyuMoneyLabel}</span>`;
+                if (includeJuhyu) {
+                    if (juhyuMinutes > 0 && weekJuhyuPay != null) {
+                        const juhyuTimeLabel = formatMins(juhyuMinutes);
+                        const weekTimeLabel  = formatMins(weekMinutes);
+                        const juhyuMoneyLabel = krw(weekJuhyuPay);
+                        weekJuhyuCellHtml =
+                                `(<span class="text-time">${weekTimeLabel}</span>/5) <br>` +
+                                `= <span class="text-time">${juhyuTimeLabel}</span><br>` +
+                                `<span class="text-money">${juhyuMoneyLabel}</span>`;
+                    } else {
+                        weekJuhyuCellHtml = '-';
+                    }
+                } else {
+                    weekJuhyuCellHtml = `<span class="text-muted">미적용</span>`;
                 }
 
                 const weekPayLabel = (weekWorkPay != null) ? krw(weekWorkPay) : '-';
@@ -791,26 +848,26 @@
             let monthWorkPay = null, monthJuhyuPay = null, monthTotal = null;
             if (wage != null) {
                 monthWorkPay  = Math.round((monthMinutes/60)      * wage);
-                monthJuhyuPay = Math.round((monthJuhyuMinutes/60) * wage);
-                monthTotal    = monthWorkPay + monthJuhyuPay;
+                monthJuhyuPay = includeJuhyu ? Math.round((monthJuhyuMinutes/60) * wage) : 0;
+                monthTotal    = monthWorkPay + (includeJuhyu ? monthJuhyuPay : 0);
             }
 
             workPayEl.textContent  = (monthWorkPay  != null) ? krw(monthWorkPay)  : '-';
-            juhyuEl.textContent    = (monthJuhyuPay != null) ? krw(monthJuhyuPay) : '-';
+            juhyuEl.textContent    = (wage != null && includeJuhyu) ? krw(monthJuhyuPay) : (includeJuhyu ? '-' : '미적용');
             totalEl.textContent    = (monthTotal    != null) ? krw(monthTotal)    : '-';
 
             // 저장 payload는 “실근무”에만 생성/적용
             if (isActual) {
-                lastPayrollPayload = (member && wage != null && monthWorkPay != null && monthJuhyuPay != null && monthTotal != null)
+                lastPayrollPayload = (member && wage != null && monthWorkPay != null && monthTotal != null)
                         ? {
                             memberId: member.id,
                             payYear: ms.getFullYear(),
                             payMonth: ms.getMonth() + 1,
                             hourlyWage: wage,
                             monthWorkMinutes: monthMinutes,
-                            monthJuhyuMinutes: monthJuhyuMinutes,
+                            monthJuhyuMinutes: includeJuhyu ? monthJuhyuMinutes : 0,
                             monthWorkPay: monthWorkPay,
-                            monthJuhyuPay: monthJuhyuPay,
+                            monthJuhyuPay: includeJuhyu ? monthJuhyuPay : 0,
                             monthTotalPay: monthTotal
                         }
                         : null;
@@ -882,10 +939,10 @@
             btnConfirm.disabled   = false;
             btnMarkPaid.disabled  = false;
 
-            if (!upper) {          btnConfirm.disabled   = true; btnMarkPaid.disabled = true; }
-            else if (upper==='DRAFT') { btnMarkPaid.disabled  = true; }
-            else if (upper==='CONFIRMED') { btnSaveDraft.disabled = true; btnConfirm.disabled = true; }
-            else if (upper==='PAID') { btnSaveDraft.disabled = true; btnConfirm.disabled = true; btnMarkPaid.disabled = true; }
+            if (!upper) {                btnConfirm.disabled   = true; btnMarkPaid.disabled = true; }
+            else if (upper==='DRAFT') {  btnMarkPaid.disabled  = true; }
+            else if (upper==='CONFIRMED'){btnSaveDraft.disabled = true; btnConfirm.disabled = true; }
+            else if (upper==='PAID') {   btnSaveDraft.disabled = true; btnConfirm.disabled = true; btnMarkPaid.disabled = true; }
 
             [btnSaveDraft, btnConfirm, btnMarkPaid].forEach(btn => btn.classList.remove('pay-action-next'));
             if (!upper) btnSaveDraft.classList.add('pay-action-next');

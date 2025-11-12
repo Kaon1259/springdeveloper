@@ -1,7 +1,6 @@
 {{>layouts/header}}
 {{>layouts/toast}}
 
-<!-- 스타일: 10분 타임테이블용 기본 스타일 포함 -->
 <style>
     .week-grid { width: 100%; border: 1px solid #e5e7eb; border-radius: 10px; overflow: hidden; user-select: none; background:#fff; }
     .week-grid table { width: 100%; border-collapse: separate; border-spacing: 0; table-layout: fixed; }
@@ -22,9 +21,7 @@
     .slot-10m:hover { background: #f8fbff; }
     .slot-10m.selected { background: rgba(25,135,84,.18); box-shadow: inset 0 0 0 1px rgba(25,135,84,.25); }
     .row-hour-start td, .row-hour-start th { border-top: 2px solid #e5e7eb !important; }
-    .timecell { font-variant-numeric: tabular-nums; }
     .grid-toolbar { display: flex; gap: 8px; align-items: center; justify-content: space-between; margin-bottom: .5rem; }
-    .grid-toolbar .left, .grid-toolbar .right { display: flex; gap: 8px; align-items: center; }
     .modal { background: rgba(0,0,0,.35); position: fixed; inset: 0; display:none; }
     .modal-dialog { margin: 50px auto; max-width: 980px; }
     .modal-content { background:#fff; border-radius: 12px; }
@@ -33,20 +30,14 @@
 <main class="container my-4">
     <h2 class="mb-3">👤 아르바이트 회원 정보 수정</h2>
 
-    <!-- 수정: 멤버 id 기준 업데이트 -->
     <form class="container px-0" action="/members/{{member.id}}/update" method="post" id="memberForm">
-        <!-- (스프링 시큐리티 사용 시) CSRF: 모델에 있을 때만 렌더 -->
-        {{#_csrf}}
-            <input type="hidden" name="{{parameterName}}" value="{{token}}">
-        {{/_csrf}}
-
+        {{#_csrf}}<input type="hidden" name="{{parameterName}}" value="{{token}}">{{/_csrf}}
         <input type="hidden" name="id" value="{{member.id}}"/>
 
         <div class="row g-3">
-            <!-- ============ 좌측: 기본 정보 ============ -->
+            <!-- 왼쪽: 기본 정보 -->
             <div class="col-12 col-lg-6">
                 <div class="card mb-3">
-                    <!-- ✅ 상태를 헤더 오른쪽에 표시 -->
                     <div class="card-header d-flex justify-content-between align-items-center">
                         <span class="fw-bold">기본 정보</span>
                         <select class="form-select form-select-sm w-auto" name="status" id="statusHeader" required>
@@ -58,46 +49,26 @@
                             <option value="RESIGNED">퇴사</option>
                         </select>
                     </div>
-
                     <div class="card-body">
-                        <!-- 이름 -->
                         <div class="mb-3">
                             <label class="form-label">이름</label>
-                            <input class="form-input form-control" type="text" name="name" id="name" value="{{member.name}}" placeholder="이름을 입력하세요" required>
+                            <input class="form-control" type="text" name="name" value="{{member.name}}" required>
                         </div>
-
-                        <!-- 성별 -->
                         <div class="mb-3">
                             <label class="form-label">성별</label>
                             <select class="form-select" name="gender" id="gender" required>
-                                <option value="">성별을 선택하세요</option>
+                                <option value="">성별 선택</option>
                                 <option value="남성">남성</option>
                                 <option value="여성">여성</option>
                             </select>
                         </div>
-
-                        <!-- 연락처 -->
                         <div class="mb-3">
                             <label class="form-label">연락처</label>
-                            <input
-                                    class="form-input form-control"
-                                    type="tel"
-                                    name="phone"
-                                    id="phone"
-                                    value="{{member.phone}}"
-                                    placeholder="010-1234-5678"
-                                    pattern="^0\d{1,2}-\d{3,4}-\d{4}$"
-                                    autocomplete="tel"
-                                    inputmode="tel"
-                                    required>
-                            <div class="form-text">숫자만 입력해도 자동으로 <code>010-1234-5678</code> 형태로 포맷팅됩니다.</div>
+                            <input class="form-control" type="tel" id="phone" name="phone" value="{{member.phone}}" required>
                         </div>
-
-                        <!-- 이메일 -->
                         <div class="mb-3">
                             <label class="form-label">이메일</label>
-                            <input class="form-input form-control" type="email" name="email" id="email" value="{{member.email}}" placeholder="name@example.com">
-                            <div class="form-text">선택 입력입니다.</div>
+                            <input class="form-control" type="email" name="email" value="{{member.email}}">
                         </div>
                     </div>
                 </div>
@@ -106,7 +77,6 @@
                 <div class="card mb-3">
                     <div class="card-header fw-bold">보건증</div>
                     <div class="card-body">
-                        <!-- 보건증 보유 여부 -->
                         <div class="mb-3">
                             <label class="form-label d-block">보건증 보유</label>
                             <div class="form-check form-check-inline">
@@ -118,242 +88,130 @@
                                 <label class="form-check-label" for="healthNo">미보유</label>
                             </div>
                         </div>
-
-                        <!-- 보건증 유효기간 (보유 선택 시 표시) -->
                         <div id="healthExpiryPanel" class="mt-2" style="display:none;">
-                            <div class="d-flex align-items-end gap-2">
-                                <div>
-                                    <label class="form-label mb-1">유효기간(만료일)</label>
-                                    <!-- 컨트롤러에서 yyyy-MM-dd 문자열 제공 -->
-                                    <input type="date"
-                                           class="form-input form-control"
-                                           id="healthExpiryDate"
-                                           name="healthCertExpiry"
-                                           value="{{healthCertExpiryStr}}">
-                                </div>
-                                <div class="mb-2">
-                                    <button type="button" class="btn btn-success btn-sm" id="applyHealthExpiry">적용</button>
-                                    <button type="button" class="btn btn-secondary btn-sm" id="cancelHealthExpiry">취소</button>
-                                </div>
-                            </div>
-                            <div id="healthExpiryPreview" class="text-muted mt-2">유효기간을 등록하세요.</div>
+                            <label class="form-label mb-1">유효기간(만료일)</label>
+                            <input type="date" class="form-control" id="healthExpiryDate" name="healthCertExpiry" value="{{healthCertExpiryStr}}">
                         </div>
                     </div>
                 </div>
 
-                <!-- 🆕 급여 입금 계좌 (보건증처럼 분리) -->
+                <!-- 계좌 -->
                 <div class="card mb-3">
                     <div class="card-header fw-bold">급여 입금 계좌</div>
                     <div class="card-body">
                         <div class="mb-3">
                             <label class="form-label">은행</label>
-                            <select class="form-select" name="bankName" id="bankName" required>
-                                <option value="">은행을 선택하세요</option>
-                                <option>KB국민</option>
-                                <option>신한</option>
-                                <option>우리</option>
-                                <option>하나</option>
-                                <option>농협</option>
-                                <option>IBK기업</option>
-                                <option>카카오뱅크</option>
-                                <option>토스뱅크</option>
-                                <option>SC제일</option>
-                                <option>씨티</option>
-                                <option>부산</option>
-                                <option>대구</option>
-                                <option>경남</option>
-                                <option>광주</option>
-                                <option>전북</option>
-                                <option>수협</option>
-                                <option>새마을</option>
-                                <option>우체국</option>
+                            <select class="form-select" name="bankName" id="bankName">
+                                <option value="">은행 선택</option>
+                                <option>KB국민</option><option>신한</option><option>우리</option><option>하나</option>
+                                <option>농협</option><option>IBK기업</option><option>카카오뱅크</option><option>토스뱅크</option>
+                                <option>SC제일</option><option>씨티</option><option>부산</option><option>대구</option>
+                                <option>경남</option><option>광주</option><option>전북</option><option>수협</option>
+                                <option>새마을</option><option>우체국</option>
                             </select>
                         </div>
-                        <div class="mb-0">
+                        <div>
                             <label class="form-label">계좌번호</label>
-                            <input
-                                    class="form-input form-control"
-                                    type="text"
-                                    name="bankAccount"
-                                    id="bankAccount"
-                                    inputmode="numeric"
-                                    placeholder="숫자만 입력 (예: 110123456789)"
-                                    value="{{member.bankAccount}}"
-                                    required>
-                            <div class="form-text">숫자만 허용 · 8~20자리. 하이픈 없이 입력하세요.</div>
+                            <input class="form-control" type="text" name="bankAccount" value="{{member.bankAccount}}">
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- ============ 우측: 근무 조건/스케줄/예상급여 ============ -->
+            <!-- 오른쪽: 근무조건 -->
             <div class="col-12 col-lg-6">
-                <div class="sticky-side d-grid gap-3">
-
-                    <!-- 근무 조건 -->
-                    <div class="card">
-                        <div class="card-header fw-bold">근무 조건</div>
-                        <div class="card-body">
-                            <!-- 시작일 -->
-                            <div class="mb-3">
-                                <label class="form-label">아르바이트 시작일</label>
-                                <input class="form-input form-control" type="date" name="startDate" id="startDate" value="{{member.startDate}}" required>
-                            </div>
-
-                            <!-- 시급 -->
-                            <div class="mb-0">
-                                <label class="form-label">시급(원)</label>
-                                <input
-                                        class="form-input form-control"
-                                        type="number"
-                                        name="hourlyWage"
-                                        id="hourlyWage"
-                                        min="0"
-                                        step="10"
-                                        value="{{member.hourlyWage}}"
-                                        placeholder="10030"
-                                        required>
-                                <div class="form-text">숫자만 입력 (예: 10030). 서버에서는 정수(원)로 저장됩니다.</div>
-                            </div>
+                <div class="card mb-3">
+                    <div class="card-header fw-bold">근무 조건</div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="form-label">시작일</label>
+                            <input class="form-control" type="date" name="startDate" value="{{member.startDate}}" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">시급(원)</label>
+                            <input class="form-control" type="number" name="hourlyWage" id="hourlyWage" value="{{member.hourlyWage}}" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">급여지급일</label>
+                            <select class="form-select" name="payday" id="payday">
+                                <option value="">미지정</option>
+                                <option value="EOM">말일</option>
+                                {{#days}}<option value="{{.}}">{{.}}일</option>{{/days}}
+                            </select>
+                        </div>
+                        <div>
+                            <label class="form-label d-block">주휴수당 적용</label>
+                            <input class="form-check-input" type="checkbox" id="includeWeeklyHolidayAllowance" name="includeWeeklyHolidayAllowance" value="true">
+                            <label class="form-check-label" for="includeWeeklyHolidayAllowance">적용 (주15시간 이상 시)</label>
                         </div>
                     </div>
+                </div>
 
-                    <!-- 근무시간 (주간 타임테이블에서 선택) -->
-                    <div class="card">
-                        <div class="card-header fw-bold d-flex justify-content-between align-items-center">
-                            <span>근무시간(요일/시간)</span>
-                            <button type="button" class="btn btn-outline-primary btn-sm" id="openScheduleModal">등록/수정</button>
-                        </div>
-                        <div class="card-body">
-                            <table class="table table-sm mb-0" id="scheduleTableView">
-                                <thead>
-                                <tr><th>요일</th><th>시작</th><th>종료</th></tr>
-                                </thead>
-                                <tbody>
-                                {{#schedules}}
-                                    <tr>
-                                        <td data-day="{{day}}">{{dayLabel}}</td>
-                                        <td data-start="{{start}}">{{start}}</td>
-                                        <td data-end="{{end}}">{{end}}</td>
-                                    </tr>
-                                {{/schedules}}
-                                {{^schedules}}
-                                    <tr class="placeholder">
-                                        <td colspan="3" class="text-muted">아직 등록된 요일/시간이 없습니다. “등록/수정” 버튼을 눌러 추가하세요.</td>
-                                    </tr>
-                                {{/schedules}}
-                                </tbody>
-                            </table>
-                        </div>
+                <!-- 근무시간 -->
+                <div class="card mb-3">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span>근무시간(요일/시간)</span>
+                        <button type="button" class="btn btn-outline-primary btn-sm" id="openScheduleModal">등록/수정</button>
                     </div>
+                    <div class="card-body">
+                        <table class="table table-sm" id="scheduleTableView">
+                            <thead><tr><th>요일</th><th>시작</th><th>종료</th></tr></thead>
+                            <tbody>
+                            {{#schedules}}
+                                <tr>
+                                    <td data-day="{{day}}">{{dayLabel}}</td>
+                                    <td data-start="{{start}}">{{start}}</td>
+                                    <td data-end="{{end}}">{{end}}</td>
+                                </tr>
+                            {{/schedules}}
+                            {{^schedules}}
+                                <tr class="placeholder"><td colspan="3" class="text-muted">등록된 근무시간이 없습니다.</td></tr>
+                            {{/schedules}}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
 
-                    <!-- 예상 급여 -->
-                    <div class="card wage-preview-card shadow-sm">
-                        <div class="card-header wage-preview-header d-flex justify-content-between align-items-center">
-                            <span class="fw-bold">예상 급여 미리보기</span>
-                            <small class="text-white-50">스케줄/시급 변경 시 자동 반영</small>
-                        </div>
-                        <div class="card-body p-0">
-                            <div class="table-responsive">
-                                <table class="table table-borderless table-hover align-middle mb-0 wage-preview-table">
-                                    <thead>
-                                    <tr>
-                                        <th class="w-50">항목</th>
-                                        <th class="text-end w-50">값</th>
-                                    </tr>
-                                    </thead>
-                                    <tbody>
-                                    <tr>
-                                        <td class="text-muted">주간 총 근무시간</td>
-                                        <td class="text-end text-mono fw-semibold" id="previewWeeklyHours">0시간 0분</td>
-                                    </tr>
-                                    <tr>
-                                        <td class="text-muted">주간 예상 급여</td>
-                                        <td class="text-end text-mono fw-bold" id="previewWeeklyPay">₩0</td>
-                                    </tr>
-                                    <tr class="table-subtle">
-                                        <td class="text-muted">월 환산 주차</td>
-                                        <td class="text-end text-mono">× 4.345</td>
-                                    </tr>
-                                    <tr>
-                                        <td class="text-muted">월간 예상 급여</td>
-                                        <td class="text-end text-mono fw-bold text-success" id="previewMonthlyPay">₩0</td>
-                                    </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                            <div class="px-3 pb-3 pt-2 small text-muted">* 월 환산은 평균 1개월 ≈ 4.345주 기준입니다.</div>
-                        </div>
-                    </div>
-
-                    <!-- 수정 버튼 -->
-                    <div class="d-grid">
-                        <button type="submit" class="btn btn-success btn-lg">수정하기</button>
-                    </div>
+                <div class="d-grid">
+                    <button type="submit" class="btn btn-success btn-lg">수정하기</button>
                 </div>
             </div>
         </div>
     </form>
 </main>
 
-<!-- 모달: 주간 10분 타임테이블(드래그 선택/해제) -->
-<div class="modal" id="scheduleModal" style="display:none;">
+<!-- 모달 -->
+<div class="modal" id="scheduleModal">
     <div class="modal-dialog">
         <div class="modal-content p-3">
             <div class="d-flex justify-content-between align-items-center mb-2">
-                <h3 class="mb-0">요일/시간 등록</h3>
+                <h5 class="mb-0">요일/시간 등록</h5>
                 <button type="button" class="btn btn-sm btn-outline-secondary" id="closeScheduleModal">닫기</button>
             </div>
-
-            <!-- 툴바 -->
-            <div class="grid-toolbar">
-                <div class="left">
-                    <button type="button" class="btn btn-sm btn-outline-secondary" id="clearAll">전체 초기화</button>
-                    <div class="input-group input-group-sm">
-                        <label class="input-group-text">요일 초기화</label>
-                        <select id="clearDaySelect" class="form-select">
-                            <option value="">선택…</option>
-                            <option value="MON">월</option><option value="TUE">화</option><option value="WED">수</option>
-                            <option value="THU">목</option><option value="FRI">금</option><option value="SAT">토</option><option value="SUN">일</option>
-                        </select>
-                        <button class="btn btn-outline-danger" type="button" id="clearDayBtn">초기화</button>
-                    </div>
-                </div>
-                <div class="right small text-muted">10분 슬롯을 드래그로 선택/해제할 수 있습니다.</div>
+            <div class="grid-toolbar mb-2">
+                <div class="left"><button type="button" class="btn btn-sm btn-outline-secondary" id="clearAll">전체 초기화</button></div>
+                <small class="text-muted">10분 단위 선택 가능</small>
             </div>
-
-            <!-- 주간 10분 그리드 -->
             <div class="week-grid mb-3">
-                <table id="weekGridTable">
+                <table>
                     <thead>
                     <tr>
-                        <th style="width:74px;">시간</th>
-                        <th data-day="MON">월</th>
-                        <th data-day="TUE">화</th>
-                        <th data-day="WED">수</th>
-                        <th data-day="THU">목</th>
-                        <th data-day="FRI">금</th>
-                        <th data-day="SAT">토</th>
-                        <th data-day="SUN">일</th>
+                        <th>시간</th>
+                        <th data-day="MON">월</th><th data-day="TUE">화</th><th data-day="WED">수</th>
+                        <th data-day="THU">목</th><th data-day="FRI">금</th><th data-day="SAT">토</th><th data-day="SUN">일</th>
                     </tr>
                     </thead>
-                    <tbody id="weekGridBody">
-                    <!-- JS로 06:00~22:00, 10분 단위(96행) 생성 -->
-                    </tbody>
+                    <tbody id="weekGridBody"></tbody>
                 </table>
             </div>
-
-            <!-- 미리보기(선택을 구간으로 병합) -->
-            <div class="mb-2">
-                <table class="table table-sm mb-0" id="schedulePreviewTable">
+            <div>
+                <table class="table table-sm" id="schedulePreviewTable">
                     <thead><tr><th>요일</th><th>시작</th><th>종료</th></tr></thead>
                     <tbody></tbody>
                 </table>
             </div>
-
-            <div class="d-flex gap-2 justify-content-end">
+            <div class="text-end mt-2">
                 <button type="button" class="btn btn-success" id="applySchedule">적용</button>
-                <button type="button" class="btn btn-secondary" id="cancelSchedule">취소</button>
             </div>
         </div>
     </div>
@@ -361,464 +219,121 @@
 
 {{>layouts/footer}}
 
-<!-- 스크립트: 서버 값 바인딩(은행) -->
 <script>
-    const serverBankName = "{{member.bankName}}";
-    if (serverBankName) {
-        const bankSel = document.getElementById("bankName");
-        bankSel.value = serverBankName;
-    }
+    // 초기값 세팅
+    (function(){
+        const bankName="{{member.bankName}}"; if(bankName)document.getElementById('bankName').value=bankName;
+        const gender="{{#member}}{{gender}}{{/member}}"; if(gender)document.getElementById('gender').value=gender;
+        const status="{{#member}}{{status}}{{/member}}"; if(status)document.getElementById('statusHeader').value=status;
+        document.getElementById('includeWeeklyHolidayAllowance').checked=(String("{{member.includeWeeklyHolidayAllowance}}").toLowerCase()==='true');
+
+        const hasHC=String("{{#member}}{{hasHealthCertificate}}{{/member}}").toLowerCase()==='true';
+        const panel=document.getElementById('healthExpiryPanel');const dateInput=document.getElementById('healthExpiryDate');
+        if(hasHC){panel.style.display='block';dateInput.disabled=false;}else{panel.style.display='none';dateInput.disabled=true;}
+        document.getElementById('healthYes').addEventListener('change',()=>{panel.style.display='block';dateInput.disabled=false;});
+        document.getElementById('healthNo').addEventListener('change',()=>{panel.style.display='none';dateInput.disabled=true;});
+
+        // payday 보정
+        const paydaySelect=document.getElementById('payday');
+        let raw="{{member.payday}}";
+        const hasNumeric=Array.from(paydaySelect.options).some(o=>/^\d+$/.test(o.value));
+        if(!hasNumeric){for(let d=1;d<=31;d++){const opt=document.createElement('option');opt.value=String(d);opt.textContent=`${d}일`;paydaySelect.appendChild(opt);}}
+        function normalize(v){if(!v)return'';v=String(v).trim();if(v.toUpperCase()==='EOM')return'EOM';if(/^\d+$/.test(v))return String(parseInt(v,10));return v;}
+        const norm=normalize(raw);
+        const exist=Array.from(paydaySelect.options).some(o=>String(o.value)===norm);
+        if(exist)paydaySelect.value=norm;
+    })();
 </script>
 
-<!-- 스크립트: 타임테이블 10분 단위 로직 등 -->
 <script>
-    (function() {
-        const form = document.getElementById('memberForm');
+    (function(){
+        const form=document.getElementById('memberForm');
+        const modal=document.getElementById('scheduleModal');
+        const openBtn=document.getElementById('openScheduleModal');
+        const closeBtn=document.getElementById('closeScheduleModal');
+        const applyBtn=document.getElementById('applySchedule');
+        const clearBtn=document.getElementById('clearAll');
+        const gridBody=document.getElementById('weekGridBody');
+        const previewBody=document.querySelector('#schedulePreviewTable tbody');
+        const viewBody=document.querySelector('#scheduleTableView tbody');
+        const dayMap={MON:'월',TUE:'화',WED:'수',THU:'목',FRI:'금',SAT:'토',SUN:'일'};
+        const days=['MON','TUE','WED','THU','FRI','SAT','SUN'];
+        const HOUR_START=6,HOUR_END=22,STEP=10;
+        const START_MIN=HOUR_START*60,END_MIN=HOUR_END*60;
+        const TOTAL=(END_MIN-START_MIN)/STEP;
 
-        /* ===== 서버 값 ===== */
-        const serverGender = "{{#member}}{{gender}}{{/member}}";
-        const serverStatus = "{{#member}}{{status}}{{/member}}";
-        const serverHasHC  = "{{#member}}{{hasHealthCertificate}}{{/member}}";
-        const serverHCExp  = "{{healthCertExpiryStr}}";
+        openBtn.addEventListener('click',()=>{buildGrid();hydrate();preview();modal.style.display='block';});
+        closeBtn.addEventListener('click',()=>modal.style.display='none');
 
-        /* ===== 연락처 자동 포맷 ===== */
-        const phone = document.getElementById('phone');
-        function formatPhone(raw) {
-            let v = String(raw || '').replace(/\D/g, '');
-            if (!v) return '';
-            if (v.startsWith('02')) {
-                if (v.length <= 2) return v;
-                if (v.length <= 6) return v.replace(/(02)(\d{0,4})/, '$1-$2');
-                return v.replace(/(02)(\d{3,4})(\d{0,4}).*/, '$1-$2-$3');
-            } else {
-                if (v.length <= 3) return v;
-                if (v.length <= 7) return v.replace(/(0\d{2})(\d{0,4})/, '$1-$2');
-                return v.replace(/(0\d{2})(\d{3,4})(\d{0,4}).*/, '$1-$2-$3');
+        function buildGrid(){
+            gridBody.innerHTML='';
+            for(let i=0;i<TOTAL;i++){
+                const t=START_MIN+i*STEP;const h=Math.floor(t/60),m=t%60;const label=(m%30===0)?`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`:'';
+                const tr=document.createElement('tr');if(m===0)tr.classList.add('row-hour-start');
+                const th=document.createElement('th');th.textContent=label;tr.appendChild(th);
+                days.forEach(d=>{const td=document.createElement('td');const div=document.createElement('div');div.className='slot-10m';div.dataset.day=d;div.dataset.idx=i;td.appendChild(div);tr.appendChild(td);});
+                gridBody.appendChild(tr);
             }
+            attachDrag();
         }
-        function isValidPhone(s){ return /^(0\d{1,2})-\d{3,4}-\d{4}$/.test(s); }
-
-        phone.addEventListener('input', () => {
-            const pos = phone.selectionStart;
-            const before = phone.value.length;
-            phone.value = formatPhone(phone.value);
-            const after = phone.value.length;
-            const delta = after - before;
-            const next = Math.max(0, (pos || 0) + delta);
-            phone.setSelectionRange(next, next);
-            phone.setCustomValidity('');
-        });
-        phone.addEventListener('blur', () => {
-            phone.value = formatPhone(phone.value);
-            if (phone.value && !isValidPhone(phone.value)) {
-                phone.setCustomValidity('예: 010-1234-5678 형식으로 입력하세요.');
-            } else {
-                phone.setCustomValidity('');
-            }
-        });
-
-        /* ===== 기본 선택값 세팅 ===== */
-        const genderSel = document.getElementById('gender');
-        const statusHeaderSel = document.getElementById('statusHeader');
-        if (serverGender) genderSel.value = serverGender;
-        if (serverStatus) statusHeaderSel.value = serverStatus;
-
-        /* ===== 보건증 인라인 폼 ===== */
-        const healthYes = document.getElementById('healthYes');
-        const healthNo  = document.getElementById('healthNo');
-        const panel     = document.getElementById('healthExpiryPanel');
-        const dateInput = document.getElementById('healthExpiryDate');
-        const applyHealthBtn  = document.getElementById('applyHealthExpiry');
-        const cancelHealthBtn = document.getElementById('cancelHealthExpiry');
-        const preview   = document.getElementById('healthExpiryPreview');
-
-        // 초기 표시
-        if ((serverHasHC || '').toString().toLowerCase() === 'true') {
-            healthYes.checked = true;
-            panel.style.display = 'block';
-            if (serverHCExp) {
-                dateInput.value = serverHCExp;
-                preview.textContent = "유효기간: " + serverHCExp;
-                preview.classList.remove('text-muted');
-            } else {
-                preview.textContent = '유효기간을 등록하세요.';
-                preview.classList.add('text-muted');
-            }
-        } else {
-            healthNo.checked = true;
-            panel.style.display = 'none';
-            preview.textContent = '보유 선택 시 유효기간을 등록할 수 있습니다.';
-            preview.classList.add('text-muted');
-        }
-
-        function onHealthRadioChange() {
-            if (healthYes.checked) {
-                panel.style.display = 'block';
-                dateInput.disabled = false;
-                const existing = form.querySelector('input[type="hidden"][name="healthCertExpiry"]');
-                if (existing && existing.value) {
-                    dateInput.value = existing.value;
-                    preview.textContent = `유효기간: ${existing.value}`;
-                    preview.classList.remove('text-muted');
-                } else if (serverHCExp) {
-                    dateInput.value = serverHCExp;
-                    preview.textContent = `유효기간: ${serverHCExp}`;
-                    preview.classList.remove('text-muted');
-                } else {
-                    dateInput.value = '';
-                    preview.textContent = '유효기간을 등록하세요.';
-                    preview.classList.add('text-muted');
-                }
-            } else {
-                panel.style.display = 'none';
-                // dateInput을 비활성화하면 빈 값 전송은 되지만 서버 바인딩엔 영향 없음
-                dateInput.disabled = true;
-                dateInput.value = '';
-                preview.textContent = '보유 선택 시 유효기간을 등록할 수 있습니다.';
-                preview.classList.add('text-muted');
-            }
-        }
-        healthYes.addEventListener('change', onHealthRadioChange);
-        healthNo.addEventListener('change', onHealthRadioChange);
-
-        applyHealthBtn.addEventListener('click', () => {
-            const val = dateInput.value;
-            if (!val) { alert('유효기간(만료일)을 선택하세요.'); return; }
-            const today = new Date().toISOString().slice(0,10);
-            if (val < today && !confirm('선택한 날짜가 이미 지났습니다. 그대로 적용할까요?')) return;
-
-            const existing = form.querySelector('input[name="healthCertExpiry"]');
-            if (existing) existing.remove();
-
-            const hidden = document.createElement('input');
-            hidden.type = 'hidden';
-            hidden.name = 'healthCertExpiry';
-            hidden.value = val;
-            hidden.setAttribute('data-health-expiry', '1');
-            form.appendChild(hidden);
-
-            preview.textContent = `유효기간: ${val}`;
-            preview.classList.remove('text-muted');
-        });
-
-        cancelHealthBtn.addEventListener('click', () => {
-            const existing = form.querySelector('input[type="hidden"][name="healthCertExpiry"]');
-            if (existing && existing.value) {
-                dateInput.value = existing.value;
-                preview.textContent = `유효기간: ${existing.value}`;
-                preview.classList.remove('text-muted');
-            } else if (serverHCExp) {
-                dateInput.value = serverHCExp;
-                preview.textContent = `유효기간: ${serverHCExp}`;
-                preview.classList.remove('text-muted');
-            } else {
-                dateInput.value = '';
-                preview.textContent = '유효기간을 등록하세요.';
-                preview.classList.add('text-muted');
-            }
-        });
-
-        /* ===== 시급 변경 시 미리보기 갱신 ===== */
-        const hourlyWage = document.getElementById('hourlyWage');
-        hourlyWage.addEventListener('blur', updatePreview);
-        hourlyWage.addEventListener('input', updatePreview);
-
-        /* ===== 스케줄(뷰 테이블) ===== */
-        const viewTableBody = document.querySelector('#scheduleTableView tbody');
-
-        /* ===== 모달/그리드 요소 ===== */
-        const modal = document.getElementById('scheduleModal');
-        const openBtn = document.getElementById('openScheduleModal');
-        const closeBtn = document.getElementById('closeScheduleModal');
-        const applyBtn = document.getElementById('applySchedule');
-        const cancelBtn = document.getElementById('cancelSchedule');
-
-        const weekGridBody = document.getElementById('weekGridBody');
-        const schedulePreviewBody = document.querySelector('#schedulePreviewTable tbody');
-
-        const clearAllBtn = document.getElementById('clearAll');
-        const clearDayBtn = document.getElementById('clearDayBtn');
-        const clearDaySelect = document.getElementById('clearDaySelect');
-
-        const dayMap = { MON:'월', TUE:'화', WED:'수', THU:'목', FRI:'금', SAT:'토', SUN:'일' };
-        const daysOrder = ['MON','TUE','WED','THU','FRI','SAT','SUN'];
-
-        // 10분 단위 설정
-        const HOUR_START=6, HOUR_END=22, STEP_MIN=10;
-        const START_MIN = HOUR_START*60;
-        const END_MIN   = HOUR_END*60; // 미포함 경계
-        const TOTAL_ROWS = (END_MIN - START_MIN) / STEP_MIN; // 96
-
-        /* ===== 모달 열기/닫기 ===== */
-        openBtn.addEventListener('click', () => {
-            buildWeekGrid10m();      // 96행 생성
-            hydrateGridFromView();   // 기존 뷰(테이블) → 슬롯 표시
-            rebuildPreviewFromGrid();// 미리보기 갱신
-            modal.style.display = 'block';
-        });
-        closeBtn.addEventListener('click', () => modal.style.display = 'none');
-        cancelBtn.addEventListener('click', () => modal.style.display = 'none');
-
-        /* ===== 10분 그리드 생성 ===== */
-        function buildWeekGrid10m(){
-            weekGridBody.innerHTML = '';
-            for(let idx=0; idx<TOTAL_ROWS; idx++){
-                const tMin = START_MIN + idx*STEP_MIN;
-                const h = Math.floor(tMin/60), m = tMin%60;
-                const hmLabel = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
-
-                const tr = document.createElement('tr');
-                if(m===0) tr.classList.add('row-hour-start');
-
-                const th = document.createElement('th');
-                th.className = 'timecell';
-                // 가독성을 위해 30분 간격만 라벨 표기
-                th.textContent = (m%30===0) ? hmLabel : '';
-                tr.appendChild(th);
-
-                daysOrder.forEach(day=>{
-                    const td = document.createElement('td');
-                    const div = document.createElement('div');
-                    div.className = 'slot-10m';
-                    div.dataset.day = day;
-                    div.dataset.idx = String(idx); // 0..95
-                    td.appendChild(div);
-                    tr.appendChild(td);
-                });
-
-                weekGridBody.appendChild(tr);
-            }
-            attachDragHandlers();
-        }
-
-        /* ===== 드래그 선택/해제 ===== */
-        let dragging=false;
-        let dragAdding=true;
-        function attachDragHandlers(){
-            weekGridBody.querySelectorAll('.slot-10m').forEach(div=>{
-                div.addEventListener('mousedown', (e)=>{
-                    e.preventDefault();
-                    dragging = true;
-                    dragAdding = !div.classList.contains('selected');
-                    toggleSlot(div, dragAdding);
-                });
-                div.addEventListener('mouseenter', ()=>{
-                    if(!dragging) return;
-                    toggleSlot(div, dragAdding);
-                });
+        let dragging=false,adding=true;
+        function attachDrag(){
+            gridBody.querySelectorAll('.slot-10m').forEach(div=>{
+                div.addEventListener('mousedown',e=>{e.preventDefault();dragging=true;adding=!div.classList.contains('selected');toggle(div,adding);});
+                div.addEventListener('mouseenter',()=>{if(!dragging)return;toggle(div,adding);});
             });
-            window.addEventListener('mouseup', ()=>{
-                if(dragging){
-                    dragging=false;
-                    rebuildPreviewFromGrid();
-                }
-            });
+            window.addEventListener('mouseup',()=>{if(dragging){dragging=false;preview();}});
         }
-        function toggleSlot(el, on){ on ? el.classList.add('selected') : el.classList.remove('selected'); }
+        function toggle(el,on){on?el.classList.add('selected'):el.classList.remove('selected');}
+        clearBtn.addEventListener('click',()=>{gridBody.querySelectorAll('.selected').forEach(s=>s.classList.remove('selected'));preview();});
 
-        /* ===== 초기화 버튼 ===== */
-        clearAllBtn.addEventListener('click', ()=>{
-            weekGridBody.querySelectorAll('.slot-10m.selected').forEach(s=>s.classList.remove('selected'));
-            rebuildPreviewFromGrid();
-        });
-        clearDayBtn.addEventListener('click', ()=>{
-            const d = clearDaySelect.value;
-            if(!d) return;
-            weekGridBody.querySelectorAll(`.slot-10m[data-day="${d}"].selected`).forEach(s=>s.classList.remove('selected'));
-            rebuildPreviewFromGrid();
-        });
-
-        /* ===== 기존 뷰 → 10분 슬롯 하이드레이트 ===== */
-        function hydrateGridFromView(){
-            const rows = Array.from(viewTableBody.querySelectorAll('tr')).filter(tr=>!tr.classList.contains('placeholder'));
+        function hydrate(){
+            const rows=Array.from(viewBody.querySelectorAll('tr')).filter(r=>!r.classList.contains('placeholder'));
             rows.forEach(r=>{
-                const day = r.querySelector('td:nth-child(1)')?.getAttribute('data-day');
-                const start = r.querySelector('td:nth-child(2)')?.getAttribute('data-start'); // "HH:MM"
-                const end   = r.querySelector('td:nth-child(3)')?.getAttribute('data-end');   // "HH:MM"
-                if(!day || !start || !end) return;
-
-                const sMin = hmToMin(start), eMin = hmToMin(end);
-                // 범위 보정
-                const a = Math.max(START_MIN, sMin);
-                const b = Math.min(END_MIN,   eMin);
-                if(a >= b) return;
-
-                const sIdx = Math.floor((a - START_MIN)/STEP_MIN);
-                const eIdx = Math.ceil((b - START_MIN)/STEP_MIN) - 1; // 포함 인덱스
-
-                for(let i=sIdx; i<=eIdx; i++){
-                    const el = weekGridBody.querySelector(`.slot-10m[data-day="${day}"][data-idx="${i}"]`);
-                    if(el) el.classList.add('selected');
-                }
+                const d=r.querySelector('td:nth-child(1)')?.getAttribute('data-day');
+                const s=r.querySelector('td:nth-child(2)')?.getAttribute('data-start')||r.querySelector('td:nth-child(2)')?.textContent?.trim();
+                const e=r.querySelector('td:nth-child(3)')?.getAttribute('data-end')||r.querySelector('td:nth-child(3)')?.textContent?.trim();
+                if(!d||!s||!e)return;
+                const sMin=toMin(s),eMin=toMin(e);const a=Math.max(START_MIN,sMin),b=Math.min(END_MIN,eMin);if(a>=b)return;
+                const si=Math.floor((a-START_MIN)/STEP),ei=Math.ceil((b-START_MIN)/STEP)-1;
+                for(let i=si;i<=ei;i++){const el=gridBody.querySelector(`.slot-10m[data-day="${d}"][data-idx="${i}"]`);if(el)el.classList.add('selected');}
             });
         }
-
-        /* ===== 10분 슬롯 → 미리보기 (연속 병합) ===== */
-        function rebuildPreviewFromGrid(){
-            schedulePreviewBody.innerHTML = '';
-            daysOrder.forEach(day=>{
-                const indexes = [];
-                for(let idx=0; idx<TOTAL_ROWS; idx++){
-                    const el = weekGridBody.querySelector(`.slot-10m[data-day="${day}"][data-idx="${idx}"]`);
-                    if(el && el.classList.contains('selected')) indexes.push(idx);
-                }
-                const merged = mergeConsecutive(indexes);
-                merged.forEach(([sIdx,eIdxInclusive])=>{
-                    const startMin = START_MIN + (sIdx)*STEP_MIN;
-                    const endMin   = START_MIN + (eIdxInclusive+1)*STEP_MIN; // 다음 슬롯 시작 = 구간 끝
-                    const tr = document.createElement('tr');
-                    tr.innerHTML = `
-          <td data-day="${day}">${dayMap[day]}(${day})</td>
-          <td data-start="${minToHM(startMin)}">${minToHM(startMin)}</td>
-          <td data-end="${minToHM(endMin)}">${minToHM(endMin)}</td>
-        `;
-                    schedulePreviewBody.appendChild(tr);
+        function preview(){
+            previewBody.innerHTML='';
+            days.forEach(d=>{
+                const idxs=[];for(let i=0;i<TOTAL;i++){const el=gridBody.querySelector(`.slot-10m[data-day="${d}"][data-idx="${i}"]`);if(el&&el.classList.contains('selected'))idxs.push(i);}
+                const merged=merge(idxs);
+                merged.forEach(([s,e])=>{
+                    const sMin=START_MIN+s*STEP,eMin=START_MIN+(e+1)*STEP;
+                    const tr=document.createElement('tr');
+                    tr.innerHTML=`<td data-day="${d}">${dayMap[d]}(${d})</td><td data-start="${toHM(sMin)}">${toHM(sMin)}</td><td data-end="${toHM(eMin)}">${toHM(eMin)}</td>`;
+                    previewBody.appendChild(tr);
                 });
             });
-            if(!schedulePreviewBody.children.length){
-                const tr = document.createElement('tr');
-                tr.innerHTML = `<td colspan="3" class="text-muted">선택된 시간이 없습니다.</td>`;
-                schedulePreviewBody.appendChild(tr);
-            }
+            if(!previewBody.children.length){const tr=document.createElement('tr');tr.innerHTML=`<td colspan="3" class="text-muted">선택된 시간이 없습니다.</td>`;previewBody.appendChild(tr);}
         }
-        function mergeConsecutive(arr){
-            const out=[]; if(!arr.length) return out;
-            arr.sort((a,b)=>a-b);
-            let s=arr[0], p=arr[0];
-            for(let i=1;i<arr.length;i++){
-                if(arr[i]===p+1){ p=arr[i]; continue; }
-                out.push([s,p]); s=p=arr[i];
-            }
-            out.push([s,p]);
-            return out;
-        }
-
-        /* ===== 적용: 미리보기 → 뷰/히든필드 ===== */
-        applyBtn.addEventListener('click', ()=>{
-            const previewRows = Array.from(schedulePreviewBody.querySelectorAll('tr')).filter(tr=>tr.querySelector('td[data-day]'));
-            viewTableBody.innerHTML = '';
-            if(!previewRows.length){
-                addViewPlaceholder();
-            } else {
-                previewRows.forEach(r=>{
-                    const d = r.querySelector('td:nth-child(1)')?.getAttribute('data-day');
-                    const s = r.querySelector('td:nth-child(2)')?.getAttribute('data-start');
-                    const e = r.querySelector('td:nth-child(3)')?.getAttribute('data-end');
-                    appendViewRow(d,s,e);
-                });
-            }
-            rebuildHiddenInputsFromView();
-            updatePreview();
-            modal.style.display='none';
+        function merge(a){const out=[];if(!a.length)return out;a.sort((x,y)=>x-y);let s=a[0],p=a[0];for(let i=1;i<a.length;i++){if(a[i]===p+1){p=a[i];continue;}out.push([s,p]);s=p=a[i];}out.push([s,p]);return out;}
+        applyBtn.addEventListener('click',()=>{const rows=Array.from(previewBody.querySelectorAll('tr')).filter(r=>r.querySelector('td[data-day]'));viewBody.innerHTML='';
+            if(!rows.length){const tr=document.createElement('tr');tr.className='placeholder';tr.innerHTML=`<td colspan="3" class="text-muted">등록된 근무시간이 없습니다.</td>`;viewBody.appendChild(tr);}
+            else{rows.forEach(r=>{const d=r.querySelector('td:nth-child(1)').dataset.day,s=r.querySelector('td:nth-child(2)').dataset.start,e=r.querySelector('td:nth-child(3)').dataset.end;
+                const tr=document.createElement('tr');tr.innerHTML=`<td data-day="${d}">${dayMap[d]}(${d})</td><td data-start="${s}">${s}</td><td data-end="${e}">${e}</td>`;viewBody.appendChild(tr);});}
+            buildHidden();modal.style.display='none';
         });
-
-        /* ===== 뷰 테이블 조작 ===== */
-        function appendViewRow(day,start,end){
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-      <td data-day="${day}">${dayMap[day]}(${day})</td>
-      <td data-start="${start}">${start}</td>
-      <td data-end="${end}">${end}</td>`;
-            viewTableBody.appendChild(tr);
-        }
-        function addViewPlaceholder(){
-            const tr=document.createElement('tr');
-            tr.className='placeholder';
-            tr.innerHTML=`<td colspan="3" class="text-muted">아직 등록된 요일/시간이 없습니다.</td>`;
-            viewTableBody.appendChild(tr);
-        }
-        function rebuildHiddenInputsFromView(){
+        function buildHidden(){
             form.querySelectorAll('input[data-schedule="1"]').forEach(n=>n.remove());
-            const rows = Array.from(viewTableBody.querySelectorAll('tr')).filter(tr=>!tr.classList.contains('placeholder'));
-            rows.forEach((r,i)=>{
-                const day = r.querySelector('td:nth-child(1)')?.getAttribute('data-day');
-                const s   = r.querySelector('td:nth-child(2)')?.getAttribute('data-start');
-                const e   = r.querySelector('td:nth-child(3)')?.getAttribute('data-end');
-                addHidden(`schedule[${i}].day`, day);
-                addHidden(`schedule[${i}].start`, s);
-                addHidden(`schedule[${i}].end`, e);
-            });
+            const rows=Array.from(viewBody.querySelectorAll('tr')).filter(r=>!r.classList.contains('placeholder'));
+            rows.forEach((r,i)=>{const d=r.querySelector('td:nth-child(1)').dataset.day,s=r.querySelector('td:nth-child(2)').dataset.start,e=r.querySelector('td:nth-child(3)').dataset.end;
+                add(`schedule[${i}].day`,d);add(`schedule[${i}].start`,s);add(`schedule[${i}].end`,e);});
         }
-        function addHidden(name,value){
-            const input=document.createElement('input');
-            input.type='hidden'; input.name=name; input.value=value; input.setAttribute('data-schedule','1');
-            form.appendChild(input);
-        }
-
-        /* ===== 제출 전 최종 검증 ===== */
-        form.addEventListener('submit', (e) => {
-            // 전화번호 최종 보정 및 확인
-            phone.value = formatPhone(phone.value);
-            if (!isValidPhone(phone.value)) {
-                e.preventDefault();
-                phone.setCustomValidity('예: 010-1234-5678 형식으로 입력하세요.');
-                phone.reportValidity();
-                return;
-            } else {
-                phone.setCustomValidity('');
-            }
-
-            // 보건증 유효기간 경고
-            if (healthYes.checked) {
-                const dateVal = dateInput.value?.trim();
-                const hidden = form.querySelector('input[name="healthCertExpiry"]');
-                if (!dateVal && !hidden && !confirm('보건증 “보유”로 선택하셨습니다. 유효기간 없이 계속 진행할까요?')) {
-                    e.preventDefault();
-                    return;
-                }
-            }
-
-            // 스케줄 최신화
-            rebuildHiddenInputsFromView();
+        function add(n,v){const input=document.createElement('input');input.type='hidden';input.name=n;input.value=v;input.dataset.schedule='1';form.appendChild(input);}
+        form.addEventListener('submit',()=>{const chk=document.getElementById('includeWeeklyHolidayAllowance');
+            form.querySelectorAll('input[name="includeWeeklyHolidayAllowance"]').forEach(n=>{if(n!==chk)n.remove();});
+            chk.removeAttribute('name');
+            const hidden=document.createElement('input');hidden.type='hidden';hidden.name='includeWeeklyHolidayAllowance';hidden.value=chk.checked?'true':'false';form.appendChild(hidden);
+            buildHidden();
         });
-
-        // 이벤트 바인딩 후 라디오 초기 1회 동기화
-        onHealthRadioChange();
-
-        /* ======== ▶ 예상 급여 미리보기 계산 로직 ◀ ======== */
-        const weeklyHoursEl  = document.getElementById('previewWeeklyHours');
-        const weeklyPayEl    = document.getElementById('previewWeeklyPay');
-        const monthlyPayEl   = document.getElementById('previewMonthlyPay');
-
-        // View 테이블 변화 자동 감지 → 미리보기 갱신
-        const viewObserver = new MutationObserver(() => updatePreview());
-        viewObserver.observe(viewTableBody, { childList: true });
-
-        function updatePreview() {
-            const totalMin = computeWeeklyMinutesFromView();
-            const wage = parseInt(String(hourlyWage.value || '0').replace(/,/g,''), 10) || 0;
-
-            const hours = Math.floor(totalMin / 60);
-            const mins  = totalMin % 60;
-            weeklyHoursEl.textContent = `${hours}시간 ${mins}분`;
-
-            const weeklyPay = Math.round((totalMin / 60) * wage);
-            weeklyPayEl.textContent  = formatKRW(weeklyPay);
-
-            const monthlyPay = Math.round(weeklyPay * 4.345);
-            monthlyPayEl.textContent = formatKRW(monthlyPay);
-        }
-
-        function computeWeeklyMinutesFromView() {
-            const rows = Array.from(viewTableBody.querySelectorAll('tr')).filter(tr => !tr.classList.contains('placeholder'));
-            let total = 0;
-            rows.forEach(r => {
-                const start = r.querySelector('td:nth-child(2)').getAttribute('data-start'); // "HH:MM"
-                const end   = r.querySelector('td:nth-child(3)').getAttribute('data-end');   // "HH:MM"
-                total += Math.max(0, hmToMin(end) - hmToMin(start));
-            });
-            return total;
-        }
-
-        function formatKRW(n) {
-            return new Intl.NumberFormat('ko-KR', { style: 'currency', currency: 'KRW', maximumFractionDigits: 0 }).format(n || 0);
-        }
-
-        /* ===== 유틸 ===== */
-        function hmToMin(hm){ const [H,M]=String(hm).split(':').map(Number); return (H||0)*60+(M||0); }
-        function minToHM(min){ const H=Math.floor(min/60), M=min%60; return `${String(H).padStart(2,'0')}:${String(M).padStart(2,'0')}`; }
-
-        // 초기 미리보기 표시
-        updatePreview();
+        function toMin(hm){const [H,M]=hm.split(':').map(Number);return (H||0)*60+(M||0);}
+        function toHM(m){const H=Math.floor(m/60),M=m%60;return`${String(H).padStart(2,'0')}:${String(M).padStart(2,'0')}`;}
     })();
 </script>

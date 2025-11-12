@@ -1,0 +1,374 @@
+{{>layouts/header}}
+
+<main class="container my-4">
+
+    <!-- ============ 상단: 아르바이트 상태별 보기 (칩 리스트) ============ -->
+    <div class="card mb-3">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <span class="fw-bold">아르바이트 상태별 보기</span>
+            <a href="/members/new" class="btn btn-sm btn-primary">추가등록</a>
+        </div>
+        <div class="card-body">
+            <div class="row g-3">
+                <!-- 상태 선택 -->
+                <div class="col-12 col-md-4">
+                    <label for="statusSelect" class="form-label small text-muted">상태</label>
+                    <select id="statusSelect" class="form-select">
+                        <option value="WORKING" selected>근무중</option>
+                        <option value="WAITING">시작전</option>
+                        <option value="RESTING">휴식중</option>
+                        <option value="PAUSED">일시중지</option>
+                        <option value="RESIGNED">퇴사</option>
+                    </select>
+                    <div class="form-text">
+                        상태를 바꾸면 아래 아르바이트 리스트와 급여 테이블이 함께 갱신됩니다.
+                    </div>
+                </div>
+
+                <!-- 아르바이트 리스트 (칩 UI) -->
+                <div class="col-12 col-md-8">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <div class="small text-muted">아르바이트 목록</div>
+                        <span id="memberCountBadge" class="badge bg-light text-dark">0명</span>
+                    </div>
+                    <div id="memberPills" class="vlist"><!-- JS 렌더 --></div>
+                    <div class="small text-muted mt-2">
+                        * 각 사람 옆의 색상은 근로자의 고유 색입니다.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ 상단: 제목 + 월 내비 (공용, sticky) ============ -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-2 gap-2 sticky-top"
+         style="top:70px;background:#fff;padding:.25rem 0;z-index:5;">
+        <div class="h5 mb-0 fw-bold">주차별 급여 테이블 (실근무 기준)</div>
+        <div class="d-flex align-items-center small text-muted gap-2">
+            <span id="monthRangeLabel">0000.00.01 ~ 00.00</span>
+            <button type="button" class="btn btn-sm btn-outline-secondary" id="btnMonthPrev">◀ 이전 달</button>
+            <button type="button" class="btn btn-sm btn-outline-secondary" id="btnMonthThis">이번 달</button>
+            <button type="button" class="btn btn-sm btn-outline-secondary" id="btnMonthNext">다음 달 ▶</button>
+        </div>
+    </div>
+
+    <!-- ============ 하단: 재구성 테이블 ============ -->
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered align-middle text-center" id="weeklyPayTable">
+                    <thead class="table-light">
+                    <tr>
+                        <th style="width:120px;">주차</th>
+                        <th style="width:160px;">근무자명</th>
+                        <th style="width:140px;" class="text-end">근무시간</th>
+                        <th style="width:120px;" class="text-end">시급</th>
+                        <th style="width:130px;">주휴수당 적용여부</th>
+                        <th style="width:140px;" class="text-end">근무수당</th>
+                        <th style="width:140px;" class="text-end">주휴수당</th>
+                        <th style="width:140px;" class="text-end">합계</th>
+                    </tr>
+                    </thead>
+                    <tbody id="weeklyPayBody">
+                    <!-- JS 렌더 -->
+                    </tbody>
+                    <tfoot>
+                    <tr class="table-secondary fw-bold">
+                        <td colspan="5" class="text-end">월 합계</td>
+                        <td class="text-end" id="monthWorkPaySum">-</td>
+                        <td class="text-end" id="monthJuhyuPaySum">-</td>
+                        <td class="text-end" id="monthTotalSum">-</td>
+                    </tr>
+                    </tfoot>
+                </table>
+            </div>
+            <div class="small text-muted">
+                * 주휴수당은 멤버 설정이 “적용”이고 해당 주 실근무가 15시간 이상일 때만 계산됩니다.<br>
+                * 근무시간 표기는 “H시간 M분”. 금액은 KRW 통화 형식으로 출력합니다.
+            </div>
+        </div>
+    </div>
+</main>
+
+<style>
+    .vlist{display:flex;flex-wrap:wrap;gap:8px}
+    .pill{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:999px;border:1px solid #e9ecef;background:#fff;cursor:pointer;font-size:.9rem;transition:background .15s, box-shadow .15s, border-color .15s}
+    .pill:hover{background:#fafafa;border-color:#dee2e6}
+    .pill.active{border-color:rgba(13,110,253,.45);box-shadow:0 0 0 3px rgba(13,110,253,.15) inset;background:#f0f6ff}
+    .pill .dot{width:12px;height:12px;border-radius:50%;border:1px solid rgba(0,0,0,.08);flex:0 0 12px}
+
+    .text-money{color:#0d6efd;font-weight:600}
+    .text-time{color:#198754;font-weight:600}
+    .small-muted{color:#6c757d;font-size:.85rem}
+    .week-label{white-space:nowrap}
+</style>
+
+<!-- 서버에서 내려준 멤버 JSON -->
+<script id="membersData" type="application/json">
+{{{membersJson}}}
+</script>
+
+<script>
+    (function(){
+        /* ===== 설정/API ===== */
+        const API_BASE_ACTUAL = '/api/schedule'; // GET /{memberId}/{startIso}/{endIso}
+
+        /* ===== DOM ===== */
+        const statusSelect     = document.getElementById('statusSelect');
+        const memberPills      = document.getElementById('memberPills');
+        const memberCountBadge = document.getElementById('memberCountBadge');
+
+        const btnMonthPrev     = document.getElementById('btnMonthPrev');
+        const btnMonthThis     = document.getElementById('btnMonthThis');
+        const btnMonthNext     = document.getElementById('btnMonthNext');
+        const monthRangeLabel  = document.getElementById('monthRangeLabel');
+
+        const weeklyPayBody    = document.getElementById('weeklyPayBody');
+        const monthWorkPaySumEl= document.getElementById('monthWorkPaySum');
+        const monthJuhyuPaySumEl= document.getElementById('monthJuhyuPaySum');
+        const monthTotalSumEl  = document.getElementById('monthTotalSum');
+
+        /* ===== 상태 ===== */
+        let allMembers = [];
+        try { allMembers = JSON.parse(document.getElementById('membersData').textContent || '[]'); }
+        catch(e){ allMembers = []; }
+
+        let filteredMembers = [];
+        let currentMonthStart = firstDayOfMonth(new Date());
+
+        /* ===== 초기화 ===== */
+        if (Array.isArray(allMembers) && allMembers.length>0) {
+            statusSelect.value = allMembers[0].status || 'WORKING';
+        }
+        statusSelect.addEventListener('change', refreshMembers);
+        btnMonthPrev.addEventListener('click', ()=> { currentMonthStart = new Date(currentMonthStart.getFullYear(), currentMonthStart.getMonth()-1, 1); loadWeeklyTable(); });
+        btnMonthThis.addEventListener('click', ()=> { currentMonthStart = firstDayOfMonth(new Date()); loadWeeklyTable(); });
+        btnMonthNext.addEventListener('click', ()=> { currentMonthStart = new Date(currentMonthStart.getFullYear(), currentMonthStart.getMonth()+1, 1); loadWeeklyTable(); });
+
+        refreshMembers();
+
+        /* ===== 멤버 필터/칩 렌더 ===== */
+        function refreshMembers(){
+            const status = statusSelect.value;
+            filteredMembers = (allMembers||[]).filter(m => m.status === status);
+            memberCountBadge.textContent = `${filteredMembers.length}명`;
+
+            memberPills.innerHTML = '';
+            if (!filteredMembers.length){
+                memberPills.innerHTML = `<span class="small-muted">해당 상태의 근무자가 없습니다.</span>`;
+            } else {
+                filteredMembers.slice().sort((a,b)=>(a.name||'').localeCompare(b.name||'','ko')).forEach(m=>{
+                    const color = colorForMember(m);
+                    const btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.className = 'pill active';
+                    btn.innerHTML = `
+          <span class="dot" style="background:${color}"></span>
+          <span class="name">${escapeHtml(m.name ?? '-')}</span>
+          <span class="small-muted">${escapeHtml(m.phone ?? '')}</span>
+        `;
+                    memberPills.appendChild(btn);
+                });
+            }
+            loadWeeklyTable();
+        }
+
+        /* ===== 주차 테이블 렌더 ===== */
+        async function loadWeeklyTable(){
+            const ms = firstDayOfMonth(currentMonthStart);
+            const me = lastDayOfMonth(currentMonthStart);
+            monthRangeLabel.textContent =
+                    `${ms.getFullYear()}.${pad2(ms.getMonth()+1)}.01 ~ ${pad2(me.getMonth()+1)}.${pad2(me.getDate())}`;
+
+            weeklyPayBody.innerHTML = '';
+            setFooterSums(0,0,0);
+
+            if (!filteredMembers.length){
+                weeklyPayBody.innerHTML = `<tr><td colspan="8" class="text-muted">표시할 멤버가 없습니다.</td></tr>`;
+                return;
+            }
+
+            // 멤버별 월 데이터 조회
+            const msIso = toIso(ms), meIso = toIso(me);
+            const memberDayMap = {}; // { memberId: { isoDate: {minutes, segments[]} } }
+            await Promise.all(filteredMembers.map(async m=>{
+                try{
+                    const url = `${API_BASE_ACTUAL}/${encodeURIComponent(m.id)}/${msIso}/${meIso}`;
+                    const resp = await fetch(url, { headers: { 'Accept':'application/json' } });
+                    if (resp.ok){
+                        const data = await resp.json();
+                        memberDayMap[m.id] = normalizeDays(data);
+                    } else {
+                        memberDayMap[m.id] = {};
+                    }
+                }catch(e){ memberDayMap[m.id] = {}; }
+            }));
+
+            // 월을 포함하는 모든 주(월~일) 시작일 목록(Mon)
+            const weeks = [];
+            let wStart = toMonday(ms);
+            const monthEnd = new Date(me);
+            while (wStart <= monthEnd){
+                weeks.push(new Date(wStart));
+                wStart.setDate(wStart.getDate()+7);
+            }
+
+            // 월 합계
+            let monthWorkPaySum = 0;
+            let monthJuhyuPaySum = 0;
+            let monthTotalSum = 0;
+
+            // 주차별 렌더
+            weeks.forEach((weekStart, idx)=>{
+                const weekEnd = addDays(weekStart, 6);
+
+                // 해당 주 각 멤버의 주간 합계 계산
+                const rows = []; // [{member, weekMinutes, wage, juhyuApplied, workPay, juhyuPay, total}]
+                filteredMembers.forEach(m=>{
+                    const wage = Number(m.hourlyWage)||0;
+                    const includeJuhyu = !!m.includeWeeklyHolidayAllowance;
+
+                    let weekMinutes = 0;
+                    for (let i=0;i<7;i++){
+                        const d = addDays(weekStart, i);
+                        if (d < ms || d > me) continue;
+                        const iso = toIso(d);
+                        const info = (memberDayMap[m.id]||{})[iso] || {minutes:0};
+                        weekMinutes += (info.minutes||0);
+                    }
+                    if (weekMinutes <= 0) return; // 근무 없는 멤버는 표에서 제외(요청하신 '분할 출력'을 간결하게)
+
+                    const workPay = Math.round((weekMinutes/60) * wage);
+                    let juhyuPay = 0;
+                    let juhyuApplied = false;
+                    if (includeJuhyu && weekMinutes >= 15*60){
+                        const juhyuMinutes = Math.round(weekMinutes / 5);
+                        juhyuPay = Math.round((juhyuMinutes/60) * wage);
+                        juhyuApplied = true;
+                    }
+
+                    rows.push({
+                        member:m,
+                        weekMinutes,
+                        wage,
+                        juhyuApplied,
+                        workPay,
+                        juhyuPay,
+                        total: workPay + juhyuPay
+                    });
+                });
+
+                // 주에 표시할 데이터가 없다면 스킵(또는 한 줄로 "해당 주 실근무 없음" 출력)
+                if (rows.length === 0) {
+                    const tr = document.createElement('tr');
+                    const weekLabel = `${pad2(weekStart.getMonth()+1)}.${pad2(weekStart.getDate())} ~ ${pad2(weekEnd.getMonth()+1)}.${pad2(weekEnd.getDate())}`;
+                    tr.innerHTML = `
+          <td class="week-label">${idx+1}주차<br><small class="text-muted">(${weekLabel})</small></td>
+          <td colspan="7" class="text-muted text-start">해당 주 실근무 내역이 없습니다.</td>
+        `;
+                    weeklyPayBody.appendChild(tr);
+                    return;
+                }
+
+                // 이름순 정렬
+                rows.sort((a,b)=>(a.member.name||'').localeCompare(b.member.name||'','ko'));
+
+                // 주차 rowSpan
+                const rowSpan = rows.length;
+                const weekLabel = `${pad2(weekStart.getMonth()+1)}.${pad2(weekStart.getDate())} ~ ${pad2(weekEnd.getMonth()+1)}.${pad2(weekEnd.getDate())}`;
+
+                rows.forEach((r, i)=>{
+                    const tr = document.createElement('tr');
+                    const weekCell = (i===0)
+                            ? `<td class="week-label" rowspan="${rowSpan}">
+               ${idx+1}주차<br><small class="text-muted">(${weekLabel})</small>
+             </td>`
+                            : '';
+
+                    tr.innerHTML = `
+          ${weekCell}
+          <td class="text-start">${escapeHtml(r.member.name||'-')}</td>
+          <td class="text-end"><span class="text-time">${formatMins(r.weekMinutes)}</span></td>
+          <td class="text-end">${r.wage ? krw(r.wage) : '-'}</td>
+          <td>${r.juhyuApplied ? '<span class="text-success fw-bold">적용</span>' : '<span class="text-muted">미적용</span>'}</td>
+          <td class="text-end">${krw(r.workPay)}</td>
+          <td class="text-end">${krw(r.juhyuPay)}</td>
+          <td class="text-end"><span class="fw-bold text-primary">${krw(r.total)}</span></td>
+        `;
+                    weeklyPayBody.appendChild(tr);
+                });
+
+                // 월 합계 누적
+                monthWorkPaySum += rows.reduce((sum,r)=> sum + r.workPay, 0);
+                monthJuhyuPaySum += rows.reduce((sum,r)=> sum + r.juhyuPay, 0);
+                monthTotalSum    += rows.reduce((sum,r)=> sum + r.total,   0);
+            });
+
+            setFooterSums(monthWorkPaySum, monthJuhyuPaySum, monthTotalSum);
+        }
+
+        function setFooterSums(work, juhyu, total){
+            monthWorkPaySumEl.textContent = krw(work|0);
+            monthJuhyuPaySumEl.textContent = krw(juhyu|0);
+            monthTotalSumEl.textContent = krw(total|0);
+        }
+
+        /* ===== 유틸 ===== */
+        function firstDayOfMonth(d){ return new Date(d.getFullYear(), d.getMonth(), 1); }
+        function lastDayOfMonth(d){ return new Date(d.getFullYear(), d.getMonth()+1, 0); }
+        function toIso(d){ return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`; }
+        function pad2(n){ return String(n).padStart(2,'0'); }
+        function addDays(d,n){ const x=new Date(d.getFullYear(), d.getMonth(), d.getDate()); x.setDate(x.getDate()+n); return x; }
+        function toMonday(date){
+            const d=new Date(date.getFullYear(),date.getMonth(),date.getDate());
+            const off=(d.getDay()+6)%7; d.setDate(d.getDate()-off); return d;
+        }
+        function normalizeDays(apiData){
+            const map={}; const arr=Array.isArray(apiData?.days)?apiData.days:[];
+            arr.forEach(d=>{
+                const date=String(d.date);
+                const segs=Array.isArray(d.segments)?d.segments:[];
+                const minutes=(typeof d.minutes==='number') ? d.minutes : segs.reduce((acc,s)=>acc+diffMinutes(s.start,s.end),0);
+                map[date] = { segments: segs, minutes };
+            });
+            return map;
+        }
+        function diffMinutes(start,end){
+            const s=parseHm(start), e=parseHm(end);
+            return (e.h*60+e.m) - (s.h*60+s.m);
+        }
+        function parseHm(hm){
+            if(!hm || typeof hm!=='string') return {h:0,m:0};
+            const [h,m]=hm.split(':').map(n=>parseInt(n,10));
+            return {h:isNaN(h)?0:h, m:isNaN(m)?0:m};
+        }
+        function formatMins(mins){
+            mins=Math.max(0, mins|0); const h=Math.floor(mins/60), m=mins%60;
+            return m===0?`${h}시간`:`${h}시간 ${m}분`;
+        }
+        function krw(v){
+            return new Intl.NumberFormat('ko-KR',{style:'currency',currency:'KRW',maximumFractionDigits:0}).format(v|0);
+        }
+        function colorForMember(m){
+            const key=(m?.id!=null?String(m.id):(m?.name||'x'));
+            const h=seededHash(key)%360, s=65, l=55;
+            return hslToHex(h,s,l);
+        }
+        function seededHash(str){ let h=2166136261>>>0; for(let i=0;i<str.length;i++){ h^=str.charCodeAt(i); h=(h*16777619)>>>0; } return h>>>0; }
+        function hslToHex(h,s,l){
+            s/=100; l/=100;
+            const k=n=>(n+h/30)%12, a=s*Math.min(l,1-l);
+            const f=n=> l - a*Math.max(-1, Math.min(k(n)-3, Math.min(9-k(n),1)));
+            const toHex=x=>Math.round(255*x).toString(16).padStart(2,'0');
+            return `#${toHex(f(0))}${toHex(f(8))}${toHex(f(4))}`;
+        }
+        function escapeHtml(s){
+            if(s==null) return '';
+            return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;')
+                    .replace(/>/g,'&gt;').replace(/"/g,'&quot;')
+                    .replace(/'/g,'&#39;');
+        }
+    })();
+</script>
+
+{{>layouts/footer}}
