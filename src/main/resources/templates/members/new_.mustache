@@ -176,7 +176,7 @@
                                 <input class="form-input form-control" type="date" name="startDate" required>
                             </div>
 
-                            <div class="mb-3">
+                            <div class="mb-0">
                                 <label class="form-label">시급(원)</label>
                                 <input
                                         class="form-input form-control"
@@ -188,31 +188,6 @@
                                         placeholder="10030"
                                         required>
                                 <div class="form-text">숫자만 입력 (예: 10030). 서버에서는 정수(원)로 저장됩니다.</div>
-                            </div>
-
-                            <!-- ✅ 추가: 급여지급일(지정) -->
-                            <div class="mb-3">
-                                <label class="form-label">급여지급일(지정)</label>
-                                <select class="form-select" name="payday" id="payday">
-                                    <option value="">선택하세요</option>
-                                    <option value="EOM">말일</option>
-                                    <option value="1">1일</option>
-                                    <option value="5">5일</option>
-                                    <option value="10">10일</option>
-                                    <option value="15">15일</option>
-                                    <option value="20">20일</option>
-                                    <option value="25">25일</option>
-                                    <option value="30">30일</option>
-                                    <option value="31">31일</option>
-                                </select>
-                                <div class="form-text">말일 또는 날짜(1~31일)를 지정할 수 있습니다.</div>
-                            </div>
-
-                            <!-- ✅ 추가: 주휴수당 선택 -->
-                            <div class="mb-0 form-check">
-                                <input class="form-check-input" type="checkbox" id="includeWeeklyHolidayAllowance" name="includeWeeklyHolidayAllowance" value="true">
-                                <label class="form-check-label" for="includeWeeklyHolidayAllowance">주휴수당 적용</label>
-                                <div class="form-text">기본 미적용. 체크 시 계산 모듈에서 주휴수당을 포함해 산정하도록 사용할 수 있습니다.</div>
                             </div>
                         </div>
                     </div>
@@ -408,7 +383,6 @@
                 phone.value = formatPhone(phone.value);
                 if (phone.value && !isValidPhone(phone.value)) {
                     phone.setCustomValidity('예: 010-1234-5678 형식으로 입력하세요.');
-                    phone.reportValidity();
                 } else {
                     phone.setCustomValidity('');
                 }
@@ -611,12 +585,9 @@
         }
 
         /* ===== 적용: 미리보기 → 뷰/히든필드 ===== */
-        const viewTableBodyEl = viewTableBody; // alias
-        const schedulePreviewBodyEl = schedulePreviewBody;
-
         applyBtn.addEventListener('click', ()=>{
-            const previewRows = Array.from(schedulePreviewBodyEl.querySelectorAll('tr')).filter(tr=>tr.querySelector('td[data-day]'));
-            viewTableBodyEl.innerHTML = '';
+            const previewRows = Array.from(schedulePreviewBody.querySelectorAll('tr')).filter(tr=>tr.querySelector('td[data-day]'));
+            viewTableBody.innerHTML = '';
             if(!previewRows.length){
                 addViewPlaceholder();
             } else {
@@ -638,17 +609,17 @@
                 <td data-day="${day}">${dayMap[day]}(${day})</td>
                 <td data-start="${start}">${start}</td>
                 <td data-end="${end}">${end}</td>`;
-            viewTableBodyEl.appendChild(tr);
+            viewTableBody.appendChild(tr);
         }
         function addViewPlaceholder(){
             const tr=document.createElement('tr');
             tr.className='placeholder';
             tr.innerHTML=`<td colspan="3" class="text-muted">아직 등록된 요일/시간이 없습니다.</td>`;
-            viewTableBodyEl.appendChild(tr);
+            viewTableBody.appendChild(tr);
         }
         function rebuildHiddenInputsFromView(){
             form.querySelectorAll('input[data-schedule="1"]').forEach(n=>n.remove());
-            const rows = Array.from(viewTableBodyEl.querySelectorAll('tr')).filter(tr=>!tr.classList.contains('placeholder'));
+            const rows = Array.from(viewTableBody.querySelectorAll('tr')).filter(tr=>!tr.classList.contains('placeholder'));
             rows.forEach((r,i)=>{
                 const day = r.querySelector('td:nth-child(1)')?.getAttribute('data-day');
                 const s   = r.querySelector('td:nth-child(2)')?.getAttribute('data-start');

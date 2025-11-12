@@ -36,7 +36,7 @@
         </div>
     </div>
 
-    <!-- 하단: 주간 타임테이블 (10/30/60분 단위 + 지난/금/다음주) -->
+    <!-- 하단: 주간 타임테이블 -->
     <div class="card">
         <div class="card-header fw-bold d-flex justify-content-between align-items-center">
             <div class="d-flex flex-column">
@@ -67,33 +67,54 @@
                     <tr>
                         <th style="width:80px;">시간</th>
                         <!-- data-dow: 0=월, 1=화, ... 6=일 -->
-                        <th data-dow="0">
-                            <div>월</div>
-                            <div class="small text-muted day-date"></div>
+                        <th data-dow="0" class="dow-head">
+                            <div class="d-flex flex-column align-items-center gap-1">
+                                <div>월</div>
+                                <div class="small text-muted day-date"></div>
+                                <div class="day-edit-wrap"></div>
+                            </div>
                         </th>
-                        <th data-dow="1">
-                            <div>화</div>
-                            <div class="small text-muted day-date"></div>
+                        <th data-dow="1" class="dow-head">
+                            <div class="d-flex flex-column align-items-center gap-1">
+                                <div>화</div>
+                                <div class="small text-muted day-date"></div>
+                                <div class="day-edit-wrap"></div>
+                            </div>
                         </th>
-                        <th data-dow="2">
-                            <div>수</div>
-                            <div class="small text-muted day-date"></div>
+                        <th data-dow="2" class="dow-head">
+                            <div class="d-flex flex-column align-items-center gap-1">
+                                <div>수</div>
+                                <div class="small text-muted day-date"></div>
+                                <div class="day-edit-wrap"></div>
+                            </div>
                         </th>
-                        <th data-dow="3">
-                            <div>목</div>
-                            <div class="small text-muted day-date"></div>
+                        <th data-dow="3" class="dow-head">
+                            <div class="d-flex flex-column align-items-center gap-1">
+                                <div>목</div>
+                                <div class="small text-muted day-date"></div>
+                                <div class="day-edit-wrap"></div>
+                            </div>
                         </th>
-                        <th data-dow="4">
-                            <div>금</div>
-                            <div class="small text-muted day-date"></div>
+                        <th data-dow="4" class="dow-head">
+                            <div class="d-flex flex-column align-items-center gap-1">
+                                <div>금</div>
+                                <div class="small text-muted day-date"></div>
+                                <div class="day-edit-wrap"></div>
+                            </div>
                         </th>
-                        <th data-dow="5">
-                            <div>토</div>
-                            <div class="small text-muted day-date"></div>
+                        <th data-dow="5" class="dow-head">
+                            <div class="d-flex flex-column align-items-center gap-1">
+                                <div>토</div>
+                                <div class="small text-muted day-date"></div>
+                                <div class="day-edit-wrap"></div>
+                            </div>
                         </th>
-                        <th data-dow="6">
-                            <div>일</div>
-                            <div class="small text-muted day-date"></div>
+                        <th data-dow="6" class="dow-head">
+                            <div class="d-flex flex-column align-items-center gap-1">
+                                <div>일</div>
+                                <div class="small text-muted day-date"></div>
+                                <div class="day-edit-wrap"></div>
+                            </div>
                         </th>
                         <th style="width:80px;">합계</th>
                     </tr>
@@ -104,8 +125,8 @@
                 </table>
             </div>
             <div class="small text-muted mt-2">
-                * 각 칸에는 해당 시간대에 근무 중인 인원 수와, 각 근로자의 색상 태그가 표시됩니다.<br>
-                * 단위 버튼(10분/30분/1시간)에 따라 타임테이블 행이 다시 계산됩니다.
+                * 하이라이트(상단 칩 선택)된 아르바이트생이 포함된 셀을 클릭하면 해당 요일 헤더에 <b>‘근무일정 수정’</b> 버튼이 나타납니다.<br>
+                * 포함되지 않은 셀을 클릭하면 해당 요일 헤더에 <b>‘일정생성하기’</b> 버튼이 나타납니다.
             </div>
         </div>
     </div>
@@ -118,18 +139,15 @@
                 <span class="badge bg-secondary ms-2" id="memberWeekNameBadge"></span>
             </div>
             <!-- 저장 버튼 (10분 모드에서만 활성화) -->
-            <span class="fw-bold" id="memberWeekTitle">(10단위 저장만 가능합니다.)</span>
+            <span class="fw-bold" id="memberWeekSaveHint">(10단위 저장만 가능합니다.)</span>
             <button type="submit" class="btn btn-sm btn-primary" form="memberWeekForm" id="btnSaveWeek" disabled>저장</button>
         </div>
         <div class="card-body">
-            <!-- 주간 일정 없음 알림(화면용) -->
             <div id="noPlanAlert" class="alert alert-warning py-2 px-3 d-none">
                 <strong>예정된 일정이 없습니다.</strong> 일정을 생성하세요.
             </div>
 
-            <!-- 수정용 타임테이블 (주간 그리드) -->
             <form id="memberWeekForm" class="mt-0">
-                <!-- 툴바 -->
                 <div class="grid-toolbar mb-2">
                     <div class="left">
                         <div class="btn-group btn-group-sm" id="gridSlotButtons" role="group" aria-label="슬롯 단위 선택">
@@ -144,7 +162,6 @@
                     </div>
                 </div>
 
-                <!-- 주간 그리드 -->
                 <div class="week-grid mb-0">
                     <table>
                         <thead>
@@ -169,44 +186,123 @@
     </div>
 </main>
 
+<!-- ===== 편집 모달 (월간 화면과 동일 UI) ===== -->
+<div class="modal" id="editModal" style="display:none;">
+    <div class="modal-dialog">
+        <div class="modal-content p-3">
+            <div class="d-flex justify-content-between align-items-center mb-2 edit-modal-header">
+                <div class="fw-bold">
+                    <span id="editTitleDate">0000-00-00</span>
+                    <span class="text-muted">/</span>
+                    <span id="editTitleMember">알바생 이름</span>
+                </div>
+                <div class="d-flex gap-2">
+                    <!-- ↓↓↓ 이 라벨이 ‘저장’ 또는 ‘일정생성하기’로 동적으로 바뀝니다 -->
+                    <button id="btnSaveEdit" class="btn btn-sm btn-primary" disabled>저장</button>
+                    <button id="btnCancelEdit" class="btn btn-sm btn-outline-secondary">취소</button>
+                    <button id="btnCloseModal" class="btn btn-sm btn-outline-dark">닫기</button>
+                </div>
+            </div>
+
+            <div class="edit-modal-body">
+                <div class="row g-3">
+                    <!-- 좌: 일정 요약 -->
+                    <div class="col-12 col-md-5">
+                        <div class="summary-box p-2 border rounded-3">
+                            <div class="d-flex align-items-center justify-content-between mb-2">
+                                <div class="small text-muted">일정 요약</div>
+                                <span class="badge bg-light text-dark" id="summaryStepBadge">슬롯: 30분</span>
+                            </div>
+
+                            <div class="mb-2">
+                                <div class="small fw-semibold">저장된 일정</div>
+                                <div id="summaryOriginal" class="d-flex flex-wrap gap-2 small text-muted"></div>
+                            </div>
+
+                            <div class="mb-2">
+                                <div class="small fw-semibold">수정안(현재 선택)</div>
+                                <div id="summaryCurrent" class="d-flex flex-wrap gap-2 small"></div>
+                            </div>
+
+                            <div class="mt-2 small">
+                                <div class="d-flex justify-content-between">
+                                    <span class="text-muted">원본 총 시간</span>
+                                    <span id="summaryOriginalTotal" class="fw-semibold">0분</span>
+                                </div>
+                                <div class="d-flex justify-content-between">
+                                    <span class="text-muted">수정안 총 시간</span>
+                                    <span id="summaryCurrentTotal" class="fw-semibold">0분</span>
+                                </div>
+                                <div class="d-flex justify-content-between">
+                                    <span class="text-muted">증감(수정안 - 원본)</span>
+                                    <span id="summaryDiffTotal" class="fw-semibold">0분</span>
+                                </div>
+                            </div>
+
+                            <div class="mt-2 small">
+                                <span class="legend legend-actual"></span> 원본 유지 블록
+                                &nbsp;·&nbsp;
+                                <span class="legend legend-plan" style="background: rgba(13,110,253,.16); border-color: rgba(13,110,253,.45)"></span> 새로 추가된 블록(파란색)
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 우: 편집 그리드 -->
+                    <div class="col-12 col-md-7">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <div class="btn-group btn-group-sm" id="slotStepButtons" role="group" aria-label="슬롯 단위">
+                                <button type="button" class="btn btn-outline-secondary" data-step="10">10분</button>
+                                <button type="button" class="btn btn-outline-secondary active" data-step="30">30분</button>
+                                <button type="button" class="btn btn-outline-secondary" data-step="60">1시간</button>
+                            </div>
+                            <div class="small text-muted">시간 슬롯을 드래그로 선택/해제합니다. (06:00 ~ 22:00)</div>
+                        </div>
+
+                        <div class="day-grid mb-2">
+                            <table id="dayGridTable">
+                                <thead>
+                                <tr>
+                                    <th style="width:74px;">시간</th>
+                                    <th>선택</th>
+                                </tr>
+                                </thead>
+                                <tbody id="dayGridBody">
+                                <!-- JS 렌더 -->
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="text-end small">
+                            총 선택: <span id="selectedMinutes" class="fw-bold">0</span>분
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
 <style>
     /* ===== 상단 리스트 ===== */
-    .vlist {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-    }
+    .vlist { display:flex; flex-wrap:wrap; gap:8px; }
     .pill {
-        display:flex;
-        align-items:center;
-        gap:8px;
-        padding:8px 10px;
-        border-radius:999px;
-        border:1px solid #e9ecef;
-        background:#fff;
-        cursor:pointer;
-        font-size:.9rem;
-        transition: background .15s, box-shadow .15s, border-color .15s;
+        display:flex; align-items:center; gap:8px; padding:8px 10px;
+        border-radius:999px; border:1px solid #e9ecef; background:#fff; cursor:pointer;
+        font-size:.9rem; transition: background .15s, box-shadow .15s, border-color .15s;
     }
-    .pill .dot {
-        width:12px;
-        height:12px;
-        border-radius:50%;
-        border:1px solid rgba(0,0,0,.08);
-        flex:0 0 12px;
-    }
+    .pill .dot { width:12px; height:12px; border-radius:50%; border:1px solid rgba(0,0,0,.08); flex:0 0 12px; }
     .pill .name { font-weight:600; }
     .pill .meta { color:#6c757d; font-size:.8rem; }
     .pill.active {
         border-color: rgba(13,110,253,.45);
-        box-shadow: 0 0 0 3px rgba(13,110,253,.15) inset;
-        background:#f0f6ff;
+        box-shadow: 0 0 0 3px rgba(13,110,253,.15) inset; background:#f0f6ff;
     }
 
     /* ===== 타임테이블 ===== */
     #weekStaffTable { border-collapse: separate; border-spacing: 0; }
     .hour-row-header { font-variant-numeric: tabular-nums; }
-    .staff-cell { vertical-align: middle; font-size:.85rem; transition: background-color .15s ease, box-shadow .15s ease; }
+    .staff-cell { vertical-align: middle; font-size:.85rem; transition: background-color .15s ease, box-shadow .15s ease; cursor:pointer; }
     .staff-tags { display:flex; flex-wrap:wrap; gap:4px; justify-content:center; }
     .staff-tag {
         display:inline-flex; align-items:center; gap:4px;
@@ -220,6 +316,8 @@
     tr.hour-separator > td, tr.hour-separator > th { border-top:2px solid #dee2e6 !important; }
 
     .day-date { line-height: 1.1; }
+    .dow-head .day-edit-wrap { min-height: 28px; } /* 버튼 영역 확보 */
+    .day-edit-btn { padding: 2px 8px; font-size: .75rem; }
 
     /* 오늘 컬럼 강조 */
     #weekStaffTable .today-col { background-color: rgba(40,167,69,0.02); border-left: 2px solid #28a745 !important; border-right: 2px solid #28a745 !important; }
@@ -247,6 +345,30 @@
 
     .grid-toolbar { display: flex; gap: 8px; align-items: center; justify-content: space-between; margin-bottom: .5rem; font-size: .85rem; }
     .grid-toolbar .left, .grid-toolbar .right { display: flex; gap: 8px; align-items: center; }
+
+    /* ===== 편집 모달용 스타일(월간과 동일) ===== */
+    .legend { display:inline-block; width:14px; height:14px; border-radius:3px; border:1px solid #ddd; vertical-align:middle; }
+    .legend-plan { background: rgba(13,110,253,.25); border-color: rgba(13,110,253,.45); }
+    .legend-actual { background: rgba(25,135,84,.25); border-color: rgba(25,135,84,.40); }
+
+    .modal { background:rgba(0,0,0,.35); position:fixed; inset:0; display:none; z-index:1055; }
+    .modal-dialog { margin:50px auto; max-width:980px; }
+    .modal-content { background:#fff; border-radius:12px; box-shadow:0 10px 40px rgba(0,0,0,.2); }
+    .edit-modal-header { padding-bottom:4px; border-bottom:1px solid #e9ecef; }
+    .edit-modal-body { padding-top:8px; }
+
+    .summary-box .chip { display:inline-flex; align-items:center; gap:6px; padding:4px 8px; border:1px solid #e9ecef; border-radius:14px; background:#fff; }
+    .chip .dot { width:10px;height:10px;border-radius:50%;border:1px solid rgba(0,0,0,.08); }
+
+    .day-grid { width:100%; border:1px solid #e5e7eb; border-radius:10px; overflow:hidden; user-select:none; background:#fff; max-height:70vh; overflow-y:auto; }
+    .day-grid table { width:100%; border-collapse:separate; border-spacing:0; table-layout:fixed; }
+    .day-grid thead th { background:#f8fafc; color:#64748b; font-weight:600; font-size:.95rem; border-bottom:1px solid #e5e7eb; text-align:center; padding:.6rem .4rem; position:sticky; top:0; z-index:2; }
+    .day-grid tbody th.timecell { background:#fafafa; color:#6b7280; font-weight:600; width:74px; border-right:1px solid #e5e7eb; text-align:center; padding:.25rem .25rem; font-size:.85rem; position:sticky; left:0; z-index:1; font-variant-numeric:tabular-nums; }
+    .row-hour-start td, .row-hour-start th { border-top:2px solid #e5e7eb!important; }
+    .slot-cell { border-bottom:1px dashed #eef2f6; height:18px; cursor:pointer; background:#ffffff; transition: background .12s; }
+    .slot-cell:hover { background:#f8fbff; }
+    .slot-cell.selected { background:rgba(25,135,84,.18); box-shadow:inset 0 0 0 1px rgba(25,135,84,.25); }
+    .slot-cell.selected.selected-diff { background:rgba(13,110,253,0.16); box-shadow:inset 0 0 0 1px rgba(13,110,253,0.45); border-color:rgba(13,110,253,0.55); }
 </style>
 
 <script id="membersData" type="application/json">
@@ -269,6 +391,7 @@
 
         const noMemberState    = document.getElementById('noMemberState');
         const timetableWrapper = document.getElementById('timetableWrapper');
+        const weekStaffTable   = document.getElementById('weekStaffTable');
         const weekStaffTbody   = document.getElementById('weekStaffTbody');
         const dayHeaderCells   = document.querySelectorAll('#weekStaffTable thead th[data-dow]');
 
@@ -291,31 +414,52 @@
         const btnGridClearAll         = document.getElementById('btnGridClearAll');
         const noPlanAlert             = document.getElementById('noPlanAlert');
 
+        // 편집 모달
+        const editModal            = document.getElementById('editModal');
+        const editTitleDate        = document.getElementById('editTitleDate');
+        const editTitleMember      = document.getElementById('editTitleMember');
+        const btnSaveEdit          = document.getElementById('btnSaveEdit');
+        const btnCancelEdit        = document.getElementById('btnCancelEdit');
+        const btnCloseModal        = document.getElementById('btnCloseModal');
+        const slotStepButtons      = document.getElementById('slotStepButtons');
+        const dayGridBody          = document.getElementById('dayGridBody');
+        const selectedMinutesEl    = document.getElementById('selectedMinutes');
+        const summaryStepBadge     = document.getElementById('summaryStepBadge');
+        const summaryOriginal      = document.getElementById('summaryOriginal');
+        const summaryCurrent       = document.getElementById('summaryCurrent');
+        const summaryOriginalTotal = document.getElementById('summaryOriginalTotal');
+        const summaryCurrentTotal  = document.getElementById('summaryCurrentTotal');
+        const summaryDiffTotal     = document.getElementById('summaryDiffTotal');
+
+        // 상태
         let allMembers = [];
         let currentStatusMembers = [];
         let currentWeekStart = toMonday(new Date());
         let selectedMember = null;
         let selectedWeekDaysMap = {};
 
-        let slotMinutes = 60;     // 메인 테이블 단위
-        let gridStepMinutes = 60; // 하단 개인 그리드 단위 (기본 1시간)
+        let slotMinutes = 60;
+        let gridStepMinutes = 60;
         const GRID_DAY_LABELS = ['월','화','수','목','금','토','일'];
 
-        // ====== 데이터 파싱 + 초기 상태 보정 ======
-        try {
-            allMembers = JSON.parse(document.getElementById('membersData').textContent || '[]');
-        } catch(e){
-            allMembers = [];
-        }
+        // 모달/일편집 상태
+        const START_MIN = HOUR_START * 60;
+        const END_MIN   = HOUR_END   * 60;
+        let stepMinutes  = 30;
+        let totalRows    = (END_MIN - START_MIN) / stepMinutes;
+        let originalSegments = [];
+        let originalSlotSet  = new Set();
+        let slotState        = new Set();
+        let modalMode        = 'edit'; // 'edit' | 'create'  ← ★ 추가: 모드에 따라 버튼 라벨 분기
+
+        try { allMembers = JSON.parse(document.getElementById('membersData').textContent || '[]'); } catch(e){ allMembers = []; }
 
         (function safeInitStatus(){
             if (!statusSelect) return;
             const initial = statusSelect.value || 'WORKING';
             const hasInInitial = (allMembers||[]).some(m => m.status === initial);
             if (!hasInInitial) {
-                const counts = (allMembers||[]).reduce((acc,m)=>{
-                    acc[m.status] = (acc[m.status]||0)+1; return acc;
-                }, {});
+                const counts = (allMembers||[]).reduce((acc,m)=>{ acc[m.status]=(acc[m.status]||0)+1; return acc; },{});
                 const best = Object.entries(counts).sort((a,b)=>b[1]-a[1])[0]?.[0];
                 if (best && Array.from(statusSelect.options).some(o=>o.value===best)) {
                     statusSelect.value = best;
@@ -323,10 +467,8 @@
             }
         })();
 
-        // ====== 이벤트 바인딩 ======
         attachHandlers();
 
-        // ====== 최초 로딩: 비동기 순서 고정 ======
         (async () => {
             await handleStatusChange(true);
             updateSaveButtonState();
@@ -339,21 +481,29 @@
             if (btnSlot30) btnSlot30.addEventListener('click', async ()=> { setSlotMinutes(30); await fetchAndRenderWeekTable(currentStatusMembers, currentWeekStart); });
             if (btnSlot60) btnSlot60.addEventListener('click', async ()=> { setSlotMinutes(60); await fetchAndRenderWeekTable(currentStatusMembers, currentWeekStart); });
 
-            if (btnPrevWeek) btnPrevWeek.addEventListener('click', async (e)=>{
-                e.preventDefault();
-                currentWeekStart = addDays(currentWeekStart, -7);
-                await handleStatusChange();
-            });
-            if (btnThisWeek) btnThisWeek.addEventListener('click', async (e)=>{
-                e.preventDefault();
-                currentWeekStart = toMonday(new Date());
-                await handleStatusChange();
-            });
-            if (btnNextWeek) btnNextWeek.addEventListener('click', async (e)=>{
-                e.preventDefault();
-                currentWeekStart = addDays(currentWeekStart, +7);
-                await handleStatusChange();
-            });
+            if (btnPrevWeek) btnPrevWeek.addEventListener('click', async (e)=>{ e.preventDefault(); currentWeekStart = addDays(currentWeekStart, -7); await handleStatusChange(); });
+            if (btnThisWeek) btnThisWeek.addEventListener('click', async (e)=>{ e.preventDefault(); currentWeekStart = toMonday(new Date()); await handleStatusChange(); });
+            if (btnNextWeek) btnNextWeek.addEventListener('click', async (e)=>{ e.preventDefault(); currentWeekStart = addDays(currentWeekStart, +7); await handleStatusChange(); });
+
+            // 주간 표 클릭: 선택 멤버 포함 여부에 따라 '수정' 또는 '생성' 버튼 노출
+            if (weekStaffTable) {
+                weekStaffTable.addEventListener('click', async (e) => {
+                    const td = e.target.closest('td.staff-cell');
+                    if (!td || !selectedMember) return;
+
+                    const dayIdx = parseInt(td.dataset.dayIdx || '-1', 10);
+                    if (dayIdx < 0 || dayIdx > 6) return;
+
+                    const iso = toIso(addDays(currentWeekStart, dayIdx));
+                    const hasSel = td.dataset.hasSelected === '1';
+
+                    if (hasSel) {
+                        showDayEditButton(dayIdx, iso);
+                    } else {
+                        showDayCreateButton(dayIdx, iso); // ★ 추가: 일정생성하기 버튼
+                    }
+                });
+            }
 
             // 하단 개인 그리드 단위 버튼
             if (gridSlotButtonsWrapper) {
@@ -387,6 +537,41 @@
             if (memberWeekForm) {
                 memberWeekForm.addEventListener('submit', onSubmitWeekForm);
             }
+
+            // 모달 버튼
+            btnSaveEdit.addEventListener('click', onSaveEdit);
+            btnCancelEdit.addEventListener('click', onCancelEdit);
+            btnCloseModal.addEventListener('click', closeEditModal);
+            editModal.addEventListener('click', (e)=>{ if(e.target===editModal) closeEditModal(); });
+
+            // 모달 슬롯 단위 버튼
+            if (slotStepButtons) {
+                slotStepButtons.querySelectorAll('button[data-step]').forEach(btn=>{
+                    btn.addEventListener('click', ()=>{
+                        const newStep = parseInt(btn.dataset.step,10);
+                        if(!newStep || newStep === stepMinutes){
+                            slotStepButtons.querySelectorAll('button[data-step]').forEach(b=>b.classList.remove('active'));
+                            btn.classList.add('active');
+                            updateModalSaveButton();
+                            return;
+                        }
+                        stepMinutes = newStep;
+                        totalRows = (END_MIN - START_MIN) / stepMinutes;
+                        slotStepButtons.querySelectorAll('button[data-step]').forEach(b=>b.classList.remove('active'));
+                        btn.classList.add('active');
+
+                        summaryStepBadge.textContent = `슬롯: ${stepMinutes===60?'1시간':(stepMinutes+'분')}`;
+                        originalSlotSet = segmentsToSlotSet(originalSegments, stepMinutes);
+                        slotState = new Set([...originalSlotSet]);
+
+                        buildDayGrid();
+                        updateSelectedMinutes();
+                        renderLeftSummary();
+                        updateModalSaveButton();
+                    });
+                });
+            }
+            window.addEventListener('mouseup', ()=>{ modalDragging=false; });
         }
 
         /* ===== 메인 주간 타임테이블 슬롯 단위 ===== */
@@ -396,17 +581,14 @@
             updateSlotButtons();
         }
         function updateSlotButtons(){
-            [btnSlot10, btnSlot30, btnSlot60].forEach(btn=>{
-                if (!btn) return;
-                btn.classList.remove('active');
-            });
+            [btnSlot10, btnSlot30, btnSlot60].forEach(btn=>{ if (!btn) return; btn.classList.remove('active'); });
             if (slotMinutes === 10 && btnSlot10) btnSlot10.classList.add('active');
             if (slotMinutes === 30 && btnSlot30) btnSlot30.classList.add('active');
             if (slotMinutes === 60 && btnSlot60) btnSlot60.classList.add('active');
         }
 
-        /* ===== 상태 변경(최초/이동 포함) ===== */
-        async function handleStatusChange(isFirstLoad = false){
+        /* ===== 상태 변경 ===== */
+        async function handleStatusChange(){
             const status = statusSelect.value;
             currentStatusMembers = (allMembers || []).filter(m => m.status === status);
 
@@ -422,6 +604,7 @@
                 noMemberState.classList.remove('d-none');
                 timetableWrapper.classList.add('d-none');
                 hideMemberWeekCard();
+                clearAllDayEditButtons();
                 return;
             }
 
@@ -434,7 +617,8 @@
             updatePillActive();
 
             await fetchAndRenderWeekTable(currentStatusMembers, currentWeekStart);
-            await loadSelectedMemberWeek(); // ← 여기에서 선택 멤버의 '일정 없음' 알림까지 처리
+            await loadSelectedMemberWeek();
+            clearAllDayEditButtons();
         }
 
         /* ===== 상단 멤버 리스트 ===== */
@@ -443,32 +627,29 @@
             memberCountBadge.textContent = `${members.length}명`;
 
             if (members.length === 0) {
-                memberList.innerHTML =
-                        `<span class="text-muted small">해당 상태의 아르바이트생이 없습니다.</span>`;
+                memberList.innerHTML = `<span class="text-muted small">해당 상태의 아르바이트생이 없습니다.</span>`;
                 return;
             }
 
-            members
-                    .slice()
-                    .sort((a,b)=>(a.name||'').localeCompare(b.name||'', 'ko'))
-                    .forEach(m => {
-                        const color = colorForMember(m);
-                        const pill = document.createElement('div');
-                        pill.className = 'pill';
-                        pill.dataset.memberId = String(m.id);
-                        pill.innerHTML = `
-                        <span class="dot" style="background:${color}"></span>
-                        <span class="name">${escapeHtml(m.name ?? '-')}</span>
-                        <span class="meta">${escapeHtml(m.phone ?? '')}</span>
-                    `;
-                        pill.addEventListener('click', async () => {
-                            selectedMember = m;
-                            updatePillActive();
-                            await fetchAndRenderWeekTable(currentStatusMembers, currentWeekStart);
-                            await loadSelectedMemberWeek(); // ← 클릭 시에도 일정 없음 알림 처리
-                        });
-                        memberList.appendChild(pill);
-                    });
+            members.slice().sort((a,b)=>(a.name||'').localeCompare(b.name||'', 'ko')).forEach(m => {
+                const color = colorForMember(m);
+                const pill = document.createElement('div');
+                pill.className = 'pill';
+                pill.dataset.memberId = String(m.id);
+                pill.innerHTML = `
+                <span class="dot" style="background:${color}"></span>
+                <span class="name">${escapeHtml(m.name ?? '-')}</span>
+                <span class="meta">${escapeHtml(m.phone ?? '')}</span>
+            `;
+                pill.addEventListener('click', async () => {
+                    selectedMember = m;
+                    updatePillActive();
+                    await fetchAndRenderWeekTable(currentStatusMembers, currentWeekStart);
+                    await loadSelectedMemberWeek();
+                    clearAllDayEditButtons();
+                });
+                memberList.appendChild(pill);
+            });
 
             updatePillActive();
         }
@@ -476,10 +657,7 @@
         function updatePillActive(){
             const pills = memberList.querySelectorAll('.pill');
             pills.forEach(p => {
-                if (!selectedMember) {
-                    p.classList.remove('active');
-                    return;
-                }
+                if (!selectedMember) { p.classList.remove('active'); return; }
                 const id = p.dataset.memberId;
                 if (String(id) === String(selectedMember.id)) p.classList.add('active');
                 else p.classList.remove('active');
@@ -546,10 +724,7 @@
                         members.map(async (m) => {
                             const url = `${API_BASE}/${encodeURIComponent(m.id)}/${startIso}/${endIso}`;
                             const resp = await fetch(url, { headers:{'Accept':'application/json'} });
-                            if (!resp.ok) {
-                                console.warn('[weekTable] fetch fail:', m.id, resp.status);
-                                return;
-                            }
+                            if (!resp.ok) { console.warn('[weekTable] fetch fail:', m.id, resp.status); return; }
                             const data = await resp.json().catch(()=>null);
                             const dayMap = normalizeDays(data);
 
@@ -561,10 +736,8 @@
                                 day.segments.forEach(seg => {
                                     const segStartMin = hmToMin(seg.start);
                                     const segEndMin   = hmToMin(seg.end);
-
                                     slots.forEach((slot, slotIdx) => {
-                                        const slotStart = slot.start;
-                                        const slotEnd   = slot.end;
+                                        const slotStart = slot.start, slotEnd = slot.end;
                                         if (segEndMin <= slotStart || segStartMin >= slotEnd) return;
                                         slotData[slotIdx][dayIdx].add(m.id);
                                     });
@@ -572,9 +745,7 @@
                             });
                         })
                 );
-            } catch(e){
-                console.error('[weekTable] unexpected error:', e);
-            }
+            } catch(e){ console.error('[weekTable] unexpected error:', e); }
 
             const rows = [];
             const DOW_LABELS = ['월','화','수','목','금','토','일'];
@@ -602,10 +773,9 @@
                 for (let dayIdx=0; dayIdx<7; dayIdx++){
                     const cell = document.createElement('td');
                     cell.className = 'staff-cell';
+                    cell.dataset.dayIdx = String(dayIdx);
 
-                    if (todayIdx !== -1 && dayIdx === todayIdx) {
-                        cell.classList.add('today-col');
-                    }
+                    if (todayIdx !== -1 && dayIdx === todayIdx) cell.classList.add('today-col');
 
                     const memberIdSet = slotData[slotIdx][dayIdx];
                     const count = memberIdSet.size;
@@ -613,10 +783,12 @@
 
                     if (count === 0){
                         cell.innerHTML = `<span class="text-muted small">-</span>`;
+                        cell.dataset.hasSelected = '0';
                     } else {
                         const tagsDiv = document.createElement('div');
                         tagsDiv.className = 'staff-tags';
 
+                        let hasSelected = false;
                         memberIdSet.forEach(memberId => {
                             const mObj = members.find(x => String(x.id) === String(memberId));
                             if (!mObj) return;
@@ -626,16 +798,18 @@
 
                             if (selectedMember && String(mObj.id) === String(selectedMember.id)) {
                                 tag.classList.add('selected-member-tag');
+                                hasSelected = true;
                             }
 
                             tag.title = `${mObj.name || ''} (${DOW_LABELS[dayIdx]} ${pad2(h)}:${pad2(m)})`;
                             tag.innerHTML = `
-                                <span class="staff-tag-dot" style="background:${color}"></span>
-                                <span class="staff-tag-name">${escapeHtml(mObj.name ?? '-')}</span>
-                            `;
+                            <span class="staff-tag-dot" style="background:${color}"></span>
+                            <span class="staff-tag-name">${escapeHtml(mObj.name ?? '-')}</span>
+                        `;
                             tagsDiv.appendChild(tag);
                         });
 
+                        cell.dataset.hasSelected = hasSelected ? '1' : '0';
                         cell.appendChild(tagsDiv);
                     }
 
@@ -652,6 +826,68 @@
 
             weekStaffTbody.innerHTML = '';
             rows.forEach(r => weekStaffTbody.appendChild(r));
+        }
+
+        /* ===== 헤더 버튼 (수정 / 생성) ===== */
+        function showDayEditButton(dayIdx, iso){
+            clearAllDayEditButtons();
+            const head = document.querySelector(`#weekStaffTable thead th[data-dow="${dayIdx}"] .day-edit-wrap`);
+            if (!head) return;
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'btn btn-primary btn-sm day-edit-btn';
+            btn.textContent = '근무일정 수정';
+            btn.dataset.dateIso = iso;
+            btn.addEventListener('click', async ()=>{
+                if (!selectedMember) return;
+                // 해당 날짜의 기존 세그먼트 로드
+                let segs = (selectedWeekDaysMap[iso]?.segments) || [];
+                if (!segs.length) {
+                    try{
+                        const resp = await fetch(`${API_BASE}/${encodeURIComponent(selectedMember.id)}/${iso}/${iso}`, { headers:{'Accept':'application/json'} });
+                        if (resp.ok){
+                            const data = await resp.json().catch(()=>null);
+                            const map = normalizeDays(data);
+                            segs = (map[iso]?.segments)||[];
+                        }
+                    }catch(e){ console.warn('single-day fetch fail', e); }
+                }
+                openEditModal(iso, selectedMember, segs, 'edit'); // ← 모드: 수정
+            });
+            head.appendChild(btn);
+        }
+
+        // ★ 추가: 일정생성하기 버튼
+        function showDayCreateButton(dayIdx, iso){
+            clearAllDayEditButtons();
+            const head = document.querySelector(`#weekStaffTable thead th[data-dow="${dayIdx}"] .day-edit-wrap`);
+            if (!head) return;
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'btn btn-success btn-sm day-edit-btn';
+            btn.textContent = '일정생성하기';
+            btn.dataset.dateIso = iso;
+            btn.addEventListener('click', async ()=>{
+                if (!selectedMember) return;
+                // 생성 모드여도 기존 세그먼트가 있으면 보여주기(컨텍스트 제공)
+                let segs = (selectedWeekDaysMap[iso]?.segments) || [];
+                if (!segs.length) {
+                    try{
+                        const resp = await fetch(`${API_BASE}/${encodeURIComponent(selectedMember.id)}/${iso}/${iso}`, { headers:{'Accept':'application/json'} });
+                        if (resp.ok){
+                            const data = await resp.json().catch(()=>null);
+                            const map = normalizeDays(data);
+                            segs = (map[iso]?.segments)||[];
+                        }
+                    }catch(e){ console.warn('single-day fetch fail', e); }
+                }
+                openEditModal(iso, selectedMember, segs, 'create'); // ← 모드: 생성
+            });
+            head.appendChild(btn);
+        }
+
+        function clearAllDayEditButtons(){
+            document.querySelectorAll('.day-edit-wrap').forEach(w => w.innerHTML = '');
         }
 
         /* ===== 개별 주간 일정 로딩 ===== */
@@ -683,34 +919,23 @@
                 selectedWeekDaysMap = {};
             }
 
-            // ✅ 화면용 배지/경고 업데이트
             updateNoPlanAlert(selectedWeekDaysMap);
-
-            // ✅ 요구사항: 선택된 아르바이트생의 주간 일정이 전혀 없으면 alert 출력
-            if (!hasAnySegments(selectedWeekDaysMap)) {
-                alert('일정이 없습니다.');
-            }
-
             buildMemberWeekGrid();
             hydrateGridFromDayMap(selectedWeekDaysMap);
             updateSaveButtonState();
         }
 
-        function hideMemberWeekCard(){
-            memberWeekCard.classList.add('d-none');
-        }
+        function hideMemberWeekCard(){ memberWeekCard.classList.add('d-none'); }
 
         /* ===== 개인 주간 그리드 생성 ===== */
         function buildMemberWeekGrid(){
             if (!memberWeekGridBody) return;
             memberWeekGridBody.innerHTML = '';
 
-            const startMin = HOUR_START * 60;
-            const endMin   = HOUR_END * 60;
-            const totalRows = (endMin - startMin) / gridStepMinutes;
+            const totalRows = (END_MIN - START_MIN) / gridStepMinutes;
 
             for (let idx=0; idx<totalRows; idx++){
-                const tMin = startMin + idx * gridStepMinutes;
+                const tMin = START_MIN + idx * gridStepMinutes;
                 const h = Math.floor(tMin/60);
                 const m = tMin%60;
                 const hmLabel = `${pad2(h)}:${pad2(m)}`;
@@ -757,17 +982,9 @@
                     toggleGridSlot(div, gridDragAdding);
                 });
             });
-            window.addEventListener('mouseup', () => {
-                if (gridDragging){
-                    gridDragging = false;
-                }
-            });
+            window.addEventListener('mouseup', () => { if (gridDragging){ gridDragging = false; } });
         }
-
-        function toggleGridSlot(el, on) {
-            if (on) el.classList.add('selected');
-            else el.classList.remove('selected');
-        }
+        function toggleGridSlot(el, on) { if (on) el.classList.add('selected'); else el.classList.remove('selected'); }
 
         /* ===== 주간 일정 없음 알림(화면용) ===== */
         function updateNoPlanAlert(dayMap){
@@ -779,10 +996,7 @@
         function hydrateGridFromDayMap(dayMap){
             if (!memberWeekGridBody) return;
 
-            const startMin = HOUR_START * 60;
-            const endMin   = HOUR_END * 60;
-            const totalRows = (endMin - startMin) / gridStepMinutes;
-
+            const totalRows = (END_MIN - START_MIN) / gridStepMinutes;
             memberWeekGridBody.querySelectorAll('.slot-10m.selected').forEach(el => el.classList.remove('selected'));
 
             const weekStart = currentWeekStart;
@@ -796,13 +1010,12 @@
                 segments.forEach(seg => {
                     const segStartMin = hmToMin(seg.start);
                     const segEndMin   = hmToMin(seg.end);
-
-                    const a = Math.max(startMin, segStartMin);
-                    const b = Math.min(endMin,   segEndMin);
+                    const a = Math.max(START_MIN, segStartMin);
+                    const b = Math.min(END_MIN,   segEndMin);
                     if (a >= b) return;
 
-                    const sIdx = Math.floor((a - startMin)/gridStepMinutes);
-                    const eIdx = Math.ceil((b - startMin)/gridStepMinutes) - 1;
+                    const sIdx = Math.floor((a - START_MIN)/gridStepMinutes);
+                    const eIdx = Math.ceil((b - START_MIN)/gridStepMinutes) - 1;
 
                     for (let idx = Math.max(0,sIdx); idx <= Math.min(totalRows-1, eIdx); idx++){
                         const slot = memberWeekGridBody.querySelector(`.slot-10m[data-day-offset="${offset}"][data-idx="${idx}"]`);
@@ -827,9 +1040,7 @@
         function collectSegmentsByDateFromGrid(){
             if (!memberWeekGridBody) return {};
             const res = {};
-            const startMin = HOUR_START * 60;
-            const endMin   = HOUR_END * 60;
-            const totalRows = (endMin - startMin) / gridStepMinutes;
+            const totalRows = (END_MIN - START_MIN) / gridStepMinutes;
             const weekStart = currentWeekStart;
 
             for (let dayOffset=0; dayOffset<7; dayOffset++){
@@ -843,12 +1054,9 @@
                 if (!merged.length) continue;
 
                 res[iso] = merged.map(([sIdx,eIdxInclusive]) => {
-                    const stMin = startMin + sIdx*gridStepMinutes;
-                    const edMin = startMin + (eIdxInclusive+1)*gridStepMinutes;
-                    return {
-                        start: minToHm(stMin),
-                        end:   minToHm(edMin)
-                    };
+                    const stMin = START_MIN + sIdx*gridStepMinutes;
+                    const edMin = START_MIN + (eIdxInclusive+1)*gridStepMinutes;
+                    return { start: minToHm(stMin), end: minToHm(edMin) };
                 });
             }
             return res;
@@ -860,19 +1068,14 @@
             const enable = (gridStepMinutes === 10);
             btnSaveWeek.disabled = !enable;
             btnSaveWeek.title = enable ? '' : '저장은 10분 단위에서만 가능합니다.';
+            document.getElementById('memberWeekSaveHint').classList.toggle('text-danger', !enable);
         }
 
         /* ===== 저장: 요약 + confirm ===== */
         async function onSubmitWeekForm(e){
             e.preventDefault();
-            if (!selectedMember) {
-                alert('선택된 아르바이트생이 없습니다.');
-                return;
-            }
-            if (gridStepMinutes !== 10) {
-                alert('저장은 10분 단위에서만 가능합니다. (그리드 단위를 10분으로 변경하세요)');
-                return;
-            }
+            if (!selectedMember) { alert('선택된 아르바이트생이 없습니다.'); return; }
+            if (gridStepMinutes !== 10) { alert('저장은 10분 단위에서만 가능합니다. (그리드 단위를 10분으로 변경하세요)'); return; }
 
             const byDate = collectSegmentsByDateFromGrid();
             const weekStart = currentWeekStart;
@@ -883,36 +1086,19 @@
                 const iso  = toIso(date);
                 const label = `${GRID_DAY_LABELS[dayOffset]} (${iso})`;
                 const segs  = byDate[iso] || [];
-
-                if (!segs.length) {
-                    summaryLines.push(`${label}: 휴무`);
-                } else {
-                    const ranges = segs.map(s => `${s.start}~${s.end}`).join(', ');
-                    summaryLines.push(`${label}: ${ranges}`);
-                }
+                summaryLines.push(!segs.length ? `${label}: 휴무` : `${label}: ${segs.map(s => `${s.start}~${s.end}`).join(', ')}`);
             }
 
-            const summaryText =
-                    `다음과 같이 주간 근무시간을 저장합니다:\n\n` +
-                    summaryLines.join('\n') +
-                    `\n\n이대로 저장하시겠습니까?`;
-
-            const ok = confirm(summaryText);
+            const ok = confirm(`다음과 같이 주간 근무시간을 저장합니다:\n\n${summaryLines.join('\n')}\n\n이대로 저장하시겠습니까?`);
             if (!ok) return;
 
             const dates = [];
-            for (let offset=0; offset<7; offset++){
-                dates.push(toIso(addDays(weekStart, offset)));
-            }
+            for (let offset=0; offset<7; offset++){ dates.push(toIso(addDays(weekStart, offset))); }
 
             try {
                 for (const iso of dates){
                     const segments = byDate[iso] || [];
-                    const payload = {
-                        memberId: selectedMember.id,
-                        date: iso,
-                        segments
-                    };
+                    const payload = { memberId: selectedMember.id, date: iso, segments };
                     const resp = await fetch(API_UPDATE, {
                         method: 'POST',
                         headers: { 'Content-Type':'application/json', 'Accept':'application/json' },
@@ -928,13 +1114,182 @@
                 alert('해당 주간 일정이 저장되었습니다.');
                 await fetchAndRenderWeekTable(currentStatusMembers, currentWeekStart);
                 await loadSelectedMemberWeek();
+                clearAllDayEditButtons();
             } catch (e) {
                 console.error(e);
                 alert('저장 중 오류가 발생했습니다.');
             }
         }
 
-        /* ===== Utils ===== */
+        /* ===== 모달(일 단위 편집) ===== */
+        let modalDragging = false, modalDragAdding = true;
+
+        // mode: 'edit' | 'create'  ← 이 값에 따라 저장 버튼 라벨이 바뀝니다.
+        function openEditModal(dateIso, member, segments, mode='edit'){
+            if(!member) return;
+            modalMode = mode === 'create' ? 'create' : 'edit';
+            editTitleDate.textContent = dateIso;
+            editTitleMember.textContent = member.name ?? '-';
+
+            // 버튼 라벨 세팅
+            btnSaveEdit.textContent = (modalMode === 'create') ? '일정생성하기' : '저장';
+
+            // 초기화
+            stepMinutes = 30;
+            totalRows = (END_MIN - START_MIN) / stepMinutes;
+            slotStepButtons.querySelectorAll('button[data-step]').forEach(b=>b.classList.remove('active'));
+            slotStepButtons.querySelector('button[data-step="30"]').classList.add('active');
+            summaryStepBadge.textContent = '슬롯: 30분';
+
+            originalSegments = Array.isArray(segments) ? segments.slice() : [];
+            originalSlotSet  = segmentsToSlotSet(originalSegments, stepMinutes);
+            slotState        = new Set([...originalSlotSet]);
+
+            buildDayGrid();
+            updateSelectedMinutes();
+            renderLeftSummary();
+            updateModalSaveButton();
+
+            editModal.dataset.memberId = String(member.id);
+            editModal.dataset.dateIso = dateIso;
+
+            editModal.style.display = 'block';
+        }
+        function closeEditModal(){ editModal.style.display = 'none'; }
+        function onCancelEdit(){
+            slotState = new Set([...originalSlotSet]);
+            buildDayGrid();
+            updateSelectedMinutes();
+            renderLeftSummary();
+        }
+        async function onSaveEdit(){
+            if(stepMinutes !== 10){
+                alert('저장은 10분 단위에서만 가능합니다.');
+                return;
+            }
+            const mid = editModal.dataset.memberId;
+            const dateIso = editModal.dataset.dateIso;
+            if(!mid || !dateIso) return;
+
+            const segments = slotSetToSegments(slotState, stepMinutes);
+            try{
+                const body = { memberId: mid, date: dateIso, segments };
+                const resp = await fetch(API_UPDATE, {
+                    method: 'POST',
+                    headers: {'Content-Type':'application/json', 'Accept':'application/json'},
+                    body: JSON.stringify(body)
+                });
+                if(!resp.ok){
+                    const text = await resp.text().catch(()=> '');
+                    alert(`저장 실패: ${resp.status} ${text}`);
+                    return;
+                }
+                closeEditModal();
+                await fetchAndRenderWeekTable(currentStatusMembers, currentWeekStart);
+                await loadSelectedMemberWeek();
+                clearAllDayEditButtons();
+            }catch(e){
+                console.error(e);
+                alert('저장 중 오류가 발생했습니다.');
+            }
+        }
+        function updateModalSaveButton(){ btnSaveEdit.disabled = (stepMinutes !== 10); }
+
+        function buildDayGrid(){
+            dayGridBody.innerHTML = '';
+            const rows = (END_MIN - START_MIN) / stepMinutes;
+            for(let idx=0; idx<rows; idx++){
+                const tMin = START_MIN + idx*stepMinutes;
+                const h = Math.floor(tMin/60);
+                const m = tMin%60;
+                const hmLabel = `${pad2(h)}:${pad2(m)}`;
+
+                const tr = document.createElement('tr');
+                if(m===0) tr.classList.add('row-hour-start');
+
+                const th = document.createElement('th');
+                th.className = 'timecell';
+                th.textContent = (m%30===0) ? hmLabel : '';
+                tr.appendChild(th);
+
+                const td = document.createElement('td');
+                const div = document.createElement('div');
+                div.className = 'slot-cell';
+                div.dataset.hm = hmLabel;
+
+                if(slotState.has(hmLabel)){
+                    div.classList.add('selected');
+                    if(!originalSlotSet.has(hmLabel)){
+                        div.classList.add('selected-diff');
+                    }
+                }
+                td.appendChild(div);
+                tr.appendChild(td);
+                dayGridBody.appendChild(tr);
+            }
+            attachDayGridDragHandlers();
+        }
+
+        function attachDayGridDragHandlers(){
+            modalDragging = false;
+            dayGridBody.querySelectorAll('.slot-cell').forEach(div=>{
+                div.addEventListener('mousedown', (e)=>{
+                    e.preventDefault();
+                    modalDragging = true;
+                    const hm = div.dataset.hm;
+                    const has = slotState.has(hm);
+                    modalDragAdding = !has;
+                    toggleModalSlot(div, modalDragAdding);
+                });
+                div.addEventListener('mouseenter', ()=>{
+                    if(!modalDragging) return;
+                    toggleModalSlot(div, modalDragAdding);
+                });
+            });
+            window.addEventListener('mouseup', ()=>{ if(modalDragging) modalDragging=false; });
+        }
+
+        function toggleModalSlot(el, on){
+            const hm = el.dataset.hm;
+            if(on){
+                if(!slotState.has(hm)){
+                    slotState.add(hm);
+                    el.classList.add('selected');
+                    if(!originalSlotSet.has(hm)) el.classList.add('selected-diff');
+                }
+            }else{
+                if(slotState.has(hm)){
+                    slotState.delete(hm);
+                    el.classList.remove('selected','selected-diff');
+                }
+            }
+            updateSelectedMinutes();
+            renderLeftSummary();
+        }
+        function updateSelectedMinutes(){ selectedMinutesEl.textContent = (slotState.size * stepMinutes)|0; }
+
+        // 좌측 요약
+        function renderLeftSummary(){
+            summaryOriginal.innerHTML = originalSegments.length
+                    ? originalSegments.map(s => chipHtml('#198754', s.start, s.end)).join(' ')
+                    : '<span class="text-muted">-</span>';
+
+            const currentSegments = slotSetToSegments(slotState, stepMinutes);
+            summaryCurrent.innerHTML = currentSegments.length
+                    ? currentSegments.map(s => chipHtml('#0d6efd', s.start, s.end)).join(' ')
+                    : '<span class="text-muted">-</span>';
+
+            const orgMin = segmentsMinutes(originalSegments);
+            const curMin = segmentsMinutes(currentSegments);
+            summaryOriginalTotal.textContent = `${orgMin}분`;
+            summaryCurrentTotal.textContent  = `${curMin}분`;
+            const diff = curMin - orgMin;
+            summaryDiffTotal.textContent = (diff>=0?'+':'') + `${diff}분`;
+            summaryDiffTotal.classList.toggle('text-primary', diff>0);
+            summaryDiffTotal.classList.toggle('text-danger', diff<0);
+        }
+
+        // ===== Utils =====
         function toMonday(date){
             const d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
             const day = d.getDay(); // 0=일,1=월,...
@@ -942,17 +1297,10 @@
             d.setDate(d.getDate() + diff);
             return d;
         }
-        function addDays(d, n){
-            const x = new Date(d);
-            x.setDate(x.getDate()+n);
-            return x;
-        }
+        function addDays(d, n){ const x = new Date(d); x.setDate(x.getDate()+n); return x; }
         function pad2(n){ return String(n).padStart(2,'0'); }
-        function toIso(d){
-            return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
-        }
+        function toIso(d){ return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`; }
 
-        // 모든 응답 스키마 지원
         function normalizeDays(apiData){
             const map = {};
             if (!apiData) return map;
@@ -961,38 +1309,32 @@
                 apiData.days.forEach(d => {
                     const date = String(d.date);
                     const segments = Array.isArray(d.segments) ? d.segments : [];
-                    const minutes = (typeof d.minutes === 'number')
-                            ? d.minutes
+                    const minutes = (typeof d.minutes === 'number') ? d.minutes
                             : segments.reduce((acc, s) => acc + (hmToMin(s.end)-hmToMin(s.start)), 0);
                     map[date] = { segments, minutes };
                 });
                 return map;
             }
-
             if (Array.isArray(apiData)) {
                 apiData.forEach(d => {
                     const date = String(d.date);
                     const segments = Array.isArray(d.segments) ? d.segments : [];
-                    const minutes = (typeof d.minutes === 'number')
-                            ? d.minutes
+                    const minutes = (typeof d.minutes === 'number') ? d.minutes
                             : segments.reduce((acc, s) => acc + (hmToMin(s.end)-hmToMin(s.start)), 0);
                     map[date] = { segments, minutes };
                 });
                 return map;
             }
-
             if (typeof apiData === 'object') {
                 Object.keys(apiData).forEach(date => {
                     const v = apiData[date] || {};
                     const segments = Array.isArray(v.segments) ? v.segments : [];
-                    const minutes = (typeof v.minutes === 'number')
-                            ? v.minutes
+                    const minutes = (typeof v.minutes === 'number') ? v.minutes
                             : segments.reduce((acc, s) => acc + (hmToMin(s.end)-hmToMin(s.start)), 0);
                     map[String(date)] = { segments, minutes };
                 });
                 return map;
             }
-
             return map;
         }
 
@@ -1005,11 +1347,7 @@
             const [h,m] = String(hm).split(':').map(n=>parseInt(n,10));
             return (h||0)*60 + (m||0);
         }
-        function minToHm(min){
-            const h = Math.floor(min/60);
-            const m = min%60;
-            return `${pad2(h)}:${pad2(m)}`;
-        }
+        function minToHm(min){ const h = Math.floor(min/60); const m = min%60; return `${pad2(h)}:${pad2(m)}`; }
 
         function colorForMember(m){
             const key = (m?.id!=null ? String(m.id) : (m?.name || 'x'));
@@ -1018,10 +1356,7 @@
         }
         function seededHash(str){
             let h=2166136261>>>0;
-            for(let i=0;i<str.length;i++){
-                h^=str.charCodeAt(i);
-                h=(h*16777619)>>>0;
-            }
+            for(let i=0;i<str.length;i++){ h^=str.charCodeAt(i); h=(h*16777619)>>>0; }
             return h>>>0;
         }
         function hslToHex(h,s,l){
@@ -1041,13 +1376,35 @@
         }
         function escapeHtml(s){
             if(s==null) return '';
-            return String(s)
-                    .replace(/&/g,'&amp;')
-                    .replace(/</g,'&lt;')
-                    .replace(/>/g,'&gt;')
-                    .replace(/"/g,'&quot;')
-                    .replace(/'/g,'&#39;');
+            return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;')
+                    .replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
         }
+
+        // 모달 유틸
+        function segmentsToSlotSet(segments, step){
+            const set = new Set();
+            (segments||[]).forEach(seg=>{
+                let s = Math.max(hmToMin(seg.start), START_MIN);
+                let e = Math.min(hmToMin(seg.end),   END_MIN);
+                for(let t=s; t<e; t+=step){ set.add(minToHm(t)); }
+            });
+            return set;
+        }
+        function slotSetToSegments(set, step){
+            const sorted = Array.from(set).map(hmToMin).sort((a,b)=>a-b);
+            const res = [];
+            let i=0;
+            while(i<sorted.length){
+                let s = sorted[i], t = s + step; i++;
+                while(i<sorted.length && sorted[i]===t){ t += step; i++; }
+                res.push({start:minToHm(s), end:minToHm(t)});
+            }
+            return res;
+        }
+        function chipHtml(color, start, end){
+            return `<span class="chip"><span class="dot" style="background:${color}"></span><span class="small">${start} ~ ${end}</span></span>`;
+        }
+        function segmentsMinutes(segs){ return (segs||[]).reduce((acc,s)=> acc + (hmToMin(s.end)-hmToMin(s.start)), 0); }
 
     })();
 </script>

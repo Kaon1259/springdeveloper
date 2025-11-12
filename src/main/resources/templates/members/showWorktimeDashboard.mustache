@@ -82,8 +82,8 @@
                 <span class="fw-bold" id="memberWeekTitle">개별 주간 계획 / 근무시간</span>
                 <span class="badge bg-secondary ms-2" id="memberWeekNameBadge"></span>
             </div>
-            <!-- 저장 버튼 -->
-            <button type="submit" class="btn btn-sm btn-primary" form="memberWeekForm">근무시간수정</button>
+            <!-- 저장 버튼: 10분 단위에서만 활성화 -->
+            <button type="submit" id="btnSaveWeek" class="btn btn-sm btn-primary" form="memberWeekForm" disabled>근무시간수정</button>
         </div>
         <div class="card-body">
             <!-- 수정용 타임테이블 (주간 그리드) -->
@@ -169,7 +169,7 @@
         background:#f0f6ff;
     }
 
-    /* ===== 주간 캘린더 (월간 캘린더 스타일 차용) ===== */
+    /* ===== 주간 캘린더 ===== */
     .week-calendar-grid {
         display: grid;
         grid-template-columns: repeat(7, 1fr);
@@ -209,19 +209,15 @@
         padding: 4px 6px;
         min-height: 36px;
     }
-    /* 실제 근무 일정 (중립 스타일) */
     .week-cell-rect-top {
         border: 1px solid #e9ecef;
         background: #fcfcfc;
     }
-    /* 계획 일정 (연한 초록 톤 + 텍스트 녹색) */
     .week-cell-rect-bottom {
         border: 1px solid rgba(25,135,84,0.5);
         background: rgba(25,135,84,0.04);
     }
-    .week-cell-rect-bottom .segments {
-        color:#198754;
-    }
+    .week-cell-rect-bottom .segments { color:#198754; }
 
     .week-cell .segments {
         display:flex;
@@ -230,23 +226,11 @@
         align-items:flex-start;
     }
 
-    .week-cell.muted {
-        background:#fcfcfc;
-        color:#adb5bd;
-    }
-    .week-cell.today {
-        outline: 2px solid #51cf66;
-        outline-offset: 2px;
-    }
+    .week-cell.muted { background:#fcfcfc; color:#adb5bd; }
+    .week-cell.today { outline: 2px solid #51cf66; outline-offset: 2px; }
 
-    /* 조정 버튼 */
-    .btn-day-adjust {
-        padding: 0 6px;
-        font-size: .7rem;
-        line-height: 1.3;
-    }
+    .btn-day-adjust { padding: 0 6px; font-size: .7rem; line-height: 1.3; }
 
-    /* 마지막 행: 실제 근무 합계 */
     .week-actual-row {
         display:grid;
         grid-template-columns: repeat(7, 1fr);
@@ -262,13 +246,10 @@
         color:#495057;
     }
 
-    /* 개별 주간 일정 카드 */
+    /* ===== 개별 주간 그리드 ===== */
     #memberWeekCard .table-sm td,
-    #memberWeekCard .table-sm th {
-        padding: .35rem .5rem;
-    }
+    #memberWeekCard .table-sm th { padding: .35rem .5rem; }
 
-    /* 주간 그리드 (개별 일정) */
     .week-grid {
         width: 100%;
         border: 1px solid #e5e7eb;
@@ -309,15 +290,10 @@
         z-index: 1;
     }
 
-    /* 요일 셀(계획 / 근무 좌우 분할) */
-    .grid-day-cell .slot-wrapper {
-        display: flex;
-        gap: 1px;
-    }
+    .grid-day-cell .slot-wrapper { display:flex; gap:1px; }
 
-    /* 공통 기본 */
-    .slot-plan,
-    .slot-10m {
+    /* 기본 슬롯 */
+    .slot-plan, .slot-10m {
         height: 18px;
         margin: 1px 0;
         border-bottom: 1px solid  #eef2f6;
@@ -329,12 +305,12 @@
     .slot-plan {
         flex: 1;
         border-radius: 6px 0 0 6px;
-        pointer-events: none; /* 클릭/드래그 안 되도록 */
+        pointer-events: none;
         background: #f8f9fa;
         opacity: .9;
     }
     .slot-plan.filled {
-        background: rgba(102, 187, 106, 0.55); /* 좀 더 진한 연두색 느낌 */
+        background: rgba(102, 187, 106, 0.55);
         box-shadow: inset 0 0 0 1px rgba(46, 160, 67, 0.6);
     }
 
@@ -345,15 +321,13 @@
         border-radius: 0 6px 6px 0;
         transition: background .15s ease, box-shadow .15s ease, border-color .15s ease;
     }
-    .slot-10m.slot-actual:hover {
-        background: #f8fbff;
-    }
+    .slot-10m.slot-actual:hover { background: #f8fbff; }
     .slot-10m.slot-actual.selected {
         background: rgba(25,135,84,.18);
         box-shadow: inset 0 0 0 1px rgba(25,135,84,.25);
     }
 
-    /* 선택된 일자 컬럼 외곽선 – 파란 라운드렉트 (실제 근무쪽 기준) */
+    /* 선택된 일자 컬럼 외곽선 */
     .week-grid thead th.grid-col-selected {
         border-top: 2px solid #0d6efd;
         border-left: 2px solid #0d6efd;
@@ -365,25 +339,21 @@
         border-left: 2px solid #0d6efd;
         border-right: 2px solid #0d6efd;
     }
-    .week-grid tbody tr:first-child td.grid-col-selected {
-        border-top: 2px solid #0d6efd;
-    }
-    .week-grid tbody tr:last-child td.grid-col-selected {
+    .week-grid tbody tr:first-child td.grid-col-selected { border-top: 2px solid #0d6efd; }
+    .week-grid tbody tr:last-child  td.grid-col-selected {
         border-bottom: 2px solid #0d6efd;
         border-bottom-left-radius: 12px;
         border-bottom-right-radius: 12px;
     }
 
-    /* 실제 근무와 다른 선택 슬롯: 연한 파란색 */
+    /* 실제 근무와 다른 선택 슬롯 표시 */
     .slot-10m.slot-actual.slot-diff {
         background: rgba(13,110,253,0.16);
         box-shadow: inset 0 0 0 1px rgba(13,110,253,0.45);
         border-color: rgba(13,110,253,0.55);
     }
 
-    .row-hour-start td, .row-hour-start th {
-        border-top: 2px solid #e5e7eb !important;
-    }
+    .row-hour-start td, .row-hour-start th { border-top: 2px solid #e5e7eb !important; }
     .timecell { font-variant-numeric: tabular-nums; }
 
     .grid-toolbar {
@@ -394,12 +364,7 @@
         margin-bottom: .5rem;
         font-size: .85rem;
     }
-    .grid-toolbar .left,
-    .grid-toolbar .right {
-        display: flex;
-        gap: 8px;
-        align-items: center;
-    }
+    .grid-toolbar .left, .grid-toolbar .right { display:flex; gap:8px; align-items:center; }
 </style>
 
 <script id="membersData" type="application/json">
@@ -432,7 +397,7 @@
         const btnThisWeek = document.getElementById('btnThisWeek');
         const btnNextWeek = document.getElementById('btnNextWeek');
 
-        // 개별 주간 그리드용 DOM
+        // 개별 주간 그리드 DOM
         const memberWeekCard      = document.getElementById('memberWeekCard');
         const memberWeekTitle     = document.getElementById('memberWeekTitle');
         const memberWeekNameBadge = document.getElementById('memberWeekNameBadge');
@@ -440,6 +405,7 @@
         const memberWeekGridBody  = document.getElementById('memberWeekGridBody');
         const gridSlotButtonsWrapper  = document.getElementById('gridSlotButtons');
         const btnGridClearAll         = document.getElementById('btnGridClearAll');
+        const btnSaveWeek             = document.getElementById('btnSaveWeek');
 
         // 데이터 상태
         let allMembers = [];
@@ -451,20 +417,18 @@
         let currentWeekActualMap = {};  // 날짜별 실제
         let selectedDateIso      = null;
 
-        // 개별 주간 그리드 상태 (왼쪽 근무계획 / 오른쪽 실제 근무시간)
+        // 개별 주간 그리드 상태
         let selectedWeekDaysMap = {};   // 실제 근무시간
-        let gridStepMinutes = 60;
+        let gridStepMinutes = 60;       // 기본 1시간(버튼 active와 일치)
 
-        // 조정 버튼으로 포커스된 날짜(하단 그리드 컬럼 강조용)
+        // 조정 버튼 포커스
         let highlightedDayIso = null;
 
         const GRID_DAY_LABELS = ['월','화','수','목','금','토','일'];
 
         try {
             allMembers = JSON.parse(document.getElementById('membersData').textContent || '[]');
-        } catch(e){
-            allMembers = [];
-        }
+        } catch(e){ allMembers = []; }
 
         if (Array.isArray(allMembers) && allMembers.length > 0) {
             statusSelect.value = allMembers[0].status || 'WORKING';
@@ -472,6 +436,7 @@
 
         attachHandlers();
         handleStatusChange();
+        updateSaveButtonByStep(); // 초기 상태(1시간) → 비활성화
 
         function attachHandlers(){
             statusSelect.addEventListener('change', handleStatusChange);
@@ -498,26 +463,28 @@
                 handleStatusChange();
             });
 
-            // 개별 주간 그리드 슬롯 단위 버튼
+            // 슬롯 단위 버튼
             if (gridSlotButtonsWrapper) {
                 gridSlotButtonsWrapper.querySelectorAll('button[data-grid-slot]').forEach(btn => {
                     btn.addEventListener('click', () => {
                         const mins = parseInt(btn.dataset.gridSlot, 10);
-                        if (!mins || gridStepMinutes === mins) {
-                            gridSlotButtonsWrapper.querySelectorAll('button[data-grid-slot]').forEach(b => b.classList.remove('active'));
-                            btn.classList.add('active');
-                            return;
-                        }
-                        gridStepMinutes = mins;
+                        if (!mins) return;
+
+                        // 버튼 active 토글
                         gridSlotButtonsWrapper.querySelectorAll('button[data-grid-slot]').forEach(b => b.classList.remove('active'));
                         btn.classList.add('active');
 
-                        buildMemberWeekGrid();
-                        hydratePlanGridFromMap(currentWeekPlanMap);
-                        hydrateWorkGridFromMap(selectedWeekDaysMap);
-                        if (highlightedDayIso) {
-                            focusDayColumnInGrid(highlightedDayIso);
+                        // 스텝 변경
+                        if (gridStepMinutes !== mins) {
+                            gridStepMinutes = mins;
+                            buildMemberWeekGrid();
+                            hydratePlanGridFromMap(currentWeekPlanMap);
+                            hydrateWorkGridFromMap(selectedWeekDaysMap);
+                            if (highlightedDayIso) focusDayColumnInGrid(highlightedDayIso);
                         }
+
+                        // ▼ 저장 버튼은 10분일 때만 활성화
+                        updateSaveButtonByStep();
                     });
                 });
             }
@@ -528,14 +495,21 @@
                     memberWeekGridBody
                             .querySelectorAll('.slot-10m.slot-actual.selected')
                             .forEach(el => el.classList.remove('selected','slot-diff'));
-                    if (highlightedDayIso) {
-                        recomputeGridDiffForHighlightedDay();
-                    }
+                    if (highlightedDayIso) recomputeGridDiffForHighlightedDay();
                 });
             }
 
             if (memberWeekForm) {
                 memberWeekForm.addEventListener('submit', onSubmitWeekForm);
+            }
+        }
+
+        /* 저장 버튼 활성/비활성 (10분만 활성) */
+        function updateSaveButtonByStep(){
+            if (btnSaveWeek) {
+                const enable = (gridStepMinutes === 10);
+                btnSaveWeek.disabled = !enable;
+                btnSaveWeek.title = enable ? '' : '저장은 10분 단위에서만 가능합니다.';
             }
         }
 
@@ -547,7 +521,6 @@
             if (selectedMember && !currentStatusMembers.some(x => String(x.id) === String(selectedMember.id))) {
                 selectedMember = null;
             }
-
             highlightedDayIso = null;
             selectedDateIso   = null;
 
@@ -566,9 +539,7 @@
             noMemberState.classList.add('d-none');
             weekCalendarWrapper.classList.remove('d-none');
 
-            if (!selectedMember) {
-                selectedMember = currentStatusMembers[0];
-            }
+            if (!selectedMember) selectedMember = currentStatusMembers[0];
             updatePillActive();
 
             loadWeekForSelectedMember();
@@ -581,34 +552,30 @@
             memberCountBadge.textContent = `${members.length}명`;
 
             if (members.length === 0) {
-                memberList.innerHTML =
-                        `<span class="text-muted small">해당 상태의 아르바이트생이 없습니다.</span>`;
+                memberList.innerHTML = `<span class="text-muted small">해당 상태의 아르바이트생이 없습니다.</span>`;
                 return;
             }
 
-            members
-                    .slice()
-                    .sort((a,b)=>(a.name||'').localeCompare(b.name||'', 'ko'))
-                    .forEach(m => {
-                        const color = colorForMember(m);
-                        const pill = document.createElement('div');
-                        pill.className = 'pill';
-                        pill.dataset.memberId = String(m.id);
-                        pill.innerHTML = `
-                        <span class="dot" style="background:${color}"></span>
-                        <span class="name">${escapeHtml(m.name ?? '-')}</span>
-                        <span class="meta">${escapeHtml(m.phone ?? '')}</span>
-                    `;
-                        pill.addEventListener('click', () => {
-                            selectedMember = m;
-                            selectedDateIso = null;
-                            highlightedDayIso = null;
-                            updatePillActive();
-                            loadWeekForSelectedMember();
-                            loadSelectedMemberWeek();
-                        });
-                        memberList.appendChild(pill);
-                    });
+            members.slice().sort((a,b)=>(a.name||'').localeCompare(b.name||'', 'ko')).forEach(m => {
+                const color = colorForMember(m);
+                const pill = document.createElement('div');
+                pill.className = 'pill';
+                pill.dataset.memberId = String(m.id);
+                pill.innerHTML = `
+                    <span class="dot" style="background:${color}"></span>
+                    <span class="name">${escapeHtml(m.name ?? '-')}</span>
+                    <span class="meta">${escapeHtml(m.phone ?? '')}</span>
+                `;
+                pill.addEventListener('click', () => {
+                    selectedMember = m;
+                    selectedDateIso = null;
+                    highlightedDayIso = null;
+                    updatePillActive();
+                    loadWeekForSelectedMember();
+                    loadSelectedMemberWeek();
+                });
+                memberList.appendChild(pill);
+            });
 
             updatePillActive();
         }
@@ -616,33 +583,22 @@
         function updatePillActive(){
             const pills = memberList.querySelectorAll('.pill');
             pills.forEach(p => {
-                if (!selectedMember) {
-                    p.classList.remove('active');
-                    return;
-                }
-                const id = p.dataset.memberId;
-                if (String(id) === String(selectedMember.id)) p.classList.add('active');
-                else p.classList.remove('active');
+                if (!selectedMember) return p.classList.remove('active');
+                p.classList.toggle('active', String(p.dataset.memberId) === String(selectedMember.id));
             });
         }
 
         /* ===== 주간 범위 라벨 ===== */
         function renderWeekRangeLabel(weekStart){
             const weekEnd = addDays(weekStart, 6);
-
             const sY = weekStart.getFullYear();
             const sM = pad2(weekStart.getMonth()+1);
             const sD = pad2(weekStart.getDate());
             const eM = pad2(weekEnd.getMonth()+1);
             const eD = pad2(weekEnd.getDate());
             const label = `${sY}.${sM}.${sD} ~ ${eM}.${eD}`;
-
-            if (weekRangeLabel) {
-                weekRangeLabel.textContent = label;
-            }
-            if (weekRangeLabelRight) {
-                weekRangeLabelRight.textContent = label;
-            }
+            if (weekRangeLabel) weekRangeLabel.textContent = label;
+            if (weekRangeLabelRight) weekRangeLabelRight.textContent = label;
         }
 
         /* ===== 주간 계획/실제 데이터 로딩 + 렌더 ===== */
@@ -659,12 +615,8 @@
 
             try {
                 const [planResp, workResp] = await Promise.all([
-                    fetch(`${API_PLAN}/${encodeURIComponent(selectedMember.id)}/${startIso}/${endIso}`, {
-                        headers: { 'Accept': 'application/json' }
-                    }),
-                    fetch(`${API_WORK}/${encodeURIComponent(selectedMember.id)}/${startIso}/${endIso}`, {
-                        headers: { 'Accept': 'application/json' }
-                    })
+                    fetch(`${API_PLAN}/${encodeURIComponent(selectedMember.id)}/${startIso}/${endIso}`, { headers: { 'Accept': 'application/json' } }),
+                    fetch(`${API_WORK}/${encodeURIComponent(selectedMember.id)}/${startIso}/${endIso}`, { headers: { 'Accept': 'application/json' } })
                 ]);
 
                 if (planResp.ok) {
@@ -690,7 +642,6 @@
 
             const weekStart = currentWeekStart;
             const todayIso  = toIso(new Date());
-
             let dailyMinutes = [];
 
             for (let offset = 0; offset < 7; offset++) {
@@ -714,23 +665,13 @@
                 cell.className = 'week-cell';
                 cell.dataset.date = iso;
                 cell.dataset.hasWork = hasWork ? '1' : '0';
-                if (iso === todayIso) {
-                    cell.classList.add('today');
-                }
+                if (iso === todayIso) cell.classList.add('today');
 
-                const plansHtml = planSegs.length
-                        ? planSegs.map(s => chipHtml(colorForMember(selectedMember), s.start, s.end)).join(' ')
-                        : '<span class="text-muted small"></span>';
+                const plansHtml  = planSegs.length  ? planSegs.map(s => chipHtml(colorForMember(selectedMember), s.start, s.end)).join(' ') : '<span class="text-muted small"></span>';
+                const actualHtml = actualSegs.length ? actualSegs.map(s => chipHtml(colorForMember(selectedMember), s.start, s.end)).join(' ') : '<span class="text-muted small"></span>';
 
-                const actualHtml = actualSegs.length
-                        ? actualSegs.map(s => chipHtml(colorForMember(selectedMember), s.start, s.end)).join(' ')
-                        : '<span class="text-muted small"></span>';
-
-                const showAdjust = hasWork && selectedDateIso === iso;
-
-                const adjustBtnHtml = showAdjust
-                        ? `<button type="button" class="btn btn-xs btn-outline-secondary btn-day-adjust" data-date="${iso}">근무시간조정</button>`
-                        : '';
+                const showAdjust   = hasWork && selectedDateIso === iso;
+                const adjustBtnHtml = showAdjust ? `<button type="button" class="btn btn-xs btn-outline-secondary btn-day-adjust" data-date="${iso}">근무시간조정</button>` : '';
 
                 cell.innerHTML = `
                     <div class="date-head">
@@ -740,11 +681,9 @@
                         </span>
                         ${adjustBtnHtml}
                     </div>
-                    <!-- 상단: 계획 일정 (초록 톤) -->
                     <div class="week-cell-rect week-cell-rect-bottom">
                         <div class="segments">${plansHtml}</div>
                     </div>
-                    <!-- 하단: 실제 근무 구간 (중립 톤) -->
                     <div class="week-cell-rect week-cell-rect-top">
                         <div class="segments">${actualHtml}</div>
                     </div>
@@ -769,11 +708,8 @@
             cells.forEach(cell => {
                 const iso = cell.dataset.date;
                 const hasWork = cell.dataset.hasWork === '1';
-
                 if (!hasWork) return;
-
                 cell.style.cursor = 'pointer';
-
                 cell.addEventListener('click', (e) => {
                     if (e.target.closest('.btn-day-adjust')) return;
                     selectedDateIso = iso;
@@ -797,12 +733,9 @@
         function focusDayColumnInGrid(iso){
             if (!memberWeekGridBody) return;
 
-            document.querySelectorAll('.week-grid thead th.grid-col-selected')
-                    .forEach(th => th.classList.remove('grid-col-selected'));
-            document.querySelectorAll('.week-grid tbody td.grid-col-selected')
-                    .forEach(td => td.classList.remove('grid-col-selected'));
-            memberWeekGridBody.querySelectorAll('.slot-10m.slot-actual.slot-diff')
-                    .forEach(el => el.classList.remove('slot-diff'));
+            document.querySelectorAll('.week-grid thead th.grid-col-selected').forEach(th => th.classList.remove('grid-col-selected'));
+            document.querySelectorAll('.week-grid tbody td.grid-col-selected').forEach(td => td.classList.remove('grid-col-selected'));
+            memberWeekGridBody.querySelectorAll('.slot-10m.slot-actual.slot-diff').forEach(el => el.classList.remove('slot-diff'));
 
             const dayOffset = dayOffsetFromIso(iso);
             if (dayOffset < 0 || dayOffset > 6) return;
@@ -824,7 +757,6 @@
             const diffMs = d.getTime() - start.getTime();
             return Math.round(diffMs / (1000*60*60*24));
         }
-
         function parseIsoDate(iso){
             const [y,m,d] = iso.split('-').map(n=>parseInt(n,10));
             return new Date(y, m-1, d);
@@ -842,8 +774,7 @@
             const endMin   = HOUR_END * 60;
             const totalRows = (endMin - startMin) / gridStepMinutes;
 
-            memberWeekGridBody.querySelectorAll(`.slot-10m.slot-actual[data-day-offset="${dayOffset}"]`)
-                    .forEach(el => el.classList.remove('slot-diff'));
+            memberWeekGridBody.querySelectorAll(`.slot-10m.slot-actual[data-day-offset="${dayOffset}"]`).forEach(el => el.classList.remove('slot-diff'));
 
             for (let idx = 0; idx < totalRows; idx++){
                 const slot = memberWeekGridBody.querySelector(`.slot-10m.slot-actual[data-day-offset="${dayOffset}"][data-idx="${idx}"]`);
@@ -861,20 +792,15 @@
                 const selected = slot.classList.contains('selected');
                 const mismatch = selected && !inActual;
 
-                if (mismatch) {
-                    slot.classList.add('slot-diff');
-                } else {
-                    slot.classList.remove('slot-diff');
-                }
+                if (mismatch) slot.classList.add('slot-diff');
+                else slot.classList.remove('slot-diff');
             }
         }
 
-        /* ===== 개별 주간 일정 로딩 (하단 그리드 – 계획/실제 분리) ===== */
+        /* ===== 개별 주간 일정 로딩 ===== */
         async function loadSelectedMemberWeek(){
-            if (!selectedMember) {
-                hideMemberWeekCard();
-                return;
-            }
+            if (!selectedMember) return hideMemberWeekCard();
+
             const weekStart = currentWeekStart;
             const weekEnd   = addDays(weekStart, 6);
             const startIso  = toIso(weekStart);
@@ -892,6 +818,7 @@
                     buildMemberWeekGrid();
                     hydratePlanGridFromMap(currentWeekPlanMap);
                     hydrateWorkGridFromMap(selectedWeekDaysMap);
+                    updateSaveButtonByStep();
                     return;
                 }
                 const data = await resp.json();
@@ -903,17 +830,14 @@
             buildMemberWeekGrid();
             hydratePlanGridFromMap(currentWeekPlanMap);
             hydrateWorkGridFromMap(selectedWeekDaysMap);
+            if (highlightedDayIso) focusDayColumnInGrid(highlightedDayIso);
 
-            if (highlightedDayIso) {
-                focusDayColumnInGrid(highlightedDayIso);
-            }
+            updateSaveButtonByStep();
         }
 
-        function hideMemberWeekCard(){
-            memberWeekCard.classList.add('d-none');
-        }
+        function hideMemberWeekCard(){ memberWeekCard.classList.add('d-none'); }
 
-        /* ===== 개인 주간 그리드 생성 (왼쪽 계획 / 오른쪽 실제) ===== */
+        /* ===== 개인 주간 그리드 생성 ===== */
         function buildMemberWeekGrid(){
             if (!memberWeekGridBody) return;
             memberWeekGridBody.innerHTML = '';
@@ -943,25 +867,21 @@
                     const wrap = document.createElement('div');
                     wrap.className = 'slot-wrapper';
 
-                    // 왼쪽: 근무계획(읽기 전용)
                     const divPlan = document.createElement('div');
                     divPlan.className = 'slot-plan';
                     divPlan.dataset.dayOffset = String(dayOffset);
                     divPlan.dataset.idx = String(idx);
 
-                    // 오른쪽: 실제 근무시간(수정 가능)
                     const divActual = document.createElement('div');
                     divActual.className = 'slot-10m slot-actual';
                     divActual.dataset.dayOffset = String(dayOffset);
                     divActual.dataset.idx = String(idx);
 
-                    // DOM 순서: 계획 → 실제
                     wrap.appendChild(divPlan);
                     wrap.appendChild(divActual);
                     td.appendChild(wrap);
                     tr.appendChild(td);
                 }
-
                 memberWeekGridBody.appendChild(tr);
             }
 
@@ -986,23 +906,16 @@
                     toggleGridSlot(div, gridDragAdding);
                 });
             });
-            window.addEventListener('mouseup', () => {
-                if (gridDragging){
-                    gridDragging = false;
-                }
-            });
+            window.addEventListener('mouseup', () => { if (gridDragging) gridDragging = false; });
         }
 
         function toggleGridSlot(el, on) {
             if (on) el.classList.add('selected');
             else el.classList.remove('selected');
-
-            if (highlightedDayIso) {
-                recomputeGridDiffForHighlightedDay();
-            }
+            if (highlightedDayIso) recomputeGridDiffForHighlightedDay();
         }
 
-        /* ===== 계획(왼쪽) 그리드에 반영 ===== */
+        /* ===== 계획(왼쪽) 채우기 ===== */
         function hydratePlanGridFromMap(planMap){
             if (!memberWeekGridBody) return;
 
@@ -1010,9 +923,7 @@
             const endMin   = HOUR_END * 60;
             const totalRows = (endMin - startMin) / gridStepMinutes;
 
-            memberWeekGridBody
-                    .querySelectorAll('.slot-plan.filled')
-                    .forEach(el => el.classList.remove('filled'));
+            memberWeekGridBody.querySelectorAll('.slot-plan.filled').forEach(el => el.classList.remove('filled'));
 
             const weekStart = currentWeekStart;
 
@@ -1041,7 +952,7 @@
             }
         }
 
-        /* ===== 실제 근무시간(오른쪽) 그리드에 반영 ===== */
+        /* ===== 실제(오른쪽) 채우기 ===== */
         function hydrateWorkGridFromMap(dayMap){
             if (!memberWeekGridBody) return;
 
@@ -1049,12 +960,8 @@
             const endMin   = HOUR_END * 60;
             const totalRows = (endMin - startMin) / gridStepMinutes;
 
-            memberWeekGridBody
-                    .querySelectorAll('.slot-10m.slot-actual.selected')
-                    .forEach(el => el.classList.remove('selected'));
-            memberWeekGridBody
-                    .querySelectorAll('.slot-10m.slot-actual.slot-diff')
-                    .forEach(el => el.classList.remove('slot-diff'));
+            memberWeekGridBody.querySelectorAll('.slot-10m.slot-actual.selected').forEach(el => el.classList.remove('selected'));
+            memberWeekGridBody.querySelectorAll('.slot-10m.slot-actual.slot-diff').forEach(el => el.classList.remove('slot-diff'));
 
             const weekStart = currentWeekStart;
 
@@ -1095,7 +1002,7 @@
             return out;
         }
 
-        /* 실제 근무시간(오른쪽)만 수집해서 저장 */
+        /* 실제 근무시간(오른쪽) 수집 → 날짜별 세그먼트 */
         function collectSegmentsByDateFromGrid(){
             if (!memberWeekGridBody) return {};
             const res = {};
@@ -1117,10 +1024,7 @@
                 res[iso] = merged.map(([sIdx,eIdxInclusive]) => {
                     const stMin = startMin + sIdx*gridStepMinutes;
                     const edMin = startMin + (eIdxInclusive+1)*gridStepMinutes;
-                    return {
-                        start: minToHm(stMin),
-                        end:   minToHm(edMin)
-                    };
+                    return { start: minToHm(stMin), end: minToHm(edMin) };
                 });
             }
             return res;
@@ -1129,6 +1033,13 @@
         /* ===== 저장: 실제 근무시간 수정 저장 ===== */
         async function onSubmitWeekForm(e){
             e.preventDefault();
+
+            // ▼ 10분 단위가 아닐 때는 저장 불가
+            if (gridStepMinutes !== 10) {
+                alert('저장은 10분 단위에서만 가능합니다. 슬롯 버튼에서 10분을 선택해 주세요.');
+                return;
+            }
+
             if (!selectedMember) {
                 alert('선택된 아르바이트생이 없습니다.');
                 return;
@@ -1143,36 +1054,20 @@
                 const iso  = toIso(date);
                 const label = `${GRID_DAY_LABELS[dayOffset]} (${iso})`;
                 const segs  = byDate[iso] || [];
-
-                if (!segs.length) {
-                    summaryLines.push(`${label}: 휴무`);
-                } else {
-                    const ranges = segs.map(s => `${s.start}~${s.end}`).join(', ');
-                    summaryLines.push(`${label}: ${ranges}`);
-                }
+                if (!segs.length) summaryLines.push(`${label}: 휴무`);
+                else summaryLines.push(`${label}: ${segs.map(s => `${s.start}~${s.end}`).join(', ')}`);
             }
 
-            const summaryText =
-                    `다음과 같이 주간 실제 근무시간을 저장합니다:\n\n` +
-                    summaryLines.join('\n') +
-                    `\n\n이대로 저장하시겠습니까?`;
-
-            const ok = confirm(summaryText);
+            const ok = confirm(`다음과 같이 주간 실제 근무시간을 저장합니다:\n\n${summaryLines.join('\n')}\n\n이대로 저장하시겠습니까?`);
             if (!ok) return;
 
             const dates = [];
-            for (let offset=0; offset<7; offset++){
-                dates.push(toIso(addDays(weekStart, offset)));
-            }
+            for (let offset=0; offset<7; offset++){ dates.push(toIso(addDays(weekStart, offset))); }
 
             try {
                 for (const iso of dates){
                     const segments = byDate[iso] || [];
-                    const payload = {
-                        memberId: selectedMember.id,
-                        date: iso,
-                        segments
-                    };
+                    const payload = { memberId: selectedMember.id, date: iso, segments };
                     const resp = await fetch(API_UPDATE, {
                         method: 'POST',
                         headers: { 'Content-Type':'application/json', 'Accept':'application/json' },
@@ -1202,15 +1097,9 @@
             d.setDate(d.getDate() + diff);
             return d;
         }
-        function addDays(d, n){
-            const x = new Date(d);
-            x.setDate(x.getDate()+n);
-            return x;
-        }
+        function addDays(d, n){ const x = new Date(d); x.setDate(x.getDate()+n); return x; }
         function pad2(n){ return String(n).padStart(2,'0'); }
-        function toIso(d){
-            return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
-        }
+        function toIso(d){ return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`; }
 
         function normalizeDays(apiData, needMinutes){
             const map = {};
@@ -1222,32 +1111,16 @@
                 if (needMinutes) {
                     minutes = (typeof d.minutes==='number')
                             ? d.minutes
-                            : segments.reduce(
-                                    (acc,s)=> acc + (hmToMin(s.end) - hmToMin(s.start)),
-                                    0
-                            );
+                            : segments.reduce((acc,s)=> acc + (hmToMin(s.end) - hmToMin(s.start)), 0);
                 }
                 map[date] = needMinutes ? { segments, minutes } : { segments };
             });
             return map;
         }
 
-        function hmToMin(hm){
-            if(!hm) return 0;
-            const [h,m] = String(hm).split(':').map(n=>parseInt(n,10));
-            return (h||0)*60 + (m||0);
-        }
-        function minToHm(min){
-            const h = Math.floor(min/60);
-            const m = min%60;
-            return `${pad2(h)}:${pad2(m)}`;
-        }
-        function formatMins(mins){
-            const v = Math.max(0, mins|0);
-            const h = Math.floor(v/60);
-            const m = v%60;
-            return m === 0 ? `${h}시간` : `${h}시간 ${m}분`;
-        }
+        function hmToMin(hm){ if(!hm) return 0; const [h,m]=String(hm).split(':').map(n=>parseInt(n,10)); return (h||0)*60+(m||0); }
+        function minToHm(min){ const h=Math.floor(min/60), m=min%60; return `${pad2(h)}:${pad2(m)}`; }
+        function formatMins(mins){ const v=Math.max(0, mins|0); const h=Math.floor(v/60), m=v%60; return m===0?`${h}시간`:`${h}시간 ${m}분`; }
 
         function chipHtml(color, start, end){
             return `<span class="chip">
@@ -1261,14 +1134,7 @@
             const h = seededHash(key)%360, s=65, l=55;
             return hslToHex(h,s,l);
         }
-        function seededHash(str){
-            let h=2166136261>>>0;
-            for(let i=0;i<str.length;i++){
-                h^=str.charCodeAt(i);
-                h=(h*16777619)>>>0;
-            }
-            return h>>>0;
-        }
+        function seededHash(str){ let h=2166136261>>>0; for(let i=0;i<str.length;i++){ h^=str.charCodeAt(i); h=(h*16777619)>>>0; } return h>>>0; }
         function hslToHex(h,s,l){
             s/=100; l/=100;
             const c=(1-Math.abs(2*l-1))*s;
@@ -1293,7 +1159,6 @@
                     .replace(/"/g,'&quot;')
                     .replace(/'/g,'&#39;');
         }
-
     })();
 </script>
 
