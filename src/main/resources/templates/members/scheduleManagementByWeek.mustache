@@ -117,10 +117,16 @@
                 <span class="fw-bold" id="memberWeekTitle">개별 주간 일정</span>
                 <span class="badge bg-secondary ms-2" id="memberWeekNameBadge"></span>
             </div>
-            <!-- 저장 버튼 -->
-            <button type="submit" class="btn btn-sm btn-primary" form="memberWeekForm">저장</button>
+            <!-- 저장 버튼 (10분 모드에서만 활성화) -->
+            <span class="fw-bold" id="memberWeekTitle">(10단위 저장만 가능합니다.)</span>
+            <button type="submit" class="btn btn-sm btn-primary" form="memberWeekForm" id="btnSaveWeek" disabled>저장</button>
         </div>
         <div class="card-body">
+            <!-- 주간 일정 없음 알림(화면용) -->
+            <div id="noPlanAlert" class="alert alert-warning py-2 px-3 d-none">
+                <strong>예정된 일정이 없습니다.</strong> 일정을 생성하세요.
+            </div>
+
             <!-- 수정용 타임테이블 (주간 그리드) -->
             <form id="memberWeekForm" class="mt-0">
                 <!-- 툴바 -->
@@ -198,169 +204,49 @@
     }
 
     /* ===== 타임테이블 ===== */
-    #weekStaffTable {
-        border-collapse: separate;
-        border-spacing: 0;
-    }
-
-    .hour-row-header {
-        font-variant-numeric: tabular-nums;
-    }
-    .staff-cell {
-        vertical-align: middle;
-        font-size:.85rem;
-        transition: background-color .15s ease, box-shadow .15s ease;
-    }
-    .staff-tags {
-        display:flex;
-        flex-wrap:wrap;
-        gap:4px;
-        justify-content:center;
-    }
+    #weekStaffTable { border-collapse: separate; border-spacing: 0; }
+    .hour-row-header { font-variant-numeric: tabular-nums; }
+    .staff-cell { vertical-align: middle; font-size:.85rem; transition: background-color .15s ease, box-shadow .15s ease; }
+    .staff-tags { display:flex; flex-wrap:wrap; gap:4px; justify-content:center; }
     .staff-tag {
-        display:inline-flex;
-        align-items:center;
-        gap:4px;
-        border-radius:999px;
-        padding:2px 6px;
-        font-size:.75rem;
-        background:#f8f9fa;
-        border:1px solid #dee2e6;
-        max-width:90px;
-        white-space:nowrap;
-        overflow:hidden;
-        text-overflow:ellipsis;
+        display:inline-flex; align-items:center; gap:4px;
+        border-radius:999px; padding:2px 6px; font-size:.75rem;
+        background:#f8f9fa; border:1px solid #dee2e6; max-width:90px;
+        white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
         transition: background-color .15s ease, border-color .15s ease, transform .1s ease;
     }
-    .staff-tag-dot {
-        width:10px;
-        height:10px;
-        border-radius:50%;
-        border:1px solid rgba(0,0,0,.08);
-        flex:0 0 10px;
-    }
-    .staff-count {
-        font-weight:600;
-        font-size:.9rem;
-    }
-    tr.hour-separator > td,
-    tr.hour-separator > th {
-        border-top:2px solid #dee2e6 !important;
-    }
+    .staff-tag-dot { width:10px; height:10px; border-radius:50%; border:1px solid rgba(0,0,0,.08); flex:0 0 10px; }
+    .staff-count { font-weight:600; font-size:.9rem; }
+    tr.hour-separator > td, tr.hour-separator > th { border-top:2px solid #dee2e6 !important; }
 
-    .day-date {
-        line-height: 1.1;
-    }
+    .day-date { line-height: 1.1; }
 
-    /* 오늘 컬럼: 녹색 외곽선 + 모서리 라운드 + 매우 연한 배경 */
-    #weekStaffTable .today-col {
-        background-color: rgba(40,167,69,0.02);
-        border-left: 2px solid #28a745 !important;
-        border-right: 2px solid #28a745 !important;
-    }
-    #weekStaffTable thead .today-col {
-        border-top: 2px solid #28a745 !important;
-        border-top-left-radius: 10px;
-        border-top-right-radius: 10px;
-    }
-    #weekStaffTable tbody tr:last-child .today-col {
-        border-bottom: 2px solid #28a745 !important;
-        border-bottom-left-radius: 10px;
-        border-bottom-right-radius: 10px;
-    }
+    /* 오늘 컬럼 강조 */
+    #weekStaffTable .today-col { background-color: rgba(40,167,69,0.02); border-left: 2px solid #28a745 !important; border-right: 2px solid #28a745 !important; }
+    #weekStaffTable thead .today-col { border-top: 2px solid #28a745 !important; border-top-left-radius: 10px; border-top-right-radius: 10px; }
+    #weekStaffTable tbody tr:last-child .today-col { border-bottom: 2px solid #28a745 !important; border-bottom-left-radius: 10px; border-bottom-right-radius: 10px; }
 
-    /* ✅ 선택된 아르바이트생 태그만 살짝 강조 */
-    .staff-tag.selected-member-tag {
-        background: rgba(13,110,253,.10);
-        border-color: rgba(13,110,253,.7);
-        font-weight: 600;
-        transform: scale(1.02);
-    }
+    /* 선택된 아르바이트생 태그 강조 */
+    .staff-tag.selected-member-tag { background: rgba(13,110,253,.10); border-color: rgba(13,110,253,.7); font-weight: 600; transform: scale(1.02); }
 
     /* 개별 주간 일정 카드 */
-    #memberWeekCard .table-sm td,
-    #memberWeekCard .table-sm th {
-        padding: .35rem .5rem;
-    }
+    #memberWeekCard .table-sm td, #memberWeekCard .table-sm th { padding: .35rem .5rem; }
 
     /* 주간 그리드 */
-    .week-grid {
-        width: 100%;
-        border: 1px solid #e5e7eb;
-        border-radius: 10px;
-        overflow: hidden;
-        user-select: none;
-        background:#fff;
-    }
-    .week-grid table {
-        width: 100%;
-        border-collapse: separate;
-        border-spacing: 0;
-        table-layout: fixed;
-    }
-    .week-grid thead th {
-        background: #f8fafc;
-        color:#64748b;
-        font-weight: 600;
-        font-size: 0.9rem;
-        border-bottom: 1px solid #e5e7eb;
-        text-align: center;
-        padding: .5rem .4rem;
-        position: sticky;
-        top: 0;
-        z-index: 2;
-    }
-    .week-grid tbody th {
-        background: #fafafa;
-        color:#6b7280;
-        font-weight: 600;
-        width: 74px;
-        border-right: 1px solid #e5e7eb;
-        text-align: center;
-        padding: .25rem .25rem;
-        font-size: .8rem;
-        position: sticky;
-        left: 0;
-        z-index: 1;
-    }
+    .week-grid { width: 100%; border: 1px solid #e5e7eb; border-radius: 10px; overflow: hidden; user-select: none; background:#fff; }
+    .week-grid table { width: 100%; border-collapse: separate; border-spacing: 0; table-layout: fixed; }
+    .week-grid thead th { background: #f8fafc; color:#64748b; font-weight: 600; font-size: 0.9rem; border-bottom: 1px solid #e5e7eb; text-align: center; padding: .5rem .4rem; position: sticky; top: 0; z-index: 2; }
+    .week-grid tbody th { background: #fafafa; color:#6b7280; font-weight: 600; width: 74px; border-right: 1px solid #e5e7eb; text-align: center; padding: .25rem .25rem; font-size: .8rem; position: sticky; left: 0; z-index: 1; }
 
-    /* ✅ 개별 주간 일정의 선택 박스: 라운드 렉트앵글 */
-    .slot-10m {
-        border-bottom: 1px dashed #eef2f6;
-        border-right: 1px dashed #eef2f6;
-        height: 18px;
-        cursor: pointer;
-        background: #ffffff;
-        border-radius: 6px;
-        margin: 1px 0;
-    }
-    .slot-10m:hover {
-        background: #f8fbff;
-    }
-    .slot-10m.selected {
-        background: rgba(25,135,84,.18);
-        box-shadow: inset 0 0 0 1px rgba(25,135,84,.25);
-    }
+    .slot-10m { border-bottom: 1px dashed #eef2f6; border-right: 1px dashed #eef2f6; height: 18px; cursor: pointer; background: #ffffff; border-radius: 6px; margin: 1px 0; }
+    .slot-10m:hover { background: #f8fbff; }
+    .slot-10m.selected { background: rgba(25,135,84,.18); box-shadow: inset 0 0 0 1px rgba(25,135,84,.25); }
 
-    .row-hour-start td, .row-hour-start th {
-        border-top: 2px solid #e5e7eb !important;
-    }
+    .row-hour-start td, .row-hour-start th { border-top: 2px solid #e5e7eb !important; }
     .timecell { font-variant-numeric: tabular-nums; }
 
-    .grid-toolbar {
-        display: flex;
-        gap: 8px;
-        align-items: center;
-        justify-content: space-between;
-        margin-bottom: .5rem;
-        font-size: .85rem;
-    }
-    .grid-toolbar .left,
-    .grid-toolbar .right {
-        display: flex;
-        gap: 8px;
-        align-items: center;
-    }
+    .grid-toolbar { display: flex; gap: 8px; align-items: center; justify-content: space-between; margin-bottom: .5rem; font-size: .85rem; }
+    .grid-toolbar .left, .grid-toolbar .right { display: flex; gap: 8px; align-items: center; }
 </style>
 
 <script id="membersData" type="application/json">
@@ -398,10 +284,12 @@
         const memberWeekTitle     = document.getElementById('memberWeekTitle');
         const memberWeekNameBadge = document.getElementById('memberWeekNameBadge');
         const memberWeekForm      = document.getElementById('memberWeekForm');
+        const btnSaveWeek         = document.getElementById('btnSaveWeek');
 
         const memberWeekGridBody      = document.getElementById('memberWeekGridBody');
         const gridSlotButtonsWrapper  = document.getElementById('gridSlotButtons');
         const btnGridClearAll         = document.getElementById('btnGridClearAll');
+        const noPlanAlert             = document.getElementById('noPlanAlert');
 
         let allMembers = [];
         let currentStatusMembers = [];
@@ -413,44 +301,61 @@
         let gridStepMinutes = 60; // 하단 개인 그리드 단위 (기본 1시간)
         const GRID_DAY_LABELS = ['월','화','수','목','금','토','일'];
 
+        // ====== 데이터 파싱 + 초기 상태 보정 ======
         try {
             allMembers = JSON.parse(document.getElementById('membersData').textContent || '[]');
         } catch(e){
             allMembers = [];
         }
 
-        if (Array.isArray(allMembers) && allMembers.length > 0) {
-            statusSelect.value = allMembers[0].status || 'WORKING';
-        }
+        (function safeInitStatus(){
+            if (!statusSelect) return;
+            const initial = statusSelect.value || 'WORKING';
+            const hasInInitial = (allMembers||[]).some(m => m.status === initial);
+            if (!hasInInitial) {
+                const counts = (allMembers||[]).reduce((acc,m)=>{
+                    acc[m.status] = (acc[m.status]||0)+1; return acc;
+                }, {});
+                const best = Object.entries(counts).sort((a,b)=>b[1]-a[1])[0]?.[0];
+                if (best && Array.from(statusSelect.options).some(o=>o.value===best)) {
+                    statusSelect.value = best;
+                }
+            }
+        })();
 
+        // ====== 이벤트 바인딩 ======
         attachHandlers();
-        handleStatusChange();
+
+        // ====== 최초 로딩: 비동기 순서 고정 ======
+        (async () => {
+            await handleStatusChange(true);
+            updateSaveButtonState();
+        })();
 
         function attachHandlers(){
-            statusSelect.addEventListener('change', handleStatusChange);
+            statusSelect.addEventListener('change', async ()=> { await handleStatusChange(); });
 
-            if (btnSlot10) btnSlot10.addEventListener('click', ()=> setSlotMinutes(10));
-            if (btnSlot30) btnSlot30.addEventListener('click', ()=> setSlotMinutes(30));
-            if (btnSlot60) btnSlot60.addEventListener('click', ()=> setSlotMinutes(60));
+            if (btnSlot10) btnSlot10.addEventListener('click', async ()=> { setSlotMinutes(10); await fetchAndRenderWeekTable(currentStatusMembers, currentWeekStart); });
+            if (btnSlot30) btnSlot30.addEventListener('click', async ()=> { setSlotMinutes(30); await fetchAndRenderWeekTable(currentStatusMembers, currentWeekStart); });
+            if (btnSlot60) btnSlot60.addEventListener('click', async ()=> { setSlotMinutes(60); await fetchAndRenderWeekTable(currentStatusMembers, currentWeekStart); });
 
-            if (btnPrevWeek) btnPrevWeek.addEventListener('click', (e)=>{
+            if (btnPrevWeek) btnPrevWeek.addEventListener('click', async (e)=>{
                 e.preventDefault();
                 currentWeekStart = addDays(currentWeekStart, -7);
-                handleStatusChange();
+                await handleStatusChange();
             });
-            if (btnThisWeek) btnThisWeek.addEventListener('click', (e)=>{
+            if (btnThisWeek) btnThisWeek.addEventListener('click', async (e)=>{
                 e.preventDefault();
                 currentWeekStart = toMonday(new Date());
-                handleStatusChange();
+                await handleStatusChange();
             });
-            if (btnNextWeek) btnNextWeek.addEventListener('click', (e)=>{
+            if (btnNextWeek) btnNextWeek.addEventListener('click', async (e)=>{
                 e.preventDefault();
                 currentWeekStart = addDays(currentWeekStart, +7);
-                handleStatusChange();
+                await handleStatusChange();
             });
 
-            updateSlotButtons();
-
+            // 하단 개인 그리드 단위 버튼
             if (gridSlotButtonsWrapper) {
                 gridSlotButtonsWrapper.querySelectorAll('button[data-grid-slot]').forEach(btn => {
                     btn.addEventListener('click', () => {
@@ -458,6 +363,7 @@
                         if (!mins || gridStepMinutes === mins) {
                             gridSlotButtonsWrapper.querySelectorAll('button[data-grid-slot]').forEach(b => b.classList.remove('active'));
                             btn.classList.add('active');
+                            updateSaveButtonState();
                             return;
                         }
                         gridStepMinutes = mins;
@@ -466,6 +372,7 @@
 
                         buildMemberWeekGrid();
                         hydrateGridFromDayMap(selectedWeekDaysMap);
+                        updateSaveButtonState();
                     });
                 });
             }
@@ -487,9 +394,6 @@
             if (slotMinutes === mins) return;
             slotMinutes = mins;
             updateSlotButtons();
-            if (currentStatusMembers.length > 0) {
-                fetchAndRenderWeekTable(currentStatusMembers, currentWeekStart);
-            }
         }
         function updateSlotButtons(){
             [btnSlot10, btnSlot30, btnSlot60].forEach(btn=>{
@@ -501,8 +405,8 @@
             if (slotMinutes === 60 && btnSlot60) btnSlot60.classList.add('active');
         }
 
-        /* ===== 상태 변경 ===== */
-        function handleStatusChange(){
+        /* ===== 상태 변경(최초/이동 포함) ===== */
+        async function handleStatusChange(isFirstLoad = false){
             const status = statusSelect.value;
             currentStatusMembers = (allMembers || []).filter(m => m.status === status);
 
@@ -529,8 +433,8 @@
             }
             updatePillActive();
 
-            fetchAndRenderWeekTable(currentStatusMembers, currentWeekStart);
-            loadSelectedMemberWeek();
+            await fetchAndRenderWeekTable(currentStatusMembers, currentWeekStart);
+            await loadSelectedMemberWeek(); // ← 여기에서 선택 멤버의 '일정 없음' 알림까지 처리
         }
 
         /* ===== 상단 멤버 리스트 ===== */
@@ -557,11 +461,11 @@
                         <span class="name">${escapeHtml(m.name ?? '-')}</span>
                         <span class="meta">${escapeHtml(m.phone ?? '')}</span>
                     `;
-                        pill.addEventListener('click', () => {
+                        pill.addEventListener('click', async () => {
                             selectedMember = m;
                             updatePillActive();
-                            fetchAndRenderWeekTable(currentStatusMembers, currentWeekStart);
-                            loadSelectedMemberWeek();
+                            await fetchAndRenderWeekTable(currentStatusMembers, currentWeekStart);
+                            await loadSelectedMemberWeek(); // ← 클릭 시에도 일정 없음 알림 처리
                         });
                         memberList.appendChild(pill);
                     });
@@ -593,12 +497,8 @@
             const eD = pad2(weekEnd.getDate());
             const label = `${sY}.${sM}.${sD} ~ ${eM}.${eD}`;
 
-            if (weekRangeLabel) {
-                weekRangeLabel.textContent = label;
-            }
-            if (weekRangeLabelRight) {
-                weekRangeLabelRight.textContent = label;
-            }
+            if (weekRangeLabel) weekRangeLabel.textContent = label;
+            if (weekRangeLabelRight) weekRangeLabelRight.textContent = label;
 
             if (dayHeaderCells && dayHeaderCells.length === 7) {
                 const weekDates = [];
@@ -610,19 +510,14 @@
                     const dd = pad2(d.getDate());
                     const cell = dayHeaderCells[i];
                     const dateSpan = cell.querySelector('.day-date');
-                    if (dateSpan) {
-                        dateSpan.textContent = `${mm}/${dd}`;
-                    }
+                    if (dateSpan) dateSpan.textContent = `${mm}/${dd}`;
                     cell.classList.remove('today-col');
                 }
 
                 const today    = new Date();
                 const todayIso = toIso(today);
                 const todayIdx = weekDates.indexOf(todayIso);
-
-                if (todayIdx !== -1) {
-                    dayHeaderCells[todayIdx].classList.add('today-col');
-                }
+                if (todayIdx !== -1) dayHeaderCells[todayIdx].classList.add('today-col');
             }
         }
 
@@ -632,10 +527,7 @@
             const startIso = toIso(weekStart);
             const endIso   = toIso(weekEnd);
 
-            const weekDatesForToday = Array.from(
-                    {length:7},
-                    (_,i)=> toIso(addDays(weekStart, i))
-            );
+            const weekDatesForToday = Array.from({length:7}, (_,i)=> toIso(addDays(weekStart, i)));
             const today    = new Date();
             const todayIso = toIso(today);
             const todayIdx = weekDatesForToday.indexOf(todayIso);
@@ -647,23 +539,21 @@
                 slots.push({ start: t, end: t + slotMinutes });
             }
 
-            const slotData = slots.map(
-                    ()=> Array.from({length:7}, ()=> new Set())
-            );
+            const slotData = slots.map(() => Array.from({length:7}, ()=> new Set()));
 
             try {
                 await Promise.all(
                         members.map(async (m) => {
                             const url = `${API_BASE}/${encodeURIComponent(m.id)}/${startIso}/${endIso}`;
                             const resp = await fetch(url, { headers:{'Accept':'application/json'} });
-                            if (!resp.ok) return;
-                            const data = await resp.json();
+                            if (!resp.ok) {
+                                console.warn('[weekTable] fetch fail:', m.id, resp.status);
+                                return;
+                            }
+                            const data = await resp.json().catch(()=>null);
                             const dayMap = normalizeDays(data);
-                            const weekDates = Array.from(
-                                    {length:7},
-                                    (_,i)=> toIso(addDays(weekStart, i))
-                            );
 
+                            const weekDates = Array.from({length:7}, (_,i)=> toIso(addDays(weekStart, i)));
                             weekDates.forEach((iso, dayIdx) => {
                                 const day = dayMap[iso];
                                 if (!day || !Array.isArray(day.segments)) return;
@@ -683,7 +573,7 @@
                         })
                 );
             } catch(e){
-                console.error(e);
+                console.error('[weekTable] unexpected error:', e);
             }
 
             const rows = [];
@@ -738,8 +628,7 @@
                                 tag.classList.add('selected-member-tag');
                             }
 
-                            tag.title =
-                                    `${mObj.name || ''} (${DOW_LABELS[dayIdx]} ${pad2(h)}:${pad2(m)})`;
+                            tag.title = `${mObj.name || ''} (${DOW_LABELS[dayIdx]} ${pad2(h)}:${pad2(m)})`;
                             tag.innerHTML = `
                                 <span class="staff-tag-dot" style="background:${color}"></span>
                                 <span class="staff-tag-name">${escapeHtml(mObj.name ?? '-')}</span>
@@ -755,8 +644,7 @@
 
                 const tdTotal = document.createElement('td');
                 tdTotal.className = 'staff-cell';
-                tdTotal.innerHTML =
-                        `<span class="staff-count">${totalCount}</span><span class="small text-muted">명</span>`;
+                tdTotal.innerHTML = `<span class="staff-count">${totalCount}</span><span class="small text-muted">명</span>`;
                 tr.appendChild(tdTotal);
 
                 rows.push(tr);
@@ -784,21 +672,28 @@
                 const url = `${API_BASE}/${encodeURIComponent(selectedMember.id)}/${startIso}/${toIso(weekEnd)}`;
                 const resp = await fetch(url, { headers:{'Accept':'application/json'} });
                 if (!resp.ok) {
-                    console.error('개별 주간 일정 조회 실패', resp.status);
+                    console.warn('[memberWeek] fetch fail:', selectedMember.id, resp.status);
                     selectedWeekDaysMap = {};
-                    buildMemberWeekGrid();
-                    hydrateGridFromDayMap(selectedWeekDaysMap);
-                    return;
+                } else {
+                    const data = await resp.json().catch(()=>null);
+                    selectedWeekDaysMap = normalizeDays(data) || {};
                 }
-                const data = await resp.json();
-                selectedWeekDaysMap = normalizeDays(data) || {};
             } catch (e) {
-                console.error(e);
+                console.error('[memberWeek] unexpected error:', e);
                 selectedWeekDaysMap = {};
+            }
+
+            // ✅ 화면용 배지/경고 업데이트
+            updateNoPlanAlert(selectedWeekDaysMap);
+
+            // ✅ 요구사항: 선택된 아르바이트생의 주간 일정이 전혀 없으면 alert 출력
+            if (!hasAnySegments(selectedWeekDaysMap)) {
+                alert('일정이 없습니다.');
             }
 
             buildMemberWeekGrid();
             hydrateGridFromDayMap(selectedWeekDaysMap);
+            updateSaveButtonState();
         }
 
         function hideMemberWeekCard(){
@@ -872,6 +767,12 @@
         function toggleGridSlot(el, on) {
             if (on) el.classList.add('selected');
             else el.classList.remove('selected');
+        }
+
+        /* ===== 주간 일정 없음 알림(화면용) ===== */
+        function updateNoPlanAlert(dayMap){
+            const hasAny = hasAnySegments(dayMap);
+            if (noPlanAlert) noPlanAlert.classList.toggle('d-none', hasAny);
         }
 
         /* ===== 서버에서 받은 일정을 그리드에 반영 ===== */
@@ -953,11 +854,23 @@
             return res;
         }
 
+        /* ===== 저장 버튼 활성화(10분 모드에서만) ===== */
+        function updateSaveButtonState(){
+            if (!btnSaveWeek) return;
+            const enable = (gridStepMinutes === 10);
+            btnSaveWeek.disabled = !enable;
+            btnSaveWeek.title = enable ? '' : '저장은 10분 단위에서만 가능합니다.';
+        }
+
         /* ===== 저장: 요약 + confirm ===== */
         async function onSubmitWeekForm(e){
             e.preventDefault();
             if (!selectedMember) {
                 alert('선택된 아르바이트생이 없습니다.');
+                return;
+            }
+            if (gridStepMinutes !== 10) {
+                alert('저장은 10분 단위에서만 가능합니다. (그리드 단위를 10분으로 변경하세요)');
                 return;
             }
 
@@ -1039,21 +952,52 @@
             return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
         }
 
+        // 모든 응답 스키마 지원
         function normalizeDays(apiData){
             const map = {};
-            const arr = Array.isArray(apiData?.days) ? apiData.days : [];
-            arr.forEach(d=>{
-                const date = String(d.date);
-                const segments = Array.isArray(d.segments) ? d.segments : [];
-                const minutes = (typeof d.minutes==='number')
-                        ? d.minutes
-                        : segments.reduce(
-                                (acc,s)=> acc + (hmToMin(s.end) - hmToMin(s.start)),
-                                0
-                        );
-                map[date] = { segments, minutes };
-            });
+            if (!apiData) return map;
+
+            if (Array.isArray(apiData.days)) {
+                apiData.days.forEach(d => {
+                    const date = String(d.date);
+                    const segments = Array.isArray(d.segments) ? d.segments : [];
+                    const minutes = (typeof d.minutes === 'number')
+                            ? d.minutes
+                            : segments.reduce((acc, s) => acc + (hmToMin(s.end)-hmToMin(s.start)), 0);
+                    map[date] = { segments, minutes };
+                });
+                return map;
+            }
+
+            if (Array.isArray(apiData)) {
+                apiData.forEach(d => {
+                    const date = String(d.date);
+                    const segments = Array.isArray(d.segments) ? d.segments : [];
+                    const minutes = (typeof d.minutes === 'number')
+                            ? d.minutes
+                            : segments.reduce((acc, s) => acc + (hmToMin(s.end)-hmToMin(s.start)), 0);
+                    map[date] = { segments, minutes };
+                });
+                return map;
+            }
+
+            if (typeof apiData === 'object') {
+                Object.keys(apiData).forEach(date => {
+                    const v = apiData[date] || {};
+                    const segments = Array.isArray(v.segments) ? v.segments : [];
+                    const minutes = (typeof v.minutes === 'number')
+                            ? v.minutes
+                            : segments.reduce((acc, s) => acc + (hmToMin(s.end)-hmToMin(s.start)), 0);
+                    map[String(date)] = { segments, minutes };
+                });
+                return map;
+            }
+
             return map;
+        }
+
+        function hasAnySegments(dayMap){
+            return Object.values(dayMap || {}).some(v => Array.isArray(v.segments) && v.segments.length > 0);
         }
 
         function hmToMin(hm){

@@ -29,7 +29,7 @@
                           class="badge bg-light border text-dark px-3 py-2 rounded-pill small">
                         0명 근무 예정
                     </span>
-                    <button id="btnRegisterActual" class="btn btn-sm btn-success px-3">
+                    <button id="btnRegisterActual" class="btn btn-sm btn-success px-3" title="10분 단위에서만 활성화됩니다." disabled>
                         실시간 반영
                     </button>
                 </div>
@@ -135,7 +135,26 @@
         display: flex;
         flex-direction: column;
         min-height: 88px;
+        transition: box-shadow .2s ease, border-color .2s ease, filter .2s ease;
+        /* ★ 현재 근무중 카드에도 아주 옅은 커피 방울 배경 */
+        background-image: linear-gradient(rgba(255,255,255,.85), rgba(255,255,255,.85)), url('/img/coffee_drop.png');
+        background-size: 140px auto;
+        background-repeat: repeat;
+        background-position: center;
     }
+
+    /* ✅ 현재 근무 중인 멤버 카드: 파란색 외곽선 깜빡임 */
+    .mini-cal-card.current-working{
+        border-color:#0d6efd;
+        box-shadow:0 0 0 2px rgba(13,110,253,.45);
+        animation: miniCardBlink 1.05s step-start infinite;
+    }
+    @keyframes miniCardBlink{
+        0%   { filter:brightness(1.0); box-shadow:0 0 0 0 rgba(13,110,253,0.00); }
+        50%  { filter:brightness(1.05); box-shadow:0 0 0 4px rgba(13,110,253,0.55); }
+        100% { filter:brightness(1.0); box-shadow:0 0 0 0 rgba(13,110,253,0.00); }
+    }
+
     .mini-cal-header{
         display:flex;
         align-items:center;
@@ -168,6 +187,7 @@
         color:#6b7280;
         white-space:nowrap;
     }
+
     .mini-cal-seg{
         border-radius:999px;
         padding:4px 8px;
@@ -177,6 +197,8 @@
         align-items:center;
         justify-content:space-between;
         gap:6px;
+        position: relative;
+        overflow: hidden;
     }
     .mini-cal-seg-time{
         font-weight:600;
@@ -185,12 +207,18 @@
         font-size:0.75rem;
         color:#6b7280;
     }
-    /* 현재 근무 중인 일정 -> 깜빡이는 라운드 렉트 */
+
+    /* ★ 현재 근무 중인 일정 -> 깜빡이는 라운드 렉트 + 커피 방울 배경 */
     .mini-cal-seg-current{
         animation: miniSegBlink 1.1s step-start infinite;
-        background:#fed7aa;
         border-color:#f97316;
         box-shadow:0 0 0 2px rgba(248, 113, 113, 0.4);
+        background-image:
+                linear-gradient(rgba(254, 215, 170, .78), rgba(254, 215, 170, .78)),
+                url('/img/coffee_drop.png');
+        background-size: auto, 26px auto;
+        background-repeat: no-repeat, repeat;
+        background-position: center, center;
     }
     @keyframes miniSegBlink{
         0%   { filter:brightness(1.0); box-shadow:0 0 0 0 rgba(248,113,113,0.0); }
@@ -198,13 +226,18 @@
         100% { filter:brightness(1.0); box-shadow:0 0 0 0 rgba(248,113,113,0.0); }
     }
 
+    /* ===== 하단 타임테이블 래퍼 (★ 커피 방울 배경 추가) ===== */
     .timetable-wrapper {
         border-radius: 0.75rem;
         border: 1px solid #edf0f4;
         max-height: calc(100vh - 260px);
         overflow-y: auto;
         overflow-x: auto;
-        background: #ffffff;
+        background-color: #ffffff;
+        background-size: auto, 160px auto;
+        background-repeat: no-repeat, repeat;
+        background-position: center, center;
+        background-attachment: local;
     }
 
     .timetable-10m tbody tr:nth-child(even) td:not(.sum-cell),
@@ -391,6 +424,13 @@
         let didAutoScrollOnce = false;
         let lastMinute = -1;
 
+        /* ==== 버튼 활성화 규칙: 10분 단위 + 금일 근무자 >= 1 ==== */
+        function updateActualButtonState() {
+            const enable = (STEP_MIN === 10) && (todayMembers.length > 0);
+            btnRegisterActual.disabled = !enable;
+            btnRegisterActual.title = enable ? '' : '10분 단위에서만 활성화됩니다.';
+        }
+
         /* ==== 초기 렌더링 ==== */
         renderNow();
         renderMiniCalendars(todayMembers);
@@ -401,16 +441,12 @@
         highlightHourSum();
         updateCurrentWorkingBlink(todayMembers);
         updateMiniCalendarState(todayMembers);   // ✅ 상태/깜빡임 초기 계산
-        // 초기에는 scrollToNowRow 호출 안 함 (위치 그대로 유지)
 
         memberCountBadge.textContent = `${todayMembers.length}명 근무 예정`;
-        btnRegisterActual.disabled = todayMembers.length === 0;
+        updateActualButtonState(); // ← 초기 상태 반영
 
         /* ==== 이벤트 바인딩 ==== */
-
-        window.addEventListener('load', function () {
-            // 초기 진입 시 자동 스크롤 없음
-        });
+        window.addEventListener('load', function () { /* 초기 자동 스크롤 없음 */ });
 
         scrollBox.addEventListener('scroll', function(){ /* 필요시 추후 사용 */ }, { passive: true });
 
@@ -421,6 +457,7 @@
                 if (!newStep || newStep === STEP_MIN) {
                     stepButtons.forEach(b => b.classList.remove('active'));
                     btn.classList.add('active');
+                    updateActualButtonState();
                     return;
                 }
 
@@ -437,6 +474,7 @@
                 highlightHourSum();
                 updateCurrentWorkingBlink(todayMembers);
                 updateMiniCalendarState(todayMembers);
+                updateActualButtonState();              // ← 단위 변경 시 즉시 반영
                 scrollToNowRow({ smooth: true });
             });
         });
@@ -450,6 +488,7 @@
 
         btnRegisterActual.addEventListener('click', async () => {
             if (!todayMembers.length) return alert('금일 근무자가 없습니다.');
+            if (STEP_MIN !== 10) return alert('실시간 반영은 10분 단위에서만 가능합니다.');
 
             const confirmMsg = '현재까지의 실제 근무(연두색) 구간을 서버에 등록하시겠습니까?';
             if (!confirm(confirmMsg)) return;
@@ -499,7 +538,7 @@
             updateDoneColors(todayMembers);
             highlightHourSum();
             updateCurrentWorkingBlink(todayMembers);
-            updateMiniCalendarState(todayMembers);  // ✅ 상태/깜빡임 주기적 업데이트
+            updateMiniCalendarState(todayMembers);
 
             const now = new Date();
             if (now.getMinutes() !== lastMinute) {
@@ -555,11 +594,12 @@
             });
         }
 
-        /* ✅ 상단 캘린더: 구간별 상태(완료/진행중/예정) + 깜빡임 처리 */
+        /* ✅ 상단 캘린더: 구간별 상태(완료/진행중/예정) + ‘진행중’이면 카드 외곽선 파란 깜빡임 */
         function updateMiniCalendarState(members){
-            // 깜빡임 초기화
             miniCalendars.querySelectorAll('.mini-cal-seg-current')
                     .forEach(el => el.classList.remove('mini-cal-seg-current'));
+            miniCalendars.querySelectorAll('.mini-cal-card.current-working')
+                    .forEach(el => el.classList.remove('current-working'));
 
             const now = new Date();
             const nowMin = now.getHours() * 60 + now.getMinutes();
@@ -569,6 +609,8 @@
                 if (!card) return;
 
                 const segEls = card.querySelectorAll('.mini-cal-seg');
+                let cardIsCurrent = false;
+
                 segEls.forEach(seg => {
                     const st = parseHm(seg.dataset.start);
                     const ed = parseHm(seg.dataset.end);
@@ -582,6 +624,7 @@
                     } else if (nowMin >= stMin && nowMin < edMin) {
                         labelText = '진행중';
                         seg.classList.add('mini-cal-seg-current');
+                        cardIsCurrent = true;
                     } else {
                         labelText = '예정';
                     }
@@ -589,6 +632,9 @@
                     const labelEl = seg.querySelector('.mini-cal-seg-label');
                     if (labelEl) labelEl.textContent = labelText;
                 });
+
+                if (cardIsCurrent) card.classList.add('current-working');
+                else card.classList.remove('current-working');
             });
         }
 
@@ -694,7 +740,6 @@
 
         /* 현재 근무 중인 스케줄 전체 구간 깜빡임 (테이블 안) */
         function updateCurrentWorkingBlink(members) {
-            // 이전 상태 제거
             bodyEl.querySelectorAll('.slot-10m.current-working')
                     .forEach(el => el.classList.remove('current-working'));
 
@@ -716,7 +761,6 @@
 
                     if (nowMin < stMin || nowMin >= edMin) return;
 
-                    // 현재 시간이 이 스케줄 안에 있으면, 해당 스케줄 전체 슬롯에 current-working 클래스
                     for (let i = 0; i < slots.length; i++) {
                         const slotStartMin = HOUR_START * 60 + i * STEP_MIN;
                         const slotEndMin   = slotStartMin + STEP_MIN;
