@@ -18,7 +18,7 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 @ToString(exclude = "schedules")
-public class Member {
+public class Member_ {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -37,7 +37,7 @@ public class Member {
     private LocalDate startDate;
 
     /** 연락처/이메일/시급/보건증 만료일 */
-    @Column(nullable = false)
+    @Column(nullable = false, unique = false)
     private String phone;
 
     @Column
@@ -54,37 +54,17 @@ public class Member {
     private Boolean hasHealthCertificate = false;
 
     /** 은행명 */
-    @Column
+    @Column(nullable = true)
     private String bankName;
 
     /** 계좌 */
-    @Column
+    @Column(nullable = true)
     private String bankAccount;
 
     /** 상태 */
     @Enumerated(EnumType.STRING)
     @Column(length = 20, nullable = false)
     private Status status = Status.WORKING;
-
-    /** ====== [추가] 급여지급일 / 주휴수당 적용 여부 ====== */
-    /**
-     * 급여지급일 코드
-     * - "EOM" = 말일
-     * - "1" ~ "31" = 해당 일자
-     *
-     * 프런트에서 select name="payday" 로 내려온 값을 그대로 저장합니다.
-     */
-    @Column(length = 8)
-    @Builder.Default
-    private String payday = null;   // 미지정 가능
-
-    /**
-     * 주휴수당 적용 여부 (기본 미적용)
-     * 프런트의 체크박스 name="includeWeeklyHolidayAllowance" 와 매핑됩니다.
-     */
-    @Column(nullable = false)
-    @Builder.Default
-    private Boolean includeWeeklyHolidayAllowance = false;
 
     /** 데이터 등록/수정일 */
     @CreationTimestamp
@@ -103,17 +83,4 @@ public class Member {
         WAITING, WORKING, RESTING, PAUSED, RESIGNED
     }
 
-    /* ================= 유틸 ================= */
-
-    /** 급여지급일 표시용 라벨 (예: "말일" 또는 "15일", 미지정 시 "-") */
-    public String getPaydayLabel() {
-        if (payday == null || payday.isBlank()) return "-";
-        if ("EOM".equalsIgnoreCase(payday)) return "말일";
-        return payday + "일";
-    }
-
-    /** 주휴수당 적용 여부(표시용) */
-    public String getWeeklyHolidayAllowanceLabel() {
-        return Boolean.TRUE.equals(includeWeeklyHolidayAllowance) ? "적용" : "미적용";
-    }
 }
