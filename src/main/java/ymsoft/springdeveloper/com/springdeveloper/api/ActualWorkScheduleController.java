@@ -25,9 +25,6 @@ public class ActualWorkScheduleController {
     @Autowired
     private final ActualWorkScheduleService service;
 
-    @Autowired
-    private final WorkScheduleService workScheduleService;
-
     @PostMapping("/save")
     public ResponseEntity<Map<String, Object>> saveActual(@RequestBody ActualWorkScheduleDto request) {
         log.info("Received save request for memberId={}, date={}", request.getMemberId(), request.getDate());
