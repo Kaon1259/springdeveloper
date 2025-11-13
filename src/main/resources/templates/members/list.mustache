@@ -65,12 +65,6 @@
                 </div>
                 <div class="d-flex flex-column align-items-end gap-2">
                     <span id="statusBadge" class="status-badge">-</span>
-                    <button type="button" id="btnSaveTemplate" class="btn btn-sm btn-primary btn-save-template" disabled>
-                        주간 템플릿 저장
-                    </button>
-                    <div class="text-xs text-muted text-end">
-                        10분 단위 · 주간 템플릿 뷰에서만 저장 가능
-                    </div>
                 </div>
             </header>
 
@@ -161,7 +155,18 @@
                     <div class="title-sm">SCHEDULE</div>
                     <h3 class="title-md mb-0" id="selectedMemberTitle">주간 템플릿 (월~일)</h3>
                 </div>
-                <span id="selectedMemberStatus" class="status-chip d-none">-</span>
+                <div class="text-end">
+                    <button type="button" id="btnSaveTemplate"
+                            class="btn btn-sm btn-primary btn-save-template me-2"
+                            disabled>
+                        주간 템플릿 저장
+                    </button>
+                    <span id="selectedMemberStatus" class="status-chip d-none">-</span>
+                    <div class="text-xs text-muted">
+                        10분 단위 · 주간 템플릿 뷰에서만 저장 가능
+                    </div>
+                </div>
+
             </header>
 
             <div class="panel-body">
@@ -179,7 +184,7 @@
                         </div>
                         <div class="text-xs text-muted text-end">
                             마우스를 드래그하거나 클릭하여 <strong>주간 템플릿(계획)</strong>을 설정하세요.<br>
-                            <span class="text-primary">파란색 셀 = 기존 템플릿과 달라진 구간</span>
+                            <span class="text-primary">선택된 셀만 색이 칠해지고, 다시 클릭하면 흰색으로 돌아옵니다.</span>
                         </div>
                     </div>
 
@@ -202,13 +207,12 @@
                             </table>
                         </div>
                         <div class="legend-row text-xs text-muted mt-2">
-                            <span class="legend-box legend-plan"></span> 템플릿(기존 / 저장된 계획)
-                            <span class="legend-box legend-changed ms-3"></span> 수정된 셀(추가·삭제 포함)
+                            <span class="legend-box legend-plan"></span> 선택된 템플릿 셀
                         </div>
                     </div>
                 </div>
 
-                <!-- 뷰 2: 주간 근무시간 요약 표 -->
+                <!-- 뷰 2: 주간 근무시간 요약 표 (타임테이블 숨김용 래퍼만 유지) -->
                 <div id="viewWeekSummary" class="d-none">
                     <div class="summary-board">
                         <div class="table-responsive">
@@ -264,7 +268,7 @@
                     </div>
                 </div>
 
-                <!-- 뷰 3: 월간 달력 -->
+                <!-- 뷰 3: 월간 달력 (타임테이블 숨김용 래퍼만 유지) -->
                 <div id="viewMonthCalendar" class="d-none">
                     <div class="calendar-board">
                         <div class="calendar-grid" id="calendarGrid"></div>
@@ -301,6 +305,22 @@
 
     </div>
 </main>
+
+<!-- ===== 빈 팝업(모달) 추가 ===== -->
+<div class="modal fade" id="schedulePopup" tabindex="-1" aria-labelledby="schedulePopupTitle" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="schedulePopupTitle">근무시간</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="닫기"></button>
+            </div>
+            <div class="modal-body text-center text-muted py-5">
+                표시할 데이터가 없습니다.<br>
+                (주간/월간 근무시간 팝업 영역 · 추후 구현용)
+            </div>
+        </div>
+    </div>
+</div>
 
 <style>
     /* ===== 전체 배경/레이아웃 ===== */
@@ -638,18 +658,11 @@
         transform: translateY(-0.5px);
     }
 
-    /* 기존 템플릿(서버에서 내려온 상태) */
+    /* 선택된 템플릿 셀 */
     .cell-10m.schedule-on {
-        background: rgba(248, 164, 76, 0.35);
+        background: rgba(248, 164, 76, 0.6);
         border-color: rgba(248, 164, 76, 0.9);
-        box-shadow: 0 0 0 1px rgba(248,164,76,0.6);
-    }
-
-    /* 기존과 다른 셀(추가 또는 삭제 포함) - 파란색 */
-    .cell-10m.cell-changed {
-        background: rgba(59,130,246,0.45);
-        border-color: rgba(59,130,246,0.95);
-        box-shadow: 0 0 0 1px rgba(37,99,235,0.9);
+        box-shadow: 0 0 0 1px rgba(248,164,76,0.8);
     }
 
     tr.hour-start > td, tr.hour-start > th {
@@ -674,10 +687,6 @@
         background: rgba(248, 164, 76, 0.6);
         border-color: rgba(248, 164, 76, 0.9);
     }
-    .legend-changed {
-        background: rgba(59,130,246,0.7);
-        border-color: rgba(37,99,235,0.95);
-    }
 
     .slot-btn-group .btn {
         border-radius:999px;
@@ -688,6 +697,12 @@
         background:#0f172a;
         color:#f9fafb;
         border-color:#0f172a;
+    }
+
+    /* ===== 주간 요약/월간 타임테이블 숨기기 ===== */
+    #viewWeekSummary .summary-board,
+    #viewMonthCalendar .calendar-board {
+        display: none !important;
     }
 
     /* ===== 주간 요약 ===== */
@@ -826,6 +841,7 @@
         const DOW_LABELS = ['월','화','수','목','금','토','일'];
         const DAY_CODES = ['MON','TUE','WED','THU','FRI','SAT','SUN'];
 
+        let schedulePopupInstance = null;
 
         // DOM
         const statusSelect      = document.getElementById('statusSelect');
@@ -925,6 +941,19 @@
             if(!btn) return;
             const view=btn.dataset.view;
             setActiveTabButton(view);
+
+            // 🔹 주간근무시간 클릭 시: 팝업 새 창으로
+            if (view === 'weekSummary') {
+                openWeekSummaryPopupWindow();
+                return;   // 아래 switchView 등은 안 타게 종료 (페이지 안 타임테이블은 안씀)
+            }
+
+            // 월간 근무시간도 같은 방식으로 팝업 쓰려면 여기서 openMonthPopupWindow() 호출
+            if (view === 'monthCalendar') {
+                openMonthSummaryPopupWindow();  // 필요 시 구현
+                return;
+            }
+
             switchView(view);
             const url=new URL(window.location.href);
             url.searchParams.set(VIEW_PARAM, view);
@@ -1048,10 +1077,10 @@
             // 템플릿 그리드(주간) 재구성 + 계획만 칠하기
             rebuildWeekGridAndPaint();
 
-            // 주간 요약표 (계획/실제 둘 다 사용)
+            // 주간 요약표 (계획/실제 둘 다 사용 - 화면에서는 숨겨짐)
             await renderWeekSummary(member, weekDates, lastPlanMap, lastActualMap);
 
-            // 월간 달력 (실제 근무)
+            // 월간 달력 (실제 근무 - 화면에서는 숨겨짐)
             const baseDate = parseIsoDate(weekStartIso);
             await renderMonthCalendar(member, baseDate);
 
@@ -1086,6 +1115,53 @@
             viewWeekGrid.classList.toggle('d-none', view!=='weekGrid');
             viewWeekSummary.classList.toggle('d-none', view!=='weekSummary');
             viewMonthCalendar.classList.toggle('d-none', view!=='monthCalendar');
+        }
+
+        function openMonthSummaryPopupWindow() {
+            if (!currentMember || !currentWeekDates.length) {
+                alert('선택된 아르바이트 또는 주간 정보가 없습니다.');
+                return;
+            }
+
+            const memberId  = currentMember.id;        // 필수
+            const anchor    = currentWeekDates[0];     // 예: "2025-11-01"
+
+            const url =
+                    `/members/showworkmonthdashboardpopup` +
+                    `?memberId=${encodeURIComponent(memberId)}` +
+                    `&week=${encodeURIComponent(anchor)}` +
+                    `&month=${encodeURIComponent(anchor)}`;
+
+            window.open(
+                    url,
+                    'monthSummaryPopup',
+                    'width=1600,height=800,scrollbars=yes,resizable=yes'
+            );
+        }
+
+
+        function openWeekSummaryPopupWindow() {
+            if (!currentMember || !currentWeekDates.length) {
+                alert('선택된 아르바이트 또는 주간 정보가 없습니다.');
+                return;
+            }
+
+            const memberId   = currentMember.id;
+            const startDate  = currentWeekDates[0];      // "2025-11-01"
+            const endDate    = currentWeekDates[6];      // "2025-11-07"
+
+            const url =
+                    `/members/showworktimedashboardpopup` +
+                    `?memberId=${encodeURIComponent(memberId)}` +
+                    `&startDate=${encodeURIComponent(startDate)}` +
+                    `&endDate=${encodeURIComponent(endDate)}`;
+
+            // 실제 팝업 오픈
+            window.open(
+                    url,
+                    'weekSummaryPopup',
+                    'width=1600,height=800,scrollbars=yes,resizable=yes'
+            );
         }
 
         // ===== 월 내비: 리로드 없이 작동 =====
@@ -1193,14 +1269,13 @@
             return { startMin, endMin };
         }
 
-        // 계획 칠하기 (schedule-on) + 원본 상태 표기(data-original)
+        // 계획 칠하기 (schedule-on)
         function paintPlanFromMap(planMap, weekDates){
             if(!tbodyWeek) return;
 
             // 전체 초기화
             tbodyWeek.querySelectorAll('.cell-10m').forEach(c=>{
-                c.classList.remove('schedule-on','cell-changed');
-                c.dataset.original = '0';   // 기본은 원본 off
+                c.classList.remove('schedule-on');
             });
 
             if(!weekDates || !weekDates.length) return;
@@ -1224,18 +1299,16 @@
                     });
                     if(overlaps){
                         cellDiv.classList.add('schedule-on');
-                        cellDiv.dataset.original = '1';   // 이 셀은 원본에서 ON
                     }
                 });
             }
         }
 
-        // ===== 드래그/클릭으로 템플릿 선택/해제 (이벤트 위임 버전) =====
+        // ===== 드래그/클릭으로 템플릿 선택/해제 (이벤트 위임, 단순 토글) =====
         let cellDragHandlersBound = false;
 
         function attachCellDragHandlers(){
             if (!tbodyWeek || cellDragHandlersBound) return;
-            // 한 번만 바인딩
             cellDragHandlersBound = true;
 
             // 1) 마우스를 누르는 시점에: 기준 상태를 정하고 바로 토글 + 드래그 시작
@@ -1271,21 +1344,12 @@
             }, { passive:true });
         }
 
-        // 원본 상태와 비교해서 변경 여부에 따라 파란색 처리
+        // 선택 토글: on이면 주황색, off면 흰색
         function togglePlanCell(cell, on){
-            const original = cell.dataset.original === '1';
-
-            if(on) cell.classList.add('schedule-on');
-            else   cell.classList.remove('schedule-on');
-
-            const nowOn = cell.classList.contains('schedule-on');
-
-            if(nowOn !== original){
-                // 원본과 다르면 변경된 셀 → 파란색
-                cell.classList.add('cell-changed');
+            if(on){
+                cell.classList.add('schedule-on');
             }else{
-                // 원본과 동일해지면 변경 해제
-                cell.classList.remove('cell-changed');
+                cell.classList.remove('schedule-on');
             }
         }
 
@@ -1344,7 +1408,7 @@
                 }
 
                 alert('주간 템플릿(계획)이 저장되었습니다.');
-                await renderAll(currentMember);   // 저장 후 다시 로딩 → 파란색 모두 초기화
+                await renderAll(currentMember);   // 저장 후 다시 로딩
             }catch(e){
                 console.error('템플릿 저장 중 예외:', e);
                 alert('템플릿 저장 중 오류가 발생했습니다.\n' + (e.message || e));
@@ -1429,21 +1493,29 @@
             `);
             }
 
-            tbodyWeekSummary.innerHTML = rows.join('');
-            weekPlannedTotalCell.textContent = formatMins(wPlanned);
-            weekActualTotalCell.textContent  = formatMins(wActual);
-            weekDeltaCell.textContent        = deltaString(wActual - wPlanned);
+            if(tbodyWeekSummary){
+                tbodyWeekSummary.innerHTML = rows.join('');
+            }
+            if(weekPlannedTotalCell) weekPlannedTotalCell.textContent = formatMins(wPlanned);
+            if(weekActualTotalCell)  weekActualTotalCell.textContent  = formatMins(wActual);
+            if(weekDeltaCell)        weekDeltaCell.textContent        = deltaString(wActual - wPlanned);
 
             const wage = (typeof member?.hourlyWage === 'number') ? member.hourlyWage : null;
-            hourlyWageCellW.textContent = (wage!=null) ? krw(wage) : '-';
+            if(hourlyWageCellW){
+                hourlyWageCellW.textContent = (wage!=null) ? krw(wage) : '-';
+            }
 
             const juhyuMinutesWeek = calcWeeklyJuhyuMinutes(wActual);
             const juhyuPayWeek = (wage!=null) ? Math.round((juhyuMinutesWeek/60)*wage) : null;
-            weekJuhyuPayCell.textContent = (juhyuPayWeek!=null) ? krw(juhyuPayWeek) : '-';
+            if(weekJuhyuPayCell){
+                weekJuhyuPayCell.textContent = (juhyuPayWeek!=null) ? krw(juhyuPayWeek) : '-';
+            }
 
             const basePayWeek = (wage!=null) ? Math.round((wActual/60)*wage) : null;
             const totalPayWeek = (basePayWeek!=null && juhyuPayWeek!=null) ? basePayWeek + juhyuPayWeek : null;
-            weekPayCell.textContent = (totalPayWeek!=null) ? krw(totalPayWeek) : '-';
+            if(weekPayCell){
+                weekPayCell.textContent = (totalPayWeek!=null) ? krw(totalPayWeek) : '-';
+            }
         }
 
         // ===== 월간 달력 (실제 근무 + 주별 주휴수당 합산) =====
@@ -1452,15 +1524,19 @@
             const me = new Date(baseDate.getFullYear(), baseDate.getMonth()+1, 0);
             const monthStartIso = toIso(ms), monthEndIso = toIso(me);
 
-            monthLabel.textContent = `${ms.getFullYear()}.${String(ms.getMonth()+1).padStart(2,'0')}`;
-            monthLabel.dataset.monthStart = monthStartIso;
+            if(monthLabel){
+                monthLabel.textContent = `${ms.getFullYear()}.${String(ms.getMonth()+1).padStart(2,'0')}`;
+                monthLabel.dataset.monthStart = monthStartIso;
+            }
 
             const leftY = ms.getFullYear();
             const leftM = String(ms.getMonth()+1).padStart(2,'0');
             const leftD = '01';
             const rightM = String(me.getMonth()+1).padStart(2,'0');
             const rightD = String(me.getDate()).padStart(2,'0');
-            monthRangeLabel.textContent = `${leftY}.${leftM}.${leftD} ~ ${rightM}.${rightD}`;
+            if(monthRangeLabel){
+                monthRangeLabel.textContent = `${leftY}.${leftM}.${leftD} ~ ${rightM}.${rightD}`;
+            }
 
             let actualMap = {};
             try {
@@ -1469,21 +1545,27 @@
                 if (resp.ok) { actualMap = normalizeDays(await resp.json()); }
             } catch (e) { console.error(e); }
 
-            calendarGrid.innerHTML = '';
+            if(calendarGrid){
+                calendarGrid.innerHTML = '';
+            }
             const DOW_HEAD = ['일','월','화','수','목','금','토'];
-            DOW_HEAD.forEach(label=>{
-                const h = document.createElement('div');
-                h.className = 'dow';
-                h.textContent = label;
-                calendarGrid.appendChild(h);
-            });
+            if(calendarGrid){
+                DOW_HEAD.forEach(label=>{
+                    const h = document.createElement('div');
+                    h.className = 'dow';
+                    h.textContent = label;
+                    calendarGrid.appendChild(h);
+                });
+            }
 
             const todayIso = toIso(new Date());
             const firstDow = ms.getDay();
-            for (let i=0;i<firstDow;i++){
-                const blank = document.createElement('div');
-                blank.className = 'cell muted';
-                calendarGrid.appendChild(blank);
+            if(calendarGrid){
+                for (let i=0;i<firstDow;i++){
+                    const blank = document.createElement('div');
+                    blank.className = 'cell muted';
+                    calendarGrid.appendChild(blank);
+                }
             }
 
             let monthMinutes = 0;
@@ -1502,23 +1584,25 @@
                     weeklyMinutesMap[weekIso] = (weeklyMinutesMap[weekIso] || 0) + dayMinutes;
                 }
 
-                const cell = document.createElement('div');
-                cell.className = 'cell';
-                if (iso === todayIso) cell.classList.add('today');
+                if(calendarGrid){
+                    const cell = document.createElement('div');
+                    cell.className = 'cell';
+                    if (iso === todayIso) cell.classList.add('today');
 
-                const chipsHtml = (a.segments?.length)
-                        ? a.segments.map(s=>chipHtml(colorForMember(member), s.start, s.end)).join(' ')
-                        : '<span class="text-muted text-xs">—</span>';
+                    const chipsHtml = (a.segments?.length)
+                            ? a.segments.map(s=>chipHtml(colorForMember(member), s.start, s.end)).join(' ')
+                            : '<span class="text-muted text-xs">—</span>';
 
-                cell.innerHTML = `
-                <div class="date-head">
-                    <span>${d.getDate()}일</span>
-                    <span class="dow-mini">${DOW_HEAD[dow]}</span>
-                </div>
-                <div class="segments">${chipsHtml}</div>
-                <div class="day-total">${formatMins(dayMinutes)}</div>
-            `;
-                calendarGrid.appendChild(cell);
+                    cell.innerHTML = `
+                    <div class="date-head">
+                        <span>${d.getDate()}일</span>
+                        <span class="dow-mini">${DOW_HEAD[dow]}</span>
+                    </div>
+                    <div class="segments">${chipsHtml}</div>
+                    <div class="day-total">${formatMins(dayMinutes)}</div>
+                `;
+                    calendarGrid.appendChild(cell);
+                }
             }
 
             let monthJuhyuMinutes = 0;
@@ -1526,9 +1610,13 @@
                 monthJuhyuMinutes += calcWeeklyJuhyuMinutes(weekMinutes);
             });
 
-            monthActualTotalCell.textContent = formatMins(monthMinutes);
+            if(monthActualTotalCell){
+                monthActualTotalCell.textContent = formatMins(monthMinutes);
+            }
             const wage = (typeof member?.hourlyWage==='number') ? member?.hourlyWage : null;
-            hourlyWageCellM.textContent = (wage!=null) ? krw(wage) : '-';
+            if(hourlyWageCellM){
+                hourlyWageCellM.textContent = (wage!=null) ? krw(wage) : '-';
+            }
 
             let basePay = null, juhyuPay = null, totalPay = null;
             if (wage != null){
@@ -1537,8 +1625,12 @@
                 totalPay = basePay + juhyuPay;
             }
 
-            monthJuhyuPayCell.textContent = (juhyuPay!=null) ? krw(juhyuPay) : '-';
-            monthPayCell.textContent      = (totalPay!=null) ? krw(totalPay) : '-';
+            if(monthJuhyuPayCell){
+                monthJuhyuPayCell.textContent = (juhyuPay!=null) ? krw(juhyuPay) : '-';
+            }
+            if(monthPayCell){
+                monthPayCell.textContent      = (totalPay!=null) ? krw(totalPay) : '-';
+            }
         }
 
         function getCurrentMonthStart(){
@@ -1597,21 +1689,21 @@
             selectedMemberStatus.className    = 'status-chip d-none';
 
             tbodyWeek.innerHTML               = '';
-            tbodyWeekSummary.innerHTML        = '';
-            calendarGrid.innerHTML            = '';
+            if(tbodyWeekSummary) tbodyWeekSummary.innerHTML        = '';
+            if(calendarGrid) calendarGrid.innerHTML            = '';
 
-            weekPlannedTotalCell.textContent  = '0시간';
-            weekActualTotalCell.textContent   = '0시간';
-            weekDeltaCell.textContent         = '0분';
-            weekPayCell.textContent           = '-';
-            weekJuhyuPayCell.textContent      = '-';
-            hourlyWageCellW.textContent       = '-';
+            if(weekPlannedTotalCell) weekPlannedTotalCell.textContent  = '0시간';
+            if(weekActualTotalCell)  weekActualTotalCell.textContent   = '0시간';
+            if(weekDeltaCell)        weekDeltaCell.textContent         = '0분';
+            if(weekPayCell)          weekPayCell.textContent           = '-';
+            if(weekJuhyuPayCell)     weekJuhyuPayCell.textContent      = '-';
+            if(hourlyWageCellW)      hourlyWageCellW.textContent       = '-';
 
-            monthActualTotalCell.textContent  = '0시간';
-            monthJuhyuPayCell.textContent     = '-';
-            monthPayCell.textContent          = '-';
-            hourlyWageCellM.textContent       = '-';
-            monthRangeLabel.textContent       = '0000.00.01 ~ 00.00';
+            if(monthActualTotalCell) monthActualTotalCell.textContent  = '0시간';
+            if(monthJuhyuPayCell)    monthJuhyuPayCell.textContent     = '-';
+            if(monthPayCell)         monthPayCell.textContent          = '-';
+            if(hourlyWageCellM)      hourlyWageCellM.textContent       = '-';
+            if(monthRangeLabel)      monthRangeLabel.textContent       = '0000.00.01 ~ 00.00';
 
             currentWeekDates = [];
             lastPlanMap = {};
