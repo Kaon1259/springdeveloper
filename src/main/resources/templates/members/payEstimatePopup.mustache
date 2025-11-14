@@ -1,0 +1,425 @@
+{{>layouts/header_}}
+
+<main class="popup-shell container py-4">
+
+    <h2 class="title-lg mb-4">예상 급여 계산</h2>
+
+    <!-- ===================== 상단 정보 (3컬럼/줄) ===================== -->
+    <section class="mb-4">
+        <table class="table table-bordered align-middle mb-0">
+            <tbody>
+            <tr>
+                <th class="bg-light w-15">이름</th>
+                <td class="w-18">{{member.name}}</td>
+                <th class="bg-light w-15">성별</th>
+                <td class="w-18">{{member.gender}}</td>
+                <th class="bg-light w-15">상태</th>
+                <td class="w-19">{{member.status}}</td>
+            </tr>
+            <tr>
+                <th class="bg-light">시작일</th>
+                <td>{{member.startDate}}</td>
+                <th class="bg-light">시급</th>
+                <td>{{member.hourlyWage}} 원</td>
+                <th class="bg-light">급여지급일</th>
+                <td>{{member.payday}}</td>
+            </tr>
+            <tr>
+                <th class="bg-light">주휴수당</th>
+                <td>
+                    {{#member.includeWeeklyHolidayAllowance}}적용{{/member.includeWeeklyHolidayAllowance}}
+                    {{^member.includeWeeklyHolidayAllowance}}미적용{{/member.includeWeeklyHolidayAllowance}}
+                </td>
+                <th class="bg-light">세금(3.3%)</th>
+                <td>
+                    {{#member.applyTax}}적용{{/member.applyTax}}
+                    {{^member.applyTax}}미적용{{/member.applyTax}}
+                </td>
+                <th class="bg-light">보건증</th>
+                <td>
+                    {{#member.hasHealthCertificate}}
+                        보유{{#member.healthCertExpiry}} (유효: {{member.healthCertExpiry}}){{/member.healthCertExpiry}}
+                    {{/member.hasHealthCertificate}}
+                    {{^member.hasHealthCertificate}}미보유{{/member.hasHealthCertificate}}
+                </td>
+            </tr>
+            <tr>
+                <th class="bg-light">은행</th>
+                <td>{{member.bankName}}</td>
+                <th class="bg-light">계좌번호</th>
+                <td colspan="3">{{member.bankAccount}}</td>
+            </tr>
+            </tbody>
+        </table>
+    </section>
+
+    <!-- ===================== 주간/월간 예상 급여 카드 (2컬럼) ===================== -->
+    <section class="mb-4">
+        <div class="row g-3">
+            <!-- 주간 카드 -->
+            <div class="col-12 col-lg-6">
+                <div class="card pay-card h-100">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span class="fw-semibold">주간 예상 급여</span>
+                        <span class="text-muted text-xs">
+                            기간: <strong>{{weekStart}} ~ {{weekEnd}}</strong>
+                        </span>
+                    </div>
+                    <div class="card-body py-3">
+                        <dl class="row pay-dl">
+                            <dt class="col-6">총 근무시간</dt>
+                            <dd class="col-6 text-end" id="weekMinutesCell">-</dd>
+
+                            <dt class="col-6">근무수당</dt>
+                            <dd class="col-6 text-end" id="weekBasePayCell">-</dd>
+
+                            <dt class="col-6">주휴수당</dt>
+                            <dd class="col-6 text-end" id="weekJuhyuPayCell">-</dd>
+
+                            <dt class="col-6 fw-semibold border-top pt-2 mt-1">주간 합계 (근무 + 주휴)</dt>
+                            <dd class="col-6 text-end fw-semibold border-top pt-2 mt-1" id="weekGrossCell">-</dd>
+
+                            <dt class="col-6 mt-2">세금(3.3%)</dt>
+                            <dd class="col-6 text-end mt-2" id="weekTaxCell">-</dd>
+
+                            <dt class="col-6 text-primary fw-semibold mt-1">실지급액(주간)</dt>
+                            <dd class="col-6 text-end text-primary fw-semibold mt-1" id="weekNetCell">-</dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 월간 카드 -->
+            <div class="col-12 col-lg-6">
+                <div class="card pay-card h-100">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span class="fw-semibold">월간 예상 급여</span>
+                        <span class="text-muted text-xs">
+                            기준 월: <strong id="monthLabelCell"></strong>
+                        </span>
+                    </div>
+                    <div class="card-body py-3">
+                        <dl class="row pay-dl">
+                            <dt class="col-6">월 근무시간(예상)</dt>
+                            <dd class="col-6 text-end" id="monthMinutesCell">-</dd>
+
+                            <dt class="col-6">근무수당</dt>
+                            <dd class="col-6 text-end" id="monthBasePayCell">-</dd>
+
+                            <dt class="col-6">월 주휴수당(예상)</dt>
+                            <dd class="col-6 text-end" id="monthJuhyuPayCell">-</dd>
+
+                            <dt class="col-6 fw-semibold border-top pt-2 mt-1">월 합계 (근무 + 주휴)</dt>
+                            <dd class="col-6 text-end fw-semibold border-top pt-2 mt-1" id="monthGrossCell">-</dd>
+
+                            <dt class="col-6 mt-2">세금(3.3%)</dt>
+                            <dd class="col-6 text-end mt-2" id="monthTaxCell">-</dd>
+
+                            <dt class="col-6 text-primary fw-semibold mt-1">실지급액(월간)</dt>
+                            <dd class="col-6 text-end text-primary fw-semibold mt-1" id="monthNetCell">-</dd>
+                        </dl>
+                        <div class="text-muted text-xs mt-1">
+                            * 월 예상치는 주간 템플릿 근무시간을 바탕으로 1개월 ≒ 4.345주 기준으로 산정합니다.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===================== 주간 근무 캘린더 (가로형 월~일) ===================== -->
+    <section class="mb-3">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <h4 class="subtitle mb-0">주간 근무 캘린더 (월~일)</h4>
+            <div class="text-muted text-xs">
+                기간: <strong>{{weekStart}} ~ {{weekEnd}}</strong>
+            </div>
+        </div>
+
+        <div class="calendar-grid-week" id="weeklyCalendarGrid">
+            <!-- JS에서 월~일까지 7칸 생성 -->
+        </div>
+    </section>
+
+</main>
+
+<!-- ====== memberDto JSON 주입 ====== -->
+<script id="memberData" type="application/json">
+{{{memberJson}}}
+</script>
+
+<style>
+    body {
+        background:#f8fafc;
+        font-family:Pretendard, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+    .popup-shell {
+        max-width: 1080px;
+    }
+    .title-lg {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color:#111827;
+    }
+    .subtitle {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color:#1f2937;
+    }
+    .text-xs {
+        font-size: .78rem;
+    }
+
+    /* 상단 정보 테이블 넓이 비율(대략) */
+    .w-15 { width:15%; }
+    .w-18 { width:18%; }
+    .w-19 { width:19%; }
+
+    /* 급여 카드 공통 */
+    .pay-card {
+        border-radius: 14px;
+        box-shadow: 0 12px 30px rgba(15,23,42,0.06);
+        border: 1px solid #e5e7eb;
+    }
+    .pay-card .card-header {
+        background: linear-gradient(90deg, #f9fafb, #eff6ff);
+        border-bottom: 1px solid #e5e7eb;
+        padding-block: .45rem;
+    }
+    .pay-dl {
+        margin-bottom: 0;
+        font-size: .88rem;
+    }
+    .pay-dl dt {
+        color:#4b5563;
+        padding-top:.2rem;
+        padding-bottom:.2rem;
+    }
+    .pay-dl dd {
+        padding-top:.2rem;
+        padding-bottom:.2rem;
+        margin-bottom:0;
+        color:#111827;
+    }
+
+    /* 가로형 주간 캘린더 */
+    .calendar-grid-week {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 10px;
+    }
+    .week-cell {
+        background:#ffffff;
+        border:1px solid #d1d5db;
+        border-radius: 14px;
+        padding: 10px 8px;
+        min-height: 160px;
+        display:flex;
+        flex-direction:column;
+    }
+    .week-day-title {
+        text-align:center;
+        font-weight:600;
+        font-size:.9rem;
+        color:#111827;
+        border-bottom:1px dashed #e5e7eb;
+        padding-bottom:4px;
+        margin-bottom:6px;
+    }
+    .week-segments {
+        flex:1 1 auto;
+        font-size:.8rem;
+    }
+    .chip {
+        display:inline-flex;
+        align-items:center;
+        padding:3px 8px;
+        border-radius:999px;
+        background:#e5e7f0;
+        margin:2px 2px;
+        font-size:.78rem;
+        white-space:nowrap;
+    }
+    .day-total {
+        margin-top:auto;
+        text-align:right;
+        font-size:.8rem;
+        font-weight:600;
+        color:#374151;
+        border-top: 1px solid #e5e7eb;
+        padding-top:4px;
+    }
+
+    @media (max-width: 992px) {
+        .calendar-grid-week {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+    @media (max-width: 576px) {
+        .calendar-grid-week {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<script>
+    (function () {
+        // ---------- JSON 파싱 ----------
+        const member = JSON.parse(document.getElementById('memberData').textContent || '{}');
+        console.log('member from JSON', member);
+
+        const weekStart = "{{weekStart}}";
+        const weekEnd   = "{{weekEnd}}";
+
+        const weeklyGridEl     = document.getElementById("weeklyCalendarGrid");
+        const monthLabelCell   = document.getElementById("monthLabelCell");
+
+        const weekMinutesCell  = document.getElementById("weekMinutesCell");
+        const weekBasePayCell  = document.getElementById("weekBasePayCell");
+        const weekJuhyuPayCell = document.getElementById("weekJuhyuPayCell");
+        const weekGrossCell    = document.getElementById("weekGrossCell");
+        const weekTaxCell      = document.getElementById("weekTaxCell");
+        const weekNetCell      = document.getElementById("weekNetCell");
+
+        const monthMinutesCell = document.getElementById("monthMinutesCell");
+        const monthBasePayCell = document.getElementById("monthBasePayCell");
+        const monthJuhyuPayCell= document.getElementById("monthJuhyuPayCell");
+        const monthGrossCell   = document.getElementById("monthGrossCell");
+        const monthTaxCell     = document.getElementById("monthTaxCell");
+        const monthNetCell     = document.getElementById("monthNetCell");
+
+        const schedules = Array.isArray(member.schedule) ? member.schedule : [];
+
+        const dayIndexMap = { MON:0, TUE:1, WED:2, THU:3, FRI:4, SAT:5, SUN:6 };
+        const dayLabels   = ["월","화","수","목","금","토","일"];
+
+        const daySegments = [[],[],[],[],[],[],[]];
+        const dayMinutes  = [0,0,0,0,0,0,0];
+
+        // DTO의 schedule -> 요일별 segment/분으로 정리
+        schedules.forEach(row => {
+            if(!row || !row.day) return;
+            const idx = dayIndexMap[row.day];
+            if (idx == null) return;
+            const start = row.start;
+            const end   = row.end;
+            daySegments[idx].push({start, end});
+            dayMinutes[idx] += diffMinutes(start, end);
+        });
+
+        // ======= 주간 캘린더 렌더링 (월~일 가로형) =======
+        function renderWeeklyGrid() {
+            let html = "";
+            for(let i=0; i<7; i++){
+                const label = dayLabels[i];
+                const segs  = daySegments[i];
+                const mins  = dayMinutes[i];
+
+                const segHtml = segs.length
+                        ? segs.map(s => `<span class="chip">${s.start} ~ ${s.end}</span>`).join("")
+                        : `<span class="text-muted">-</span>`;
+
+                html += `
+                <div class="week-cell">
+                    <div class="week-day-title">${label}</div>
+                    <div class="week-segments">
+                        ${segHtml}
+                    </div>
+                    <div class="day-total">
+                        일 합계: ${formatMins(mins)}
+                    </div>
+                </div>
+            `;
+            }
+            weeklyGridEl.innerHTML = html;
+        }
+
+        // ======= 주간/월간 급여 계산 & 카드에 반영 =======
+        function calcAndRenderPays() {
+            const wage = Number(member.hourlyWage || 0);
+            const includeWeekly = member.includeWeeklyHolidayAllowance === true;
+            const applyTax = member.applyTax === true;
+
+            const weekTotalMinutes = dayMinutes.reduce((a,b)=>a+b, 0);
+
+            // 주휴: 주 15시간 이상일 때 (분 기준 900분)
+            const juhyuWeekMinutes = (includeWeekly && weekTotalMinutes >= 900)
+                    ? Math.round(weekTotalMinutes / 5)
+                    : 0;
+
+            const weekBasePay = Math.round((weekTotalMinutes / 60) * wage);
+            const weekJuhyuPay = Math.round((juhyuWeekMinutes / 60) * wage);
+            const weekGross = weekBasePay + weekJuhyuPay;
+            const weekTax = applyTax ? Math.round(weekGross * 0.033) : 0;
+            const weekNet = weekGross - weekTax;
+
+            weekMinutesCell.textContent  = formatMins(weekTotalMinutes);
+            weekBasePayCell.textContent  = krw(weekBasePay);
+            weekJuhyuPayCell.textContent = krw(weekJuhyuPay);
+            weekGrossCell.textContent    = krw(weekGross);
+            weekTaxCell.textContent      = krw(weekTax);
+            weekNetCell.textContent      = krw(weekNet);
+
+            // 기준 월 라벨 (YYYY-MM)
+            if(weekStart && weekStart.length >= 7){
+                monthLabelCell.textContent = weekStart.substring(0,7);
+            } else {
+                monthLabelCell.textContent = "-";
+            }
+
+            // 월 예상치: 주 * 4.345주
+            const weeksPerMonth = 4.345;
+            const monthTotalMinutes = Math.round(weekTotalMinutes * weeksPerMonth);
+            const monthBasePay = Math.round((monthTotalMinutes / 60) * wage);
+
+            const monthJuhyuMinutes = (includeWeekly && weekTotalMinutes >= 900)
+                    ? Math.round(juhyuWeekMinutes * weeksPerMonth)
+                    : 0;
+
+            const monthJuhyuPay = Math.round((monthJuhyuMinutes / 60) * wage);
+            const monthGross = monthBasePay + monthJuhyuPay;
+            const monthTax = applyTax ? Math.round(monthGross * 0.033) : 0;
+            const monthNet = monthGross - monthTax;
+
+            monthMinutesCell.textContent  = formatMins(monthTotalMinutes);
+            monthBasePayCell.textContent  = krw(monthBasePay);
+            monthJuhyuPayCell.textContent = krw(monthJuhyuPay);
+            monthGrossCell.textContent    = krw(monthGross);
+            monthTaxCell.textContent      = krw(monthTax);
+            monthNetCell.textContent      = krw(monthNet);
+        }
+
+        // ======= Util 함수들 =======
+        function diffMinutes(startHm, endHm){
+            const s = parseHm(startHm);
+            const e = parseHm(endHm);
+            return (e.h * 60 + e.m) - (s.h * 60 + s.m);
+        }
+        function parseHm(hm){
+            if(!hm) return {h:0, m:0};
+            const parts = String(hm).split(':');
+            const h = parseInt(parts[0], 10) || 0;
+            const m = parseInt(parts[1], 10) || 0;
+            return {h,m};
+        }
+        function formatMins(mins){
+            mins = mins || 0;
+            const h = Math.floor(mins/60);
+            const m = mins % 60;
+            return m === 0 ? `${h}시간` : `${h}시간 ${m}분`;
+        }
+        function krw(v){
+            return new Intl.NumberFormat('ko-KR',{
+                style:'currency',
+                currency:'KRW',
+                maximumFractionDigits:0
+            }).format(v || 0);
+        }
+
+        // 초기 렌더
+        renderWeeklyGrid();
+        calcAndRenderPays();
+    })();
+</script>
+
+{{>layouts/footer}}

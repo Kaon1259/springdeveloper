@@ -419,16 +419,32 @@
                             <td class="text-end text-mono fw-semibold" id="previewWeeklyHours">0시간 0분</td>
                         </tr>
                         <tr>
-                            <td class="text-muted">주간 예상 급여</td>
-                            <td class="text-end text-mono fw-bold" id="previewWeeklyPay">₩0</td>
+                            <td class="text-muted">주간 근무수당</td>
+                            <td class="text-end text-mono fw-semibold" id="previewWeeklyBasePay">₩0</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted">주간 주휴수당</td>
+                            <td class="text-end text-mono fw-semibold" id="previewWeeklyHolidayPay">₩0</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted">주간 합계 (근무 + 주휴)</td>
+                            <td class="text-end text-mono fw-bold" id="previewWeeklyGross">₩0</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted">세금(3.3%)</td>
+                            <td class="text-end text-mono" id="previewWeeklyTax">₩0</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted">실지급액(주간)</td>
+                            <td class="text-end text-mono fw-bold text-success" id="previewWeeklyNet">₩0</td>
                         </tr>
                         <tr class="table-subtle">
                             <td class="text-muted">월 환산 주차</td>
                             <td class="text-end text-mono">× 4.345</td>
                         </tr>
                         <tr>
-                            <td class="text-muted">월간 예상 급여</td>
-                            <td class="text-end text-mono fw-bold text-success" id="previewMonthlyPay">₩0</td>
+                            <td class="text-muted">실지급액(월간 예상)</td>
+                            <td class="text-end text-mono fw-bold text-success" id="previewMonthlyNet">₩0</td>
                         </tr>
                         </tbody>
                     </table>
@@ -889,7 +905,6 @@
             }
 
             // 요구사항: 그리드 선택 상태는 그대로 유지
-            // (아무 것도 해제하지 않음)
 
             // 하단 리스트 및 급여/hidden 필드 갱신
             rebuildPreviewFromSchedules();
@@ -906,13 +921,26 @@
 
         /* ===== 예상 급여 미리보기 (스케줄 상태 기준) ===== */
         const hourlyWage = document.getElementById('hourlyWage');
-        const weeklyHoursEl = document.getElementById('previewWeeklyHours');
-        const weeklyPayEl   = document.getElementById('previewWeeklyPay');
-        const monthlyPayEl  = document.getElementById('previewMonthlyPay');
+        const weeklyHoursEl       = document.getElementById('previewWeeklyHours');
+        const weeklyBasePayEl     = document.getElementById('previewWeeklyBasePay');
+        const weeklyHolidayPayEl  = document.getElementById('previewWeeklyHolidayPay');
+        const weeklyGrossEl       = document.getElementById('previewWeeklyGross');
+        const weeklyTaxEl         = document.getElementById('previewWeeklyTax');
+        const weeklyNetEl         = document.getElementById('previewWeeklyNet');
+        const monthlyNetEl        = document.getElementById('previewMonthlyNet');
+
+        const weeklyHolidayCheckbox = document.getElementById('includeWeeklyHolidayAllowance');
+        const applyTaxCheckbox      = document.getElementById('applyTax');
 
         if (hourlyWage) {
             hourlyWage.addEventListener('blur', updatePreview);
             hourlyWage.addEventListener('input', updatePreview);
+        }
+        if (weeklyHolidayCheckbox) {
+            weeklyHolidayCheckbox.addEventListener('change', updatePreview);
+        }
+        if (applyTaxCheckbox) {
+            applyTaxCheckbox.addEventListener('change', updatePreview);
         }
 
         function computeWeeklyMinutesFromSchedules() {
@@ -926,7 +954,7 @@
         }
 
         function formatKRW(n) {
-            return new Intl.NumberFormat('ko-KR',{
+            return new Intl.NumberFormat('ko-KR', {
                 style:'currency',
                 currency:'KRW',
                 maximumFractionDigits:0
@@ -937,15 +965,44 @@
             const totalMin = computeWeeklyMinutesFromSchedules();
             const wage = parseInt(String(hourlyWage?.value || '0').replace(/,/g,''), 10) || 0;
 
+            // 근무시간 표시
             const h = Math.floor(totalMin / 60);
             const m = totalMin % 60;
             weeklyHoursEl.textContent = `${h}시간 ${m}분`;
 
-            const weeklyPay = Math.round((totalMin / 60) * wage);
-            weeklyPayEl.textContent   = formatKRW(weeklyPay);
+            // 주휴/세금 플래그
+            const includeWeekly = !!(weeklyHolidayCheckbox && weeklyHolidayCheckbox.checked);
+            const applyTax      = !!(applyTaxCheckbox && applyTaxCheckbox.checked);
 
-            const monthlyPay = Math.round(weeklyPay * 4.345);
-            monthlyPayEl.textContent  = formatKRW(monthlyPay);
+            // 근무수당
+            const weeklyBasePay = Math.round((totalMin / 60) * wage);
+
+            // 주휴수당: 15시간(900분) 이상 & 주휴 적용 체크 시
+            let weeklyHolidayMinutes = 0;
+            if (includeWeekly && totalMin >= 900) {
+                weeklyHolidayMinutes = Math.round(totalMin / 5);
+            }
+            const weeklyHolidayPay = Math.round((weeklyHolidayMinutes / 60) * wage);
+
+            const weeklyGross = weeklyBasePay + weeklyHolidayPay;
+
+            // 세금 3.3%
+            const weeklyTax = applyTax ? Math.round(weeklyGross * 0.033) : 0;
+            const weeklyNet = weeklyGross - weeklyTax;
+
+            weeklyBasePayEl.textContent    = formatKRW(weeklyBasePay);
+            weeklyHolidayPayEl.textContent = formatKRW(weeklyHolidayPay);
+            weeklyGrossEl.textContent      = formatKRW(weeklyGross);
+            weeklyTaxEl.textContent        = formatKRW(weeklyTax);
+            weeklyNetEl.textContent        = formatKRW(weeklyNet);
+
+            // 월 환산 (주간 합계 기준)
+            const weeksPerMonth = 4.345;
+            const monthlyGross  = Math.round(weeklyGross * weeksPerMonth);
+            const monthlyTax    = applyTax ? Math.round(monthlyGross * 0.033) : 0;
+            const monthlyNet    = monthlyGross - monthlyTax;
+
+            monthlyNetEl.textContent       = formatKRW(monthlyNet);
         }
 
         /* ===== 스케줄 히든필드 생성 (schedules 기준) ===== */

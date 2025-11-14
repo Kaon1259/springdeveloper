@@ -126,6 +126,7 @@ public class MemberDto {
                 .payday(m.getPayday())
                 .includeWeeklyHolidayAllowance(m.getIncludeWeeklyHolidayAllowance())
                 //
+                .applyTax(m.getApplyTax())
                 .status(m.getStatus())
                 .createdAt(m.getCreatedAt())
                 .updatedAt(m.getUpdatedAt())
@@ -155,7 +156,7 @@ public class MemberDto {
                 // [추가 매핑]
                 .payday(dto.getPayday())
                 .includeWeeklyHolidayAllowance(Boolean.TRUE.equals(dto.getIncludeWeeklyHolidayAllowance()))
-                //
+                .applyTax(Boolean.TRUE.equals(dto.getApplyTax()))
                 .status(dto.getStatus())
                 .build();
 

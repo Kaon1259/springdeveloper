@@ -120,4 +120,8 @@ public class Member {
     public String getWeeklyHolidayAllowanceLabel() {
         return Boolean.TRUE.equals(includeWeeklyHolidayAllowance) ? "적용" : "미적용";
     }
+    
+    public  String getApplyTaxLabel() {
+        return Boolean.TRUE.equals(applyTax) ? "적용" : "미적용";
+    }
 }

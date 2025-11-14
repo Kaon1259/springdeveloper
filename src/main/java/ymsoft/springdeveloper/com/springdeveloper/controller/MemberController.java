@@ -73,6 +73,27 @@ public class MemberController {
         return "members/list";
     }
 
+    @GetMapping("/members/pay-estimate")
+    public String showPayEstimatePopup(
+            @RequestParam Long memberId,
+            @RequestParam String weekStart,
+            @RequestParam String weekEnd,
+            Model model
+    ) throws Exception {
+        MemberDto memberDto = memService.findById(memberId);
+
+        log.info(memberDto.toString());
+
+        model.addAttribute("member", memberDto);
+        model.addAttribute("weekStart", weekStart);
+        model.addAttribute("weekEnd", weekEnd);
+
+        String memberJson = objectMapper.writeValueAsString(memberDto);
+        model.addAttribute("memberJson", memberJson);
+
+        return "members/payEstimatePopup";
+    }
+
     @GetMapping("/members/realtimedashboard")
     public String realtimedashboard(Model model) throws Exception {
 
@@ -346,17 +367,34 @@ public class MemberController {
     //인사정보 보기
     @GetMapping("/members/{id}/edit")
     public String editMember(@PathVariable Long id, Model model) throws Exception {
+        log.info("editMember: {}", id);
         MemberDto member = memService.findById(id);
         model.addAttribute("member", member);
-        // 🔹 null-safe 값들 미리 만들어 내려주기
-        String healthCertExpiryStr = (member.getHealthCertExpiry() != null)
-                ? member.getHealthCertExpiry().toString() : "";
-        model.addAttribute("healthCertExpiryStr", healthCertExpiryStr);
 
-        // 스케줄도 null-safe로 내려주기
-        List<MemberDto.ScheduleRow> schedules =
-                (member.getSchedule() != null) ? member.getSchedule() : List.of();
-        model.addAttribute("schedules", schedules);
+        // 1) 기준 주(월요일~일요일) 계산
+        LocalDate base =  LocalDate.now();
+        LocalDate startOfWeek = base.with(java.time.DayOfWeek.MONDAY);
+        LocalDate endOfWeek   = startOfWeek.plusDays(6);
+
+        // 2) 라벨/URL
+        DateTimeFormatter ymd = DateTimeFormatter.ofPattern("yyyy.MM.dd");
+        DateTimeFormatter md  = DateTimeFormatter.ofPattern("MM.dd");
+
+        String weekRangeLabel = String.format("%s ~ %s",
+                startOfWeek.format(ymd), endOfWeek.format(md));
+
+        // 예: /members?week=2025-11-03
+        String weekPrevUrl = "/members?week=" + startOfWeek.minusWeeks(1);
+        String weekNextUrl = "/members?week=" + startOfWeek.plusWeeks(1);
+
+
+        // 4) 주간 네비게이션 바인딩
+        model.addAttribute("weekRangeLabel", weekRangeLabel);
+        model.addAttribute("weekPrevUrl", weekPrevUrl);
+        model.addAttribute("weekNextUrl", weekNextUrl);
+
+        String memberJson = objectMapper.writeValueAsString(member);
+        model.addAttribute("memberJson", memberJson);
 
         log.info(member.toString());
 
@@ -433,6 +471,7 @@ public class MemberController {
         }
 
 
+        log.info("hasHealthCertificate: {}", dto.getHasHealthCertificate());
         // 보건증 보유/만료일 처리
         if (Boolean.TRUE.equals(dto.getHasHealthCertificate())) {
             log.info("hasHealthCertificate is empty");
@@ -468,6 +507,7 @@ public class MemberController {
             // 실제 업데이트
             MemberDto updated = memService.update(id, dto);
 
+            log.info("updated: {}", updated.toString());
             // 성공 알림 후 상세 편집 화면으로 리다이렉트
             redirectAttributes.addFlashAttribute("toast", "수정되었습니다.");
             redirectAttributes.addFlashAttribute("toastType", "success");

@@ -64,7 +64,15 @@
                     </div>
                 </div>
                 <div class="d-flex flex-column align-items-end gap-2">
-                    <span id="statusBadge" class="status-badge">-</span>
+                    <div class="d-flex align-items-center gap-2">
+                        <!-- ✅ 수정하기 버튼 -->
+                        <button type="button"
+                                id="btnEditMember"
+                                class="btn btn-sm btn-outline-secondary">
+                            수정하기
+                        </button>
+                        <span id="statusBadge" class="status-badge">-</span>
+                    </div>
                 </div>
             </header>
 
@@ -109,8 +117,8 @@
                     </div>
                 </div>
 
-                <!-- 3줄: 은행, 계좌번호 -->
-                <div class="info-grid">
+                <!-- 3줄: 은행, 계좌번호, 세금 적용, 예상 급여 버튼 -->
+                <div class="info-grid mb-2">
                     <div class="info-item">
                         <div class="label">은행</div>
                         <div id="infoBankName" class="value">-</div>
@@ -118,6 +126,20 @@
                     <div class="info-item">
                         <div class="label">계좌번호</div>
                         <div id="infoBankAccount" class="value">-</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="label">세금 적용</div>
+                        <div id="infoApplyTax" class="value">-</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="label">예상 급여</div>
+                        <div class="value">
+                            <button type="button"
+                                    id="btnOpenPayEstimate"
+                                    class="btn btn-sm btn-outline-primary">
+                                예상 급여 보기
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -306,7 +328,7 @@
     </div>
 </main>
 
-<!-- ===== 빈 팝업(모달) 추가 ===== -->
+<!-- ===== 근무시간 팝업(기존) ===== -->
 <div class="modal fade" id="schedulePopup" tabindex="-1" aria-labelledby="schedulePopupTitle" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content">
@@ -317,6 +339,21 @@
             <div class="modal-body text-center text-muted py-5">
                 표시할 데이터가 없습니다.<br>
                 (주간/월간 근무시간 팝업 영역 · 추후 구현용)
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ===== 예상 급여 팝업(신규) ===== -->
+<div class="modal fade" id="payEstimatePopup" tabindex="-1" aria-labelledby="payEstimatePopupTitle" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="payEstimatePopupTitle">예상 급여 계산</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="닫기"></button>
+            </div>
+            <div class="modal-body" id="payEstimatePopupBody">
+                <!-- JS에서 계산 결과를 채웁니다. -->
             </div>
         </div>
     </div>
@@ -836,7 +873,7 @@
         const DEFAULT_VIEW = 'weekGrid';
 
         const API_BASE_PLAN     = '/api/member';          // 주간 "템플릿" GET + POST(update)
-        const API_BASE_ACTUAL   = '/api/schedule';        // 주간/월간 "실제" GET
+        //const API_BASE_ACTUAL   = '/api/schedule';        // 주간/월간 "실제" GET
 
         const DOW_LABELS = ['월','화','수','목','금','토','일'];
         const DAY_CODES = ['MON','TUE','WED','THU','FRI','SAT','SUN'];
@@ -861,6 +898,7 @@
         const createdAtLabel    = document.getElementById('createdAtLabel');
         const infoPayday        = document.getElementById('infoPayday');
         const infoIncludeWeekly = document.getElementById('infoIncludeWeekly');
+        const infoApplyTax      = document.getElementById('infoApplyTax');
 
         const tbodyWeek         = document.getElementById('tbodyWeek10m');
         const theadWeek         = document.getElementById('theadWeek');
@@ -898,6 +936,13 @@
 
         const gridSlotButtonsWrapper = document.getElementById('gridSlotButtons');
         const btnSaveTemplate        = document.getElementById('btnSaveTemplate');
+        const btnOpenPayEstimate     = document.getElementById('btnOpenPayEstimate');
+        const btnEditMember          = document.getElementById('btnEditMember'); // ✅ 수정하기 버튼
+
+        const payEstimatePopupEl   = document.getElementById('payEstimatePopup');
+        const payEstimatePopupBody = document.getElementById('payEstimatePopupBody');
+
+        let payEstimateModal = null;
 
         // 상태
         let currentMember      = null;
@@ -907,6 +952,20 @@
         let currentWeekDates   = [];           // ["YYYY-MM-DD", ... 7개]
         let lastPlanMap        = {};           // GET된 계획 데이터 캐시 (원본 템플릿)
         let lastActualMap      = {};           // GET된 실제 데이터 캐시
+
+        // 주/월 요약 상태 (예상급여 팝업에서 사용)
+        let weekSummaryState = {
+            weekStartIso: null,
+            weekEndIso: null,
+            totalMinutes: 0,
+            juhyuMinutes: 0
+        };
+        let monthSummaryState = {
+            monthStartIso: null,
+            monthEndIso: null,
+            totalMinutes: 0,
+            totalJuhyuMinutes: 0
+        };
 
         // 드래그 선택 상태
         let gridDragging       = false;
@@ -930,10 +989,20 @@
         setActiveTabButton(initialView);
         switchView(initialView);
 
-        attachMonthHandlers();
+        //attachMonthHandlers();
         attachGridSlotHandlers();
         if (btnSaveTemplate) {
             btnSaveTemplate.addEventListener('click', onClickSaveTemplate);
+        }
+        if (btnOpenPayEstimate) {
+            btnOpenPayEstimate.addEventListener('click', onClickPayEstimate);
+        }
+        if (btnEditMember) {
+            btnEditMember.addEventListener('click', onClickEditMember); // ✅ 이벤트 등록
+        }
+
+        if (window.bootstrap && payEstimatePopupEl) {
+            payEstimateModal = new bootstrap.Modal(payEstimatePopupEl);
         }
 
         viewTabsTop.addEventListener('click', (e)=>{
@@ -942,15 +1011,15 @@
             const view=btn.dataset.view;
             setActiveTabButton(view);
 
-            // 🔹 주간근무시간 클릭 시: 팝업 새 창으로
+            // 주간근무시간 탭: 팝업 새 창
             if (view === 'weekSummary') {
                 openWeekSummaryPopupWindow();
-                return;   // 아래 switchView 등은 안 타게 종료 (페이지 안 타임테이블은 안씀)
+                return;
             }
 
-            // 월간 근무시간도 같은 방식으로 팝업 쓰려면 여기서 openMonthPopupWindow() 호출
+            // 월간 근무시간 탭: 팝업 새 창
             if (view === 'monthCalendar') {
-                openMonthSummaryPopupWindow();  // 필요 시 구현
+                openMonthSummaryPopupWindow();
                 return;
             }
 
@@ -1046,6 +1115,8 @@
             // 주간 범위 파싱
             const { weekStartIso, weekEndIso, weekDates } = parseWeekRangeToDates(weekRangeLabelEl?.textContent || '');
             currentWeekDates = weekDates;
+            weekSummaryState.weekStartIso = weekStartIso;
+            weekSummaryState.weekEndIso   = weekEndIso;
             renderWeekHeadDates(weekDates);
 
             // 계획/실제 데이터 로드
@@ -1063,26 +1134,8 @@
                 console.error('plan fetch error', e);
             }
 
-            try{
-                const urlAct = `${API_BASE_ACTUAL}/${encodeURIComponent(member.id)}/${weekStartIso}/${weekEndIso}`;
-                const respAct = await fetch(urlAct,{headers:{'Accept':'application/json'}});
-                if(respAct.ok){
-                    const data = await respAct.json();
-                    lastActualMap = normalizeDays(data);
-                }
-            }catch(e){
-                console.error('actual fetch error', e);
-            }
-
             // 템플릿 그리드(주간) 재구성 + 계획만 칠하기
             rebuildWeekGridAndPaint();
-
-            // 주간 요약표 (계획/실제 둘 다 사용 - 화면에서는 숨겨짐)
-            await renderWeekSummary(member, weekDates, lastPlanMap, lastActualMap);
-
-            // 월간 달력 (실제 근무 - 화면에서는 숨겨짐)
-            const baseDate = parseIsoDate(weekStartIso);
-            await renderMonthCalendar(member, baseDate);
 
             selectedMemberTitle.textContent = `${member.name ?? '-'} — 주간 템플릿`;
             const active = getActiveView();
@@ -1123,8 +1176,8 @@
                 return;
             }
 
-            const memberId  = currentMember.id;        // 필수
-            const anchor    = currentWeekDates[0];     // 예: "2025-11-01"
+            const memberId  = currentMember.id;
+            const anchor    = currentWeekDates[0];
 
             const url =
                     `/members/showworkmonthdashboardpopup` +
@@ -1139,7 +1192,6 @@
             );
         }
 
-
         function openWeekSummaryPopupWindow() {
             if (!currentMember || !currentWeekDates.length) {
                 alert('선택된 아르바이트 또는 주간 정보가 없습니다.');
@@ -1147,8 +1199,8 @@
             }
 
             const memberId   = currentMember.id;
-            const startDate  = currentWeekDates[0];      // "2025-11-01"
-            const endDate    = currentWeekDates[6];      // "2025-11-07"
+            const startDate  = currentWeekDates[0];
+            const endDate    = currentWeekDates[6];
 
             const url =
                     `/members/showworktimedashboardpopup` +
@@ -1156,7 +1208,6 @@
                     `&startDate=${encodeURIComponent(startDate)}` +
                     `&endDate=${encodeURIComponent(endDate)}`;
 
-            // 실제 팝업 오픈
             window.open(
                     url,
                     'weekSummaryPopup',
@@ -1187,14 +1238,6 @@
                         renderMonthCalendar(currentMember, thisMonth);
                     }
                 });
-            }
-        }
-
-        function navigateMonth(offset){
-            const curStart = getCurrentMonthStart();
-            const target = new Date(curStart.getFullYear(), curStart.getMonth()+offset, 1);
-            if(currentMember){
-                renderMonthCalendar(currentMember, target);
             }
         }
 
@@ -1382,14 +1425,14 @@
             try{
                 // index 를 써야 DAY_CODES[idx] 를 쓸 수 있음
                 for(let idx = 0; idx < currentWeekDates.length; idx++){
-                    const iso = currentWeekDates[idx];          // "2025-11-10" 같은 값
-                    const dayCode = DAY_CODES[idx];             // "MON" ~ "SUN"
+                    const iso = currentWeekDates[idx];
+                    const dayCode = DAY_CODES[idx];
                     const segments = byDate[iso] || [];
 
                     const payload = {
                         memberId: currentMember.id,
-                        day: dayCode,           // 요일 코드로 전송
-                        segments: segments      // [{start:"11:00", end:"14:00"}, ...]
+                        day: dayCode,
+                        segments: segments
                     };
 
                     const url = `${API_BASE_PLAN}/${encodeURIComponent(currentMember.id)}/update`;
@@ -1408,7 +1451,7 @@
                 }
 
                 alert('주간 템플릿(계획)이 저장되었습니다.');
-                await renderAll(currentMember);   // 저장 후 다시 로딩
+                await renderAll(currentMember);
             }catch(e){
                 console.error('템플릿 저장 중 예외:', e);
                 alert('템플릿 저장 중 오류가 발생했습니다.\n' + (e.message || e));
@@ -1459,185 +1502,47 @@
             return out;
         }
 
-        // ===== 주간 요약 (주간 주휴수당 포함) =====
-        async function renderWeekSummary(member, weekDates, planMap, actualMap){
-            const DOW_KO = ['일','월','화','수','목','금','토'];
 
-            let wPlanned = 0, wActual = 0;
-            const rows = [];
-
-            for(let i=0;i<7;i++){
-                const d = new Date(weekDates[i]);
-                const iso = weekDates[i];
-
-                const p = planMap[iso] || {segments:[], minutes:0};
-                const a = actualMap[iso] || {segments:[], minutes:0};
-
-                wPlanned += (p.minutes||0);
-                wActual  += (a.minutes||0);
-
-                const chipsPlanned = p.segments.length
-                        ? p.segments.map(s=>chipHtml('#ff9f43', s.start, s.end)).join(' ')
-                        : '<span class="text-muted text-xs">—</span>';
-                const chipsActual = a.segments.length
-                        ? a.segments.map(s=>chipHtml(colorForMember(member), s.start, s.end)).join(' ')
-                        : '<span class="text-muted text-xs">—</span>';
-
-                rows.push(`
-                <tr>
-                    <th scope="row">${DOW_KO[d.getDay()]}</th>
-                    <td>${chipsPlanned}</td>
-                    <td>${chipsActual}</td>
-                    <td class="text-end">${formatMins(a.minutes||0)}</td>
-                </tr>
-            `);
+        // ===== 예상 급여 버튼 클릭 =====
+        function onClickPayEstimate(){
+            if(!currentMember || !currentWeekDates.length){
+                alert('선택된 아르바이트 또는 주간 정보가 없습니다.');
+                return;
             }
 
-            if(tbodyWeekSummary){
-                tbodyWeekSummary.innerHTML = rows.join('');
-            }
-            if(weekPlannedTotalCell) weekPlannedTotalCell.textContent = formatMins(wPlanned);
-            if(weekActualTotalCell)  weekActualTotalCell.textContent  = formatMins(wActual);
-            if(weekDeltaCell)        weekDeltaCell.textContent        = deltaString(wActual - wPlanned);
+            const memberId  = currentMember.id;
+            const weekStart = currentWeekDates[0];
+            const weekEnd   = currentWeekDates[6];
 
-            const wage = (typeof member?.hourlyWage === 'number') ? member.hourlyWage : null;
-            if(hourlyWageCellW){
-                hourlyWageCellW.textContent = (wage!=null) ? krw(wage) : '-';
-            }
+            // 새 창으로 Mustache 팝업 오픈
+            const url =
+                    `/members/pay-estimate` +
+                    `?memberId=${encodeURIComponent(memberId)}` +
+                    `&weekStart=${encodeURIComponent(weekStart)}` +
+                    `&weekEnd=${encodeURIComponent(weekEnd)}`;
 
-            const juhyuMinutesWeek = calcWeeklyJuhyuMinutes(wActual);
-            const juhyuPayWeek = (wage!=null) ? Math.round((juhyuMinutesWeek/60)*wage) : null;
-            if(weekJuhyuPayCell){
-                weekJuhyuPayCell.textContent = (juhyuPayWeek!=null) ? krw(juhyuPayWeek) : '-';
-            }
-
-            const basePayWeek = (wage!=null) ? Math.round((wActual/60)*wage) : null;
-            const totalPayWeek = (basePayWeek!=null && juhyuPayWeek!=null) ? basePayWeek + juhyuPayWeek : null;
-            if(weekPayCell){
-                weekPayCell.textContent = (totalPayWeek!=null) ? krw(totalPayWeek) : '-';
-            }
+            window.open(
+                    url,
+                    'payEstimatePopup',
+                    'width=1200,height=900,scrollbars=yes,resizable=yes'
+            );
         }
 
-        // ===== 월간 달력 (실제 근무 + 주별 주휴수당 합산) =====
-        async function renderMonthCalendar(member, baseDate){
-            const ms = new Date(baseDate.getFullYear(), baseDate.getMonth(), 1);
-            const me = new Date(baseDate.getFullYear(), baseDate.getMonth()+1, 0);
-            const monthStartIso = toIso(ms), monthEndIso = toIso(me);
-
-            if(monthLabel){
-                monthLabel.textContent = `${ms.getFullYear()}.${String(ms.getMonth()+1).padStart(2,'0')}`;
-                monthLabel.dataset.monthStart = monthStartIso;
+        // ===== ✅ 수정하기 버튼 클릭: members/{id}/edit로 이동 =====
+        function onClickEditMember(){
+            if (!currentMember) {
+                alert('수정할 아르바이트 정보가 없습니다.\n먼저 목록에서 아르바이트를 선택해 주세요.');
+                return;
             }
 
-            const leftY = ms.getFullYear();
-            const leftM = String(ms.getMonth()+1).padStart(2,'0');
-            const leftD = '01';
-            const rightM = String(me.getMonth()+1).padStart(2,'0');
-            const rightD = String(me.getDate()).padStart(2,'0');
-            if(monthRangeLabel){
-                monthRangeLabel.textContent = `${leftY}.${leftM}.${leftD} ~ ${rightM}.${rightD}`;
+            const memberId = currentMember.id;
+            if (memberId == null) {
+                alert('선택된 아르바이트의 ID를 찾을 수 없습니다.');
+                return;
             }
 
-            let actualMap = {};
-            try {
-                const url = `${API_BASE_ACTUAL}/${encodeURIComponent(member.id)}/${monthStartIso}/${monthEndIso}`;
-                const resp = await fetch(url, { headers: { 'Accept': 'application/json' } });
-                if (resp.ok) { actualMap = normalizeDays(await resp.json()); }
-            } catch (e) { console.error(e); }
-
-            if(calendarGrid){
-                calendarGrid.innerHTML = '';
-            }
-            const DOW_HEAD = ['일','월','화','수','목','금','토'];
-            if(calendarGrid){
-                DOW_HEAD.forEach(label=>{
-                    const h = document.createElement('div');
-                    h.className = 'dow';
-                    h.textContent = label;
-                    calendarGrid.appendChild(h);
-                });
-            }
-
-            const todayIso = toIso(new Date());
-            const firstDow = ms.getDay();
-            if(calendarGrid){
-                for (let i=0;i<firstDow;i++){
-                    const blank = document.createElement('div');
-                    blank.className = 'cell muted';
-                    calendarGrid.appendChild(blank);
-                }
-            }
-
-            let monthMinutes = 0;
-            const weeklyMinutesMap = {};
-
-            for (let d = new Date(ms); d <= me; d.setDate(d.getDate()+1)) {
-                const iso = toIso(d);
-                const dow = d.getDay();
-                const a = actualMap[iso] || {segments:[], minutes:0};
-                const dayMinutes = a.minutes || 0;
-                monthMinutes += dayMinutes;
-
-                if (dayMinutes > 0){
-                    const weekStartIsoDate = toMonday(d);
-                    const weekIso = toIso(weekStartIsoDate);
-                    weeklyMinutesMap[weekIso] = (weeklyMinutesMap[weekIso] || 0) + dayMinutes;
-                }
-
-                if(calendarGrid){
-                    const cell = document.createElement('div');
-                    cell.className = 'cell';
-                    if (iso === todayIso) cell.classList.add('today');
-
-                    const chipsHtml = (a.segments?.length)
-                            ? a.segments.map(s=>chipHtml(colorForMember(member), s.start, s.end)).join(' ')
-                            : '<span class="text-muted text-xs">—</span>';
-
-                    cell.innerHTML = `
-                    <div class="date-head">
-                        <span>${d.getDate()}일</span>
-                        <span class="dow-mini">${DOW_HEAD[dow]}</span>
-                    </div>
-                    <div class="segments">${chipsHtml}</div>
-                    <div class="day-total">${formatMins(dayMinutes)}</div>
-                `;
-                    calendarGrid.appendChild(cell);
-                }
-            }
-
-            let monthJuhyuMinutes = 0;
-            Object.values(weeklyMinutesMap).forEach(weekMinutes=>{
-                monthJuhyuMinutes += calcWeeklyJuhyuMinutes(weekMinutes);
-            });
-
-            if(monthActualTotalCell){
-                monthActualTotalCell.textContent = formatMins(monthMinutes);
-            }
-            const wage = (typeof member?.hourlyWage==='number') ? member?.hourlyWage : null;
-            if(hourlyWageCellM){
-                hourlyWageCellM.textContent = (wage!=null) ? krw(wage) : '-';
-            }
-
-            let basePay = null, juhyuPay = null, totalPay = null;
-            if (wage != null){
-                basePay = Math.round((monthMinutes/60)*wage);
-                juhyuPay = Math.round((monthJuhyuMinutes/60)*wage);
-                totalPay = basePay + juhyuPay;
-            }
-
-            if(monthJuhyuPayCell){
-                monthJuhyuPayCell.textContent = (juhyuPay!=null) ? krw(juhyuPay) : '-';
-            }
-            if(monthPayCell){
-                monthPayCell.textContent      = (totalPay!=null) ? krw(totalPay) : '-';
-            }
-        }
-
-        function getCurrentMonthStart(){
-            const ds = monthLabel?.dataset?.monthStart;
-            if(ds && /^\d{4}-\d{2}-\d{2}$/.test(ds)) return parseIsoDate(ds);
-            const t = new Date();
-            return new Date(t.getFullYear(), t.getMonth(), 1);
+            // /members/{id}/edit 로 이동
+            window.location.href = `/members/${encodeURIComponent(memberId)}/edit`;
         }
 
         // ===== Info/Utils =====
@@ -1654,6 +1559,7 @@
 
             infoPayday.textContent        = formatPayday(m.payday);
             infoIncludeWeekly.textContent = yesNoLabel(m.includeWeeklyHolidayAllowance);
+            infoApplyTax.textContent      = yesNoLabel(m.applyTax);
 
             infoBankName.textContent    = m.bankName ?? '-';
             infoBankAccount.textContent = m.bankAccount ?? '-';
@@ -1676,6 +1582,7 @@
             infoHourlyWage.textContent    = '-';
             infoPayday.textContent        = '-';
             infoIncludeWeekly.textContent = '-';
+            infoApplyTax.textContent      = '-';
             infoBankName.textContent      = '-';
             infoBankAccount.textContent   = '-';
             createdAtLabel.textContent    = '(등록일: -)';
@@ -1708,6 +1615,18 @@
             currentWeekDates = [];
             lastPlanMap = {};
             lastActualMap = {};
+            weekSummaryState = {
+                weekStartIso: null,
+                weekEndIso: null,
+                totalMinutes: 0,
+                juhyuMinutes: 0
+            };
+            monthSummaryState = {
+                monthStartIso: null,
+                monthEndIso: null,
+                totalMinutes: 0,
+                totalJuhyuMinutes: 0
+            };
             updateSaveButtonByStep();
         }
 
@@ -1768,22 +1687,19 @@
             const map = {};
             const arr = Array.isArray(apiRows) ? apiRows : [];
 
-            // weekDates 안전장치
             const dates = Array.isArray(weekDates) ? weekDates : [];
             const dayOrder = ['MON','TUE','WED','THU','FRI','SAT','SUN'];
 
-            // 1) 요일별로 segment 묶기
-            const byDayCode = {};   // ex) { MON: [{start,end}, ...], TUE: [...], ... }
+            const byDayCode = {};
 
             arr.forEach(row => {
-                const dayCode = String(row.day || '').toUpperCase();  // "MON" / "TUE" / ...
+                const dayCode = String(row.day || '').toUpperCase();
                 if(!dayCode) return;
 
                 if(!byDayCode[dayCode]) {
                     byDayCode[dayCode] = [];
                 }
 
-                // "06:50:00" -> "06:50"
                 const startHm = (row.start || '').slice(0,5);
                 const endHm   = (row.end   || '').slice(0,5);
 
@@ -1793,9 +1709,8 @@
                 });
             });
 
-            // 2) 현재 주(weekDates: [월~일]) 기준으로 날짜별 map 구성
             dates.forEach((iso, idx) => {
-                const dayCode = dayOrder[idx];   // 월~일 매핑
+                const dayCode = dayOrder[idx];
                 const segs    = byDayCode[dayCode] || [];
 
                 const minutes = segs.reduce((acc, s) => {
