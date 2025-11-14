@@ -86,6 +86,10 @@ public class Member {
     @Builder.Default
     private Boolean includeWeeklyHolidayAllowance = false;
 
+    /** 세금 적용 여부 */
+    @Column(nullable = false)
+    private Boolean applyTax = false;
+
     /** 데이터 등록/수정일 */
     @CreationTimestamp
     @Column(updatable = false)

@@ -58,6 +58,8 @@ public class MemberDto {
     /** [추가] 주휴수당 적용 여부 - null 가능 → Boolean.TRUE.equals(...)로 처리 */
     private Boolean includeWeeklyHolidayAllowance;
 
+    private Boolean applyTax;
+
     @NotNull
     private Member.Status status;           // Member 엔티티의 Status enum 사용
 
