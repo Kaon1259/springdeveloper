@@ -76,14 +76,18 @@
                     <div class="small text-muted">월 합계(실근무)</div>
                     <div class="fw-semibold" id="monthActualTotalCell">0시간</div>
                 </div>
+                <!--
                 <div class="d-flex justify-content-between">
                     <div class="small text-muted">시급</div>
                     <div id="hourlyWageCell">-</div>
                 </div>
+                -->
+                <!--
                 <div class="d-flex justify-content-between">
                     <div class="small text-muted">월 예상 급여</div>
                     <div class="text-primary fw-semibold" id="monthPayCell">-</div>
                 </div>
+                -->
             </div>
 
             <div class="small text-muted mt-2">
@@ -456,8 +460,8 @@
         const monthRangeLabelEl   = document.getElementById('monthRangeLabel');
         const calendarGrid        = document.getElementById('calendarGrid');
         const monthActualTotalCell= document.getElementById('monthActualTotalCell');
-        const monthPayCell        = document.getElementById('monthPayCell');
-        const hourlyWageCell      = document.getElementById('hourlyWageCell');
+        //const monthPayCell        = document.getElementById('monthPayCell');
+        //const hourlyWageCell      = document.getElementById('hourlyWageCell');
         const monthHeaderEl       = document.querySelector('.month-header');
 
         const dayAdjustModal      = document.getElementById('dayAdjustModal');
@@ -713,7 +717,7 @@
             calendarGrid.innerHTML = '';
 
             const wage = (typeof member?.hourlyWage === 'number') ? member.hourlyWage : null;
-            hourlyWageCell.textContent = (wage != null) ? krw(wage) : '-';
+            //hourlyWageCell.textContent = (wage != null) ? krw(wage) : '-';
 
             // 요일 헤더
             DOW_HEAD.forEach(label => {
@@ -814,8 +818,8 @@
             }
 
             monthActualTotalCell.textContent = formatMins(monthMinutes);
-            const monthPay = (wage != null) ? Math.round((monthMinutes / 60) * wage) : null;
-            monthPayCell.textContent = (monthPay != null) ? krw(monthPay) : '-';
+           // const monthPay = (wage != null) ? Math.round((monthMinutes / 60) * wage) : null;
+           // monthPayCell.textContent = (monthPay != null) ? krw(monthPay) : '-';
 
             attachCalendarCellHandlers(member, startIso, endIso, dayMap);
         }
@@ -850,8 +854,8 @@
         function clearCalendar(){
             calendarGrid.innerHTML = '';
             monthActualTotalCell.textContent = '0시간';
-            monthPayCell.textContent = '-';
-            hourlyWageCell.textContent = '-';
+           // monthPayCell.textContent = '-';
+           // hourlyWageCell.textContent = '-';
 
             calendarTitle.textContent = '월간 캘린더';
             headerStatusBadge.textContent = '-';

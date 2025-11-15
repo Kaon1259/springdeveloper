@@ -63,12 +63,10 @@
                         <th style="width:160px;">근무자명</th>
                         <th style="width:140px;" class="text-end">근무시간</th>
                         <th style="width:120px;" class="text-end">시급</th>
-                        <th style="width:130px;">주휴수당부가</th>
-                        <th style="width:130px;">세금부가</th>
+                        <th style="width:130px;">주휴수당 적용여부</th>
                         <th style="width:140px;" class="text-end">근무수당</th>
                         <th style="width:140px;" class="text-end">주휴수당</th>
-                        <th style="width:140px;" class="text-end">세금(3.3%)</th>
-                        <th style="width:140px;" class="text-end">실수령액</th>
+                        <th style="width:140px;" class="text-end">합계</th>
                     </tr>
                     </thead>
                     <tbody id="weeklyPayBody">
@@ -76,19 +74,17 @@
                     </tbody>
                     <tfoot>
                     <tr class="table-secondary fw-bold">
-                        <td colspan="6" class="text-end">월 합계</td>
+                        <td colspan="5" class="text-end">월 합계</td>
                         <td class="text-end" id="monthWorkPaySum">-</td>
                         <td class="text-end" id="monthJuhyuPaySum">-</td>
-                        <td class="text-end" id="monthTaxSum">-</td>
-                        <td class="text-end" id="monthNetSum">-</td>
+                        <td class="text-end" id="monthTotalSum">-</td>
                     </tr>
                     </tfoot>
                 </table>
             </div>
             <div class="small text-muted">
                 * 주휴수당은 멤버 설정이 “적용”이고 해당 주 실근무가 15시간 이상일 때만 계산됩니다.<br>
-                * 근무시간 표기는 “H시간 M분”. 금액은 KRW 통화 형식으로 출력합니다.<br>
-                * 세금(3.3%)은 근무수당+주휴수당에 일괄 적용되며, 실수령액 = (근무수당+주휴수당) - 세금 입니다.
+                * 근무시간 표기는 “H시간 M분”. 금액은 KRW 통화 형식으로 출력합니다.
             </div>
         </div>
     </div>
@@ -127,18 +123,17 @@
         const btnMonthNext     = document.getElementById('btnMonthNext');
         const monthRangeLabel  = document.getElementById('monthRangeLabel');
 
-        const weeklyPayBody        = document.getElementById('weeklyPayBody');
-        const monthWorkPaySumEl    = document.getElementById('monthWorkPaySum');
-        const monthJuhyuPaySumEl   = document.getElementById('monthJuhyuPaySum');
-        const monthTaxSumEl        = document.getElementById('monthTaxSum');
-        const monthNetSumEl        = document.getElementById('monthNetSum');
+        const weeklyPayBody    = document.getElementById('weeklyPayBody');
+        const monthWorkPaySumEl= document.getElementById('monthWorkPaySum');
+        const monthJuhyuPaySumEl= document.getElementById('monthJuhyuPaySum');
+        const monthTotalSumEl  = document.getElementById('monthTotalSum');
 
         /* ===== 상태 ===== */
         let allMembers = [];
         try { allMembers = JSON.parse(document.getElementById('membersData').textContent || '[]'); }
         catch(e){ allMembers = []; }
 
-        let filteredMembers   = [];
+        let filteredMembers = [];
         let currentMonthStart = firstDayOfMonth(new Date());
 
         /* ===== 초기화 ===== */
@@ -146,26 +141,9 @@
             statusSelect.value = allMembers[0].status || 'WORKING';
         }
         statusSelect.addEventListener('change', refreshMembers);
-        btnMonthPrev.addEventListener('click', ()=> {
-            currentMonthStart = new Date(
-                    currentMonthStart.getFullYear(),
-                    currentMonthStart.getMonth()-1,
-                    1
-            );
-            loadWeeklyTable();
-        });
-        btnMonthThis.addEventListener('click', ()=> {
-            currentMonthStart = firstDayOfMonth(new Date());
-            loadWeeklyTable();
-        });
-        btnMonthNext.addEventListener('click', ()=> {
-            currentMonthStart = new Date(
-                    currentMonthStart.getFullYear(),
-                    currentMonthStart.getMonth()+1,
-                    1
-            );
-            loadWeeklyTable();
-        });
+        btnMonthPrev.addEventListener('click', ()=> { currentMonthStart = new Date(currentMonthStart.getFullYear(), currentMonthStart.getMonth()-1, 1); loadWeeklyTable(); });
+        btnMonthThis.addEventListener('click', ()=> { currentMonthStart = firstDayOfMonth(new Date()); loadWeeklyTable(); });
+        btnMonthNext.addEventListener('click', ()=> { currentMonthStart = new Date(currentMonthStart.getFullYear(), currentMonthStart.getMonth()+1, 1); loadWeeklyTable(); });
 
         refreshMembers();
 
@@ -179,21 +157,18 @@
             if (!filteredMembers.length){
                 memberPills.innerHTML = `<span class="small-muted">해당 상태의 근무자가 없습니다.</span>`;
             } else {
-                filteredMembers
-                        .slice()
-                        .sort((a,b)=>(a.name||'').localeCompare(b.name||'','ko'))
-                        .forEach(m=>{
-                            const color = colorForMember(m);
-                            const btn = document.createElement('button');
-                            btn.type = 'button';
-                            btn.className = 'pill active';
-                            btn.innerHTML = `
+                filteredMembers.slice().sort((a,b)=>(a.name||'').localeCompare(b.name||'','ko')).forEach(m=>{
+                    const color = colorForMember(m);
+                    const btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.className = 'pill active';
+                    btn.innerHTML = `
           <span class="dot" style="background:${color}"></span>
           <span class="name">${escapeHtml(m.name ?? '-')}</span>
           <span class="small-muted">${escapeHtml(m.phone ?? '')}</span>
         `;
-                            memberPills.appendChild(btn);
-                        });
+                    memberPills.appendChild(btn);
+                });
             }
             loadWeeklyTable();
         }
@@ -206,16 +181,16 @@
                     `${ms.getFullYear()}.${pad2(ms.getMonth()+1)}.01 ~ ${pad2(me.getMonth()+1)}.${pad2(me.getDate())}`;
 
             weeklyPayBody.innerHTML = '';
-            setFooterSums(0,0,0,0);
+            setFooterSums(0,0,0);
 
             if (!filteredMembers.length){
-                weeklyPayBody.innerHTML = `<tr><td colspan="10" class="text-muted">표시할 멤버가 없습니다.</td></tr>`;
+                weeklyPayBody.innerHTML = `<tr><td colspan="8" class="text-muted">표시할 멤버가 없습니다.</td></tr>`;
                 return;
             }
 
+            // 멤버별 월 데이터 조회
             const msIso = toIso(ms), meIso = toIso(me);
             const memberDayMap = {}; // { memberId: { isoDate: {minutes, segments[]} } }
-
             await Promise.all(filteredMembers.map(async m=>{
                 try{
                     const url = `${API_BASE_ACTUAL}/${encodeURIComponent(m.id)}/${msIso}/${meIso}`;
@@ -226,15 +201,12 @@
                     } else {
                         memberDayMap[m.id] = {};
                     }
-                }catch(e){
-                    console.error('schedule fetch error', e);
-                    memberDayMap[m.id] = {};
-                }
+                }catch(e){ memberDayMap[m.id] = {}; }
             }));
 
             // 월을 포함하는 모든 주(월~일) 시작일 목록(Mon)
-            const weeks   = [];
-            let wStart    = toMonday(ms);
+            const weeks = [];
+            let wStart = toMonday(ms);
             const monthEnd = new Date(me);
             while (wStart <= monthEnd){
                 weeks.push(new Date(wStart));
@@ -244,19 +216,17 @@
             // 월 합계
             let monthWorkPaySum = 0;
             let monthJuhyuPaySum = 0;
-            let monthTaxSum = 0;
-            let monthNetSum = 0;
+            let monthTotalSum = 0;
 
             // 주차별 렌더
             weeks.forEach((weekStart, idx)=>{
                 const weekEnd = addDays(weekStart, 6);
 
                 // 해당 주 각 멤버의 주간 합계 계산
-                const rows = []; // [{member, weekMinutes, wage, juhyuApplied, workPay, juhyuPay, applyTax, taxAmount, grossTotal, netTotal}]
+                const rows = []; // [{member, weekMinutes, wage, juhyuApplied, workPay, juhyuPay, total}]
                 filteredMembers.forEach(m=>{
                     const wage = Number(m.hourlyWage)||0;
                     const includeJuhyu = !!m.includeWeeklyHolidayAllowance;
-                    const applyTax = isTaxApplied(m);
 
                     let weekMinutes = 0;
                     for (let i=0;i<7;i++){
@@ -266,7 +236,7 @@
                         const info = (memberDayMap[m.id]||{})[iso] || {minutes:0};
                         weekMinutes += (info.minutes||0);
                     }
-                    if (weekMinutes <= 0) return; // 근무 없는 멤버는 표에서 제외
+                    if (weekMinutes <= 0) return; // 근무 없는 멤버는 표에서 제외(요청하신 '분할 출력'을 간결하게)
 
                     const workPay = Math.round((weekMinutes/60) * wage);
                     let juhyuPay = 0;
@@ -277,35 +247,24 @@
                         juhyuApplied = true;
                     }
 
-                    const grossTotal = workPay + juhyuPay;
-                    let taxAmount = 0;
-                    let netTotal = grossTotal;
-                    if (applyTax && grossTotal > 0){
-                        taxAmount = Math.round(grossTotal * 0.033);
-                        netTotal  = grossTotal - taxAmount;
-                    }
-
                     rows.push({
-                        member: m,
+                        member:m,
                         weekMinutes,
                         wage,
                         juhyuApplied,
                         workPay,
                         juhyuPay,
-                        applyTax,
-                        taxAmount,
-                        grossTotal,
-                        netTotal
+                        total: workPay + juhyuPay
                     });
                 });
 
-                // 주에 표시할 데이터가 없다면 한 줄로 "해당 주 실근무 없음"
+                // 주에 표시할 데이터가 없다면 스킵(또는 한 줄로 "해당 주 실근무 없음" 출력)
                 if (rows.length === 0) {
                     const tr = document.createElement('tr');
                     const weekLabel = `${pad2(weekStart.getMonth()+1)}.${pad2(weekStart.getDate())} ~ ${pad2(weekEnd.getMonth()+1)}.${pad2(weekEnd.getDate())}`;
                     tr.innerHTML = `
           <td class="week-label">${idx+1}주차<br><small class="text-muted">(${weekLabel})</small></td>
-          <td colspan="9" class="text-muted text-start">해당 주 실근무 내역이 없습니다.</td>
+          <td colspan="7" class="text-muted text-start">해당 주 실근무 내역이 없습니다.</td>
         `;
                     weeklyPayBody.appendChild(tr);
                     return;
@@ -315,7 +274,7 @@
                 rows.sort((a,b)=>(a.member.name||'').localeCompare(b.member.name||'','ko'));
 
                 // 주차 rowSpan
-                const rowSpan   = rows.length;
+                const rowSpan = rows.length;
                 const weekLabel = `${pad2(weekStart.getMonth()+1)}.${pad2(weekStart.getDate())} ~ ${pad2(weekEnd.getMonth()+1)}.${pad2(weekEnd.getDate())}`;
 
                 rows.forEach((r, i)=>{
@@ -332,30 +291,26 @@
           <td class="text-end"><span class="text-time">${formatMins(r.weekMinutes)}</span></td>
           <td class="text-end">${r.wage ? krw(r.wage) : '-'}</td>
           <td>${r.juhyuApplied ? '<span class="text-success fw-bold">적용</span>' : '<span class="text-muted">미적용</span>'}</td>
-          <td>${r.applyTax ? '<span class="text-danger fw-bold">부과</span>' : '<span class="text-muted">미부과</span>'}</td>
           <td class="text-end">${krw(r.workPay)}</td>
           <td class="text-end">${krw(r.juhyuPay)}</td>
-          <td class="text-end">${r.applyTax ? krw(r.taxAmount) : '-'}</td>
-          <td class="text-end"><span class="fw-bold text-primary">${krw(r.netTotal)}</span></td>
+          <td class="text-end"><span class="fw-bold text-primary">${krw(r.total)}</span></td>
         `;
                     weeklyPayBody.appendChild(tr);
                 });
 
                 // 월 합계 누적
-                monthWorkPaySum  += rows.reduce((sum,r)=> sum + r.workPay,    0);
-                monthJuhyuPaySum += rows.reduce((sum,r)=> sum + r.juhyuPay,   0);
-                monthTaxSum      += rows.reduce((sum,r)=> sum + r.taxAmount,  0);
-                monthNetSum      += rows.reduce((sum,r)=> sum + r.netTotal,   0);
+                monthWorkPaySum += rows.reduce((sum,r)=> sum + r.workPay, 0);
+                monthJuhyuPaySum += rows.reduce((sum,r)=> sum + r.juhyuPay, 0);
+                monthTotalSum    += rows.reduce((sum,r)=> sum + r.total,   0);
             });
 
-            setFooterSums(monthWorkPaySum, monthJuhyuPaySum, monthTaxSum, monthNetSum);
+            setFooterSums(monthWorkPaySum, monthJuhyuPaySum, monthTotalSum);
         }
 
-        function setFooterSums(work, juhyu, tax, net){
-            monthWorkPaySumEl.textContent  = krw(work|0);
+        function setFooterSums(work, juhyu, total){
+            monthWorkPaySumEl.textContent = krw(work|0);
             monthJuhyuPaySumEl.textContent = krw(juhyu|0);
-            monthTaxSumEl.textContent      = tax ? krw(tax|0) : '-';
-            monthNetSumEl.textContent      = krw(net|0);
+            monthTotalSumEl.textContent = krw(total|0);
         }
 
         /* ===== 유틸 ===== */
@@ -373,9 +328,7 @@
             arr.forEach(d=>{
                 const date=String(d.date);
                 const segs=Array.isArray(d.segments)?d.segments:[];
-                const minutes=(typeof d.minutes==='number')
-                        ? d.minutes
-                        : segs.reduce((acc,s)=>acc+diffMinutes(s.start,s.end),0);
+                const minutes=(typeof d.minutes==='number') ? d.minutes : segs.reduce((acc,s)=>acc+diffMinutes(s.start,s.end),0);
                 map[date] = { segments: segs, minutes };
             });
             return map;
@@ -390,30 +343,18 @@
             return {h:isNaN(h)?0:h, m:isNaN(m)?0:m};
         }
         function formatMins(mins){
-            mins=Math.max(0, mins|0);
-            const h=Math.floor(mins/60), m=mins%60;
+            mins=Math.max(0, mins|0); const h=Math.floor(mins/60), m=mins%60;
             return m===0?`${h}시간`:`${h}시간 ${m}분`;
         }
         function krw(v){
-            return new Intl.NumberFormat('ko-KR',{
-                style:'currency',
-                currency:'KRW',
-                maximumFractionDigits:0
-            }).format(v|0);
+            return new Intl.NumberFormat('ko-KR',{style:'currency',currency:'KRW',maximumFractionDigits:0}).format(v|0);
         }
         function colorForMember(m){
             const key=(m?.id!=null?String(m.id):(m?.name||'x'));
             const h=seededHash(key)%360, s=65, l=55;
             return hslToHex(h,s,l);
         }
-        function seededHash(str){
-            let h=2166136261>>>0;
-            for(let i=0;i<str.length;i++){
-                h^=str.charCodeAt(i);
-                h=(h*16777619)>>>0;
-            }
-            return h>>>0;
-        }
+        function seededHash(str){ let h=2166136261>>>0; for(let i=0;i<str.length;i++){ h^=str.charCodeAt(i); h=(h*16777619)>>>0; } return h>>>0; }
         function hslToHex(h,s,l){
             s/=100; l/=100;
             const k=n=>(n+h/30)%12, a=s*Math.min(l,1-l);
@@ -423,27 +364,10 @@
         }
         function escapeHtml(s){
             if(s==null) return '';
-            return String(s)
-                    .replace(/&/g,'&amp;')
-                    .replace(/</g,'&lt;')
-                    .replace(/>/g,'&gt;')
-                    .replace(/"/g,'&quot;')
+            return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;')
+                    .replace(/>/g,'&gt;').replace(/"/g,'&quot;')
                     .replace(/'/g,'&#39;');
         }
-
-        // applyTax 값(Y/N, true/false, 1/0 등)을 boolean 으로 정규화
-        function isTaxApplied(member){
-            const v = member?.applyTax;
-            if (v === true) return true;
-            if (v === false || v == null) return false;
-            if (typeof v === 'number') return v === 1;
-            if (typeof v === 'string'){
-                const s = v.trim().toUpperCase();
-                return s === 'Y' || s === 'TRUE' || s === 'T' || s === '1';
-            }
-            return false;
-        }
-
     })();
 </script>
 
