@@ -14,6 +14,7 @@ import ymsoft.springdeveloper.com.springdeveloper.entity.ScheduleItem;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -91,6 +92,15 @@ public class MemberDto {
             };
         }
     }
+
+    public String getHealthCertExpiryStr() {
+        if (healthCertExpiry == null) {
+            return "";
+        }
+        // input[type="date"]에서 요구하는 yyyy-MM-dd 포맷
+        return healthCertExpiry.format(DateTimeFormatter.ISO_LOCAL_DATE);
+    }
+
 
     // List<Member> → List<MemberDto>
     public static List<MemberDto> toDtoList(List<Member> members) {

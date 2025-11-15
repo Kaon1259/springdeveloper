@@ -5,6 +5,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -366,39 +367,54 @@ public class MemberController {
 
     //인사정보 보기
     @GetMapping("/members/{id}/edit")
-    public String editMember(@PathVariable Long id, Model model) throws Exception {
-        log.info("editMember: {}", id);
-        MemberDto member = memService.findById(id);
-        model.addAttribute("member", member);
+    public String editMember(@PathVariable Long id,
+                             RedirectAttributes redirectAttributes,
+                             Model model) throws Exception {
 
-        // 1) 기준 주(월요일~일요일) 계산
-        LocalDate base =  LocalDate.now();
-        LocalDate startOfWeek = base.with(java.time.DayOfWeek.MONDAY);
-        LocalDate endOfWeek   = startOfWeek.plusDays(6);
+        try {
+            log.info("editMember: {}", id);
+            MemberDto member = memService.findById(id);
+            member.getHealthCertExpiryStr();
 
-        // 2) 라벨/URL
-        DateTimeFormatter ymd = DateTimeFormatter.ofPattern("yyyy.MM.dd");
-        DateTimeFormatter md  = DateTimeFormatter.ofPattern("MM.dd");
+            model.addAttribute("member", member);
 
-        String weekRangeLabel = String.format("%s ~ %s",
-                startOfWeek.format(ymd), endOfWeek.format(md));
+            // 1) 기준 주(월요일~일요일) 계산
+            LocalDate base =  LocalDate.now();
+            LocalDate startOfWeek = base.with(java.time.DayOfWeek.MONDAY);
+            LocalDate endOfWeek   = startOfWeek.plusDays(6);
 
-        // 예: /members?week=2025-11-03
-        String weekPrevUrl = "/members?week=" + startOfWeek.minusWeeks(1);
-        String weekNextUrl = "/members?week=" + startOfWeek.plusWeeks(1);
+            // 2) 라벨/URL
+            DateTimeFormatter ymd = DateTimeFormatter.ofPattern("yyyy.MM.dd");
+            DateTimeFormatter md  = DateTimeFormatter.ofPattern("MM.dd");
+
+            String weekRangeLabel = String.format("%s ~ %s",
+                    startOfWeek.format(ymd), endOfWeek.format(md));
+
+            // 예: /members?week=2025-11-03
+            String weekPrevUrl = "/members?week=" + startOfWeek.minusWeeks(1);
+            String weekNextUrl = "/members?week=" + startOfWeek.plusWeeks(1);
 
 
-        // 4) 주간 네비게이션 바인딩
-        model.addAttribute("weekRangeLabel", weekRangeLabel);
-        model.addAttribute("weekPrevUrl", weekPrevUrl);
-        model.addAttribute("weekNextUrl", weekNextUrl);
+            // 4) 주간 네비게이션 바인딩
+            model.addAttribute("weekRangeLabel", weekRangeLabel);
+            model.addAttribute("weekPrevUrl", weekPrevUrl);
+            model.addAttribute("weekNextUrl", weekNextUrl);
 
-        String memberJson = objectMapper.writeValueAsString(member);
-        model.addAttribute("memberJson", memberJson);
+            String memberJson = objectMapper.writeValueAsString(member);
+            model.addAttribute("memberJson", memberJson);
 
-        log.info(member.toString());
+            log.info(member.toString());
 
-        return "members/edit";
+            return "members/edit";
+
+        } catch (Exception ex) {
+            log.info("Exception : /members/{id}/edit: {}", ex.toString());
+            // 예외 처리: 에러 메시지와 함께 편집 화면 복귀
+            redirectAttributes.addFlashAttribute("toast", "수정도중 오류가 발생하였습니다.");
+            redirectAttributes.addFlashAttribute("toastType", "error");
+            return "redirect:/members/" + id + "/edit";
+        }
+
     }
 
 
@@ -407,7 +423,8 @@ public class MemberController {
                                BindingResult bindingResult,
                                RedirectAttributes redirectAttributes) {
 
-        log.info("memberDto: {}", dto.toString());
+        log.info("createMember:memberDto: {}", dto.toString());
+
         // 1) 서버측 기본 검증
         if (!StringUtils.hasText(dto.getName())) {
             bindingResult.rejectValue("name", "required", "이름은 필수입니다.");
@@ -438,13 +455,24 @@ public class MemberController {
 
         if (bindingResult.hasErrors()) {
             // 에러 시, 다시 폼으로(템플릿 경로는 프로젝트에 맞게)
+            String errorMessage = bindingResult.getAllErrors()
+                    .stream()
+                    .map(DefaultMessageSourceResolvable::getDefaultMessage)
+                    .collect(Collectors.joining(", "));
+            log.info("bindingResult.hasErrors(): " + errorMessage);
             return "members/new";
         }
 
-        memService.save(dto);
+        try {
+            Member saved = memService.save(dto);
+            // 4) 리다이렉트
+            log.info("createMember: saved: {}", saved.toString());
+            return "redirect:/members/" + saved.getId() + "/edit"; // 목록 페이지 등 원하는 곳으로
 
-        // 4) 리다이렉트
-        return "redirect:/members"; // 목록 페이지 등 원하는 곳으로
+        }catch (Exception ex) {
+            log.info("Exception : /members/{id}/edit: {}", ex.toString());
+            return "members/new";
+        }
     }
 
 
@@ -497,8 +525,14 @@ public class MemberController {
 
         // --- 에러 시: edit.mustache가 기대하는 모델 값 복구 ---
         if (bindingResult.hasErrors()) {
-            log.info("bindingResult.hasErrors(): {}", dto.toString());
-            redirectAttributes.addFlashAttribute("toast", "수정도중 오류가 발생하였습니다.");
+            String errorMessage = bindingResult.getAllErrors()
+                    .stream()
+                    .map(DefaultMessageSourceResolvable::getDefaultMessage)
+                    .collect(Collectors.joining(", "));
+
+            log.info("Errors: {}", errorMessage);
+
+            redirectAttributes.addFlashAttribute("toast", errorMessage);
             redirectAttributes.addFlashAttribute("toastType", "error");
             return "redirect:/members/" + id + "/edit";
         }

@@ -1,29 +1,94 @@
 package ymsoft.springdeveloper.com.springdeveloper.service;
 
 
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ymsoft.springdeveloper.com.springdeveloper.dto.*;
+import ymsoft.springdeveloper.com.springdeveloper.entity.Member;
 import ymsoft.springdeveloper.com.springdeveloper.entity.PayrollMonth;
 import ymsoft.springdeveloper.com.springdeveloper.enums.PayrollStatus;
 import ymsoft.springdeveloper.com.springdeveloper.repository.PayrollMonthRepository;
+import ymsoft.springdeveloper.com.springdeveloper.repository.memberRepository;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 public class PayrollMonthService {
 
     private final PayrollMonthRepository payrollMonthRepository;
 
+    @Autowired
+    private memberRepository memberRepository;
+
     public PayrollMonthService(PayrollMonthRepository payrollMonthRepository) {
         this.payrollMonthRepository = payrollMonthRepository;
     }
 
+    /*
+    @Transactional
+    public PayrollMonth saveMonth(PayrollMonthSaveRequest req) {
+
+        // 🔹 생성(Create)
+        if (req.getId() == null) {
+            if (req.getMemberId() == null) {
+                throw new IllegalArgumentException("memberId 는 필수입니다.");
+            }
+
+            Member member = memberRepository.findById(req.getMemberId())
+                    .orElseThrow(() -> new IllegalArgumentException("해당 ID의 아르바이트를 찾을 수 없습니다. id=" + req.getMemberId()));
+
+            PayrollMonth pm = new PayrollMonth();
+
+            // ❗❗ 여기서 pm.setId(...) 절대 하지 않기
+            pm.setMember(member);
+
+            pm.setPayYear(req.getPayYear());
+            pm.setPayMonth(req.getPayMonth());
+            pm.setMonthWorkMinutes(req.getMonthWorkMinutes());
+            pm.setMonthWorkPay(req.getMonthWorkPay());
+            pm.setMonthJuhyuMinutes(req.getMonthJuhyuMinutes());
+            pm.setMonthJuhyuPay(req.getMonthJuhyuPay());
+            pm.setMonthTotalPay(req.getMonthTotalPay());
+            pm.setHourlyWage(req.getHourlyWage());
+
+            pm.setStatus(PayrollStatus.DRAFT);     // 예시
+            pm.setConfirmedAt(null);
+            pm.setPaidAt(null);
+
+            return payrollMonthRepository.save(pm);   // 🔹 여기서는 persist → INSERT
+        }
+
+        // 🔹 수정(Update)
+        PayrollMonth pm = payrollMonthRepository.findById(req.getId())
+                .orElseThrow(() -> new IllegalArgumentException("수정할 PayrollMonth 를 찾을 수 없습니다. id=" + req.getId()));
+
+        // (보통 member 는 수정 안 한다고 가정)
+        pm.setPayYear(req.getPayYear());
+        pm.setPayMonth(req.getPayMonth());
+        pm.setMonthWorkMinutes(req.getMonthWorkMinutes());
+        pm.setMonthWorkPay(req.getMonthWorkPay());
+        pm.setMonthJuhyuMinutes(req.getMonthJuhyuMinutes());
+        pm.setMonthJuhyuPay(req.getMonthJuhyuPay());
+        pm.setMonthTotalPay(req.getMonthTotalPay());
+        pm.setHourlyWage(req.getHourlyWage());
+        // confirmedAt, paidAt, status 등은 비즈니스 룰에 맞게
+
+        // pm 은 이미 영속 상태라 save(pm) 호출 안 해도 flush 시 UPDATE 됨
+        return pm;
+    }
+}
+*/
+
     @Transactional
     public PayrollMonth saveMonth(PayrollMonthRequest req) {
+
+        log.info("Saving month: {}", req.getMemberId());
 
         PayrollMonth entity = payrollMonthRepository
                 .findByMemberIdAndPayYearAndPayMonth(
@@ -33,10 +98,13 @@ public class PayrollMonthService {
                 )
                 .orElseGet(PayrollMonth::new);
 
+        log.info("Saving month: {}", entity);
+
         // 신규면 기본키/키 필드 세팅
         if (entity.getId() == null) {
-        //    entity.setMemberId(req.getMemberId());
-            entity.setMember(entity.getMember());
+            Member member = memberRepository.findById(req.getMemberId())
+                    .orElseThrow(() -> new IllegalArgumentException("해당 ID의 아르바이트를 찾을 수 없습니다. id=" + req.getMemberId()));
+            entity.setMember(member);
             entity.setPayYear(req.getPayYear());
             entity.setPayMonth(req.getPayMonth());
         }

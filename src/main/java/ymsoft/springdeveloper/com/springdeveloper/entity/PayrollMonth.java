@@ -6,6 +6,7 @@ import ymsoft.springdeveloper.com.springdeveloper.enums.PayrollStatus;
 
 import java.time.LocalDateTime;
 
+@ToString
 @Getter @Setter
 @Builder
 @AllArgsConstructor

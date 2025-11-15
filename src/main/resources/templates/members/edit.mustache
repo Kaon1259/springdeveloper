@@ -1,339 +1,1021 @@
 {{>layouts/header}}
 {{>layouts/toast}}
 
-<style>
-    .week-grid { width: 100%; border: 1px solid #e5e7eb; border-radius: 10px; overflow: hidden; user-select: none; background:#fff; }
-    .week-grid table { width: 100%; border-collapse: separate; border-spacing: 0; table-layout: fixed; }
-    .week-grid thead th {
-        background: #f8fafc; color:#64748b; font-weight: 600; font-size: 0.95rem;
-        border-bottom: 1px solid #e5e7eb; text-align: center; padding: .6rem .4rem;
-        position: sticky; top: 0; z-index: 2;
-    }
-    .week-grid tbody th {
-        background: #fafafa; color:#6b7280; font-weight: 600; width: 74px;
-        border-right: 1px solid #e5e7eb; text-align: center; padding: .25rem .25rem; font-size: .85rem;
-        position: sticky; left: 0; z-index: 1;
-    }
-    .slot-10m {
-        border-bottom: 1px dashed #eef2f6; border-right: 1px dashed #eef2f6;
-        height: 18px; cursor: pointer; background: #ffffff;
-    }
-    .slot-10m:hover { background: #f8fbff; }
-    .slot-10m.selected { background: rgba(25,135,84,.18); box-shadow: inset 0 0 0 1px rgba(25,135,84,.25); }
-    .row-hour-start td, .row-hour-start th { border-top: 2px solid #e5e7eb !important; }
-    .grid-toolbar { display: flex; gap: 8px; align-items: center; justify-content: space-between; margin-bottom: .5rem; }
-    .modal { background: rgba(0,0,0,.35); position: fixed; inset: 0; display:none; }
-    .modal-dialog { margin: 50px auto; max-width: 980px; }
-    .modal-content { background:#fff; border-radius: 12px; }
-</style>
+<main class="schedule-shell py-4">
+    <div class="schedule-layout container">
 
-<main class="container my-4">
-    <h2 class="mb-3">👤 아르바이트 회원 정보 수정</h2>
+        <!-- ============ 상단: 한 명의 이름 + 상태 선택 + 상단 저장 버튼 ============ -->
+        <section class="panel card-info mb-3">
+            <header class="panel-header panel-header-compact d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="title-sm">STAFF EDIT</div>
 
-    <form class="container px-0" action="/members/{{member.id}}/update" method="post" id="memberForm">
-        {{#_csrf}}<input type="hidden" name="{{parameterName}}" value="{{token}}">{{/_csrf}}
-        <input type="hidden" name="id" value="{{member.id}}"/>
+                    <div class="d-flex align-items-center flex-wrap gap-2">
+                        <h2 class="title-lg mb-0">아르바이트 정보 수정</h2>
+                        <span class="name-pill">
+                            {{member.name}}
+                        </span>
 
-        <div class="row g-3">
-            <!-- 왼쪽: 기본 정보 -->
-            <div class="col-12 col-lg-6">
-                <div class="card mb-3">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <span class="fw-bold">기본 정보</span>
-                        <select class="form-select form-select-sm w-auto" name="status" id="statusHeader" required>
-                            <option value="">상태</option>
-                            <option value="WAITING">시작전</option>
-                            <option value="WORKING">근무중</option>
-                            <option value="RESTING">휴식중</option>
-                            <option value="PAUSED">일시중지</option>
-                            <option value="RESIGNED">퇴사</option>
-                        </select>
-                    </div>
-                    <div class="card-body">
-                        <div class="mb-3">
-                            <label class="form-label">이름</label>
-                            <input class="form-control" type="text" name="name" value="{{member.name}}" required>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">성별</label>
-                            <select class="form-select" name="gender" id="gender" required>
-                                <option value="">성별 선택</option>
-                                <option value="남성">남성</option>
-                                <option value="여성">여성</option>
+                        <!-- 이름 옆 상태 선택 드롭다운 (form 속성으로 폼에 연결) -->
+                        <div class="status-inline ms-2">
+                            <span class="text-xs text-muted mb-0">상태</span>
+                            <select id="statusSelectTop"
+                                    class="form-select form-select-sm"
+                                    name="status"
+                                    form="memberEditForm"
+                                    required>
+                                <option value="WORKING">근무중</option>
+                                <option value="WAITING">시작전</option>
+                                <option value="RESTING">휴식중</option>
+                                <option value="PAUSED">일시중지</option>
+                                <option value="RESIGNED">퇴사</option>
                             </select>
                         </div>
-                        <div class="mb-3">
-                            <label class="form-label">연락처</label>
-                            <input class="form-control" type="tel" id="phone" name="phone" value="{{member.phone}}" required>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">이메일</label>
-                            <input class="form-control" type="email" name="email" value="{{member.email}}">
-                        </div>
+                    </div>
+
+                    <div class="text-xs text-muted mt-1">
+                        {{#member}}
+                            <span>
+                            (등록일:
+                                {{#createdAt}}
+                                    {{createdAt}}
+                                {{/createdAt}}
+                                {{^createdAt}}
+                                    -
+                                {{/createdAt}}
+                                )
+                        </span>
+                        {{/member}}
                     </div>
                 </div>
 
-                <!-- 보건증 -->
-                <div class="card mb-3">
-                    <div class="card-header fw-bold">보건증</div>
-                    <div class="card-body">
-                        <div class="mb-3">
-                            <label class="form-label d-block">보건증 보유</label>
-                            <div class="form-check form-check-inline">
-                                <input class="form-check-input" type="radio" name="hasHealthCertificate" value="true" id="healthYes" {{#member}}{{#hasHealthCertificate}}checked{{/hasHealthCertificate}}{{/member}}>
-                                <label class="form-check-label" for="healthYes">보유</label>
-                            </div>
-                            <div class="form-check form-check-inline">
-                                <input class="form-check-input" type="radio" name="hasHealthCertificate" value="false" id="healthNo" {{#member}}{{^hasHealthCertificate}}checked{{/hasHealthCertificate}}{{/member}}>
-                                <label class="form-check-label" for="healthNo">미보유</label>
-                            </div>
-                        </div>
-                        <div id="healthExpiryPanel" class="mt-2" style="display:none;">
-                            <label class="form-label mb-1">유효기간(만료일)</label>
-                            <input type="date" class="form-control" id="healthExpiryDate" name="healthCertExpiry" value="{{healthCertExpiry}}">
-                        </div>
-                    </div>
-                </div>
+                <!-- 오른쪽 끝: 상단 저장 버튼 -->
+                <div class="d-flex flex-column align-items-end gap-2">
 
-                <!-- 계좌 -->
-                <div class="card mb-3">
-                    <div class="card-header fw-bold">급여 입금 계좌</div>
-                    <div class="card-body">
-                        <div class="mb-3">
-                            <label class="form-label">은행</label>
-                            <select class="form-select" name="bankName" id="bankName">
-                                <option value="">은행 선택</option>
-                                <option>KB국민</option><option>신한</option><option>우리</option><option>하나</option>
-                                <option>농협</option><option>IBK기업</option><option>카카오뱅크</option><option>토스뱅크</option>
-                                <option>SC제일</option><option>씨티</option><option>부산</option><option>대구</option>
-                                <option>경남</option><option>광주</option><option>전북</option><option>수협</option>
-                                <option>새마을</option><option>우체국</option>
+                        <a href="/members"
+                           class="btn btn-sm btn-outline-secondary">
+                            목록으로
+                        </a>
+
+                    <button type="submit"
+                            form="memberEditForm"
+                            class="btn btn-sm btn-primary">
+                        저장하기
+                    </button>
+                    <!-- 버튼 영역 (하단) -->
+                </div>
+            </header>
+        </section>
+
+        <!-- ============ 패널: 기본 정보 편집 폼 ============ -->
+        <section class="panel mb-3">
+            <div class="panel-body">
+
+                <!-- action / method / csrf는 프로젝트 설정에 맞게 -->
+                <form id="memberEditForm" method="post" action="/members/{{member.id}}/update" autocomplete="off">
+
+                    <!-- 1줄: 기본 정보 -->
+                    <div class="info-grid mb-3">
+                        <div class="info-item">
+                            <div class="label">이름</div>
+                            <input type="text"
+                                   class="form-control form-control-sm"
+                                   name="name"
+                                   value="{{member.name}}"
+                                   required>
+                        </div>
+
+                        <div class="info-item">
+                            <div class="label">성별</div>
+                            <select class="form-select form-select-sm"
+                                    name="gender"
+                                    required>
+                                <option value="">선택</option>
+                                <option value="M">남</option>
+                                <option value="F">여</option>
                             </select>
                         </div>
-                        <div>
-                            <label class="form-label">계좌번호</label>
-                            <input class="form-control" type="text" name="bankAccount" value="{{member.bankAccount}}">
+                        <div class="info-item">
+                            <div class="label">전화번호</div>
+                            <input type="text"
+                                   class="form-control form-control-sm"
+                                   name="phone"
+                                   value="{{member.phone}}">
+                        </div>
+
+                        <div class="info-item">
+                            <div class="label">이메일</div>
+                            <input type="email"
+                                   class="form-control form-control-sm"
+                                   name="email"
+                                   value="{{member.email}}">
                         </div>
                     </div>
-                </div>
-            </div>
 
-            <!-- 오른쪽: 근무조건 -->
-            <div class="col-12 col-lg-6">
-                <div class="card mb-3">
-                    <div class="card-header fw-bold">근무 조건</div>
-                    <div class="card-body">
-                        <div class="mb-3">
-                            <label class="form-label">시작일</label>
-                            <input class="form-control" type="date" name="startDate" value="{{member.startDate}}" required>
+                    <!-- 2줄: 시작일/시급/급여지급일/주휴수당 -->
+                    <div class="info-grid mb-3">
+                        <div class="info-item">
+                            <div class="label">시작일(근무)</div>
+                            <input type="date"
+                                   class="form-control form-control-sm"
+                                   name="startDate"
+                                   value="{{member.startDate}}">
                         </div>
-                        <div class="mb-3">
-                            <label class="form-label">시급(원)</label>
-                            <input class="form-control" type="number" name="hourlyWage" id="hourlyWage" value="{{member.hourlyWage}}" required>
+                        <div class="info-item">
+                            <div class="label">시급(원)</div>
+                            <input type="number"
+                                   min="0"
+                                   step="10"
+                                   class="form-control form-control-sm text-end"
+                                   name="hourlyWage"
+                                   value="{{member.hourlyWage}}">
                         </div>
-                        <div class="mb-3">
-                            <label class="form-label">급여지급일</label>
-                            <select class="form-select" name="payday" id="payday">
-                                <option value="">미지정</option>
+                        <div class="info-item">
+                            <div class="label">급여지급일</div>
+                            <select class="form-select form-select-sm"
+                                    name="payday"
+                                    required>
+                                <option value="">선택</option>
                                 <option value="EOM">말일</option>
-                                {{#days}}<option value="{{.}}">{{.}}일</option>{{/days}}
+                                <!-- 🔹 1 ~ 31일까지 모두 고정 옵션으로 표시 -->
+                                <option value="1">1일</option>
+                                <option value="2">2일</option>
+                                <option value="3">3일</option>
+                                <option value="4">4일</option>
+                                <option value="5">5일</option>
+                                <option value="6">6일</option>
+                                <option value="7">7일</option>
+                                <option value="8">8일</option>
+                                <option value="9">9일</option>
+                                <option value="10">10일</option>
+                                <option value="11">11일</option>
+                                <option value="12">12일</option>
+                                <option value="13">13일</option>
+                                <option value="14">14일</option>
+                                <option value="15">15일</option>
+                                <option value="16">16일</option>
+                                <option value="17">17일</option>
+                                <option value="18">18일</option>
+                                <option value="19">19일</option>
+                                <option value="20">20일</option>
+                                <option value="21">21일</option>
+                                <option value="22">22일</option>
+                                <option value="23">23일</option>
+                                <option value="24">24일</option>
+                                <option value="25">25일</option>
+                                <option value="26">26일</option>
+                                <option value="27">27일</option>
+                                <option value="28">28일</option>
+                                <option value="29">29일</option>
+                                <option value="30">30일</option>
+                                <option value="31">31일</option>
                             </select>
                         </div>
-                        <div>
-                            <label class="form-label d-block">주휴수당 적용</label>
-                            <input class="form-check-input" type="checkbox" id="includeWeeklyHolidayAllowance" name="includeWeeklyHolidayAllowance" value="true">
-                            <label class="form-check-label" for="includeWeeklyHolidayAllowance">적용 (주15시간 이상 시)</label>
+
+                        <div class="info-item">
+                            <div class="label">주휴수당 적용</div>
+                            <div class="form-check form-switch mt-1">
+                                <input class="form-check-input"
+                                       type="checkbox"
+                                       role="switch"
+                                       id="includeWeeklyHolidayAllowance"
+                                       name="includeWeeklyHolidayAllowance">
+                                <label class="form-check-label text-xs text-muted" for="includeWeeklyHolidayAllowance">
+                                    주 15시간 이상 근무 시 자동 계산
+                                </label>
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                <!-- 근무시간 -->
-                <div class="card mb-3">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <span>근무시간(요일/시간)</span>
-                        <button type="button" class="btn btn-outline-primary btn-sm" id="openScheduleModal">등록/수정</button>
-                    </div>
-                    <div class="card-body">
-                        <table class="table table-sm" id="scheduleTableView">
-                            <thead><tr><th>요일</th><th>시작</th><th>종료</th></tr></thead>
-                            <tbody>
-                            {{#schedules}}
-                                <tr>
-                                    <td data-day="{{day}}">{{dayLabel}}</td>
-                                    <td data-start="{{start}}">{{start}}</td>
-                                    <td data-end="{{end}}">{{end}}</td>
-                                </tr>
-                            {{/schedules}}
-                            {{^schedules}}
-                                <tr class="placeholder"><td colspan="3" class="text-muted">등록된 근무시간이 없습니다.</td></tr>
-                            {{/schedules}}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
+                    <!-- 3줄: 급여/주휴/세금 -->
+                    <div class="info-grid mb-3">
 
-                <div class="d-grid">
-                    <button type="submit" class="btn btn-success btn-lg">수정하기</button>
-                </div>
+                        <div class="info-item">
+                            <div class="label">은행</div>
+                            <input type="text"
+                                   class="form-control form-control-sm"
+                                   name="bankName"
+                                   value="{{member.bankName}}">
+                        </div>
+
+                        <div class="info-item">
+                            <div class="label">계좌번호</div>
+                            <input type="text"
+                                   class="form-control form-control-sm"
+                                   name="bankAccount"
+                                   value="{{member.bankAccount}}">
+                        </div>
+
+                        <div class="info-item">
+                            <div class="label">세금 적용</div>
+                            <div class="form-check form-switch mt-1">
+                                <input class="form-check-input"
+                                       type="checkbox"
+                                       role="switch"
+                                       id="applyTax"
+                                       name="applyTax">
+                                <label class="form-check-label text-xs text-muted" for="applyTax">
+                                    3.3% 등 소득세 공제 적용
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="info-item">
+                            <div class="label"></div>
+                        </div>
+                    </div>
+
+                    <!-- 4줄: 보건증 정보 -->
+                    <div class="info-grid mb-4">
+                        <div class="info-item">
+                            <div class="label">보건증 보유 여부</div>
+                            <div class="form-check form-switch mt-1">
+                                <input class="form-check-input"
+                                       type="checkbox"
+                                       role="switch"
+                                       id="hasHealthCertificate"
+                                       name="hasHealthCertificate">
+                                <label class="form-check-label text-xs text-muted" for="hasHealthCertificate">
+                                    보건증 소지
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="info-item">
+                            <div class="label">보건증 유효기간</div>
+                            <div class="d-flex align-items-center gap-2">
+                                <input type="date"
+                                       class="form-control form-control-sm"
+                                       name="healthCertExpiry"
+                                       id="healthCertExpiry"
+                                       value="{{member.healthCertExpiryStr}}">
+                            </div>
+
+                        </div>
+                        <div class="info-item"></div>
+                        <div>
+                            <button type="button"
+                                    id="btnOpenPayEstimate"
+                                    class="btn btn-sm btn-outline-primary">
+                                예상 급여 보기
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="info-grid mb-4">
+                        <div class="info-item">
+                            <div class="label">메모</div>
+                            <textarea class="form-control form-control-sm"
+                                      name="memo"
+                                      rows="2"
+                                      placeholder="간단 메모를 남겨두세요."></textarea>
+                        </div>
+                    </div>
+
+                    <!-- ============ 주간 템플릿 편집 ============ -->
+                    <section class="panel panel-schedule mb-3 mt-4">
+                        <header class="panel-header d-flex justify-content-between align-items-center">
+                            <div>
+                                <div class="title-sm">SCHEDULE TEMPLATE</div>
+                                <h3 class="title-md mb-0">
+                                    {{member.name}} — 주간 템플릿 (월~일)
+                                </h3>
+                            </div>
+                            <div class="text-end">
+                                <div class="text-xs text-muted">
+                                    10/30/60분 단위 · 드래그로 선택/해제<br>
+                                    <span class="text-primary">폼 저장 시 현재 템플릿이 함께 저장됩니다.</span>
+                                </div>
+                            </div>
+                        </header>
+
+                        <div class="panel-body">
+
+                            <div class="d-flex flex-wrap justify-content-between align-items-center mb-2 gap-2">
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="text-xs text-muted">슬롯 단위</span>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div class="btn-group btn-group-sm slot-btn-group" id="gridSlotButtons" role="group" aria-label="슬롯 단위 선택">
+                                            <button type="button" class="btn btn-outline-secondary active" data-grid-slot="10">10분</button>
+                                            <button type="button" class="btn btn-outline-secondary" data-grid-slot="30">30분</button>
+                                            <button type="button" class="btn btn-outline-secondary" data-grid-slot="60">1시간</button>
+                                        </div>
+
+                                        <button type="button"
+                                                class="btn btn-sm btn-outline-secondary"
+                                                id="btnGridClear">
+                                            초기화
+                                        </button>
+                                        <button type="button"
+                                                class="btn btn-sm btn-outline-secondary"
+                                                id="btnGridRestore">
+                                            원래대로
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="text-xs text-muted text-end">
+                                    마우스를 드래그하거나 클릭하여 <strong>주간 템플릿(계획)</strong>을 설정하세요.<br>
+                                    다시 선택하면 <span class="text-primary">해제</span>됩니다.
+                                </div>
+                            </div>
+
+                            <div class="schedule-board">
+                                <div class="table-responsive schedule-table-wrap">
+                                    <table class="table schedule-table text-center" id="tableWeek10m">
+                                        <thead>
+                                        <tr id="theadWeek">
+                                            <th class="time-col">시간</th>
+                                            <th>월</th>
+                                            <th>화</th>
+                                            <th>수</th>
+                                            <th>목</th>
+                                            <th>금</th>
+                                            <th>토</th>
+                                            <th>일</th>
+                                        </tr>
+                                        </thead>
+                                        <tbody id="tbodyWeek10m"></tbody>
+                                    </table>
+                                </div>
+                                <div class="legend-row text-xs text-muted mt-2">
+                                    <span class="legend-box legend-plan"></span> 선택된 템플릿 셀
+                                </div>
+                            </div>
+
+                        </div>
+                    </section>
+
+                </form>
+
             </div>
-        </div>
-    </form>
+        </section>
+
+    </div>
 </main>
 
-<!-- 모달 -->
-<div class="modal" id="scheduleModal">
-    <div class="modal-dialog">
-        <div class="modal-content p-3">
-            <div class="d-flex justify-content-between align-items-center mb-2">
-                <h5 class="mb-0">요일/시간 등록</h5>
-                <button type="button" class="btn btn-sm btn-outline-secondary" id="closeScheduleModal">닫기</button>
-            </div>
-            <div class="grid-toolbar mb-2">
-                <div class="left"><button type="button" class="btn btn-sm btn-outline-secondary" id="clearAll">전체 초기화</button></div>
-                <small class="text-muted">10분 단위 선택 가능</small>
-            </div>
-            <div class="week-grid mb-3">
-                <table>
-                    <thead>
-                    <tr>
-                        <th>시간</th>
-                        <th data-day="MON">월</th><th data-day="TUE">화</th><th data-day="WED">수</th>
-                        <th data-day="THU">목</th><th data-day="FRI">금</th><th data-day="SAT">토</th><th data-day="SUN">일</th>
-                    </tr>
-                    </thead>
-                    <tbody id="weekGridBody"></tbody>
-                </table>
-            </div>
-            <div>
-                <table class="table table-sm" id="schedulePreviewTable">
-                    <thead><tr><th>요일</th><th>시작</th><th>종료</th></tr></thead>
-                    <tbody></tbody>
-                </table>
-            </div>
-            <div class="text-end mt-2">
-                <button type="button" class="btn btn-success" id="applySchedule">적용</button>
-            </div>
-        </div>
-    </div>
-</div>
+<style>
+    /* ===== 전체 배경/레이아웃 ===== */
+    body {
+        background:
+                radial-gradient(circle at top left, #f5f7ff 0, #eef3ff 36%, transparent 70%),
+                radial-gradient(circle at bottom right, #fef6f3 0, #ffe8da 40%, #ffe1f0 75%);
+    }
+    .schedule-shell {
+        min-height: calc(100vh - 80px);
+    }
 
-{{>layouts/footer}}
+    .schedule-layout {
+        display: flex;
+        flex-direction: column;
+        gap: 1.2rem;
+    }
 
-<script>
-    // 초기값 세팅
-    (function(){
-        const bankName="{{member.bankName}}"; if(bankName)document.getElementById('bankName').value=bankName;
-        const gender="{{#member}}{{gender}}{{/member}}"; if(gender)document.getElementById('gender').value=gender;
-        const status="{{#member}}{{status}}{{/member}}"; if(status)document.getElementById('statusHeader').value=status;
-        document.getElementById('includeWeeklyHolidayAllowance').checked=(String("{{member.includeWeeklyHolidayAllowance}}").toLowerCase()==='true');
+    .panel {
+        border-radius: 18px;
+        background: rgba(255,255,255,0.9);
+        box-shadow: 0 18px 40px rgba(15,23,42,0.08);
+        border: 1px solid rgba(148,163,184,0.18);
+        backdrop-filter: blur(14px);
+        -webkit-backdrop-filter: blur(14px);
+    }
 
-        const hasHC=String("{{#member}}{{hasHealthCertificate}}{{/member}}").toLowerCase()==='true';
-        const panel=document.getElementById('healthExpiryPanel');const dateInput=document.getElementById('healthExpiryDate');
-        if(hasHC){panel.style.display='block';dateInput.disabled=false;}else{panel.style.display='none';dateInput.disabled=true;}
-        document.getElementById('healthYes').addEventListener('change',()=>{panel.style.display='block';dateInput.disabled=false;});
-        document.getElementById('healthNo').addEventListener('change',()=>{panel.style.display='none';dateInput.disabled=true;});
+    .panel-header {
+        padding: 1.1rem 1.3rem 0.7rem 1.3rem;
+        border-bottom: 1px solid rgba(226,232,240,0.9);
+    }
+    .panel-header-compact {
+        padding-bottom: 0.4rem;
+    }
+    .panel-body {
+        padding: 0.9rem 1.3rem 1.2rem 1.3rem;
+    }
 
-        // payday 보정
-        const paydaySelect=document.getElementById('payday');
-        let raw="{{member.payday}}";
-        const hasNumeric=Array.from(paydaySelect.options).some(o=>/^\d+$/.test(o.value));
-        if(!hasNumeric){for(let d=1;d<=31;d++){const opt=document.createElement('option');opt.value=String(d);opt.textContent=`${d}일`;paydaySelect.appendChild(opt);}}
-        function normalize(v){if(!v)return'';v=String(v).trim();if(v.toUpperCase()==='EOM')return'EOM';if(/^\d+$/.test(v))return String(parseInt(v,10));return v;}
-        const norm=normalize(raw);
-        const exist=Array.from(paydaySelect.options).some(o=>String(o.value)===norm);
-        if(exist)paydaySelect.value=norm;
-    })();
+    .card-info {
+        border-radius: 18px;
+    }
+
+    .title-sm {
+        font-size: 0.7rem;
+        letter-spacing: .16em;
+        text-transform: uppercase;
+        color: #9ca3af;
+        font-weight: 600;
+    }
+    .title-lg {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #111827;
+    }
+    .title-md {
+        font-size: 0.98rem;
+        font-weight: 600;
+        color: #111827;
+    }
+    .text-xs {
+        font-size: 0.75rem;
+    }
+
+    .name-pill {
+        display:inline-flex;
+        align-items:center;
+        padding:0.2rem 0.7rem;
+        border-radius:999px;
+        background:#0f172a;
+        color:#f9fafb;
+        font-size:0.8rem;
+    }
+
+    .info-grid {
+        display:grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap:0.9rem 1.2rem;
+    }
+    .info-item .label {
+        font-size:0.7rem;
+        text-transform:uppercase;
+        letter-spacing:.12em;
+        color:#9ca3af;
+        margin-bottom:0.25rem;
+    }
+    .info-item .value {
+        font-size:0.9rem;
+        font-weight:500;
+        color:#111827;
+    }
+
+    .form-control-sm,
+    .form-select-sm {
+        font-size:0.82rem;
+        padding:.25rem .5rem;
+        border-radius:0.6rem;
+    }
+
+    .form-control-sm:focus,
+    .form-select-sm:focus {
+        box-shadow:0 0 0 1px rgba(59,130,246,0.3);
+        border-color:#2563eb;
+    }
+
+    /* ===== 주간 템플릿용 추가 스타일 ===== */
+    .panel-schedule {
+        border-radius: 18px;
+    }
+
+    .slot-btn-group .btn {
+        border-radius:999px;
+        font-size:0.76rem;
+        padding-inline:0.6rem;
+    }
+    .slot-btn-group .btn.active {
+        background:#0f172a;
+        color:#f9fafb;
+        border-color:#0f172a;
+    }
+
+    .schedule-board {
+        border-radius:14px;
+        border:1px solid rgba(226,232,240,0.9);
+        padding:0.8rem;
+        background:linear-gradient(135deg, rgba(248,250,252,0.9), rgba(239,246,255,0.95));
+    }
+    .schedule-table-wrap {
+        max-height: 520px;
+        overflow:auto;
+    }
+    .schedule-table {
+        margin-bottom:0;
+        border-collapse:separate;
+        border-spacing:0;
+        font-size:0.78rem;
+    }
+    .schedule-table thead th {
+        position: sticky;
+        top: 0;
+        z-index: 3;
+        background: linear-gradient(135deg,#e5edff,#f9fafb);
+        border-bottom:1px solid rgba(209,213,219,0.9);
+        font-size:0.75rem;
+        font-weight:600;
+        color:#4b5563;
+    }
+    .schedule-table th, .schedule-table td {
+        border:0;
+        padding:2px 2px;
+        vertical-align:middle;
+    }
+    .schedule-table .time-col {
+        width:70px;
+        font-variant-numeric:tabular-nums;
+        font-size:0.7rem;
+        color:#6b7280;
+        background:rgba(15,23,42,0.04);
+        position: sticky;
+        left:0;
+        z-index:2;
+    }
+
+    .cell-10m {
+        height: 14px;
+        border-radius: 4px;
+        background: #ffffff;
+        cursor: pointer;
+        user-select: none;
+        border:1px solid rgba(229,231,235,0.85);
+        transition: background .08s, border-color .08s, box-shadow .08s, transform .04s;
+    }
+    .cell-10m:hover {
+        box-shadow: 0 0 0 1px rgba(59,130,246,0.45);
+        transform: translateY(-0.5px);
+    }
+
+    .cell-10m.schedule-on {
+        background: rgba(248, 164, 76, 0.6);
+        border-color: rgba(248, 164, 76, 0.9);
+        box-shadow: 0 0 0 1px rgba(248,164,76,0.8);
+    }
+
+    tr.hour-start > td, tr.hour-start > th {
+        border-top: 1px dashed rgba(148,163,184,0.5) !important;
+    }
+
+    .legend-row {
+        display:flex;
+        align-items:center;
+        gap:0.5rem;
+        flex-wrap:wrap;
+    }
+    .legend-box {
+        display:inline-block;
+        width:14px;
+        height:14px;
+        border-radius:4px;
+        border:1px solid rgba(209,213,219,0.9);
+        vertical-align:middle;
+    }
+    .legend-plan {
+        background: rgba(248, 164, 76, 0.6);
+        border-color: rgba(248, 164, 76, 0.9);
+    }
+
+    @media (max-width: 768px) {
+        .schedule-layout {
+            gap:0.8rem;
+        }
+    }
+
+    .status-inline {
+        display: inline-flex;
+        flex-wrap: nowrap;
+        align-items: center;
+        gap: 0.25rem;
+    }
+
+    .status-inline .form-select-sm {
+        width: auto;
+        min-width: 110px;
+    }
+</style>
+
+<!-- ===== memberDto JSON (schedule 포함) ===== -->
+<script id="memberData" type="application/json">
+{{{memberJson}}}
 </script>
 
 <script>
-    (function(){
-        const form=document.getElementById('memberForm');
-        const modal=document.getElementById('scheduleModal');
-        const openBtn=document.getElementById('openScheduleModal');
-        const closeBtn=document.getElementById('closeScheduleModal');
-        const applyBtn=document.getElementById('applySchedule');
-        const clearBtn=document.getElementById('clearAll');
-        const gridBody=document.getElementById('weekGridBody');
-        const previewBody=document.querySelector('#schedulePreviewTable tbody');
-        const viewBody=document.querySelector('#scheduleTableView tbody');
-        const dayMap={MON:'월',TUE:'화',WED:'수',THU:'목',FRI:'금',SAT:'토',SUN:'일'};
-        const days=['MON','TUE','WED','THU','FRI','SAT','SUN'];
-        const HOUR_START=6,HOUR_END=22,STEP=10;
-        const START_MIN=HOUR_START*60,END_MIN=HOUR_END*60;
-        const TOTAL=(END_MIN-START_MIN)/STEP;
+    (function () {
+        const HOUR_START = 6;
+        const HOUR_END   = 22;
+        const DAY_CODES  = ['MON','TUE','WED','THU','FRI','SAT','SUN'];
+        const DOW_LABELS = ['월','화','수','목','금','토','일'];
 
-        openBtn.addEventListener('click',()=>{buildGrid();hydrate();preview();modal.style.display='block';});
-        closeBtn.addEventListener('click',()=>modal.style.display='none');
+        const tbodyWeek         = document.getElementById('tbodyWeek10m');
+        const theadWeek         = document.getElementById('theadWeek');
+        const gridSlotButtons   = document.getElementById('gridSlotButtons');
+        const btnGridClear      = document.getElementById('btnGridClear');
+        const btnGridRestore    = document.getElementById('btnGridRestore');
+        const form              = document.getElementById('memberEditForm');
 
-        function buildGrid(){
-            gridBody.innerHTML='';
-            for(let i=0;i<TOTAL;i++){
-                const t=START_MIN+i*STEP;const h=Math.floor(t/60),m=t%60;const label=(m%30===0)?`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`:'';
-                const tr=document.createElement('tr');if(m===0)tr.classList.add('row-hour-start');
-                const th=document.createElement('th');th.textContent=label;tr.appendChild(th);
-                days.forEach(d=>{const td=document.createElement('td');const div=document.createElement('div');div.className='slot-10m';div.dataset.day=d;div.dataset.idx=i;td.appendChild(div);tr.appendChild(td);});
-                gridBody.appendChild(tr);
+        let gridStepMinutes     = 10;
+        let scheduleMapByDay    = {};
+        let originalScheduleMapByDay = {};
+
+        let gridDragging        = false;
+        let gridDragAdding      = true;
+
+        let member = {};
+        try {
+            member = JSON.parse(document.getElementById('memberData').textContent || '{}');
+        } catch (e) {
+            member = {};
+        }
+
+        // 기본 필드들 초기화 (status, gender, payday, boolean들)
+        initBasicFieldsFromMember(member);
+
+        scheduleMapByDay = buildScheduleMapFromMember(member);
+        originalScheduleMapByDay = cloneScheduleMap(scheduleMapByDay);
+
+        buildWeekGrid();
+        renderWeekHeadDays();
+        paintScheduleFromMap(scheduleMapByDay);
+
+        attachCellDragHandlers();
+        attachSlotButtons();
+        attachFormSubmitHandler();
+        attachResetButtons();
+
+        function initBasicFieldsFromMember(m) {
+            if (!form || !m) return;
+
+            const statusSelectTop = document.getElementById('statusSelectTop');
+            if (statusSelectTop && m.status) {
+                statusSelectTop.value = m.status;
             }
-            attachDrag();
-        }
-        let dragging=false,adding=true;
-        function attachDrag(){
-            gridBody.querySelectorAll('.slot-10m').forEach(div=>{
-                div.addEventListener('mousedown',e=>{e.preventDefault();dragging=true;adding=!div.classList.contains('selected');toggle(div,adding);});
-                div.addEventListener('mouseenter',()=>{if(!dragging)return;toggle(div,adding);});
-            });
-            window.addEventListener('mouseup',()=>{if(dragging){dragging=false;preview();}});
-        }
-        function toggle(el,on){on?el.classList.add('selected'):el.classList.remove('selected');}
-        clearBtn.addEventListener('click',()=>{gridBody.querySelectorAll('.selected').forEach(s=>s.classList.remove('selected'));preview();});
 
-        function hydrate(){
-            const rows=Array.from(viewBody.querySelectorAll('tr')).filter(r=>!r.classList.contains('placeholder'));
-            rows.forEach(r=>{
-                const d=r.querySelector('td:nth-child(1)')?.getAttribute('data-day');
-                const s=r.querySelector('td:nth-child(2)')?.getAttribute('data-start')||r.querySelector('td:nth-child(2)')?.textContent?.trim();
-                const e=r.querySelector('td:nth-child(3)')?.getAttribute('data-end')||r.querySelector('td:nth-child(3)')?.textContent?.trim();
-                if(!d||!s||!e)return;
-                const sMin=toMin(s),eMin=toMin(e);const a=Math.max(START_MIN,sMin),b=Math.min(END_MIN,eMin);if(a>=b)return;
-                const si=Math.floor((a-START_MIN)/STEP),ei=Math.ceil((b-START_MIN)/STEP)-1;
-                for(let i=si;i<=ei;i++){const el=gridBody.querySelector(`.slot-10m[data-day="${d}"][data-idx="${i}"]`);if(el)el.classList.add('selected');}
+            const genderSelect = form.querySelector('select[name="gender"]');
+            if (genderSelect && m.gender) {
+                genderSelect.value = m.gender;
+            }
+
+            const paydaySelect = form.querySelector('select[name="payday"]');
+            if (paydaySelect && m.payday) {
+                paydaySelect.value = m.payday;   // 🔹 EOM 또는 "1"~"31" 자동 선택
+            }
+
+            const weeklyCb = document.getElementById('includeWeeklyHolidayAllowance');
+            if (weeklyCb && typeof m.includeWeeklyHolidayAllowance === 'boolean') {
+                weeklyCb.checked = m.includeWeeklyHolidayAllowance;
+            }
+
+            const applyTaxCb = document.getElementById('applyTax');
+            if (applyTaxCb && typeof m.applyTax === 'boolean') {
+                applyTaxCb.checked = m.applyTax;
+            }
+
+            const healthCb = document.getElementById('hasHealthCertificate');
+            if (healthCb && typeof m.hasHealthCertificate === 'boolean') {
+                healthCb.checked = m.hasHealthCertificate;
+            }
+        }
+
+        function buildScheduleMapFromMember(m) {
+            const map = {};
+            DAY_CODES.forEach(dc => map[dc] = []);
+
+            if (!m || !Array.isArray(m.schedule)) return map;
+
+            m.schedule.forEach(row => {
+                if (!row) return;
+                const dayCode = String(row.day || '').toUpperCase();
+                if (!DAY_CODES.includes(dayCode)) return;
+
+                const startRaw = row.start != null ? String(row.start) : '';
+                const endRaw   = row.end   != null ? String(row.end)   : '';
+
+                const startHm = startRaw.slice(0,5);
+                const endHm   = endRaw.slice(0,5);
+
+                if (!startHm || !endHm) return;
+
+                map[dayCode].push({ start: startHm, end: endHm });
+            });
+
+            return map;
+        }
+
+        function cloneScheduleMap(src) {
+            const dst = {};
+            DAY_CODES.forEach(dc => {
+                const arr = src[dc] || [];
+                dst[dc] = arr.map(s => ({ start: s.start, end: s.end }));
+            });
+            return dst;
+        }
+
+        function buildWeekGrid() {
+            tbodyWeek.innerHTML = '';
+
+            const totalMinutes = (HOUR_END - HOUR_START) * 60;
+            const totalRows    = totalMinutes / gridStepMinutes;
+
+            for (let idx = 0; idx < totalRows; idx++) {
+                const absMin = HOUR_START * 60 + idx * gridStepMinutes;
+                const h = Math.floor(absMin / 60);
+                const m = absMin % 60;
+                const hm = pad2(h) + ':' + pad2(m);
+
+                const tr = document.createElement('tr');
+                if (m === 0) tr.classList.add('hour-start');
+
+                let tds = '';
+                for (let col = 1; col <= 7; col++) {
+                    tds += `<td data-col="${col}"><div class="cell-10m" data-row="${idx}" data-day-index="${col-1}"></div></td>`;
+                }
+
+                tr.innerHTML = `
+                    <th class="timecell time-col" scope="row">${hm}</th>
+                    ${tds}
+                `;
+                tbodyWeek.appendChild(tr);
+            }
+        }
+
+        function renderWeekHeadDays() {
+            const ths = theadWeek.querySelectorAll('th');
+            for (let i = 0; i < 7; i++) {
+                const th = ths[i + 1];
+                if (!th) continue;
+                th.innerHTML = `${DOW_LABELS[i]}`;
+            }
+        }
+
+        function paintScheduleFromMap(map) {
+            tbodyWeek.querySelectorAll('.cell-10m').forEach(c => {
+                c.classList.remove('schedule-on');
+            });
+
+            const rows = Array.from(tbodyWeek.querySelectorAll('tr'));
+
+            for (let dayIdx = 0; dayIdx < 7; dayIdx++) {
+                const dayCode = DAY_CODES[dayIdx];
+                const segs = map[dayCode] || [];
+                if (!segs.length) continue;
+
+                rows.forEach((tr, rIdx) => {
+                    const cellDiv = tr.querySelector(`td[data-col="${dayIdx+1}"] .cell-10m`);
+                    if (!cellDiv) return;
+
+                    const interval = rowToInterval(rIdx);
+                    const startMin = interval.startMin;
+                    const endMin   = interval.endMin;
+
+                    const overlaps = segs.some(seg => {
+                        const ss = hmToMin(seg.start);
+                        const ee = hmToMin(seg.end);
+                        return !(ee <= startMin || ss >= endMin);
+                    });
+
+                    if (overlaps) {
+                        cellDiv.classList.add('schedule-on');
+                    }
+                });
+            }
+        }
+
+        function rowToInterval(rowIdx) {
+            const startMin = HOUR_START * 60 + rowIdx * gridStepMinutes;
+            const endMin   = startMin + gridStepMinutes;
+            return { startMin, endMin };
+        }
+
+        function hmToMin(hm) {
+            const parts = String(hm).split(':');
+            const h = parseInt(parts[0] || '0', 10);
+            const m = parseInt(parts[1] || '0', 10);
+            return h * 60 + m;
+        }
+
+        function pad2(n) { return String(n).padStart(2, '0'); }
+
+        function minToHm(min) {
+            const h = Math.floor(min / 60);
+            const m = min % 60;
+            return pad2(h) + ':' + pad2(m) + ':00';
+        }
+
+        function clearGridSelection() {
+            if (!tbodyWeek) return;
+            tbodyWeek.querySelectorAll('.cell-10m').forEach(c => {
+                c.classList.remove('schedule-on');
             });
         }
-        function preview(){
-            previewBody.innerHTML='';
-            days.forEach(d=>{
-                const idxs=[];for(let i=0;i<TOTAL;i++){const el=gridBody.querySelector(`.slot-10m[data-day="${d}"][data-idx="${i}"]`);if(el&&el.classList.contains('selected'))idxs.push(i);}
-                const merged=merge(idxs);
-                merged.forEach(([s,e])=>{
-                    const sMin=START_MIN+s*STEP,eMin=START_MIN+(e+1)*STEP;
-                    const tr=document.createElement('tr');
-                    tr.innerHTML=`<td data-day="${d}">${dayMap[d]}(${d})</td><td data-start="${toHM(sMin)}">${toHM(sMin)}</td><td data-end="${toHM(eMin)}">${toHM(eMin)}</td>`;
-                    previewBody.appendChild(tr);
+
+        function attachCellDragHandlers() {
+            if (!tbodyWeek) return;
+
+            tbodyWeek.addEventListener('mousedown', (e) => {
+                const cell = e.target.closest('.cell-10m');
+                if (!cell || !tbodyWeek.contains(cell)) return;
+
+                e.preventDefault();
+
+                gridDragging = true;
+                const nowOn  = cell.classList.contains('schedule-on');
+                const nextOn = !nowOn;
+                gridDragAdding = nextOn;
+
+                toggleCell(cell, nextOn);
+            });
+
+            tbodyWeek.addEventListener('mouseover', (e) => {
+                if (!gridDragging) return;
+                const cell = e.target.closest('.cell-10m');
+                if (!cell || !tbodyWeek.contains(cell)) return;
+                toggleCell(cell, gridDragAdding);
+            });
+
+            window.addEventListener('mouseup', () => {
+                if (gridDragging) {
+                    gridDragging = false;
+                }
+            }, { passive: true });
+        }
+
+        function toggleCell(cell, on) {
+            if (on) {
+                cell.classList.add('schedule-on');
+            } else {
+                cell.classList.remove('schedule-on');
+            }
+        }
+
+        function attachSlotButtons() {
+            if (!gridSlotButtons) return;
+
+            gridSlotButtons.querySelectorAll('button[data-grid-slot]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const mins = parseInt(btn.dataset.gridSlot, 10);
+                    if (!mins || mins === gridStepMinutes) return;
+
+                    gridStepMinutes = mins;
+
+                    gridSlotButtons.querySelectorAll('button[data-grid-slot]').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+
+                    buildWeekGrid();
+                    renderWeekHeadDays();
+                    paintScheduleFromMap(scheduleMapByDay);
+                    attachCellDragHandlers();
                 });
             });
-            if(!previewBody.children.length){const tr=document.createElement('tr');tr.innerHTML=`<td colspan="3" class="text-muted">선택된 시간이 없습니다.</td>`;previewBody.appendChild(tr);}
         }
-        function merge(a){const out=[];if(!a.length)return out;a.sort((x,y)=>x-y);let s=a[0],p=a[0];for(let i=1;i<a.length;i++){if(a[i]===p+1){p=a[i];continue;}out.push([s,p]);s=p=a[i];}out.push([s,p]);return out;}
-        applyBtn.addEventListener('click',()=>{const rows=Array.from(previewBody.querySelectorAll('tr')).filter(r=>r.querySelector('td[data-day]'));viewBody.innerHTML='';
-            if(!rows.length){const tr=document.createElement('tr');tr.className='placeholder';tr.innerHTML=`<td colspan="3" class="text-muted">등록된 근무시간이 없습니다.</td>`;viewBody.appendChild(tr);}
-            else{rows.forEach(r=>{const d=r.querySelector('td:nth-child(1)').dataset.day,s=r.querySelector('td:nth-child(2)').dataset.start,e=r.querySelector('td:nth-child(3)').dataset.end;
-                const tr=document.createElement('tr');tr.innerHTML=`<td data-day="${d}">${dayMap[d]}(${d})</td><td data-start="${s}">${s}</td><td data-end="${e}">${e}</td>`;viewBody.appendChild(tr);});}
-            buildHidden();modal.style.display='none';
-        });
-        function buildHidden(){
-            form.querySelectorAll('input[data-schedule="1"]').forEach(n=>n.remove());
-            const rows=Array.from(viewBody.querySelectorAll('tr')).filter(r=>!r.classList.contains('placeholder'));
-            rows.forEach((r,i)=>{const d=r.querySelector('td:nth-child(1)').dataset.day,s=r.querySelector('td:nth-child(2)').dataset.start,e=r.querySelector('td:nth-child(3)').dataset.end;
-                add(`schedule[${i}].day`,d);add(`schedule[${i}].start`,s);add(`schedule[${i}].end`,e);});
+
+        function attachResetButtons() {
+            if (btnGridClear) {
+                btnGridClear.addEventListener('click', () => {
+                    clearGridSelection();
+                });
+            }
+            if (btnGridRestore) {
+                btnGridRestore.addEventListener('click', () => {
+                    clearGridSelection();
+                    paintScheduleFromMap(originalScheduleMapByDay);
+                });
+            }
         }
-        function add(n,v){const input=document.createElement('input');input.type='hidden';input.name=n;input.value=v;input.dataset.schedule='1';form.appendChild(input);}
-        form.addEventListener('submit',()=>{const chk=document.getElementById('includeWeeklyHolidayAllowance');
-            form.querySelectorAll('input[name="includeWeeklyHolidayAllowance"]').forEach(n=>{if(n!==chk)n.remove();});
-            chk.removeAttribute('name');
-            const hidden=document.createElement('input');hidden.type='hidden';hidden.name='includeWeeklyHolidayAllowance';hidden.value=chk.checked?'true':'false';form.appendChild(hidden);
-            buildHidden();
-        });
-        function toMin(hm){const [H,M]=hm.split(':').map(Number);return (H||0)*60+(M||0);}
-        function toHM(m){const H=Math.floor(m/60),M=m%60;return`${String(H).padStart(2,'0')}:${String(M).padStart(2,'0')}`;}
+
+        function normalizeBooleanCheckbox(id, fieldName) {
+            if (!form) return;
+            const cb = document.getElementById(id);
+            if (!cb) return;
+
+            Array.from(form.querySelectorAll('input[type="hidden"][name="' + fieldName + '"]'))
+                    .forEach(el => el.remove());
+
+            if (cb.hasAttribute('name')) {
+                cb.removeAttribute('name');
+            }
+
+            appendHidden(fieldName, cb.checked ? 'true' : 'false');
+        }
+
+        function attachFormSubmitHandler() {
+            if (!form) return;
+
+            form.addEventListener('submit', () => {
+                normalizeBooleanCheckbox('includeWeeklyHolidayAllowance', 'includeWeeklyHolidayAllowance');
+                normalizeBooleanCheckbox('applyTax', 'applyTax');
+                normalizeBooleanCheckbox('hasHealthCertificate', 'hasHealthCertificate');
+
+                Array.from(form.querySelectorAll('input[name^="schedule["]')).forEach(el => el.remove());
+
+                const daySegMap = collectSegmentsFromGrid();
+
+                let idx = 0;
+                DAY_CODES.forEach(dayCode => {
+                    const segs = daySegMap[dayCode] || [];
+                    segs.forEach(seg => {
+                        appendHidden(`schedule[${idx}].day`, dayCode);
+                        appendHidden(`schedule[${idx}].start`, seg.start);
+                        appendHidden(`schedule[${idx}].end`, seg.end);
+                        idx++;
+                    });
+                });
+            });
+        }
+
+        function collectSegmentsFromGrid() {
+            const result = {};
+            DAY_CODES.forEach(dc => result[dc] = []);
+
+            if (!tbodyWeek) return result;
+
+            const rows = Array.from(tbodyWeek.querySelectorAll('tr'));
+
+            for (let dayIdx = 0; dayIdx < 7; dayIdx++) {
+                const indices = [];
+
+                rows.forEach((tr, rIdx) => {
+                    const cellDiv = tr.querySelector(`td[data-col="${dayIdx+1}"] .cell-10m`);
+                    if (cellDiv && cellDiv.classList.contains('schedule-on')) {
+                        indices.push(rIdx);
+                    }
+                });
+
+                if (!indices.length) continue;
+
+                const merged = mergeConsecutive(indices);
+                const dayCode = DAY_CODES[dayIdx];
+
+                merged.forEach(([sIdx, eIdx]) => {
+                    const startMin = HOUR_START * 60 + sIdx * gridStepMinutes;
+                    const endMin   = HOUR_START * 60 + (eIdx + 1) * gridStepMinutes;
+
+                    result[dayCode].push({
+                        start: minToHm(startMin),
+                        end:   minToHm(endMin)
+                    });
+                });
+            }
+
+            scheduleMapByDay = result;
+            return result;
+        }
+
+        function mergeConsecutive(arr) {
+            if (!arr.length) return [];
+            const sorted = arr.slice().sort((a,b) => a - b);
+            const out = [];
+            let s = sorted[0];
+            let prev = sorted[0];
+
+            for (let i = 1; i < sorted.length; i++) {
+                const v = sorted[i];
+                if (v === prev + 1) {
+                    prev = v;
+                    continue;
+                }
+                out.push([s, prev]);
+                s = prev = v;
+            }
+            out.push([s, prev]);
+            return out;
+        }
+
+        function appendHidden(name, value) {
+            const input = document.createElement('input');
+            input.type  = 'hidden';
+            input.name  = name;
+            input.value = value;
+            form.appendChild(input);
+        }
+
     })();
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const btn = document.getElementById('btnOpenPayEstimate');
+        if (!btn) return;
+
+        btn.addEventListener('click', function () {
+            const memberId = '{{member.id}}';
+
+            if (!memberId) {
+                alert('예상 급여를 조회할 아르바이트 ID를 찾을 수 없습니다.');
+                return;
+            }
+
+            const today = new Date();
+
+            const monday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+            const day    = monday.getDay();
+            const offset = (day + 6) % 7;
+            monday.setDate(monday.getDate() - offset);
+
+            const sunday = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + 6);
+
+            function pad2(n) {
+                return String(n).padStart(2, '0');
+            }
+            function toIso(d) {
+                return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate());
+            }
+
+            const weekStart = toIso(monday);
+            const weekEnd   = toIso(sunday);
+
+            const url =
+                    '/members/pay-estimate'
+                    + '?memberId=' + encodeURIComponent(memberId)
+                    + '&weekStart=' + encodeURIComponent(weekStart)
+                    + '&weekEnd=' + encodeURIComponent(weekEnd);
+
+            window.open(
+                    url,
+                    'payEstimatePopup',
+                    'width=1200,height=900,scrollbars=yes,resizable=yes'
+            );
+        });
+    });
 </script>
+
+{{>layouts/footer}}
