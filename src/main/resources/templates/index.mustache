@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="ko">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{#pageTitle}}{{pageTitle}}{{/pageTitle}}{{^pageTitle}}Cafe Friends Manager{{/pageTitle}}</title>
+
+    <!-- Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css"
+          rel="stylesheet" crossorigin="anonymous">
+    <script defer src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+            crossorigin="anonymous"></script>
+
+    <!-- Google Font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --cafe-bg: #fff7ec;
+            --cafe-bg-accent: #fde7c7;
+            --cafe-brown: #5b3a29;
+            --cafe-brown-dark: #3d261a;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Noto Sans KR', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: radial-gradient(circle at top left, var(--cafe-bg-accent), var(--cafe-bg));
+            min-height: 100vh;
+            color: var(--cafe-brown);
+        }
+
+        /* 로딩 오버레이 */
+        #loading-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(255, 247, 236, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            transition: opacity 0.4s ease;
+        }
+
+        #loading-overlay.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .spinner-cup {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            border: 4px solid #f0d2aa;
+            border-top-color: var(--cafe-brown);
+            animation: spin 0.9s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* 메인 컨텐츠 레이아웃 */
+        .main-wrapper {
+            min-height: 100vh;
+        }
+
+        .welcome-card {
+            max-width: 520px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 20px;
+            box-shadow:
+                    0 18px 45px rgba(0, 0, 0, 0.08),
+                    0 0 0 1px rgba(255, 255, 255, 0.8);
+            padding: 2.5rem 2.25rem 2rem;
+            animation: fadeUp 0.7s ease-out both;
+        }
+
+        @keyframes fadeUp {
+            from {
+                opacity: 0;
+                transform: translateY(18px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .main-logo {
+            max-width: 340px;
+            border-radius: 14px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.12);
+            animation: fadeIn 0.9s ease-out both;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .welcome-title {
+            color: var(--cafe-brown-dark);
+            letter-spacing: 0.03em;
+        }
+
+        .welcome-sub {
+            color: #8a5e43;
+        }
+
+        /* 입장하기 버튼 + 호버 애니메이션 */
+        .btn-enter {
+            background: linear-gradient(135deg, #b87336, #8b4a24);
+            border: none;
+            color: #fff;
+            font-weight: 600;
+            font-size: 1.1rem;
+            padding: 0.7rem 3.2rem;
+            border-radius: 999px;
+            box-shadow: 0 10px 25px rgba(139, 74, 36, 0.35);
+            transition:
+                    transform 0.15s ease-out,
+                    box-shadow 0.15s ease-out,
+                    filter 0.15s ease-out;
+        }
+
+        .btn-enter:hover,
+        .btn-enter:focus {
+            transform: translateY(-2px) scale(1.03);
+            box-shadow: 0 14px 32px rgba(139, 74, 36, 0.45);
+            filter: brightness(1.03);
+        }
+
+        .btn-enter:active {
+            transform: translateY(0) scale(0.98);
+            box-shadow: 0 6px 14px rgba(139, 74, 36, 0.35);
+        }
+
+        .helper-text {
+            font-size: 0.9rem;
+            color: #b08a6b;
+        }
+
+        @media (max-width: 576px) {
+            .welcome-card {
+                margin: 1.5rem;
+                padding: 1.75rem 1.5rem 1.5rem;
+            }
+            .main-logo {
+                max-width: 260px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<!-- 로딩 애니메이션 -->
+<div id="loading-overlay">
+    <div class="d-flex flex-column align-items-center gap-3">
+        <div class="spinner-cup"></div>
+        <div class="fw-semibold" style="color: #8b5a35;">Cafe Friends Manager 로딩 중...</div>
+    </div>
+</div>
+
+<div class="container-fluid main-wrapper d-flex align-items-center justify-content-center">
+    <div class="welcome-card text-center">
+        <!-- 메인 타이틀 이미지 -->
+        <div class="mb-4">
+            <img src="/img/mainTitle.jpg"
+                 alt="Cafe Friends Manager"
+                 class="img-fluid main-logo">
+        </div>
+
+        <!-- 타이틀/설명 -->
+        <h1 class="welcome-title h3 mb-2">
+            Cafe Friends Manager
+        </h1>
+        <p class="welcome-sub mb-4">
+            커피 프랜차이즈 동행 관리 프로그램에 오신 것을 환영합니다.
+        </p>
+
+        <!-- 입장하기 버튼 -->
+        <a href="/members" class="btn btn-enter mb-2">
+            입장하기
+        </a>
+        <div class="helper-text">
+            버튼을 클릭하면 근무자 관리 메인 페이지로 이동합니다.
+        </div>
+    </div>
+</div>
+
+<script>
+    // 페이지 로드 후 로딩 오버레이 제거
+    window.addEventListener('load', function () {
+        const overlay = document.getElementById('loading-overlay');
+        if (!overlay) return;
+
+        overlay.classList.add('hidden');
+        setTimeout(function () {
+            overlay.style.display = 'none';
+        }, 400);
+    });
+</script>
+
+</body>
+</html>

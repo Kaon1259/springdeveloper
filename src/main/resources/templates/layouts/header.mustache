@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Hello, world!</title>
+    <title>Cafe Friends Manager</title>
 
     <!-- Bootstrap -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css"
@@ -18,23 +18,122 @@
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600;700&display=swap" rel="stylesheet">
 
     <style>
-        /* 2번째 라인(급여 서브메뉴) 스타일 보정용 */
-        .submenu-row {
-            border-top: 1px solid rgba(0,0,0,.05);
-        }
-        .submenu-row .nav-link {
-            font-size: 0.875rem;
-            padding-top: 0.25rem;
-            padding-bottom: 0.25rem;
+        body {
+            font-family: 'Noto Sans KR', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
         }
 
+        /* 상단 헤더 전체 스타일 */
+        .app-navbar {
+            background: linear-gradient(135deg, #ffffff, #fff7ec);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            min-height: 64px;
+        }
+
+        .app-navbar .navbar-brand img {
+            height: 32px;
+            width: auto;
+        }
+
+        .app-navbar .navbar-brand span {
+            font-size: 1.1rem;
+            letter-spacing: 0.03em;
+            color: #4b3426;
+        }
+
+        /* 상위 메뉴(1줄째) */
+        .main-menu .nav-link {
+            font-size: 0.95rem;
+            padding-top: 0.4rem;
+            padding-bottom: 0.4rem;
+            margin-right: 0.25rem;
+            color: #5c5c5c;
+            position: relative;
+            transition: color 0.15s ease-out;
+        }
+
+        .main-menu .nav-link::after {
+            content: "";
+            position: absolute;
+            left: 10%;
+            right: 10%;
+            bottom: 0;
+            height: 2px;
+            background-color: transparent;
+            border-radius: 999px;
+            transition: background-color 0.15s ease-out, transform 0.15s ease-out;
+            transform: scaleX(0);
+            transform-origin: center;
+        }
+
+        .main-menu .nav-link:hover {
+            color: #8b4a24;
+        }
+
+        .main-menu .nav-link:hover::after {
+            background-color: #d48a4c;
+            transform: scaleX(1);
+        }
+
+        .main-menu .nav-link.active {
+            color: #8b4a24;
+            font-weight: 600;
+        }
+
+        .main-menu .nav-link.active::after {
+            background-color: #c76a2d;
+            transform: scaleX(1);
+        }
+
+        /* 오른쪽 기타 메뉴(Greeting / Good Bye / Quote...) */
+        .navbar-nav.ms-auto .nav-link {
+            font-size: 0.9rem;
+            color: #7a7a7a;
+        }
+
+        .navbar-nav.ms-auto .nav-link:hover {
+            color: #8b4a24;
+        }
+
+        /* 2번째 라인(서브메뉴) 스타일 */
+        .submenu-row {
+            border-top: 1px solid rgba(0,0,0,.05);
+            background-color: rgba(255, 248, 238, 0.7);
+        }
+
+        .submenu-row .nav-link {
+            font-size: 0.85rem;
+            padding-top: 0.25rem;
+            padding-bottom: 0.25rem;
+            padding-left: 0.75rem;
+            padding-right: 0.75rem;
+            margin-right: 0.25rem;
+            border-radius: 999px;
+            color: #5b4637;
+            transition: background-color 0.15s ease-out, color 0.15s ease-out;
+        }
+
+        .submenu-row .nav-link:hover {
+            background-color: rgba(215, 153, 93, 0.12);
+            color: #8b4a24;
+        }
+
+        @media (max-width: 991.98px) {
+            .submenu-row .navbar-nav {
+                padding-bottom: 0.5rem;
+            }
+        }
     </style>
 </head>
 <body>
 
-<nav class="navbar navbar-expand-lg navbar-light bg-light fixed-top shadow-sm">
+<nav class="navbar navbar-expand-lg navbar-light app-navbar fixed-top shadow-sm">
     <div class="container-fluid">
-        <a class="navbar-brand fs-3" href="/" aria-label="Home" title="Home">☕</a>
+
+        <!-- 로고: /img/logo.png 사용 -->
+        <a class="navbar-brand d-flex align-items-center" href="/" aria-label="Home" title="Home">
+            <img src="/img/logo.png" alt="Cafe Friends Manager Logo" class="me-2">
+            <span class="fw-bold d-none d-sm-inline">Cafe Friends Manager</span>
+        </a>
 
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
                 data-bs-target="#navbarMenu" aria-controls="navbarMenu"
@@ -105,9 +204,6 @@
                 <!-- ===== 2줄째: 근무시간 하위 메뉴 ===== -->
                 <div id="workSubmenuRow" class="submenu-row w-100 d-none">
                     <ul class="navbar-nav me-auto flex-row flex-wrap mt-1">
-                        <!--                        <li class="nav-item">-->
-                        <!--                            <a class="nav-link" href="/members/registerworkingtime">(일간)근무시간조정</a>-->
-                        <!--                        </li>-->
                         <li class="nav-item">
                             <a class="nav-link" href="/members/showworktimedashboard">(주간)조회</a>
                         </li>
@@ -170,7 +266,6 @@
 
         const path = window.location.pathname || '';
 
-        // ===== 위치 계산: 상위 메뉴 바로 아래에서 시작하도록 좌측 마진 조정 =====
         function positionSubmenu(row, anchor) {
             if (!row || !anchor) return;
             const ul = row.querySelector('ul');
@@ -194,7 +289,6 @@
             });
         }
 
-        // ===== 1) 현재 URL 에 따라 기본으로 펼칠 서브메뉴 결정 =====
         const isSchedulePage =
                 path.startsWith('/members/schedulemanagementbyweek') ||
                 path.startsWith('/members/schedulemanagement');
@@ -211,7 +305,6 @@
                 path === '/members' ||
                 path.startsWith('/members/new');
 
-        // 전부 숨기고 active 제거
         function hideAllSubmenus() {
             scheduleSubmenuRow.classList.add('d-none');
             paySubmenuRow.classList.add('d-none');
@@ -246,81 +339,40 @@
             positionSubmenu(memberSubmenuRow, memberMenuLink);
         }
 
-        // ===== 3) 상위 메뉴 클릭 시 토글 + 위치 맞추기 =====
+        /* ===== 상위 메뉴 클릭 시 기본 하위 메뉴로 바로 이동 ===== */
         scheduleMenuLink.addEventListener('click', function (e) {
             e.preventDefault();
-            const shown = !scheduleSubmenuRow.classList.contains('d-none');
-            if (shown) {
-                scheduleSubmenuRow.classList.add('d-none');
-                scheduleMenuLink.classList.remove('active');
-            } else {
-                hideAllSubmenus();
-                scheduleSubmenuRow.classList.remove('d-none');
-                scheduleMenuLink.classList.add('active');
-                positionSubmenu(scheduleSubmenuRow, scheduleMenuLink);
-            }
-        });
-
-        payMenuLink.addEventListener('click', function (e) {
-            e.preventDefault();
-            const shown = !paySubmenuRow.classList.contains('d-none');
-            if (shown) {
-                paySubmenuRow.classList.add('d-none');
-                payMenuLink.classList.remove('active');
-            } else {
-                hideAllSubmenus();
-                paySubmenuRow.classList.remove('d-none');
-                payMenuLink.classList.add('active');
-                positionSubmenu(paySubmenuRow, payMenuLink);
-            }
+            window.location.href = '/members/schedulemanagementbyweek';  // 주간일정
         });
 
         workMenuLink.addEventListener('click', function (e) {
             e.preventDefault();
-            const shown = !workSubmenuRow.classList.contains('d-none');
-            if (shown) {
-                workSubmenuRow.classList.add('d-none');
-                workMenuLink.classList.remove('active');
-            } else {
-                hideAllSubmenus();
-                workSubmenuRow.classList.remove('d-none');
-                workMenuLink.classList.add('active');
-                positionSubmenu(workSubmenuRow, workMenuLink);
-            }
+            window.location.href = '/members/showworktimedashboard';     // (주간)조회
+        });
+
+        payMenuLink.addEventListener('click', function (e) {
+            e.preventDefault();
+            window.location.href = '/payment';                           // (개별)급여관리
         });
 
         memberMenuLink.addEventListener('click', function (e) {
             e.preventDefault();
-            const shown = !memberSubmenuRow.classList.contains('d-none');
-            if (shown) {
-                memberSubmenuRow.classList.add('d-none');
-                memberMenuLink.classList.remove('active');
-            } else {
-                hideAllSubmenus();
-                memberSubmenuRow.classList.remove('d-none');
-                memberMenuLink.classList.add('active');
-                positionSubmenu(memberSubmenuRow, memberMenuLink);
-            }
+            window.location.href = '/members';                           // 조회
         });
 
-        // ===== 4) "다른 상위 메뉴(실시간현황 등)" 클릭 시 서브메뉴 모두 닫기 =====
+        // ===== "실시간현황" 등 다른 상위 메뉴 클릭 시 서브메뉴 모두 닫기 =====
         mainMenuLinks.forEach(function (link) {
             link.addEventListener('click', function () {
-                // 상위 메뉴(일정/급여/근무시간/근무자)는 여기서 처리하지 않음
                 if (this === scheduleMenuLink ||
                         this === payMenuLink ||
                         this === workMenuLink ||
                         this === memberMenuLink) {
+                    // 위에서 별도 처리하므로 여기서는 패스
                     return;
                 }
                 hideAllSubmenus();
             });
         });
-
-        // 하위 메뉴(nav-link)는 건드리지 않으므로
-        // → 하위 메뉴 클릭해도 서브메뉴는 유지되고,
-        //   새 페이지에서 URL 기준(path)으로 다시 열릴지 결정됩니다.
     });
 </script>
-
 

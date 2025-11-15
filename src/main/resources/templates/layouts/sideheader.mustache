@@ -1,0 +1,157 @@
+{{! layouts/sideheader.mustache - 사이드바 내부 내용만 }}
+
+<!-- 상단 로고/홈 -->
+<div class="sidebar-header d-flex align-items-center px-3">
+    <a class="navbar-brand fs-3 text-decoration-none" href="/" aria-label="Home" title="Home">
+        ☕
+    </a>
+</div>
+
+<!-- 메뉴 내용 -->
+<div class="flex-grow-1 d-flex flex-column overflow-auto">
+    <ul class="nav flex-column main-menu px-2 pt-2">
+
+        <!-- 단일 메뉴: 실시간현황 -->
+        <li class="nav-item mb-1">
+            <a class="nav-link"
+               href="/members/realtimedashboard"
+               data-content-url="/members/realtimedashboard">
+                실시간현황
+            </a>
+        </li>
+
+        <!-- 일정 섹션 -->
+        <li class="nav-item menu-section">
+            <div class="section-title">일정</div>
+            <ul class="nav flex-column submenu">
+                <li class="nav-item">
+                    <a class="nav-link"
+                       href="/members/schedulemanagementbyweek"
+                       data-content-url="/members/schedulemanagementbyweek">
+                        주간일정
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link"
+                       href="/members/schedulemanagement"
+                       data-content-url="/members/schedulemanagement">
+                        월간일정
+                    </a>
+                </li>
+            </ul>
+        </li>
+
+        <!-- 근무시간 섹션 -->
+        <li class="nav-item menu-section">
+            <div class="section-title">근무시간</div>
+            <ul class="nav flex-column submenu">
+                <!--
+                <li class="nav-item">
+                    <a class="nav-link"
+                       href="/members/registerworkingtime"
+                       data-content-url="/members/registerworkingtime">
+                        (일간)근무시간조정
+                    </a>
+                </li>
+                -->
+                <li class="nav-item">
+                    <a class="nav-link"
+                       href="/members/showworktimedashboard"
+                       data-content-url="/members/showworktimedashboard">
+                        (주간)조회
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link"
+                       href="/members/showworkmonthdashboard"
+                       data-content-url="/members/showworkmonthdashboard">
+                        (월간)조회
+                    </a>
+                </li>
+            </ul>
+        </li>
+
+        <!-- 급여 섹션 -->
+        <li class="nav-item menu-section">
+            <div class="section-title">급여</div>
+            <ul class="nav flex-column submenu">
+                <li class="nav-item">
+                    <a class="nav-link"
+                       href="/payment"
+                       data-content-url="/payment">
+                        (개별)급여관리
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link"
+                       href="/payment/paymanagerdashboard"
+                       data-content-url="/payment/paymanagerdashboard">
+                        급여관리현황
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link"
+                       href="/payment/payid"
+                       data-content-url="/payment/payid">
+                        (개별)지급현황
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link"
+                       href="/payment/payiddashboard"
+                       data-content-url="/payment/payiddashboard">
+                        (전체)지급현황
+                    </a>
+                </li>
+            </ul>
+        </li>
+
+        <!-- 근무자 섹션 -->
+        <li class="nav-item menu-section">
+            <div class="section-title">근무자</div>
+            <ul class="nav flex-column submenu">
+                <li class="nav-item">
+                    <a class="nav-link"
+                       href="/members"
+                       data-content-url="/members">
+                        조회
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link"
+                       href="/members/new"
+                       data-content-url="/members/new">
+                        신규등록
+                    </a>
+                </li>
+            </ul>
+        </li>
+    </ul>
+
+    <!-- 기타 메뉴 (Greeting / Good Bye / Quote) -->
+    <div class="mt-auto px-2 pb-2 pt-2 border-top">
+        <ul class="nav flex-column">
+            <li class="nav-item">
+                <a class="nav-link"
+                   href="/greetings"
+                   data-content-url="/greetings">
+                    Greeting
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link"
+                   href="/goodbye"
+                   data-content-url="/goodbye">
+                    Good Bye
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link"
+                   href="/quote"
+                   data-content-url="/quote">
+                    Quote...
+                </a>
+            </li>
+        </ul>
+    </div>
+</div>
