@@ -98,7 +98,7 @@
                 </div>
                 <div class="d-flex align-items-center gap-1">
                     <span class="legend-box legend-current"></span>
-                    <span>깜빡임: <strong>현재 근무 중인 스케줄 전체 구간</strong></span>
+                    <span>깜빡임: <strong>현재 시간 슬롯의 실제 근무</strong></span>
                 </div>
                 <div class="ms-auto small text-secondary">
                     오른쪽 <strong>‘시간대 합’</strong>은 해당 시간대 근무 예정 인원 수입니다.
@@ -110,40 +110,72 @@
 
 <style>
     /* ===== 공통/레이아웃 ===== */
-    .timetable-10m th, .timetable-10m td {
+    .timetable-10m {
+        border-collapse: separate;
+        border-spacing: 0;
+    }
+
+    .timetable-10m th,
+    .timetable-10m td {
         vertical-align: middle;
         font-size: 0.85rem;
+        border-color: #e5e7eb !important;
     }
+
     .timecell {
         font-variant-numeric: tabular-nums;
     }
 
+    /* TD 패딩 줄이고 안의 slot-10m가 꽉 차게 */
+    #tt10m td {
+        padding: 0.04rem 0.06rem;
+    }
+
     /* ===== 상단 가로 캘린더 ===== */
+
     .mini-cal-wrapper{
         display: flex;
         flex-wrap: wrap;
         gap: 12px;
     }
+
+    /* 한 줄에 3명씩, 카드 조금 더 크게 */
     .mini-cal-card{
-        flex: 1 1 220px;
-        max-width: 260px;
-        border-radius: 14px;
+        flex: 0 0 calc((100% - 24px) / 3);   /* gap 12px * 2 = 24px */
+        max-width: calc((100% - 24px) / 3);
+        border-radius: 16px;
         border: 1px solid #e5e7eb;
         background: #ffffff;
-        padding: 10px 12px;
-        box-shadow: 0 2px 4px rgba(15,23,42,.06);
+        padding: 12px 14px;
+        box-shadow: 0 2px 5px rgba(15,23,42,.05);
         display: flex;
         flex-direction: column;
-        min-height: 88px;
-        transition: box-shadow .2s ease, border-color .2s ease, filter .2s ease;
-        /* ★ 현재 근무중 카드에도 아주 옅은 커피 방울 배경 */
-        background-image: linear-gradient(rgba(255,255,255,.85), rgba(255,255,255,.85)), url('/img/coffee_drop.png');
-        background-size: 140px auto;
-        background-repeat: repeat;
-        background-position: center;
+        min-height: 110px;
+        transition: box-shadow .2s ease, border-color .2s ease, transform .15s ease;
     }
 
-    /* ✅ 현재 근무 중인 멤버 카드: 파란색 외곽선 깜빡임 */
+    .mini-cal-card:hover{
+        border-color: #cbd5f5;
+        box-shadow: 0 4px 10px rgba(15,23,42,.08);
+        transform: translateY(-1px);
+    }
+
+    /* 반응형: 화면이 좁아지면 2개 → 1개 */
+    @media (max-width: 992px) {
+        .mini-cal-card{
+            flex: 0 0 calc((100% - 12px) / 2);
+            max-width: calc((100% - 12px) / 2);
+        }
+    }
+
+    @media (max-width: 576px) {
+        .mini-cal-card{
+            flex: 1 1 100%;
+            max-width: 100%;
+        }
+    }
+
+    /* 현재 근무 중 멤버 카드: 옅은 파란 외곽선 깜빡임 */
     .mini-cal-card.current-working{
         border-color:#0d6efd;
         box-shadow:0 0 0 2px rgba(13,110,253,.45);
@@ -173,26 +205,36 @@
         align-items:center;
         gap:6px;
         font-weight:600;
-        font-size:0.85rem;
+        font-size:0.9rem;
+    }
+    .mini-cal-name-text{
+        display:inline-block;
+    }
+    .mini-cal-status-text{
+        display:inline-block;
+        margin-left:4px;
+        font-size:0.78rem;
+        color:#6b7280;
     }
     .mini-cal-dot{
-        width:10px;
-        height:10px;
+        width:11px;
+        height:11px;
         border-radius:50%;
         border:1px solid rgba(0,0,0,.08);
         flex:0 0 auto;
     }
     .mini-cal-status{
-        font-size:0.75rem;
+        font-size:0.76rem;
         color:#6b7280;
         white-space:nowrap;
     }
 
+    /* 스케줄 pill */
     .mini-cal-seg{
         border-radius:999px;
-        padding:4px 8px;
-        background:#fff7e6;
-        border:1px solid #fed7aa;
+        padding:4px 9px;
+        background: transparent;
+        border:1px solid #e5e7eb;
         display:flex;
         align-items:center;
         justify-content:space-between;
@@ -202,23 +244,20 @@
     }
     .mini-cal-seg-time{
         font-weight:600;
+        font-size:0.8rem;
     }
     .mini-cal-seg-label{
         font-size:0.75rem;
         color:#6b7280;
     }
 
-    /* ★ 현재 근무 중인 일정 -> 깜빡이는 라운드 렉트 + 커피 방울 배경 */
+    /* 현재 근무 중인 일정: 테두리/깜빡임 */
     .mini-cal-seg-current{
         animation: miniSegBlink 1.1s step-start infinite;
         border-color:#f97316;
         box-shadow:0 0 0 2px rgba(248, 113, 113, 0.4);
-        background-image:
-                linear-gradient(rgba(254, 215, 170, .78), rgba(254, 215, 170, .78)),
-                url('/img/coffee_drop.png');
-        background-size: auto, 26px auto;
-        background-repeat: no-repeat, repeat;
-        background-position: center, center;
+        background-color: transparent;
+        background-image: none;
     }
     @keyframes miniSegBlink{
         0%   { filter:brightness(1.0); box-shadow:0 0 0 0 rgba(248,113,113,0.0); }
@@ -226,7 +265,7 @@
         100% { filter:brightness(1.0); box-shadow:0 0 0 0 rgba(248,113,113,0.0); }
     }
 
-    /* ===== 하단 타임테이블 래퍼 (★ 커피 방울 배경 추가) ===== */
+    /* ===== 하단 타임테이블 래퍼 ===== */
     .timetable-wrapper {
         border-radius: 0.75rem;
         border: 1px solid #edf0f4;
@@ -234,15 +273,25 @@
         overflow-y: auto;
         overflow-x: auto;
         background-color: #ffffff;
-        background-size: auto, 160px auto;
-        background-repeat: no-repeat, repeat;
-        background-position: center, center;
         background-attachment: local;
     }
 
+    /* 줄무늬 + hover시 약간 강조 */
     .timetable-10m tbody tr:nth-child(even) td:not(.sum-cell),
     .timetable-10m tbody tr:nth-child(even) th.timecell {
         background-color: #fcfdff;
+    }
+
+    .timetable-10m tbody tr:hover td:not(.sum-cell),
+    .timetable-10m tbody tr:hover th.timecell {
+        background-color: #f3f4ff;
+    }
+
+    /* 정시 시작 행 강조 */
+    .hour-start-row th.timecell,
+    .hour-start-row td {
+        border-top-color: #d1d5db !important;
+        border-top-width: 2px !important;
     }
 
     /* 멤버 컬럼 헤더 */
@@ -252,11 +301,21 @@
         position: relative;
         padding-top: 0.5rem;
         padding-bottom: 0.5rem;
+        background-color: #f9fafb;
     }
     .member-head .member-name {
         display: inline-flex;
         align-items: center;
         gap: 6px;
+    }
+    .member-name-text{
+        display:inline-block;
+    }
+    .member-status-text{
+        display:inline-block;
+        margin-left:4px;
+        font-size:0.78rem;
+        color:#6b7280;
     }
     .member-head .member-dot {
         width: 10px;
@@ -281,11 +340,26 @@
         background: var(--member-color, transparent);
     }
 
-    /* 슬롯 스타일 */
+    /* ★ 아르바이트 컬럼 간격: 각 멤버 컬럼 사이에 10px 빈 여백 기둥 */
+    #tt10m th.member-col,
+    #tt10m td.member-col {
+        border-left-color: #e5e7eb !important;
+    }
+
+    #tt10m th.member-col + th.member-col,
+    #tt10m td.member-col + td.member-col {
+        border-left-width: 10px !important;           /* 10px 간격 */
+        border-left-color: transparent !important;    /* 투명 → 빈 공간처럼 보이게 */
+    }
+
+    /* 슬롯 스타일: 셀 안을 꽉 채우도록 */
     .slot-10m {
-        height: 14px;
+        display: block;
+        width: 100%;
+        height: 100%;
+        min-height: 14px;
         border: 1px solid #eef2f6;
-        border-radius: 3px;
+        border-radius: 6px;
         background: #fff;
         transition: background-color .12s ease, border-color .12s ease, box-shadow .12s ease;
     }
@@ -333,13 +407,16 @@
         font-size: 0.8rem;
         border-left: 1px solid #e2e8f0 !important;
     }
+    .timetable-10m tbody tr:hover .sum-cell {
+        background:#edf7ef;
+    }
     .sum-cell.now-hour {
         background:#e8f5e9;
         border-left:2px solid #198754 !important;
         color:#146c43;
     }
 
-    /* 테이블 안: 현재 근무 중인 스케줄 전체 구간 깜빡임 */
+    /* 현재 시간 슬롯만 깜빡이는 하이라이트 */
     .slot-10m.current-working {
         animation: slotCurrentBlink 1s step-start infinite;
         background: rgba(255, 193, 7, 0.95) !important;
@@ -406,8 +483,11 @@
         const miniCalendars = document.getElementById('miniCalendars');
 
         let allMembers = [];
-        try { allMembers = JSON.parse(document.getElementById('membersData').textContent || '[]'); }
-        catch (e) { allMembers = []; }
+        try {
+            allMembers = JSON.parse(document.getElementById('membersData').textContent || '[]');
+        } catch (e) {
+            allMembers = [];
+        }
 
         const targetDate = new Date(`${TARGET_DATE_STR}T00:00:00`);
         const DAY_KEY = dayKeyOf(targetDate);
@@ -417,14 +497,13 @@
                 .sort((a,b) => (a.name||'').localeCompare(b.name||'', 'ko'));
 
         const colorMap = {};
-        todayMembers.forEach(m => colorMap[m.id] = colorForMember(m));
+        todayMembers.forEach(m => { colorMap[m.id] = colorForMember(m); });
 
         const hourlyTotals = computeHourlyTotals(todayMembers);
 
         let didAutoScrollOnce = false;
         let lastMinute = -1;
 
-        /* ==== 버튼 활성화 규칙: 10분 단위 + 금일 근무자 >= 1 ==== */
         function updateActualButtonState() {
             const enable = (STEP_MIN === 10) && (todayMembers.length > 0);
             btnRegisterActual.disabled = !enable;
@@ -440,15 +519,13 @@
         updateDoneColors(todayMembers);
         highlightHourSum();
         updateCurrentWorkingBlink(todayMembers);
-        updateMiniCalendarState(todayMembers);   // ✅ 상태/깜빡임 초기 계산
+        updateMiniCalendarState(todayMembers);
+        updateMemberHeaderState(todayMembers);
 
         memberCountBadge.textContent = `${todayMembers.length}명 근무 예정`;
-        updateActualButtonState(); // ← 초기 상태 반영
+        updateActualButtonState();
 
-        /* ==== 이벤트 바인딩 ==== */
-        window.addEventListener('load', function () { /* 초기 자동 스크롤 없음 */ });
-
-        scrollBox.addEventListener('scroll', function(){ /* 필요시 추후 사용 */ }, { passive: true });
+        scrollBox.addEventListener('scroll', function(){}, { passive: true });
 
         /* ===== 단위 선택 버튼 ===== */
         stepButtons.forEach(btn => {
@@ -474,7 +551,8 @@
                 highlightHourSum();
                 updateCurrentWorkingBlink(todayMembers);
                 updateMiniCalendarState(todayMembers);
-                updateActualButtonState();              // ← 단위 변경 시 즉시 반영
+                updateMemberHeaderState(todayMembers);
+                updateActualButtonState();
                 scrollToNowRow({ smooth: true });
             });
         });
@@ -486,6 +564,7 @@
             return `${hh}:${mm}`;
         }
 
+        /* ===== 실시간 반영 버튼 ===== */
         btnRegisterActual.addEventListener('click', async () => {
             if (!todayMembers.length) return alert('금일 근무자가 없습니다.');
             if (STEP_MIN !== 10) return alert('실시간 반영은 10분 단위에서만 가능합니다.');
@@ -539,6 +618,7 @@
             highlightHourSum();
             updateCurrentWorkingBlink(todayMembers);
             updateMiniCalendarState(todayMembers);
+            updateMemberHeaderState(todayMembers);
 
             const now = new Date();
             if (now.getMinutes() !== lastMinute) {
@@ -582,7 +662,8 @@
                     <div class="mini-cal-header">
                         <div class="mini-cal-name">
                             <span class="mini-cal-dot" style="background:${color};"></span>
-                            <span>${escapeHtml(m.name || '-')}</span>
+                            <span class="mini-cal-name-text">${escapeHtml(m.name || '-')}</span>
+                            <span class="mini-cal-status-text"></span>
                         </div>
                         <div class="mini-cal-status">${statusText}</div>
                     </div>
@@ -594,7 +675,7 @@
             });
         }
 
-        /* ✅ 상단 캘린더: 구간별 상태(완료/진행중/예정) + ‘진행중’이면 카드 외곽선 파란 깜빡임 */
+        /* 상단 카드 상태 + 텍스트 (근무중/휴식중/근무시간종료) 갱신 */
         function updateMiniCalendarState(members){
             miniCalendars.querySelectorAll('.mini-cal-seg-current')
                     .forEach(el => el.classList.remove('mini-cal-seg-current'));
@@ -609,7 +690,9 @@
                 if (!card) return;
 
                 const segEls = card.querySelectorAll('.mini-cal-seg');
-                let cardIsCurrent = false;
+                let hasPast = false;
+                let hasFuture = false;
+                let isWorking = false;
 
                 segEls.forEach(seg => {
                     const st = parseHm(seg.dataset.start);
@@ -621,20 +704,82 @@
 
                     if (nowMin >= edMin) {
                         labelText = '완료';
+                        hasPast = true;
                     } else if (nowMin >= stMin && nowMin < edMin) {
                         labelText = '진행중';
                         seg.classList.add('mini-cal-seg-current');
-                        cardIsCurrent = true;
-                    } else {
+                        isWorking = true;
+                    } else if (nowMin < stMin) {
                         labelText = '예정';
+                        hasFuture = true;
                     }
 
                     const labelEl = seg.querySelector('.mini-cal-seg-label');
                     if (labelEl) labelEl.textContent = labelText;
                 });
 
-                if (cardIsCurrent) card.classList.add('current-working');
+                let statusType = 'rest'; // default: 휴식중
+                if (isWorking) {
+                    statusType = 'working';
+                } else if (!hasFuture && hasPast) {
+                    statusType = 'done';
+                }
+
+                const txtEl = card.querySelector('.mini-cal-status-text');
+                if (txtEl) {
+                    if (statusType === 'working') txtEl.textContent = ' (근무중)';
+                    else if (statusType === 'done') txtEl.textContent = ' (근무시간종료)';
+                    else txtEl.textContent = ' (휴식중)';
+                }
+
+                if (statusType === 'working') card.classList.add('current-working');
                 else card.classList.remove('current-working');
+            });
+        }
+
+        /* 헤더(이름 옆) 상태 텍스트 갱신 */
+        function updateMemberHeaderState(members){
+            const now = new Date();
+            const nowMin = now.getHours() * 60 + now.getMinutes();
+
+            members.forEach(m => {
+                const segs = getSchedules(m).filter(s => s.day === DAY_KEY);
+                if (!segs.length) return;
+
+                let hasPast = false;
+                let hasFuture = false;
+                let isWorking = false;
+
+                segs.forEach(s => {
+                    const st = parseHm(s.start);
+                    const ed = parseHm(s.end);
+                    const stMin = st.h*60 + st.m;
+                    const edMin = ed.h*60 + ed.m;
+
+                    if (nowMin >= edMin) {
+                        hasPast = true;
+                    } else if (nowMin >= stMin && nowMin < edMin) {
+                        isWorking = true;
+                    } else if (nowMin < stMin) {
+                        hasFuture = true;
+                    }
+                });
+
+                let statusType = 'rest';
+                if (isWorking) {
+                    statusType = 'working';
+                } else if (!hasFuture && hasPast) {
+                    statusType = 'done';
+                }
+
+                const th = headRow.querySelector(`th[data-member-id="${String(m.id)}"]`);
+                if (!th) return;
+                const txtEl = th.querySelector('.member-status-text');
+                if (!txtEl) return;
+
+                if (statusType === 'working') txtEl.textContent = ' (근무중)';
+                else if (statusType === 'done') txtEl.textContent = ' (근무시간종료)';
+                else txtEl.textContent = ' (휴식중)';
             });
         }
 
@@ -652,11 +797,12 @@
                         const planLabel = todayPlanLabel(m);
                         return `
                         <th data-member-id="${String(m.id)}"
-                            class="member-head"
+                            class="member-head member-col"
                             style="--member-color: ${color};">
                             <span class="member-name">
                                 <span class="member-dot" style="background:${color};"></span>
-                                <span>${escapeHtml(m.name || '-')}</span>
+                                <span class="member-name-text">${escapeHtml(m.name || '-')}</span>
+                                <span class="member-status-text"></span>
                             </span>
                             ${planLabel ? `<span class="member-plan">${planLabel}</span>` : ''}
                         </th>
@@ -677,10 +823,12 @@
                         ? `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`
                         : '';
 
+                const rowClass = (m === 0) ? ' class="hour-start-row"' : '';
+
                 let row = `
-        <tr data-row-index="${i}">
+        <tr data-row-index="${i}"${rowClass}>
           <th class="timecell">${label}</th>
-          ${todayMembers.map(mb => `<td data-member-id="${String(mb.id)}"><div class="slot-10m"></div></td>`).join('')}
+          ${todayMembers.map(mb => `<td class="member-col" data-member-id="${String(mb.id)}"><div class="slot-10m"></div></td>`).join('')}
       `;
                 if (m === 0) {
                     const total = hourlyTotals[h] ?? 0;
@@ -738,41 +886,33 @@
             highlightNowRow();
         }
 
-        /* 현재 근무 중인 스케줄 전체 구간 깜빡임 (테이블 안) */
+        /* 현재 시간 슬롯만 깜빡이도록 */
         function updateCurrentWorkingBlink(members) {
             bodyEl.querySelectorAll('.slot-10m.current-working')
                     .forEach(el => el.classList.remove('current-working'));
 
             const now = new Date();
             const nowMin = now.getHours() * 60 + now.getMinutes();
+            const idxNow = indexFromNow();
 
             members.forEach(m => {
                 const segs = getSchedules(m).filter(s => s.day === DAY_KEY);
                 if (!segs.length) return;
 
                 const slots = bodyEl.querySelectorAll(`td[data-member-id="${String(m.id)}"] .slot-10m`);
-                if (!slots.length) return;
+                if (!slots.length || idxNow < 0 || idxNow >= slots.length) return;
 
-                segs.forEach(s => {
+                const isWorkingNow = segs.some(s => {
                     const st = parseHm(s.start);
                     const ed = parseHm(s.end);
                     const stMin = st.h * 60 + st.m;
                     const edMin = ed.h * 60 + ed.m;
-
-                    if (nowMin < stMin || nowMin >= edMin) return;
-
-                    for (let i = 0; i < slots.length; i++) {
-                        const slotStartMin = HOUR_START * 60 + i * STEP_MIN;
-                        const slotEndMin   = slotStartMin + STEP_MIN;
-                        const overlap = Math.max(
-                                0,
-                                Math.min(edMin, slotEndMin) - Math.max(stMin, slotStartMin)
-                        );
-                        if (overlap > 0) {
-                            slots[i].classList.add('current-working');
-                        }
-                    }
+                    return nowMin >= stMin && nowMin < edMin;
                 });
+
+                if (isWorkingNow) {
+                    slots[idxNow].classList.add('current-working');
+                }
             });
         }
 
