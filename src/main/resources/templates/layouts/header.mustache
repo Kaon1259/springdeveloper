@@ -18,118 +18,110 @@
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600;700&display=swap" rel="stylesheet">
 
     <style>
+        :root {
+            --cafe-bg-light: #fff9f2;
+            --cafe-brown: #5b4434;
+            --cafe-brown-dark: #3f2c20;
+
+            /* 메뉴 하이라이트용 연녹색 */
+            --menu-hover-bg: #f0fbf3;
+            --menu-active-bg: #e3f7e9;
+            --menu-active-border: #a2d9b1;
+            --menu-active-text: #1f6b3b;
+        }
+
         body {
             font-family: 'Noto Sans KR', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
         }
 
-        /* 상단 헤더 전체 스타일 */
+        /* ===== 상단 헤더 전체 스타일 ===== */
         .app-navbar {
-            background: linear-gradient(135deg, #ffffff, #fff7ec);
-            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            background: linear-gradient(135deg, #ffffff, var(--cafe-bg-light));
+            border-bottom: 1px solid rgba(0, 0, 0, 0.04);
             min-height: 64px;
+            box-shadow: 0 8px 18px rgba(0, 0, 0, 0.03);
+            z-index: 1000;
         }
 
         .app-navbar .navbar-brand img {
-            height: 32px;
+            height: 30px;
             width: auto;
         }
 
         .app-navbar .navbar-brand span {
-            font-size: 1.1rem;
-            letter-spacing: 0.03em;
-            color: #4b3426;
+            font-size: 1.05rem;
+            letter-spacing: 0.04em;
+            color: var(--cafe-brown-dark);
+            font-weight: 700;
         }
 
-        /* 상위 메뉴(1줄째) */
-        .main-menu .nav-link {
-            font-size: 0.95rem;
-            padding-top: 0.4rem;
-            padding-bottom: 0.4rem;
+        /* ===== 1행 메인 메뉴 ===== */
+
+        .main-menu-link {
+            font-size: 0.92rem;
+            padding: 0.35rem 0.9rem;
             margin-right: 0.25rem;
-            color: #5c5c5c;
-            position: relative;
-            transition: color 0.15s ease-out;
-        }
-
-        .main-menu .nav-link::after {
-            content: "";
-            position: absolute;
-            left: 10%;
-            right: 10%;
-            bottom: 0;
-            height: 2px;
-            background-color: transparent;
             border-radius: 999px;
-            transition: background-color 0.15s ease-out, transform 0.15s ease-out;
-            transform: scaleX(0);
-            transform-origin: center;
+            font-weight: 500;
+            text-decoration: none !important;
+            border: 1px solid transparent;
+            color: var(--cafe-brown);
+            transition:
+                    background-color 0.15s ease-out,
+                    color 0.15s ease-out,
+                    border-color 0.15s ease-out,
+                    transform 0.08s ease-out;
         }
 
-        .main-menu .nav-link:hover {
-            color: #8b4a24;
+        /* 모든 상태에서 파란색 방지 & 기본 링크 스타일 제거 */
+        .main-menu-link,
+        .main-menu-link:link,
+        .main-menu-link:visited,
+        .main-menu-link:focus,
+        .main-menu-link:active {
+            color: var(--cafe-brown) !important;
+            outline: none !important;
+            box-shadow: none !important;
+            text-decoration: none !important;
         }
 
-        .main-menu .nav-link:hover::after {
-            background-color: #d48a4c;
-            transform: scaleX(1);
+        .main-menu-link:hover {
+            background-color: var(--menu-hover-bg);
+            color: var(--menu-active-text) !important;
+            transform: translateY(-1px);
         }
 
-        .main-menu .nav-link.active {
-            color: #8b4a24;
+        .main-menu-link.active {
+            background-color: var(--menu-active-bg);
+            border-color: var(--menu-active-border);
+            color: var(--menu-active-text) !important;
             font-weight: 600;
         }
 
-        .main-menu .nav-link.active::after {
-            background-color: #c76a2d;
-            transform: scaleX(1);
-        }
-
-        /* 오른쪽 기타 메뉴(Greeting / Good Bye / Quote...) */
+        /* 우측 기타 메뉴 */
         .navbar-nav.ms-auto .nav-link {
-            font-size: 0.9rem;
-            color: #7a7a7a;
+            font-size: 0.88rem;
+            color: #8b7a6d;
+            font-weight: 500;
+            padding-top: 0.35rem;
+            padding-bottom: 0.35rem;
         }
 
         .navbar-nav.ms-auto .nav-link:hover {
-            color: #8b4a24;
-        }
-
-        /* 2번째 라인(서브메뉴) 스타일 */
-        .submenu-row {
-            border-top: 1px solid rgba(0,0,0,.05);
-            background-color: rgba(255, 248, 238, 0.7);
-        }
-
-        .submenu-row .nav-link {
-            font-size: 0.85rem;
-            padding-top: 0.25rem;
-            padding-bottom: 0.25rem;
-            padding-left: 0.75rem;
-            padding-right: 0.75rem;
-            margin-right: 0.25rem;
-            border-radius: 999px;
-            color: #5b4637;
-            transition: background-color 0.15s ease-out, color 0.15s ease-out;
-        }
-
-        .submenu-row .nav-link:hover {
-            background-color: rgba(215, 153, 93, 0.12);
-            color: #8b4a24;
-        }
-
-        @media (max-width: 991.98px) {
-            .submenu-row .navbar-nav {
-                padding-bottom: 0.5rem;
-            }
+            color: var(--cafe-brown-dark);
         }
     </style>
 </head>
+
 <body>
 
-<nav class="navbar navbar-expand-lg navbar-light app-navbar fixed-top shadow-sm">
+<!-- ============================================================
+     =============== 상단 네비게이션 (1행 메뉴) ===================
+     ============================================================ -->
+<nav class="navbar navbar-expand-lg navbar-light app-navbar fixed-top">
     <div class="container-fluid">
 
-        <!-- 로고: /img/logo.png 사용 -->
+        <!-- 로고 -->
         <a class="navbar-brand d-flex align-items-center" href="/" aria-label="Home" title="Home">
             <img src="/img/logo.png" alt="Cafe Friends Manager Logo" class="me-2">
             <span class="fw-bold d-none d-sm-inline">Cafe Friends Manager</span>
@@ -141,236 +133,155 @@
             <span class="navbar-toggler-icon"></span>
         </button>
 
+        <!-- 메뉴 영역 -->
         <div class="collapse navbar-collapse" id="navbarMenu">
-            <div class="w-100 d-flex flex-column">
+            <div class="w-100 d-flex flex-row align-items-center">
 
-                <!-- ===== 1줄째: 상위 메뉴 라인 ===== -->
-                <div class="d-flex w-100">
-                    <ul class="navbar-nav me-auto align-items-center flex-wrap main-menu">
-                        <li class="nav-item">
-                            <a class="nav-link" href="/members/realtimedashboard">실시간현황</a>
-                        </li>
+                <!-- 좌측: 메인 메뉴 전부 1행 -->
+                <ul class="navbar-nav me-auto align-items-center flex-wrap">
+                    <!-- 실시간현황 -->
+                    <li class="nav-item">
+                        <a class="nav-link main-menu-link"
+                           id="menu-realtime"
+                           href="/members/realtimedashboard">
+                            실시간현황
+                        </a>
+                    </li>
 
-                        <!-- 일정 상위 메뉴 -->
-                        <li class="nav-item">
-                            <a class="nav-link" href="#" id="scheduleMenuLink">
-                                일정
-                            </a>
-                        </li>
-                        <!-- 근무시간 상위 메뉴 -->
-                        <li class="nav-item">
-                            <a class="nav-link" href="#" id="workMenuLink">
-                                근무시간
-                            </a>
-                        </li>
-                        <!-- 급여 상위 메뉴 -->
-                        <li class="nav-item">
-                            <a class="nav-link" href="#" id="payMenuLink">
-                                급여
-                            </a>
-                        </li>
-                        <!-- 근무자 상위 메뉴 -->
-                        <li class="nav-item">
-                            <a class="nav-link" href="#" id="memberMenuLink">
-                                근무자
-                            </a>
-                        </li>
-                    </ul>
+                    <!-- 일정 관련 -->
+                    <li class="nav-item">
+                        <a class="nav-link main-menu-link"
+                           id="menu-schedule-week"
+                           href="/members/schedulemanagementbyweek">
+                            주간일정
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link main-menu-link"
+                           id="menu-schedule-month"
+                           href="/members/schedulemanagement">
+                            월간일정
+                        </a>
+                    </li>
 
-                    <ul class="navbar-nav ms-auto flex-wrap">
-                        <li class="nav-item">
-                            <a class="nav-link" href="/greetings">Greeting</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="/goodbye">Good Bye</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="/quote">Quote...</a>
-                        </li>
-                    </ul>
-                </div>
+                    <!-- 근무시간 -->
+                    <li class="nav-item">
+                        <a class="nav-link main-menu-link"
+                           id="menu-work-week"
+                           href="/members/showworktimedashboard">
+                            (주간)근무시간조회
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link main-menu-link"
+                           id="menu-work-month"
+                           href="/members/showworkmonthdashboard">
+                            (월간)근무시간조회
+                        </a>
+                    </li>
 
-                <!-- ===== 2줄째: 일정 하위 메뉴 ===== -->
-                <div id="scheduleSubmenuRow" class="submenu-row w-100 d-none">
-                    <ul class="navbar-nav me-auto flex-row flex-wrap mt-1">
-                        <li class="nav-item">
-                            <a class="nav-link" href="/members/schedulemanagementbyweek">주간일정</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="/members/schedulemanagement">월간일정</a>
-                        </li>
-                    </ul>
-                </div>
-                <!-- ===== 2줄째: 근무시간 하위 메뉴 ===== -->
-                <div id="workSubmenuRow" class="submenu-row w-100 d-none">
-                    <ul class="navbar-nav me-auto flex-row flex-wrap mt-1">
-                        <li class="nav-item">
-                            <a class="nav-link" href="/members/showworktimedashboard">(주간)조회</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="/members/showworkmonthdashboard">(월간)조회</a>
-                        </li>
-                    </ul>
-                </div>
-                <!-- ===== 2줄째: 급여 하위 메뉴 ===== -->
-                <div id="paySubmenuRow" class="submenu-row w-100 d-none">
-                    <ul class="navbar-nav me-auto flex-row flex-wrap mt-1">
-                        <li class="nav-item">
-                            <a class="nav-link" href="/payment">(개별)급여관리</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="/payment/paymanagerdashboard">급여관리현황</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="/payment/payid">(개별)지급현황</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="/payment/payiddashboard">(전체)지급현황</a>
-                        </li>
-                    </ul>
-                </div>
-                <!-- ===== 2줄째: 근무자 하위 메뉴 ===== -->
-                <div id="memberSubmenuRow" class="submenu-row w-100 d-none">
-                    <ul class="navbar-nav me-auto flex-row flex-wrap mt-1">
-                        <li class="nav-item">
-                            <a class="nav-link" href="/members">조회</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="/members/new">신규등록</a>
-                        </li>
-                    </ul>
-                </div>
-                <!-- ===== 2줄째 끝 ===== -->
+                    <!-- 급여 -->
+                    <li class="nav-item">
+                        <a class="nav-link main-menu-link"
+                           id="menu-pay-individual"
+                           href="/payment">
+                            (개별)급여관리
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link main-menu-link"
+                           id="menu-pay-dashboard"
+                           href="/payment/paymanagerdashboard">
+                            급여관리현황
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link main-menu-link"
+                           id="menu-payid-individual"
+                           href="/payment/payid">
+                            (개별)지급현황
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link main-menu-link"
+                           id="menu-payid-all"
+                           href="/payment/payiddashboard">
+                            (전체)지급현황
+                        </a>
+                    </li>
 
+                    <!-- 근무자 -->
+                    <li class="nav-item">
+                        <a class="nav-link main-menu-link"
+                           id="menu-member-list"
+                           href="/members">
+                            근무자조회
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link main-menu-link"
+                           id="menu-member-new"
+                           href="/members/new">
+                            근무자신규등록
+                        </a>
+                    </li>
+                </ul>
+
+                <!-- 우측: 기타 메뉴 -->
+                <ul class="navbar-nav ms-auto flex-wrap">
+                    <li class="nav-item"><a class="nav-link" href="/greetings">Greeting</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/goodbye">Good Bye</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/quote">Quote...</a></li>
+                </ul>
             </div>
         </div>
     </div>
 </nav>
 
+<!-- ============================================================
+     =============== JS: 활성 메뉴 처리 ===========================
+     ============================================================ -->
 <script>
     document.addEventListener('DOMContentLoaded', function () {
-        const scheduleMenuLink = document.getElementById('scheduleMenuLink');
-        const payMenuLink      = document.getElementById('payMenuLink');
-        const workMenuLink     = document.getElementById('workMenuLink');
-        const memberMenuLink   = document.getElementById('memberMenuLink');
-
-        const scheduleSubmenuRow = document.getElementById('scheduleSubmenuRow');
-        const paySubmenuRow      = document.getElementById('paySubmenuRow');
-        const workSubmenuRow     = document.getElementById('workSubmenuRow');
-        const memberSubmenuRow   = document.getElementById('memberSubmenuRow');
-
-        const mainMenuLinks = document.querySelectorAll('.main-menu .nav-link');
-        const navContainer  = document.querySelector('.navbar .container-fluid');
-
-        if (!scheduleMenuLink || !payMenuLink || !workMenuLink || !memberMenuLink) return;
-
         const path = window.location.pathname || '';
 
-        function positionSubmenu(row, anchor) {
-            if (!row || !anchor) return;
-            const ul = row.querySelector('ul');
-            if (!ul) return;
-
-            const anchorRect = anchor.getBoundingClientRect();
-            const containerRect = navContainer
-                    ? navContainer.getBoundingClientRect()
-                    : { left: 0 };
-
-            const offset = anchorRect.left - containerRect.left;
-
-            ul.style.marginLeft = offset + 'px';
+        // 1) 루트(/)로 들어온 경우 → 실시간현황으로 디폴트 이동
+        if (path === '/' || path === '') {
+            window.location.replace('/members/realtimedashboard');
+            return;
         }
 
-        function resetSubmenuPositions() {
-            [scheduleSubmenuRow, paySubmenuRow, workSubmenuRow, memberSubmenuRow].forEach(row => {
-                if (!row) return;
-                const ul = row.querySelector('ul');
-                if (ul) ul.style.marginLeft = '';
-            });
+        const menuLinks = document.querySelectorAll('.main-menu-link');
+
+        // 모든 메뉴 active 제거
+        function clearActive() {
+            menuLinks.forEach(link => link.classList.remove('active'));
         }
 
-        const isSchedulePage =
-                path.startsWith('/members/schedulemanagementbyweek') ||
-                path.startsWith('/members/schedulemanagement');
+        // 현재 URL과 정확히 일치하는 메뉴에 active 부여
+        clearActive();
+        let matched = false;
 
-        const isPayPage =
-                path.startsWith('/payment');
+        menuLinks.forEach(link => {
+            const hrefPath = new URL(link.href, window.location.origin).pathname;
+            if (hrefPath === path) {
+                link.classList.add('active');
+                matched = true;
+            }
+        });
 
-        const isWorkPage =
-                path.startsWith('/members/registerworkingtime') ||
-                path.startsWith('/members/showworktimedashboard') ||
-                path.startsWith('/members/showworkmonthdashboard');
-
-        const isMemberPage =
-                path === '/members' ||
-                path.startsWith('/members/new');
-
-        function hideAllSubmenus() {
-            scheduleSubmenuRow.classList.add('d-none');
-            paySubmenuRow.classList.add('d-none');
-            workSubmenuRow.classList.add('d-none');
-            memberSubmenuRow.classList.add('d-none');
-
-            scheduleMenuLink.classList.remove('active');
-            payMenuLink.classList.remove('active');
-            workMenuLink.classList.remove('active');
-            memberMenuLink.classList.remove('active');
-
-            resetSubmenuPositions();
+        // 혹시 매칭되는 게 없으면, 실시간현황을 기본 active로
+        if (!matched) {
+            const realtime = document.getElementById('menu-realtime');
+            if (realtime) {
+                realtime.classList.add('active');
+            }
         }
 
-        hideAllSubmenus();
-
-        if (isSchedulePage) {
-            scheduleSubmenuRow.classList.remove('d-none');
-            scheduleMenuLink.classList.add('active');
-            positionSubmenu(scheduleSubmenuRow, scheduleMenuLink);
-        } else if (isPayPage) {
-            paySubmenuRow.classList.remove('d-none');
-            payMenuLink.classList.add('active');
-            positionSubmenu(paySubmenuRow, payMenuLink);
-        } else if (isWorkPage) {
-            workSubmenuRow.classList.remove('d-none');
-            workMenuLink.classList.add('active');
-            positionSubmenu(workSubmenuRow, workMenuLink);
-        } else if (isMemberPage) {
-            memberSubmenuRow.classList.remove('d-none');
-            memberMenuLink.classList.add('active');
-            positionSubmenu(memberSubmenuRow, memberMenuLink);
-        }
-
-        /* ===== 상위 메뉴 클릭 시 기본 하위 메뉴로 바로 이동 ===== */
-        scheduleMenuLink.addEventListener('click', function (e) {
-            e.preventDefault();
-            window.location.href = '/members/schedulemanagementbyweek';  // 주간일정
-        });
-
-        workMenuLink.addEventListener('click', function (e) {
-            e.preventDefault();
-            window.location.href = '/members/showworktimedashboard';     // (주간)조회
-        });
-
-        payMenuLink.addEventListener('click', function (e) {
-            e.preventDefault();
-            window.location.href = '/payment';                           // (개별)급여관리
-        });
-
-        memberMenuLink.addEventListener('click', function (e) {
-            e.preventDefault();
-            window.location.href = '/members';                           // 조회
-        });
-
-        // ===== "실시간현황" 등 다른 상위 메뉴 클릭 시 서브메뉴 모두 닫기 =====
-        mainMenuLinks.forEach(function (link) {
+        // 클릭 시 포커스 제거(파란 포커스/테두리 방지)
+        menuLinks.forEach(link => {
             link.addEventListener('click', function () {
-                if (this === scheduleMenuLink ||
-                        this === payMenuLink ||
-                        this === workMenuLink ||
-                        this === memberMenuLink) {
-                    // 위에서 별도 처리하므로 여기서는 패스
-                    return;
-                }
-                hideAllSubmenus();
+                this.blur();
             });
         });
     });

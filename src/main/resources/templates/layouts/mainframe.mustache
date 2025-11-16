@@ -1,0 +1,226 @@
+{{! layouts/sideheader.mustache - 좌측 메뉴 + 우측 컨텐츠 프레임 }}
+{{>layouts/mainframe_header}}
+
+<style>
+    /* 필요하면 공용 CSS로 빼셔도 됩니다 */
+    .sidebar-layout {
+        display: flex;
+        flex-direction: row;    /* 좌우 배치 */
+        height: 100vh;
+        overflow: hidden;
+    }
+
+    .sidebar-layout .sidebar {
+        display: flex;
+        flex-direction: column;
+        border-right: 1px solid #dee2e6;
+        width: 260px;
+        min-width: 220px;
+        max-width: 280px;
+    }
+
+    .sidebar-layout .content-area {
+        flex: 1;
+        height: 100vh;
+    }
+
+    .sidebar-layout iframe {
+        width: 100%;
+        height: 100%;
+        border: 0;
+        overflow: auto;
+    }
+</style>
+
+<div class="sidebar-layout">
+
+    <!-- 왼쪽 사이드바 영역 -->
+    <nav class="sidebar">
+
+        <!-- 상단 로고/홈 -->
+        <div class="sidebar-header d-flex align-items-center px-3 py-2">
+            <a class="navbar-brand fs-3 text-decoration-none"
+               href="/"
+               target="contentFrame"
+               aria-label="Home"
+               title="Home">
+            </a>
+        </div>
+
+        <!-- 메뉴 내용 -->
+        <div class="flex-grow-1 d-flex flex-column overflow-auto">
+            <ul class="nav flex-column main-menu px-2 pt-2">
+
+                <!-- 단일 메뉴: 실시간현황 -->
+                <li class="nav-item mb-1">
+                    <a class="nav-link"
+                       href="/members/realtimedashboard"
+                       data-content-url="/members/realtimedashboard"
+                       target="contentFrame">
+                        실시간현황
+                    </a>
+                </li>
+
+                <!-- 일정 섹션 -->
+                <li class="nav-item menu-section">
+                    <div class="section-title">일정</div>
+                    <ul class="nav flex-column submenu">
+                        <li class="nav-item">
+                            <a class="nav-link"
+                               href="/members/schedulemanagementbyweek"
+                               data-content-url="/members/schedulemanagementbyweek"
+                               target="contentFrame">
+                                주간일정
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link"
+                               href="/members/schedulemanagement"
+                               data-content-url="/members/schedulemanagement"
+                               target="contentFrame">
+                                월간일정
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+
+                <!-- 근무시간 섹션 -->
+                <li class="nav-item menu-section">
+                    <div class="section-title">근무시간</div>
+                    <ul class="nav flex-column submenu">
+                        <!--
+                        <li class="nav-item">
+                            <a class="nav-link"
+                               href="/members/registerworkingtime"
+                               data-content-url="/members/registerworkingtime"
+                               target="contentFrame">
+                                (일간)근무시간조정
+                            </a>
+                        </li>
+                        -->
+                        <li class="nav-item">
+                            <a class="nav-link"
+                               href="/members/showworktimedashboard"
+                               data-content-url="/members/showworktimedashboard"
+                               target="contentFrame">
+                                (주간)조회
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link"
+                               href="/members/showworkmonthdashboard"
+                               data-content-url="/members/showworkmonthdashboard"
+                               target="contentFrame">
+                                (월간)조회
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+
+                <!-- 급여 섹션 -->
+                <li class="nav-item menu-section">
+                    <div class="section-title">급여</div>
+                    <ul class="nav flex-column submenu">
+                        <li class="nav-item">
+                            <a class="nav-link"
+                               href="/payment"
+                               data-content-url="/payment"
+                               target="contentFrame">
+                                (개별)급여관리
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link"
+                               href="/payment/paymanagerdashboard"
+                               data-content-url="/payment/paymanagerdashboard"
+                               target="contentFrame">
+                                급여관리현황
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link"
+                               href="/payment/payid"
+                               data-content-url="/payment/payid"
+                               target="contentFrame">
+                                (개별)지급현황
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link"
+                               href="/payment/payiddashboard"
+                               data-content-url="/payment/payiddashboard"
+                               target="contentFrame">
+                                (전체)지급현황
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+
+                <!-- 근무자 섹션 -->
+                <li class="nav-item menu-section">
+                    <div class="section-title">근무자</div>
+                    <ul class="nav flex-column submenu">
+                        <li class="nav-item">
+                            <a class="nav-link"
+                               href="/members"
+                               data-content-url="/members"
+                               target="contentFrame">
+                                조회
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link"
+                               href="/members/new"
+                               data-content-url="/members/new"
+                               target="contentFrame">
+                                신규등록
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+            </ul>
+
+            <!-- 기타 메뉴 (Greeting / Good Bye / Quote) -->
+            <div class="mt-auto px-2 pb-2 pt-2 border-top">
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link"
+                           href="/greetings"
+                           data-content-url="/greetings"
+                           target="contentFrame">
+                            Greeting
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link"
+                           href="/goodbye"
+                           data-content-url="/goodbye"
+                           target="contentFrame">
+                            Good Bye
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link"
+                           href="/quote"
+                           data-content-url="/quote"
+                           target="contentFrame">
+                            Quote...
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 오른쪽 컨텐츠 프레임 영역 -->
+    <div class="content-area">
+        <!-- 초기 진입 시 보여줄 기본 페이지를 src 에 넣어주세요 -->
+        <iframe
+                id="contentFrame"
+                name="contentFrame"
+                src="/members/realtimedashboard">
+        </iframe>
+    </div>
+</div>
+
+{{>layouts/footer}}
