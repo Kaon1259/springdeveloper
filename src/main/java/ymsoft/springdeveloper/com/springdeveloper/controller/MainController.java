@@ -8,7 +8,6 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.support.SessionStatus;
 import ymsoft.springdeveloper.com.springdeveloper.dto.UserDto;
 import ymsoft.springdeveloper.com.springdeveloper.dto.UserLoginRequest;
 import ymsoft.springdeveloper.com.springdeveloper.entity.Users;
