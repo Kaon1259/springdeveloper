@@ -3,10 +3,12 @@
 <main class="container my-4">
 
     <!-- ============ 상단: 아르바이트 상태별 보기 (칩 리스트) ============ -->
-    <div class="card mb-3">
+    <!-- ✅ 파란 배경 + 상단 라운드 적용 -->
+    <div class="card mb-3 state-card-blue">
         <div class="card-header d-flex justify-content-between align-items-center">
             <span class="fw-bold">아르바이트 상태별 보기</span>
-            <a href="/members/new" class="btn btn-sm btn-primary">추가등록</a>
+            <!-- 파란 배경 위에서는 primary 대신 light 버튼이 시인성이 좋아서 변경 -->
+            <a href="/members/new" class="btn btn-sm btn-light">추가등록</a>
         </div>
         <div class="card-body">
             <div class="row g-3">
@@ -89,7 +91,8 @@
                     <!-- 📅 월별 뷰 -->
                     <div id="payViewMonth">
                         <table class="table table-bordered align-middle text-center" id="payHistoryTableMonth">
-                            <thead class="table-light">
+                            <!-- ✅ 헤더 파란색 + 상단 라운드 -->
+                            <thead class="pay-table-header">
                             <tr>
                                 <th style="width:90px;">연도-월</th>
                                 <th style="width:160px;">지급일</th>
@@ -111,7 +114,8 @@
                     <!-- 📆 연도별 뷰 -->
                     <div id="payViewYear" class="d-none">
                         <table class="table table-bordered align-middle text-center" id="payHistoryTableYear">
-                            <thead class="table-light">
+                            <!-- ✅ 헤더 파란색 + 상단 라운드 -->
+                            <thead class="pay-table-header">
                             <tr>
                                 <th style="width:100px;">연도</th>
                                 <th style="width:140px;">실근무시간 합계</th>
@@ -165,6 +169,35 @@
 </main>
 
 <style>
+    /* ✅ 상단 아르바이트 상태 카드: 파란 배경 + 상단 모서리 라운드 */
+    .state-card-blue{
+        border-radius:1rem;
+        overflow:hidden;
+        background:#0d6efd;
+        color:#fff;
+        border:none;
+    }
+    .state-card-blue .card-header{
+        background:rgba(255,255,255,0.08);
+        border-bottom:1px solid rgba(255,255,255,0.25);
+    }
+    .state-card-blue .card-body{
+        background:transparent;
+    }
+    .state-card-blue .form-label,
+    .state-card-blue .form-text,
+    .state-card-blue .text-muted{
+        color:rgba(255,255,255,0.85) !important;
+    }
+    .state-card-blue .form-select{
+        background-color:#ffffff;
+        border-color:rgba(0,0,0,0.1);
+    }
+    .state-card-blue .btn-light{
+        color:#0d6efd;
+        border-color:transparent;
+    }
+
     /* ===== 상단 아르바이트 리스트: 칩 스타일 ===== */
     .vlist {
         display: flex;
@@ -233,6 +266,27 @@
 
     .toast-top-center {
         margin-top: 70px; /* 상단 네비바 아래쪽 여백 */
+    }
+
+    /* ✅ 월별/연도별 테이블 헤더 파란색 + 상단 모서리 라운드 */
+    .pay-table-header th{
+        background:#0d6efd !important;
+        color:#fff !important;
+        border-color:#0b5ed7 !important;
+        vertical-align:middle;
+    }
+    .pay-table-header th:first-child{
+        border-top-left-radius:0.75rem;
+    }
+    .pay-table-header th:last-child{
+        border-top-right-radius:0.75rem;
+    }
+    #payHistoryTableMonth,
+    #payHistoryTableYear{
+        border-collapse:separate;
+        border-spacing:0;
+        border-radius:0.75rem;
+        overflow:hidden;
     }
 </style>
 
@@ -438,11 +492,11 @@
             lastMonthlyCount = 0;
             lastYearlyCount  = 0;
 
-            summaryTotalWorkTime.textContent = '0시간';
+            summaryTotalWorkTime.textContent  = '0시간';
             summaryTotalJuhyuTime.textContent = '0시간';
-            summaryTotalWorkPay.textContent  = '-';
-            summaryTotalJuhyuPay.textContent = '-';
-            summaryTotalPay.textContent      = '-';
+            summaryTotalWorkPay.textContent   = '-';
+            summaryTotalJuhyuPay.textContent  = '-';
+            summaryTotalPay.textContent       = '-';
 
             renderMemberHeader(null);
         }

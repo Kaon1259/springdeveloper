@@ -2,172 +2,236 @@
 
 <main class="container my-4">
 
-    <!-- 🔼 상단: 뷰 전환 탭 (월별 / 연도별) -->
-    <ul class="nav nav-pills mb-3" id="payViewTabs">
-        <li class="nav-item">
-            <button class="nav-link active" data-view="MONTH" type="button">
-                월별 지급현황
-            </button>
-        </li>
-        <li class="nav-item">
-            <button class="nav-link" data-view="YEAR" type="button">
-                연도별 지급현황
-            </button>
-        </li>
-    </ul>
+    <!-- ✅ 전체를 감싸는 라운드 박스(외부 테이블 느낌) -->
+    <div class="pay-shell">
 
-    <!-- ================== 🗓 월별 지급현황 뷰 ================== -->
-    <section id="viewMonth">
-
-        <!-- 상단: 월 선택 + 네비게이션 -->
-        <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
-            <div class="d-flex flex-wrap align-items-center gap-2">
-                <button class="btn btn-outline-secondary btn-sm" id="prevMonthBtn">◀ 이전달</button>
-                <button class="btn btn-outline-secondary btn-sm" id="thisMonthBtn">이번달</button>
-                <button class="btn btn-outline-secondary btn-sm" id="nextMonthBtn">다음달 ▶</button>
-
-                <input type="month" id="monthPicker"
-                       class="form-control form-control-sm ms-1"
-                       style="width:170px;">
+        <!-- ✅ 외부 상단 헤더 : 파란색 배경 -->
+        <div class="pay-shell-header">
+            <div class="d-flex align-items-center gap-2">
+                <span class="fw-bold text-white fs-5">임금 지급 현황</span>
             </div>
-            <div class="text-end">
-                <div class="fw-bold h5 mb-0">월별 임금 지급 현황</div>
-                <div class="small text-muted" id="monthLabelSub"></div>
-            </div>
+
+            <!-- 🔼 상단: 뷰 전환 탭 (월별 / 연도별) -->
+            <ul class="nav nav-pills" id="payViewTabs">
+                <li class="nav-item">
+                    <button class="nav-link active" data-view="MONTH" type="button">
+                        월별 지급현황
+                    </button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link" data-view="YEAR" type="button">
+                        연도별 지급현황
+                    </button>
+                </li>
+            </ul>
         </div>
 
-        <!-- 안내 문구 -->
-        <div class="small text-muted mb-3">
-            선택한 <b>연-월</b> 기준으로 <b>임시저장 / 확정 / 지급완료</b> 상태의 근무자를 모두 표시합니다.<br>
-            지급완료된 행은 <span class="badge bg-primary">연파랑색</span>으로 강조됩니다.
-        </div>
+        <!-- ✅ 외부 내용 영역 -->
+        <div class="pay-shell-body">
 
-        <!-- 📊 월별 근무자 타임테이블 -->
-        <div class="table-responsive">
-            <table class="table table-bordered align-middle text-center" id="monthlyPayTable">
-                <thead class="table-light">
-                <tr>
-                    <th style="width:220px;">근무자</th>
-                    <th style="width:120px;">실근무시간</th>
-                    <th style="width:130px;">주휴수당 시간</th>
-                    <th style="width:100px;">시급</th>
-                    <th style="width:130px;" class="text-end">실근무 급여</th>
-                    <th style="width:130px;" class="text-end">주휴 수당</th>
-                    <th style="width:150px;" class="text-end">전체 금액</th>
-                    <th style="width:90px;">상태</th>
-                    <th style="width:170px;">처리일자</th>
-                </tr>
-                </thead>
-                <tbody id="monthlyPayBody">
-                <!-- JS 렌더 -->
-                </tbody>
-            </table>
-        </div>
+            <!-- ================== 🗓 월별 지급현황 뷰 ================== -->
+            <section id="viewMonth">
 
-        <!-- 📌 월별 요약 영역 -->
-        <div class="mt-4 p-3 bg-light rounded">
-            <div class="d-flex justify-content-between mb-1">
-                <span class="small text-muted">총 실근무시간</span>
-                <span class="fw-semibold" id="sumWorkTime">-</span>
-            </div>
-            <div class="d-flex justify-content-between mb-1">
-                <span class="small text-muted">총 주휴수당시간</span>
-                <span class="fw-semibold" id="sumJuhyuTime">-</span>
-            </div>
-            <div class="d-flex justify-content-between mb-1">
-                <span class="small text-muted">총 실근무 급여</span>
-                <span class="fw-semibold" id="sumWorkPay">-</span>
-            </div>
-            <div class="d-flex justify-content-between mb-2">
-                <span class="small text-muted">총 주휴 수당</span>
-                <span class="fw-semibold" id="sumJuhyuPay">-</span>
-            </div>
-            <hr class="my-2">
-            <div class="d-flex justify-content-between align-items-center">
-                <span class="small fw-bold">총 지급 금액 (실근무 급여 + 주휴 수당)</span>
-                <span class="fw-bold text-primary" id="sumTotalPay">-</span>
-            </div>
-        </div>
-    </section>
+                <!-- 상단: 월 선택 + 네비게이션 -->
+                <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+                    <div class="d-flex flex-wrap align-items-center gap-2">
+                        <button class="btn btn-outline-secondary btn-sm" id="prevMonthBtn">◀ 이전달</button>
+                        <button class="btn btn-outline-secondary btn-sm" id="thisMonthBtn">이번달</button>
+                        <button class="btn btn-outline-secondary btn-sm" id="nextMonthBtn">다음달 ▶</button>
 
-    <!-- ================== 📅 연도별 지급현황 뷰 ================== -->
-    <section id="viewYear" class="d-none mt-4">
+                        <input type="month" id="monthPicker"
+                               class="form-control form-control-sm ms-1"
+                               style="width:170px;">
+                    </div>
+                    <div class="text-end">
+                        <div class="fw-bold h5 mb-0">월별 임금 지급 현황</div>
+                        <div class="small text-muted" id="monthLabelSub"></div>
+                    </div>
+                </div>
 
-        <!-- 상단: 연도 선택 + 네비게이션 -->
-        <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
-            <div class="d-flex flex-wrap align-items-center gap-2">
-                <button class="btn btn-outline-secondary btn-sm" id="prevYearBtn">◀ 이전해</button>
-                <button class="btn btn-outline-secondary btn-sm" id="thisYearBtn">올해</button>
-                <button class="btn btn-outline-secondary btn-sm" id="nextYearBtn">다음해 ▶</button>
+                <!-- 안내 문구 -->
+                <div class="small text-muted mb-3">
+                    선택한 <b>연-월</b> 기준으로 <b>임시저장 / 확정 / 지급완료</b> 상태의 근무자를 모두 표시합니다.<br>
+                    지급완료된 행은 <span class="badge bg-primary">연파랑색</span>으로 강조됩니다.
+                </div>
 
-                <input type="number" id="yearInput"
-                       class="form-control form-control-sm ms-1"
-                       style="width:120px;"
-                       min="2000" max="2100">
-            </div>
-            <div class="text-end">
-                <div class="fw-bold h5 mb-0">연도별 임금 지급 현황</div>
-                <div class="small text-muted" id="yearLabelSub"></div>
-            </div>
-        </div>
+                <!-- 📊 월별 근무자 타임테이블 -->
+                <div class="table-responsive">
+                    <table class="table table-bordered align-middle text-center" id="monthlyPayTable">
+                        <!-- ✅ 내부 타임테이블 헤더도 파란색 + 상단 라운드 -->
+                        <thead class="inner-table-header">
+                        <tr>
+                            <th style="width:220px;">근무자</th>
+                            <th style="width:120px;">실근무시간</th>
+                            <th style="width:130px;">주휴수당 시간</th>
+                            <th style="width:100px;">시급</th>
+                            <th style="width:130px;" class="text-end">실근무 급여</th>
+                            <th style="width:130px;" class="text-end">주휴 수당</th>
+                            <th style="width:150px;" class="text-end">전체 금액</th>
+                            <th style="width:90px;">상태</th>
+                            <th style="width:170px;">처리일자</th>
+                        </tr>
+                        </thead>
+                        <tbody id="monthlyPayBody">
+                        <!-- JS 렌더 -->
+                        </tbody>
+                    </table>
+                </div>
 
-        <!-- 안내 문구 -->
-        <div class="small text-muted mb-3">
-            선택한 <b>연도 전체</b> 기준으로 근무자별 <b>실근무/주휴수당/급여합계</b>를 표시합니다.<br>
-            연도 합계는 각 월의 지급 내역을 합산한 값입니다.
-        </div>
+                <!-- 📌 월별 요약 영역 -->
+                <div class="mt-4 p-3 bg-light rounded">
+                    <div class="d-flex justify-content-between mb-1">
+                        <span class="small text-muted">총 실근무시간</span>
+                        <span class="fw-semibold" id="sumWorkTime">-</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-1">
+                        <span class="small text-muted">총 주휴수당시간</span>
+                        <span class="fw-semibold" id="sumJuhyuTime">-</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-1">
+                        <span class="small text-muted">총 실근무 급여</span>
+                        <span class="fw-semibold" id="sumWorkPay">-</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="small text-muted">총 주휴 수당</span>
+                        <span class="fw-semibold" id="sumJuhyuPay">-</span>
+                    </div>
+                    <hr class="my-2">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="small fw-bold">총 지급 금액 (실근무 급여 + 주휴 수당)</span>
+                        <span class="fw-bold text-primary" id="sumTotalPay">-</span>
+                    </div>
+                </div>
+            </section>
 
-        <!-- 📊 연도별 근무자 테이블 -->
-        <div class="table-responsive">
-            <table class="table table-bordered align-middle text-center" id="yearlyPayTable">
-                <thead class="table-light">
-                <tr>
-                    <th style="width:220px;">근무자</th>
-                    <th style="width:120px;">연간 실근무시간</th>
-                    <th style="width:130px;">연간 주휴수당 시간</th>
-                    <th style="width:100px;">기준 시급</th>
-                    <th style="width:130px;" class="text-end">연간 실근무 급여</th>
-                    <th style="width:130px;" class="text-end">연간 주휴 수당</th>
-                    <th style="width:150px;" class="text-end">연간 전체 금액</th>
-                    <th style="width:120px;">비고</th>
-                </tr>
-                </thead>
-                <tbody id="yearlyPayBody">
-                <!-- JS 렌더 -->
-                </tbody>
-            </table>
-        </div>
+            <!-- ================== 📅 연도별 지급현황 뷰 ================== -->
+            <section id="viewYear" class="d-none mt-4">
 
-        <!-- 📌 연도별 요약 영역 -->
-        <div class="mt-4 p-3 bg-light rounded">
-            <div class="d-flex justify-content-between mb-1">
-                <span class="small text-muted">연간 총 실근무시간</span>
-                <span class="fw-semibold" id="yearSumWorkTime">-</span>
-            </div>
-            <div class="d-flex justify-content-between mb-1">
-                <span class="small text-muted">연간 총 주휴수당시간</span>
-                <span class="fw-semibold" id="yearSumJuhyuTime">-</span>
-            </div>
-            <div class="d-flex justify-content-between mb-1">
-                <span class="small text-muted">연간 총 실근무 급여</span>
-                <span class="fw-semibold" id="yearSumWorkPay">-</span>
-            </div>
-            <div class="d-flex justify-content-between mb-2">
-                <span class="small text-muted">연간 총 주휴 수당</span>
-                <span class="fw-semibold" id="yearSumJuhyuPay">-</span>
-            </div>
-            <hr class="my-2">
-            <div class="d-flex justify-content-between align-items-center">
-                <span class="small fw-bold">연간 총 지급 금액 (실근무 급여 + 주휴 수당)</span>
-                <span class="fw-bold text-primary" id="yearSumTotalPay">-</span>
-            </div>
-        </div>
-    </section>
+                <!-- 상단: 연도 선택 + 네비게이션 -->
+                <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+                    <div class="d-flex flex-wrap align-items-center gap-2">
+                        <button class="btn btn-outline-secondary btn-sm" id="prevYearBtn">◀ 이전해</button>
+                        <button class="btn btn-outline-secondary btn-sm" id="thisYearBtn">올해</button>
+                        <button class="btn btn-outline-secondary btn-sm" id="nextYearBtn">다음해 ▶</button>
+
+                        <input type="number" id="yearInput"
+                               class="form-control form-control-sm ms-1"
+                               style="width:120px;"
+                               min="2000" max="2100">
+                    </div>
+                    <div class="text-end">
+                        <div class="fw-bold h5 mb-0">연도별 임금 지급 현황</div>
+                        <div class="small text-muted" id="yearLabelSub"></div>
+                    </div>
+                </div>
+
+                <!-- 안내 문구 -->
+                <div class="small text-muted mb-3">
+                    선택한 <b>연도 전체</b> 기준으로 근무자별 <b>실근무/주휴수당/급여합계</b>를 표시합니다.<br>
+                    연도 합계는 각 월의 지급 내역을 합산한 값입니다.
+                </div>
+
+                <!-- 📊 연도별 근무자 테이블 -->
+                <div class="table-responsive">
+                    <table class="table table-bordered align-middle text-center" id="yearlyPayTable">
+                        <!-- ✅ 내부 타임테이블 헤더도 파란색 + 상단 라운드 -->
+                        <thead class="inner-table-header">
+                        <tr>
+                            <th style="width:220px;">근무자</th>
+                            <th style="width:120px;">연간 실근무시간</th>
+                            <th style="width:130px;">연간 주휴수당 시간</th>
+                            <th style="width:100px;">기준 시급</th>
+                            <th style="width:130px;" class="text-end">연간 실근무 급여</th>
+                            <th style="width:130px;" class="text-end">연간 주휴 수당</th>
+                            <th style="width:150px;" class="text-end">연간 전체 금액</th>
+                            <th style="width:120px;">비고</th>
+                        </tr>
+                        </thead>
+                        <tbody id="yearlyPayBody">
+                        <!-- JS 렌더 -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- 📌 연도별 요약 영역 -->
+                <div class="mt-4 p-3 bg-light rounded">
+                    <div class="d-flex justify-content-between mb-1">
+                        <span class="small text-muted">연간 총 실근무시간</span>
+                        <span class="fw-semibold" id="yearSumWorkTime">-</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-1">
+                        <span class="small text-muted">연간 총 주휴수당시간</span>
+                        <span class="fw-semibold" id="yearSumJuhyuTime">-</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-1">
+                        <span class="small text-muted">연간 총 실근무 급여</span>
+                        <span class="fw-semibold" id="yearSumWorkPay">-</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="small text-muted">연간 총 주휴 수당</span>
+                        <span class="fw-semibold" id="yearSumJuhyuPay">-</span>
+                    </div>
+                    <hr class="my-2">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="small fw-bold">연간 총 지급 금액 (실근무 급여 + 주휴 수당)</span>
+                        <span class="fw-bold text-primary" id="yearSumTotalPay">-</span>
+                    </div>
+                </div>
+            </section>
+
+        </div><!-- .pay-shell-body -->
+    </div><!-- .pay-shell -->
 
 </main>
 
 <!-- 💄 스타일 -->
 <style>
+    /* ✅ 전체 외부 라운드 박스 */
+    .pay-shell{
+        border-radius:1rem;
+        border:1px solid #dee2e6;
+        overflow:hidden;
+        background:#ffffff;
+        box-shadow:0 4px 12px rgba(0,0,0,0.03);
+    }
+
+    /* ✅ 외부 상단 헤더 (파란색) */
+    .pay-shell-header{
+        background:#0d6efd;
+        color:#ffffff;
+        padding:0.75rem 1rem;
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        gap:1rem;
+    }
+
+    /* 헤더 안 nav-pill 스타일 튜닝 */
+    .pay-shell-header .nav-pills .nav-link{
+        color:rgba(255,255,255,0.8);
+        border-radius:999px;
+        padding:0.25rem 0.9rem;
+        font-size:0.9rem;
+        border:1px solid transparent;
+        background:transparent;
+    }
+    .pay-shell-header .nav-pills .nav-link:hover{
+        color:#ffffff;
+        border-color:rgba(255,255,255,0.4);
+        background:rgba(255,255,255,0.08);
+    }
+    .pay-shell-header .nav-pills .nav-link.active{
+        color:#0d6efd;
+        background:#ffffff;
+        border-color:#ffffff;
+        font-weight:600;
+    }
+
+    /* 외부 내용 영역 */
+    .pay-shell-body{
+        padding:1.25rem 1.5rem 1.5rem;
+    }
+
     /* 상태 색상 점 (첫 컬럼용) */
     .status-dot {
         display:inline-block;
@@ -209,6 +273,29 @@
     .toast-top-center {
         margin-top: 70px; /* 상단 네비바 아래쪽 여백 */
     }
+
+    /* ✅ 내부 타임테이블 헤더: 파란색 + 상단 모서리 라운드 */
+    .inner-table-header th{
+        background:#0d6efd !important;
+        color:#ffffff !important;
+        border-color:#0b5ed7 !important;
+        vertical-align:middle;
+    }
+    .inner-table-header th:first-child{
+        border-top-left-radius:0.75rem;
+    }
+    .inner-table-header th:last-child{
+        border-top-right-radius:0.75rem;
+    }
+
+    /* 테이블 자체 모서리 라운드 */
+    #monthlyPayTable,
+    #yearlyPayTable{
+        border-collapse:separate;
+        border-spacing:0;
+        border-radius:0.75rem;
+        overflow:hidden;
+    }
 </style>
 
 <!-- ✅ 부트스트랩 토스트 영역 (상단 중앙 배치 + 3초 자동 닫힘 + X 텍스트 버튼) -->
@@ -235,7 +322,6 @@
         </div>
     </div>
 </div>
-
 <script>
     (function() {
         // 📡 API URL
@@ -304,12 +390,10 @@
                 if (view === 'MONTH') {
                     viewMonthSection.classList.remove('d-none');
                     viewYearSection.classList.add('d-none');
-                    // 월별 데이터 로딩
                     loadMonthlyData();
                 } else {
                     viewYearSection.classList.remove('d-none');
                     viewMonthSection.classList.add('d-none');
-                    // 연도별 데이터 로딩
                     loadYearlyData();
                 }
             });
@@ -575,10 +659,10 @@
                             ${
                         (memberPhone || memberCode)
                                 ? `<div class="member-meta">
-                                           ${memberPhone ? memberPhone : ''}
-                                           ${memberPhone && memberCode ? ' · ' : ''}
-                                           ${memberCode ? memberCode : ''}
-                                       </div>`
+                                       ${memberPhone ? memberPhone : ''}
+                                       ${memberPhone && memberCode ? ' · ' : ''}
+                                       ${memberCode ? memberCode : ''}
+                                   </div>`
                                 : ''
                 }
                         </td>
@@ -652,7 +736,7 @@
                 totalJuhyuPay  += juhyuPay;
                 totalPay       += total;
 
-                const hourly    = (typeof item.hourlyWage === 'number') ? item.hourlyWage : 0;
+                const hourly      = (typeof item.hourlyWage === 'number') ? item.hourlyWage : 0;
                 const memberName  = escapeHtml(item.memberName || '-');
                 const memberPhone = escapeHtml(item.memberPhone || '');
                 const memberCode  = escapeHtml(item.memberCode || '');
@@ -664,10 +748,10 @@
                             ${
                         (memberPhone || memberCode)
                                 ? `<div class="member-meta">
-                                           ${memberPhone ? memberPhone : ''}
-                                           ${memberPhone && memberCode ? ' · ' : ''}
-                                           ${memberCode ? memberCode : ''}
-                                       </div>`
+                                       ${memberPhone ? memberPhone : ''}
+                                       ${memberPhone && memberCode ? ' · ' : ''}
+                                       ${memberCode ? memberCode : ''}
+                                   </div>`
                                 : ''
                 }
                         </td>

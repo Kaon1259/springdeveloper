@@ -3,10 +3,11 @@
 <main class="container my-4">
 
     <!-- ============ 상단: 아르바이트 상태별 보기 (칩 리스트) ============ -->
-    <div class="card mb-3">
+    <!-- ✅ 파란 배경 + 상단 라운드 적용: state-card-blue 클래스 -->
+    <div class="card mb-3 state-card-blue">
         <div class="card-header d-flex justify-content-between align-items-center">
             <span class="fw-bold">아르바이트 상태별 보기</span>
-            <a href="/members/new" class="btn btn-sm btn-primary">추가등록</a>
+            <a href="/members/new" class="btn btn-sm btn-light">추가등록</a>
         </div>
         <div class="card-body">
             <div class="row g-3">
@@ -57,7 +58,8 @@
         <div class="card-body">
             <div class="table-responsive">
                 <table class="table table-bordered align-middle text-center" id="weeklyPayTable">
-                    <thead class="table-light">
+                    <!-- ✅ 헤더를 파란색 + 상단 모서리 라운드: weekly-table-header 클래스 사용 -->
+                    <thead class="weekly-table-header">
                     <tr>
                         <th style="width:120px;">주차</th>
                         <th style="width:160px;">근무자명</th>
@@ -95,6 +97,36 @@
 </main>
 
 <style>
+    /* ✅ 상단 아르바이트 상태 카드: 파란 배경 + 상단 모서리 라운드 */
+    .state-card-blue{
+        border-radius:1rem;
+        overflow:hidden;
+        background:#0d6efd;
+        color:#fff;
+        border:none;
+    }
+    .state-card-blue .card-header{
+        background:rgba(255,255,255,0.08);
+        border-bottom:1px solid rgba(255,255,255,0.25);
+    }
+    .state-card-blue .card-body{
+        background:transparent;
+    }
+    .state-card-blue .form-label,
+    .state-card-blue .form-text,
+    .state-card-blue .text-muted{
+        color:rgba(255,255,255,0.85) !important;
+    }
+    .state-card-blue .form-select{
+        background-color:#ffffff;
+        border-color:rgba(0,0,0,0.1);
+    }
+    .state-card-blue .btn-light{
+        color:#0d6efd;
+        border-color:transparent;
+    }
+
+    /* ===== 상단 칩 리스트 ===== */
     .vlist{display:flex;flex-wrap:wrap;gap:8px}
     .pill{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:999px;border:1px solid #e9ecef;background:#fff;cursor:pointer;font-size:.9rem;transition:background .15s, box-shadow .15s, border-color .15s}
     .pill:hover{background:#fafafa;border-color:#dee2e6}
@@ -105,6 +137,28 @@
     .text-time{color:#198754;font-weight:600}
     .small-muted{color:#6c757d;font-size:.85rem}
     .week-label{white-space:nowrap}
+
+    /* ✅ 주차/근무자명 등 테이블 헤더 파란색 + 상단 모서리 라운드 */
+    .weekly-table-header th{
+        background:#0d6efd !important;
+        color:#fff !important;
+        border-color:#0b5ed7 !important;
+        vertical-align:middle;
+    }
+    /* 맨 왼쪽/오른쪽 상단 모서리 라운드 */
+    .weekly-table-header th:first-child{
+        border-top-left-radius:0.75rem;
+    }
+    .weekly-table-header th:last-child{
+        border-top-right-radius:0.75rem;
+    }
+    /* 테이블 자체도 상단 모서리 보이도록 */
+    #weeklyPayTable{
+        border-collapse:separate;
+        border-spacing:0;
+        border-radius:0.75rem;
+        overflow:hidden;
+    }
 </style>
 
 <!-- 서버에서 내려준 멤버 JSON -->
