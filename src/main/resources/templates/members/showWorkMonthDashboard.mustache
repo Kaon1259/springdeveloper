@@ -3,17 +3,19 @@
 <main class="container my-4">
 
     <!-- ============ 상단: 상태 선택(왼쪽) + 알바생 이름 칩(오른쪽, 같은 라인) ============ -->
-    <div class="card mb-3">
-        <div class="card-header d-flex justify-content-between align-items-center">
-            <span class="fw-bold">아르바이트 상태별 보기</span>
-            <a href="/members/new" class="btn btn-sm btn-primary">추가등록</a>
+    <!-- 🔵 파란 라운드 패널로 변경 -->
+    <div class="status-panel-blue mb-3">
+        <div class="status-panel-header">
+            <div class="status-panel-title">아르바이트 상태별 보기</div>
+            <a href="/members/new" class="btn btn-sm btn-light status-panel-add-btn">추가등록</a>
         </div>
-        <div class="card-body">
+
+        <div class="status-panel-body">
             <div class="row g-3 align-items-center">
                 <!-- 왼쪽: 상태 선택 -->
                 <div class="col-12 col-md-4">
                     <label for="statusSelect" class="form-label small text-muted">상태</label>
-                    <select id="statusSelect" class="form-select form-select-sm">
+                    <select id="statusSelect" class="form-select form-select-sm status-panel-select">
                         <option value="WORKING" selected>근무중</option>
                         <option value="WAITING">시작전</option>
                         <option value="RESTING">휴식중</option>
@@ -148,6 +150,103 @@
 </main>
 
 <style>
+    /* ==== 아르바이트 상태별 보기: 파란 라운드 패널 ==== */
+    .status-panel-blue {
+        background: linear-gradient(135deg, #1d4ed8, #2563eb);
+        border-radius: 18px;
+        padding: 16px 18px 18px;
+        box-shadow: 0 14px 30px rgba(15, 23, 42, 0.28);
+        color: #e5eeff;
+    }
+    .status-panel-header {
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        margin-bottom: 10px;
+    }
+    .status-panel-title {
+        font-weight: 700;
+        font-size: 1rem;
+        color:#f9fbff;
+    }
+    .status-panel-body {
+        margin-top: 4px;
+    }
+    .status-panel-add-btn {
+        border-radius: 999px;
+        padding-inline: 14px;
+        font-weight: 600;
+    }
+
+    /* 패널 안의 텍스트/레이블 톤 조정 */
+    .status-panel-blue .form-label,
+    .status-panel-blue .form-text,
+    .status-panel-blue .small.text-muted {
+        color: #dbeafe !important;
+    }
+
+    /* 셀렉트/인풋을 약간 투명한 네이비 톤으로 */
+    .status-panel-blue .status-panel-select {
+        background: rgba(15,23,42,0.22);
+        border-color: rgba(191,219,254,0.85);
+        color:#e5eeff;
+    }
+    .status-panel-blue .status-panel-select:focus {
+        background: rgba(15,23,42,0.30);
+        border-color:#bfdbfe;
+        box-shadow:0 0 0 0.15rem rgba(191,219,254,0.45);
+        color:#f9fbff;
+    }
+
+    .status-panel-blue .badge.bg-light {
+        background:#e5eeff !important;
+        color:#0f172a !important;
+    }
+
+    /* 패널 안 member-pill 스타일 튜닝 */
+    .status-panel-blue .member-pill-container {
+        min-height: 32px;
+    }
+    .status-panel-blue .member-pill {
+        display:inline-flex;
+        align-items:center;
+        gap:4px;
+        padding:4px 10px;
+        border-radius:999px;
+        border:1px solid rgba(191,219,254,0.55);
+        background: rgba(15,23,42,0.20);
+        font-size:.8rem;
+        cursor:pointer;
+        white-space:nowrap;
+        transition: background .15s, box-shadow .15s, border-color .15s, transform .08s;
+        color:#e5eeff;
+    }
+    .status-panel-blue .member-pill-dot {
+        width:10px;
+        height:10px;
+        border-radius:50%;
+        border:1px solid rgba(15,23,42,.6);
+        flex:0 0 10px;
+    }
+    .status-panel-blue .member-pill-name {
+        font-weight:600;
+    }
+    .status-panel-blue .member-pill-meta {
+        font-size:.7rem;
+        color:#cbd5f5;
+    }
+    .status-panel-blue .member-pill:hover {
+        background: rgba(15,23,42,0.30);
+        border-color: rgba(191,219,254,0.9);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 14px rgba(15,23,42,0.35);
+    }
+    .status-panel-blue .member-pill.active {
+        border-color: rgba(191,219,254,1);
+        box-shadow: 0 0 0 2px rgba(191,219,254,.95) inset;
+        background: rgba(15,23,42,0.42);
+    }
+
     .chip {
         display:inline-flex; align-items:center; gap:6px;
         border:1px solid #e9ecef; border-radius:14px; padding:4px 8px; background:#fff;
@@ -165,7 +264,7 @@
         flex:0 0 auto;
     }
 
-    /* ===== 상단: 오른쪽 이름 칩 영역 ===== */
+    /* ===== 상단: 오른쪽 이름 칩 영역 (기본) ===== */
     .member-pill-container {
         min-height: 32px;
     }
@@ -259,7 +358,7 @@
     }
     .cell .date-head .dow-mini { color:#6c757d; font-weight: 500; font-size: .85rem; }
 
-    /* ✅ 날짜 셀 내부를 3개의 라운드 렉트로 분리 */
+    /* 날짜 셀 내부 3개 라운드렉트 */
     .cell-rect {
         border-radius: 8px;
         padding: 4px 6px;
@@ -615,10 +714,10 @@
                         ${
                                 memberPhone || memberCode
                                         ? `<span class="member-pill-meta">
-                                 ${memberPhone ? memberPhone : ''}
-                                 ${memberPhone && memberCode ? ' · ' : ''}
-                                 ${memberCode ? memberCode : ''}
-                               </span>`
+                                     ${memberPhone ? memberPhone : ''}
+                                     ${memberPhone && memberCode ? ' · ' : ''}
+                                     ${memberCode ? memberCode : ''}
+                                   </span>`
                                         : ''
                         }
                     `;
@@ -647,7 +746,6 @@
                 headerStatusBadge.classList.remove('d-none');
             } else {
                 headerStatusBadge.textContent = '-';
-                headerStatusBadge.className = 'badge bg-secondary ms-2 d-none';
             }
 
             computeCalendarOffsets();
@@ -661,7 +759,7 @@
             });
         }
 
-        // ======================== 수정된 부분 시작 =========================
+        // ======================== 월 데이터 로딩/렌더 =========================
 
         async function loadAndRenderMonth(member) {
             const { monthStartIso, monthEndIso } = parseMonthRange(monthRangeLabelEl?.textContent || '');
@@ -670,7 +768,6 @@
             let actualMap = {};
 
             try {
-                // 계획 일정 조회
                 const planUrl = `${API_PLAN}/${encodeURIComponent(member.id)}/${monthStartIso}/${monthEndIso}`;
                 const planResp = await fetch(planUrl, { headers: { 'Accept': 'application/json' } });
                 if (planResp.ok) {
@@ -682,7 +779,6 @@
             }
 
             try {
-                // 실제 근무시간 조회
                 const actUrl = `${API_BASE}/${encodeURIComponent(member.id)}/${monthStartIso}/${monthEndIso}`;
                 const actResp = await fetch(actUrl, { headers: { 'Accept': 'application/json' } });
                 if (actResp.ok) {
@@ -693,13 +789,10 @@
                 console.error('actual fetch error:', err);
             }
 
-            // 계획 + 실제 병합
             const mergedMap = mergePlanAndActual(planMap, actualMap);
-
             renderMonthCalendar(member, monthStartIso, monthEndIso, mergedMap);
         }
 
-// 계획 + 실제 일정 병합
         function mergePlanAndActual(planMap, actualMap) {
             const merged = {};
             const allDates = new Set([...Object.keys(planMap), ...Object.keys(actualMap)]);
@@ -717,7 +810,6 @@
             calendarGrid.innerHTML = '';
 
             const wage = (typeof member?.hourlyWage === 'number') ? member.hourlyWage : null;
-            //hourlyWageCell.textContent = (wage != null) ? krw(wage) : '-';
 
             // 요일 헤더
             DOW_HEAD.forEach(label => {
@@ -765,7 +857,6 @@
 
                 const totalLabel = formatMins(a.minutes || 0);
 
-                // ✅ 수정: planSegments가 있어도 버튼 보이도록 조건 변경 + 버튼 이름 변경
                 const showAdjust =
                         (selectedDateIso === iso) && (
                                 (a.minutes || 0) > 0 || (a.planSegments?.length ?? 0) > 0
@@ -774,31 +865,27 @@
                         ? `<button type="button" class="btn btn-xs btn-outline-secondary btn-day-adjust" data-date="${iso}">근무시간조정</button>`
                         : '';
 
-
                 cell.innerHTML = `
-            <div class="date-head">
-                <span class="left-date">
-                    <span>${iso.split('-')[2]}일</span>
-                    <span class="dow-mini">${DOW_HEAD[dow]}</span>
-                </span>
-                ${adjustBtnHtml}
-            </div>
+                    <div class="date-head">
+                        <span class="left-date">
+                            <span>${iso.split('-')[2]}일</span>
+                            <span class="dow-mini">${DOW_HEAD[dow]}</span>
+                        </span>
+                        ${adjustBtnHtml}
+                    </div>
 
-            <!-- 1. 계획 일정 -->
-            <div class="cell-rect cell-rect-top">
-                <div class="segments">${planChips}</div>
-            </div>
+                    <div class="cell-rect cell-rect-top">
+                        <div class="segments">${planChips}</div>
+                    </div>
 
-            <!-- 2. 실제 근무 -->
-            <div class="cell-rect cell-rect-middle">
-                <div class="segments">${actualChips}</div>
-            </div>
+                    <div class="cell-rect cell-rect-middle">
+                        <div class="segments">${actualChips}</div>
+                    </div>
 
-            <!-- 3. 합계 -->
-            <div class="cell-rect cell-rect-bottom">
-                <div class="day-total">${totalLabel}</div>
-            </div>
-        `;
+                    <div class="cell-rect cell-rect-bottom">
+                        <div class="day-total">${totalLabel}</div>
+                    </div>
+                `;
                 calendarGrid.appendChild(cell);
 
                 const isWeekEnd = (dow === 6);
@@ -809,22 +896,17 @@
                     wk.className = 'week-summary';
                     const weekPay = (wage != null) ? Math.round((weekMinutes / 60) * wage) : null;
                     wk.innerHTML = `
-                <span class="label">주 ${++weekIndex} 합계</span>
-                <span class="value">${formatMins(weekMinutes)} · ${weekPay != null ? krw(weekPay) : '-'}</span>
-            `;
+                        <span class="label">주 ${++weekIndex} 합계</span>
+                        <span class="value">${formatMins(weekMinutes)} · ${weekPay != null ? krw(weekPay) : '-'}</span>
+                    `;
                     calendarGrid.appendChild(wk);
                     weekMinutes = 0;
                 }
             }
 
             monthActualTotalCell.textContent = formatMins(monthMinutes);
-           // const monthPay = (wage != null) ? Math.round((monthMinutes / 60) * wage) : null;
-           // monthPayCell.textContent = (monthPay != null) ? krw(monthPay) : '-';
-
             attachCalendarCellHandlers(member, startIso, endIso, dayMap);
         }
-
-// ======================== 수정된 부분 끝 =========================
 
         function attachCalendarCellHandlers(member, startIso, endIso, actualMap) {
             Array.from(calendarGrid.querySelectorAll('.cell[data-date]')).forEach(cell => {
@@ -854,8 +936,6 @@
         function clearCalendar(){
             calendarGrid.innerHTML = '';
             monthActualTotalCell.textContent = '0시간';
-           // monthPayCell.textContent = '-';
-           // hourlyWageCell.textContent = '-';
 
             calendarTitle.textContent = '월간 캘린더';
             headerStatusBadge.textContent = '-';
@@ -881,7 +961,6 @@
             const dowLabel = DOW_HEAD[d.getDay()] || '';
             dayModalDateLabel.textContent = `${iso} (${dowLabel})`;
 
-            // ✅ 왼쪽: 계획 일정 칩
             if (currentDayPlanSegments.length > 0) {
                 dayPlanBox.innerHTML = currentDayPlanSegments
                         .map(s => chipHtml('#198754', s.start, s.end))
@@ -890,18 +969,15 @@
                 dayPlanBox.innerHTML = '<span class="text-muted small">등록된 계획 일정이 없습니다.</span>';
             }
 
-            // ✅ 오른쪽: 실제 근무시간 슬롯 초기화 + 선택 반영
             buildDayGrid();
-            hydrateDayGrid({ segments: actualSegments }); // 실제 근무시간 표시
+            hydrateDayGrid({ segments: actualSegments });
 
-            // 계획 구간(녹색 tone) 표시 겹치기
             if (currentDayPlanSegments.length > 0) {
                 overlayPlanOnGrid(currentDayPlanSegments);
             }
 
             dayAdjustModal.classList.remove('d-none');
         }
-
 
         function closeDayModal() {
             dayAdjustModal.classList.add('d-none');
@@ -925,7 +1001,7 @@
                 for (let idx = Math.max(0, sIdx); idx <= Math.min(totalRows-1, eIdx); idx++) {
                     const slot = dayGridBody.querySelector(`.day-slot[data-idx="${idx}"]`);
                     if (!slot) continue;
-                    slot.classList.add('plan-slot'); // 계획시간 표시용 class
+                    slot.classList.add('plan-slot');
                 }
             });
         }
@@ -1103,10 +1179,7 @@
                 const member  = members.find(m => String(m.id) === String(currentDayGridMember.id));
 
                 if (member) {
-                    // 어떤 날짜를 선택했는지는 유지
                     selectedDateIso = currentDayGridDate;
-
-                    // ★ 여기서 다시 월 전체(계획+실제)를 불러와서 렌더링
                     await loadAndRenderMonth(member);
                 }
             } catch (e) {
@@ -1208,7 +1281,7 @@
             const k=n=>(n+h/30)%12, a=s*Math.min(l,1-l);
             const f=n=>l-a*Math.max(-1,Math.min(k(n)-3,Math.min(9-k(n),1)));
             const toHex=x=>Math.round(255*x).toString(16).padStart(2,'0');
-            return `#${toHex(f(0))}${toHex(f(8))}${toHex(f(4))}`;
+            return `#${toHex(f(0))}{${toHex(f(8))}${toHex(f(4))}`.replace('{','');
         }
         function escapeHtml(s){
             if(s==null) return '';

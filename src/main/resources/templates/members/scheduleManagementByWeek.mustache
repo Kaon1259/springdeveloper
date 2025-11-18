@@ -2,17 +2,17 @@
 
 <main class="container my-4">
     <!-- 상단: 상태 선택 + 필터된 아르바이트 리스트 -->
-    <div class="card mb-3">
+    <div class="card mb-3 status-card">
         <div class="card-header d-flex justify-content-between align-items-center">
             <div class="fw-bold">아르바이트 상태별 보기</div>
-            <div class="small text-muted">
+            <div class="small">
                 <span id="weekRangeLabel"></span>
             </div>
         </div>
         <div class="card-body">
             <div class="row g-3">
                 <div class="col-12 col-md-4">
-                    <label class="form-label small text-muted" for="statusSelect">상태</label>
+                    <label class="form-label small" for="statusSelect">상태</label>
                     <select id="statusSelect" class="form-select">
                         <option value="WORKING" selected>근무중</option>
                         <option value="WAITING">시작전</option>
@@ -24,11 +24,11 @@
                 </div>
                 <div class="col-12 col-md-8">
                     <div class="d-flex justify-content-between align-items-center mb-2">
-                        <span class="small text-muted">필터된 아르바이트생</span>
+                        <span class="small">필터된 아르바이트생</span>
                         <span id="memberCountBadge" class="badge bg-secondary">0명</span>
                     </div>
                     <div id="memberList" class="vlist"></div>
-                    <div class="small text-muted mt-2">
+                    <div class="small mt-2">
                         * 각 사람 옆의 색상은 해당 근로자의 고유 색입니다. (아래 타임테이블에도 동일 색 사용)
                     </div>
                 </div>
@@ -316,6 +316,69 @@
 </div>
 
 <style>
+    /* ===== 상단 카드(아르바이트 상태별 보기) 파란 라운드렉트 스타일 ===== */
+    .status-card {
+        border: none;
+        border-radius: 18px;
+
+        background: linear-gradient(135deg, #1d4ed8, #2563eb);
+        color: #f8fafc;
+        box-shadow: 0 10px 25px rgba(15, 23, 42, 0.18);
+    }
+    .status-card .card-header {
+        border-bottom: none;
+        background: transparent;
+        color: #e5edff;
+        padding-bottom: .5rem;
+    }
+    .status-card .card-body {
+        background: transparent;
+        color: #f9fafb;
+        padding-top: .5rem;
+    }
+    .status-card .form-text,
+    .status-card .small {
+        color: rgba(248, 250, 252, 0.75) !important;
+    }
+    .status-card label.form-label {
+        color: rgba(248, 250, 252, 0.85);
+    }
+    .status-card .form-select {
+        background: rgba(15, 23, 42, 0.18);
+        border-color: rgba(148, 163, 184, 0.6);
+        color: #e5edff;
+    }
+    .status-card .form-select:focus {
+        box-shadow: 0 0 0 .1rem rgba(191, 219, 254, .65);
+        border-color: rgba(191, 219, 254, .9);
+        background: rgba(15, 23, 42, 0.24);
+        color: #eff6ff;
+    }
+    .status-card .badge.bg-secondary {
+        background-color: rgba(15, 23, 42, 0.65) !important;
+        color: #e5edff !important;
+    }
+    .status-card #memberCountBadge {
+        background-color: #f9fafb !important;
+        color: #2563eb !important;
+    }
+    .status-card .pill {
+        background: #ffffff;
+        border-color: rgba(148, 163, 184, 0.5);
+    }
+    .status-card .pill.active {
+        background: #eff6ff;
+        border-color: rgba(59, 130, 246, 0.9);
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.35) inset;
+    }
+    .status-card .pill .meta {
+        color: #6b7280;
+    }
+    .status-card .pill .name {
+        color: #000 !important;
+        font-weight: 700 !important;
+    }
+
     /* ===== 상단 리스트 ===== */
     .vlist { display:flex; flex-wrap:wrap; gap:8px; }
     .pill {
@@ -1518,7 +1581,7 @@
             d.setDate(d.getDate() + diff);
             return d;
         }
-        function addDays(d, n){ const x = new Date(d); x.setDate(d.getDate()+n); return x; }
+        function addDays(d, n){ const x = new Date(d); x.setDate(x.getDate()+n); return x; }
         function pad2(n){ return String(n).padStart(2,'0'); }
         function toIso(d){ return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`; }
 

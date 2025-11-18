@@ -39,8 +39,19 @@ public class WorkScheduleController {
     public ResponseEntity<ScheduleDayUpdateResponse> updateDay(
             @Valid @RequestBody ScheduleDayUpdateRequest request
     ) {
+        log.info("api/schedule/work/update: " + request.toString());
         ScheduleDayUpdateResponse res = workScheduleService.upsertDay(request);
         return ResponseEntity.ok(res);
+    }
+
+    @PostMapping("/batchupdate")
+    public ResponseEntity<?> updateDay(
+            @Valid @RequestBody ScheduleBatchUpdateReqeust request
+    ) {
+        log.info("api/schedule/work/batchupdate: " + request.toString());
+
+        List<ScheduleDayUpdateResponse> response =  workScheduleService.batchUpdatePlanWeek(request).stream().toList();
+        return ResponseEntity.ok().build();
     }
 
     @GetMapping("/{memberId}/{date}")

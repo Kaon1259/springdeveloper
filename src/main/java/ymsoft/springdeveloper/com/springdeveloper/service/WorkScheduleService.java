@@ -330,6 +330,43 @@ public class WorkScheduleService {
         return resp;
     }
 
+    @Transactional
+    public List<ScheduleDayUpdateResponse> batchUpdatePlanWeek(ScheduleBatchUpdateReqeust req) {
+
+        List<ScheduleDayUpdateResponse> response = new ArrayList<>();
+
+        List<ScheduleBatchUpdateReqeust.PlanDay> days = req.getDays();
+        for (ScheduleBatchUpdateReqeust.PlanDay day : days) {
+            log.info("day=" + day.toString());
+        }
+        // 각 날짜별로 기존 upsertDay() 호출
+        req.getDays().forEach(planDay -> {
+            List<ScheduleDayUpdateRequest.Segment> segments =
+                    (planDay.getSegments() == null)
+                            ? List.of()
+                            : planDay.getSegments().stream()
+                            .map(seg -> ScheduleDayUpdateRequest.Segment.builder()
+                                    .start(LocalTime.parse(seg.getStart()))  // "HH:mm" → LocalTime
+                                    .end(LocalTime.parse(seg.getEnd()))
+                                    .note(null)                              // 메모 필요하면 프론트/DTO에 추가
+                                    .build())
+                            .collect(Collectors.toList());
+
+            ScheduleDayUpdateRequest dayReq = ScheduleDayUpdateRequest.builder()
+                    .memberId(req.getMemberId())
+                    .date(planDay.getDate())   // LocalDate (SchedulePlanWeekUpdateRequest 안의 내부 클래스)
+                    .segments(segments)
+                    .build();
+
+            // 기존 로직 재사용
+            ScheduleDayUpdateResponse res = upsertDay(dayReq);
+            response.add(res);
+        });
+
+        return response;
+    }
+
+
     /**
      * 특정 멤버의 오늘자 스케줄 조회
      */

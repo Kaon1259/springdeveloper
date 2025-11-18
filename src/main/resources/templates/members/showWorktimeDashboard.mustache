@@ -1,19 +1,21 @@
 {{>layouts/header}}
 
 <main class="container my-4">
-    <!-- 상단: 상태 선택 + 필터된 아르바이트 리스트 -->
-    <div class="card mb-3">
-        <div class="card-header d-flex justify-content-between align-items-center">
-            <div class="fw-bold">아르바이트 상태별 보기</div>
-            <div class="small text-muted">
+    <!-- ==== 상단: 아르바이트 상태별 보기 (파란 라운드 패널) ==== -->
+    <div class="status-panel-blue mb-3">
+        <div class="status-panel-header">
+            <div class="status-panel-title">아르바이트 상태별 보기</div>
+            <div class="status-panel-period">
                 <span id="weekRangeLabel"></span>
             </div>
         </div>
-        <div class="card-body">
+
+        <div class="status-panel-body">
             <div class="row g-3">
+                <!-- 상태 셀렉트 -->
                 <div class="col-12 col-md-4">
                     <label class="form-label small text-muted" for="statusSelect">상태</label>
-                    <select id="statusSelect" class="form-select">
+                    <select id="statusSelect" class="form-select status-panel-select">
                         <option value="WORKING" selected>근무중</option>
                         <option value="WAITING">시작전</option>
                         <option value="RESTING">휴식중</option>
@@ -22,10 +24,12 @@
                     </select>
                     <div class="form-text">상태를 바꾸면 아래 리스트와 타임테이블이 함께 바뀝니다.</div>
                 </div>
+
+                <!-- 필터된 아르바이트 리스트 -->
                 <div class="col-12 col-md-8">
                     <div class="d-flex justify-content-between align-items-center mb-2">
                         <span class="small text-muted">필터된 아르바이트생</span>
-                        <span id="memberCountBadge" class="badge bg-secondary">0명</span>
+                        <span id="memberCountBadge" class="badge bg-light text-dark">0명</span>
                     </div>
                     <div id="memberList" class="vlist"></div>
                     <div class="small text-muted mt-2">
@@ -129,6 +133,105 @@
 </main>
 
 <style>
+    /* ==== 아르바이트 상태별 보기: 파란 라운드 패널 ==== */
+    .status-panel-blue {
+        background: linear-gradient(135deg, #1d4ed8, #2563eb);
+        border-radius: 18px;
+        padding: 16px 18px 18px;
+        box-shadow: 0 14px 30px rgba(15, 23, 42, 0.28);
+        color: #e5eeff;
+    }
+    .status-panel-header {
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        margin-bottom: 10px;
+    }
+    .status-panel-title {
+        font-weight: 700;
+        font-size: 1rem;
+        color:#f9fbff;
+    }
+    .status-panel-period {
+        font-size:.85rem;
+        opacity:.9;
+    }
+    .status-panel-body {
+        margin-top: 4px;
+    }
+
+    /* 패널 안의 텍스트/레이블 톤 조정 */
+    .status-panel-blue .form-label,
+    .status-panel-blue .form-text,
+    .status-panel-blue .small.text-muted {
+        color: #dbeafe !important;
+    }
+
+    /* 셀렉트/인풋을 약간 투명한 네이비 톤으로 */
+    .status-panel-blue .status-panel-select {
+        background: rgba(15,23,42,0.22);
+        border-color: rgba(191,219,254,0.85);
+        color:#e5eeff;
+    }
+    .status-panel-blue .status-panel-select:focus {
+        background: rgba(15,23,42,0.30);
+        border-color:#bfdbfe;
+        box-shadow:0 0 0 0.15rem rgba(191,219,254,0.45);
+        color:#f9fbff;
+    }
+
+    .status-panel-blue .badge.bg-secondary {
+        background: rgba(15,23,42,0.35) !important;
+        color:#e5eeff;
+    }
+    .status-panel-blue .badge.bg-light {
+        background:#e5eeff !important;
+        color:#0f172a !important;
+    }
+
+    /* 패널 안 pill 스타일 튜닝 */
+    .status-panel-blue .vlist {
+        display:flex;
+        flex-wrap:wrap;
+        gap:8px;
+    }
+    .status-panel-blue .pill {
+        display:flex;
+        align-items:center;
+        gap:8px;
+        padding:8px 10px;
+        border-radius:999px;
+        border:1px solid rgba(191,219,254,0.55);
+        background: rgba(15,23,42,0.20);
+        cursor:pointer;
+        font-size:.9rem;
+        color:#e5eeff;
+        transition: background .15s, box-shadow .15s, border-color .15s, transform .08s;
+    }
+    .status-panel-blue .pill .dot {
+        width:12px;
+        height:12px;
+        border-radius:50%;
+        border:1px solid rgba(15,23,42,.5);
+        flex:0 0 12px;
+    }
+    .status-panel-blue .pill .name { font-weight:600; }
+    .status-panel-blue .pill .meta {
+        color:#cbd5f5;
+        font-size:.8rem;
+    }
+    .status-panel-blue .pill:hover {
+        background: rgba(15,23,42,0.30);
+        border-color: rgba(191,219,254,0.9);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 14px rgba(15,23,42,0.35);
+    }
+    .status-panel-blue .pill.active {
+        border-color: rgba(191,219,254,1);
+        box-shadow: 0 0 0 2px rgba(191,219,254,.95) inset;
+        background: rgba(15,23,42,0.42);
+    }
+
     /* 공통 칩 모양 */
     .chip {
         display:inline-flex; align-items:center; gap:6px;
@@ -136,7 +239,7 @@
         font-size: .8rem;
     }
 
-    /* ===== 상단 리스트 ===== */
+    /* ===== 상단 리스트 (기본, 다른 곳에서 사용할 경우) ===== */
     .vlist {
         display: flex;
         flex-wrap: wrap;
@@ -556,26 +659,29 @@
                 return;
             }
 
-            members.slice().sort((a,b)=>(a.name||'').localeCompare(b.name||'', 'ko')).forEach(m => {
-                const color = colorForMember(m);
-                const pill = document.createElement('div');
-                pill.className = 'pill';
-                pill.dataset.memberId = String(m.id);
-                pill.innerHTML = `
-                    <span class="dot" style="background:${color}"></span>
-                    <span class="name">${escapeHtml(m.name ?? '-')}</span>
-                    <span class="meta">${escapeHtml(m.phone ?? '')}</span>
-                `;
-                pill.addEventListener('click', () => {
-                    selectedMember = m;
-                    selectedDateIso = null;
-                    highlightedDayIso = null;
-                    updatePillActive();
-                    loadWeekForSelectedMember();
-                    loadSelectedMemberWeek();
-                });
-                memberList.appendChild(pill);
-            });
+            members
+                    .slice()
+                    .sort((a,b)=>(a.name||'').localeCompare(b.name||'', 'ko'))
+                    .forEach(m => {
+                        const color = colorForMember(m);
+                        const pill = document.createElement('div');
+                        pill.className = 'pill';
+                        pill.dataset.memberId = String(m.id);
+                        pill.innerHTML = `
+                        <span class="dot" style="background:${color}"></span>
+                        <span class="name">${escapeHtml(m.name ?? '-')}</span>
+                        <span class="meta">${escapeHtml(m.phone ?? '')}</span>
+                    `;
+                        pill.addEventListener('click', () => {
+                            selectedMember = m;
+                            selectedDateIso = null;
+                            highlightedDayIso = null;
+                            updatePillActive();
+                            loadWeekForSelectedMember();
+                            loadSelectedMemberWeek();
+                        });
+                        memberList.appendChild(pill);
+                    });
 
             updatePillActive();
         }
@@ -667,11 +773,17 @@
                 cell.dataset.hasWork = hasWork ? '1' : '0';
                 if (iso === todayIso) cell.classList.add('today');
 
-                const plansHtml  = planSegs.length  ? planSegs.map(s => chipHtml(colorForMember(selectedMember), s.start, s.end)).join(' ') : '<span class="text-muted small"></span>';
-                const actualHtml = actualSegs.length ? actualSegs.map(s => chipHtml(colorForMember(selectedMember), s.start, s.end)).join(' ') : '<span class="text-muted small"></span>';
+                const plansHtml  = planSegs.length
+                        ? planSegs.map(s => chipHtml(colorForMember(selectedMember), s.start, s.end)).join(' ')
+                        : '<span class="text-muted small"></span>';
+                const actualHtml = actualSegs.length
+                        ? actualSegs.map(s => chipHtml(colorForMember(selectedMember), s.start, s.end)).join(' ')
+                        : '<span class="text-muted small"></span>';
 
-                const showAdjust   = hasWork && selectedDateIso === iso;
-                const adjustBtnHtml = showAdjust ? `<button type="button" class="btn btn-xs btn-outline-secondary btn-day-adjust" data-date="${iso}">근무시간조정</button>` : '';
+                const showAdjust    = hasWork && selectedDateIso === iso;
+                const adjustBtnHtml = showAdjust
+                        ? `<button type="button" class="btn btn-xs btn-outline-secondary btn-day-adjust" data-date="${iso}">근무시간조정</button>`
+                        : '';
 
                 cell.innerHTML = `
                     <div class="date-head">
@@ -733,9 +845,12 @@
         function focusDayColumnInGrid(iso){
             if (!memberWeekGridBody) return;
 
-            document.querySelectorAll('.week-grid thead th.grid-col-selected').forEach(th => th.classList.remove('grid-col-selected'));
-            document.querySelectorAll('.week-grid tbody td.grid-col-selected').forEach(td => td.classList.remove('grid-col-selected'));
-            memberWeekGridBody.querySelectorAll('.slot-10m.slot-actual.slot-diff').forEach(el => el.classList.remove('slot-diff'));
+            document.querySelectorAll('.week-grid thead th.grid-col-selected')
+                    .forEach(th => th.classList.remove('grid-col-selected'));
+            document.querySelectorAll('.week-grid tbody td.grid-col-selected')
+                    .forEach(td => td.classList.remove('grid-col-selected'));
+            memberWeekGridBody.querySelectorAll('.slot-10m.slot-actual.slot-diff')
+                    .forEach(el => el.classList.remove('slot-diff'));
 
             const dayOffset = dayOffsetFromIso(iso);
             if (dayOffset < 0 || dayOffset > 6) return;
@@ -743,10 +858,11 @@
             const headTh = document.querySelector(`.week-grid thead th[data-day-offset="${dayOffset}"]`);
             if (headTh) headTh.classList.add('grid-col-selected');
 
-            memberWeekGridBody.querySelectorAll(`td > .slot-wrapper > .slot-actual[data-day-offset="${dayOffset}"]`).forEach(slot => {
-                const td = slot.closest('td');
-                if (td) td.classList.add('grid-col-selected');
-            });
+            memberWeekGridBody.querySelectorAll(`td > .slot-wrapper > .slot-actual[data-day-offset="${dayOffset}"]`)
+                    .forEach(slot => {
+                        const td = slot.closest('td');
+                        if (td) td.classList.add('grid-col-selected');
+                    });
 
             recomputeGridDiffForHighlightedDay();
         }
@@ -774,10 +890,13 @@
             const endMin   = HOUR_END * 60;
             const totalRows = (endMin - startMin) / gridStepMinutes;
 
-            memberWeekGridBody.querySelectorAll(`.slot-10m.slot-actual[data-day-offset="${dayOffset}"]`).forEach(el => el.classList.remove('slot-diff'));
+            memberWeekGridBody.querySelectorAll(`.slot-10m.slot-actual[data-day-offset="${dayOffset}"]`)
+                    .forEach(el => el.classList.remove('slot-diff'));
 
             for (let idx = 0; idx < totalRows; idx++){
-                const slot = memberWeekGridBody.querySelector(`.slot-10m.slot-actual[data-day-offset="${dayOffset}"][data-idx="${idx}"]`);
+                const slot = memberWeekGridBody.querySelector(
+                        `.slot-10m.slot-actual[data-day-offset="${dayOffset}"][data-idx="${idx}"]`
+                );
                 if (!slot) continue;
 
                 const slotStart = startMin + idx * gridStepMinutes;
@@ -835,7 +954,9 @@
             updateSaveButtonByStep();
         }
 
-        function hideMemberWeekCard(){ memberWeekCard.classList.add('d-none'); }
+        function hideMemberWeekCard(){
+            memberWeekCard.classList.add('d-none');
+        }
 
         /* ===== 개인 주간 그리드 생성 ===== */
         function buildMemberWeekGrid(){
@@ -923,7 +1044,8 @@
             const endMin   = HOUR_END * 60;
             const totalRows = (endMin - startMin) / gridStepMinutes;
 
-            memberWeekGridBody.querySelectorAll('.slot-plan.filled').forEach(el => el.classList.remove('filled'));
+            memberWeekGridBody.querySelectorAll('.slot-plan.filled')
+                    .forEach(el => el.classList.remove('filled'));
 
             const weekStart = currentWeekStart;
 
@@ -945,7 +1067,9 @@
                     const eIdx = Math.ceil((b - startMin)/gridStepMinutes) - 1;
 
                     for (let idx = Math.max(0,sIdx); idx <= Math.min(totalRows-1, eIdx); idx++){
-                        const slot = memberWeekGridBody.querySelector(`.slot-plan[data-day-offset="${offset}"][data-idx="${idx}"]`);
+                        const slot = memberWeekGridBody.querySelector(
+                                `.slot-plan[data-day-offset="${offset}"][data-idx="${idx}"]`
+                        );
                         if (slot) slot.classList.add('filled');
                     }
                 });
@@ -960,8 +1084,10 @@
             const endMin   = HOUR_END * 60;
             const totalRows = (endMin - startMin) / gridStepMinutes;
 
-            memberWeekGridBody.querySelectorAll('.slot-10m.slot-actual.selected').forEach(el => el.classList.remove('selected'));
-            memberWeekGridBody.querySelectorAll('.slot-10m.slot-actual.slot-diff').forEach(el => el.classList.remove('slot-diff'));
+            memberWeekGridBody.querySelectorAll('.slot-10m.slot-actual.selected')
+                    .forEach(el => el.classList.remove('selected'));
+            memberWeekGridBody.querySelectorAll('.slot-10m.slot-actual.slot-diff')
+                    .forEach(el => el.classList.remove('slot-diff'));
 
             const weekStart = currentWeekStart;
 
@@ -983,7 +1109,9 @@
                     const eIdx = Math.ceil((b - startMin)/gridStepMinutes) - 1;
 
                     for (let idx = Math.max(0,sIdx); idx <= Math.min(totalRows-1, eIdx); idx++){
-                        const slot = memberWeekGridBody.querySelector(`.slot-10m.slot-actual[data-day-offset="${offset}"][data-idx="${idx}"]`);
+                        const slot = memberWeekGridBody.querySelector(
+                                `.slot-10m.slot-actual[data-day-offset="${offset}"][data-idx="${idx}"]`
+                        );
                         if (slot) slot.classList.add('selected');
                     }
                 });
@@ -1015,7 +1143,9 @@
                 const iso = toIso(addDays(weekStart, dayOffset));
                 const indexes = [];
                 for (let idx=0; idx<totalRows; idx++){
-                    const slot = memberWeekGridBody.querySelector(`.slot-10m.slot-actual[data-day-offset="${dayOffset}"][data-idx="${idx}"]`);
+                    const slot = memberWeekGridBody.querySelector(
+                            `.slot-10m.slot-actual[data-day-offset="${dayOffset}"][data-idx="${idx}"]`
+                    );
                     if (slot && slot.classList.contains('selected')) indexes.push(idx);
                 }
                 const merged = mergeConsecutive(indexes);
@@ -1058,7 +1188,11 @@
                 else summaryLines.push(`${label}: ${segs.map(s => `${s.start}~${s.end}`).join(', ')}`);
             }
 
-            const ok = confirm(`다음과 같이 주간 실제 근무시간을 저장합니다:\n\n${summaryLines.join('\n')}\n\n이대로 저장하시겠습니까?`);
+            const ok = confirm(
+                    `다음과 같이 주간 실제 근무시간을 저장합니다:\n\n` +
+                    `${summaryLines.join('\n')}\n\n` +
+                    `이대로 저장하시겠습니까?`
+            );
             if (!ok) return;
 
             const dates = [];
@@ -1118,9 +1252,20 @@
             return map;
         }
 
-        function hmToMin(hm){ if(!hm) return 0; const [h,m]=String(hm).split(':').map(n=>parseInt(n,10)); return (h||0)*60+(m||0); }
-        function minToHm(min){ const h=Math.floor(min/60), m=min%60; return `${pad2(h)}:${pad2(m)}`; }
-        function formatMins(mins){ const v=Math.max(0, mins|0); const h=Math.floor(v/60), m=v%60; return m===0?`${h}시간`:`${h}시간 ${m}분`; }
+        function hmToMin(hm){
+            if(!hm) return 0;
+            const [h,m]=String(hm).split(':').map(n=>parseInt(n,10));
+            return (h||0)*60+(m||0);
+        }
+        function minToHm(min){
+            const h=Math.floor(min/60), m=min%60;
+            return `${pad2(h)}:${pad2(m)}`;
+        }
+        function formatMins(mins){
+            const v=Math.max(0, mins|0);
+            const h=Math.floor(v/60), m=v%60;
+            return m===0?`${h}시간`:`${h}시간 ${m}분`;
+        }
 
         function chipHtml(color, start, end){
             return `<span class="chip">
@@ -1134,7 +1279,14 @@
             const h = seededHash(key)%360, s=65, l=55;
             return hslToHex(h,s,l);
         }
-        function seededHash(str){ let h=2166136261>>>0; for(let i=0;i<str.length;i++){ h^=str.charCodeAt(i); h=(h*16777619)>>>0; } return h>>>0; }
+        function seededHash(str){
+            let h=2166136261>>>0;
+            for(let i=0;i<str.length;i++){
+                h^=str.charCodeAt(i);
+                h=(h*16777619)>>>0;
+            }
+            return h>>>0;
+        }
         function hslToHex(h,s,l){
             s/=100; l/=100;
             const c=(1-Math.abs(2*l-1))*s;

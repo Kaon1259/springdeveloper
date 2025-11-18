@@ -2,47 +2,65 @@
 
 <main class="container my-4">
 
-    <!-- ============ 상단: 아르바이트 상태별 보기 (칩 리스트) ============ -->
+    <!-- ============ 상단: 아르바이트 상태별 보기 (헤더 포함 전체 파란 패널) ============ -->
     <div class="card mb-3">
-        <div class="card-header fw-bold d-flex align-items-center justify-content-between">
-            <span>아르바이트 상태별 보기</span>
-            <!-- ▷ 인원수 배지 대신 기간 표시 -->
-            <span id="statusPeriodLabel" class="small text-muted">0000.00.01 ~ 00.00</span>
-        </div>
-        <div class="card-body">
-            <div class="row g-3">
-                <div class="col-12 col-md-4">
-                    <label class="form-label small text-muted" for="statusSelect">상태</label>
-                    <select id="statusSelect" class="form-select">
-                        <option value="WORKING" selected>근무중</option>
-                        <option value="WAITING">시작전</option>
-                        <option value="RESTING">휴식중</option>
-                        <option value="PAUSED">일시중지</option>
-                        <option value="RESIGNED">퇴사</option>
-                    </select>
-                    <div class="form-text">상태를 바꾸면 아래 리스트와 월간 일정이 함께 바뀝니다.</div>
+        <div class="card-body p-0">
+            <!-- 🔵 헤더까지 모두 포함하는 파란 라운드 패널 -->
+            <div class="status-panel-blue">
+                <!-- 타이틀 + 기간 -->
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div>
+                        <div class="status-title">아르바이트 상태별 보기</div>
+                        <div class="status-subtitle-small">
+                            상태별로 아르바이트생을 필터링하고, 선택한 상태의 월간 일정을 함께 확인할 수 있습니다.
+                        </div>
+                    </div>
+                    <div class="d-flex flex-column align-items-end">
+                        <span class="status-period-label-caption">조회 기간</span>
+                        <span id="statusPeriodLabel" class="status-period-label-value">0000.00.01 ~ 00.00</span>
+                    </div>
                 </div>
 
-                <div class="col-12 col-md-8">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <span class="small text-muted">필터된 아르바이트생</span>
-                        <!-- ▷ 오른쪽 끝 인원 배지 유지 -->
-                        <span id="statusCountBadgeTop" class="badge bg-secondary">0명</span>
+                <!-- 본문: 상태 선택 + 칩 리스트 -->
+                <div class="row g-3 align-items-start">
+                    <!-- 왼쪽: 상태 선택 -->
+                    <div class="col-12 col-md-4">
+                        <label class="form-label small status-label" for="statusSelect">상태</label>
+                        <select id="statusSelect" class="form-select status-select">
+                            <option value="WORKING" selected>근무중</option>
+                            <option value="WAITING">시작전</option>
+                            <option value="RESTING">휴식중</option>
+                            <option value="PAUSED">일시중지</option>
+                            <option value="RESIGNED">퇴사</option>
+                        </select>
+                        <div class="form-text status-help-text">
+                            상태를 바꾸면 오른쪽 리스트와 아래 월간 일정이 함께 바뀝니다.
+                        </div>
                     </div>
 
-                    <!-- 칩( pill ) 리스트 -->
-                    <div id="memberPills" class="vlist"></div>
+                    <!-- 오른쪽: 필터된 아르바이트 생 칩 리스트 -->
+                    <div class="col-12 col-md-8">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="small status-subtitle">필터된 아르바이트생</span>
+                            <!-- ▷ 오른쪽 끝 인원 배지 -->
+                            <span id="statusCountBadgeTop" class="badge bg-light text-dark status-count-badge">0명</span>
+                        </div>
 
-                    <div class="small text-muted mt-2">
-                        * 각 사람 옆의 색상은 근로자의 고유 색입니다. (달력 일정에도 동일 색상 사용)
-                    </div>
+                        <!-- 칩( pill ) 리스트 -->
+                        <div id="memberPills" class="vlist status-pill-list"></div>
 
-                    <div class="mt-2 d-flex align-items-center gap-3">
-                        <span class="legend legend-plan"></span><span class="small">계획(주간 템플릿)</span>
-                        <span class="legend legend-actual"></span><span class="small">저장된 일정</span>
+                        <div class="small status-caption mt-2">
+                            * 각 사람 옆의 색상은 근로자의 고유 색입니다. (달력 일정에도 동일 색상 사용)
+                        </div>
+
+                        <div class="mt-2 d-flex align-items-center gap-3">
+                            <span class="legend legend-plan"></span><span class="small status-legend-text">계획(주간 템플릿)</span>
+                            <span class="legend legend-actual"></span><span class="small status-legend-text">저장된 일정</span>
+                        </div>
                     </div>
                 </div>
             </div>
+            <!-- // status-panel-blue -->
         </div>
     </div>
 
@@ -89,8 +107,8 @@
             </div>
             <div class="small text-muted mt-2">
                 * 날짜 셀의 <b>사람별 배지</b>를 클릭하면 해당 근로자를 선택(배지 테두리 표시)합니다.
-                * **상단 칩으로 근로자를 하이라이트한 경우에만** 선택된 배지 위에 <b>‘근무일정 수정’</b> 버튼이 나타납니다.
-                * **하이라이트한 근로자의 일정이 없는 날짜 셀을 클릭**하면 우상단에 <b>‘일정 생성하기’</b> 버튼이 나타납니다.
+                * <b>상단 칩으로 근로자를 하이라이트한 경우에만</b> 선택된 배지 위에 <b>‘근무일정 수정’</b> 버튼이 나타납니다.
+                * <b>하이라이트한 근로자의 일정이 없는 날짜 셀을 클릭</b>하면 우상단에 <b>‘일정 생성하기’</b> 버튼이 나타납니다.
             </div>
             <span id="monthLabel" class="d-none">0000-00-01</span>
         </div>
@@ -205,21 +223,107 @@
     .legend-plan { background: rgba(13,110,253,.25); border-color: rgba(13,110,253,.45); }
     .legend-actual { background: rgba(25,135,84,.25); border-color: rgba(25,135,84,.40); }
 
-    /* ===== 아르바이트 리스트: 칩 스타일 ===== */
+    /* ===== 🔵 상단 아르바이트 상태 패널 (헤더 포함 전체 파란 배경 + 라운드 직사각형) ===== */
+    .status-panel-blue {
+        background: linear-gradient(135deg, #1d4ed8, #2563eb);
+        border-radius: 18px;
+        padding: 16px 20px 18px;
+        box-shadow: 0 14px 30px rgba(15, 23, 42, 0.28);
+        color: #e5eeff;
+    }
+    .status-title {
+        font-size: 1.1rem;
+        font-weight: 700;
+        letter-spacing: .02em;
+    }
+    .status-subtitle-small {
+        font-size: .8rem;
+        margin-top: 2px;
+        color: rgba(226, 232, 255, 0.78);
+    }
+    .status-period-label-caption {
+        font-size: .75rem;
+        color: rgba(226, 232, 255, 0.7);
+    }
+    .status-period-label-value {
+        font-size: .85rem;
+        font-weight: 600;
+        margin-top: 1px;
+        padding: 2px 8px;
+        border-radius: 999px;
+        background: rgba(15, 23, 42, 0.32);
+        border: 1px solid rgba(191, 219, 254, 0.6);
+    }
+    .status-label {
+        color: rgba(226, 232, 255, 0.9) !important;
+    }
+    .status-help-text {
+        color: rgba(226, 232, 255, 0.85) !important;
+    }
+    .status-subtitle {
+        color: rgba(226, 232, 255, 0.9);
+    }
+    .status-caption {
+        color: rgba(226, 232, 255, 0.8);
+    }
+    .status-legend-text {
+        color: rgba(226, 232, 255, 0.85);
+    }
+    .status-count-badge {
+        border-radius: 999px;
+        padding: 3px 10px;
+        font-weight: 600;
+    }
+    .status-select {
+        background: rgba(15, 23, 42, 0.25);
+        border-color: rgba(191, 219, 254, 0.6);
+        color: #e5eeff;
+    }
+    .status-select:focus {
+        background: rgba(15, 23, 42, 0.35);
+        border-color: #bfdbfe;
+        box-shadow: 0 0 0 0.2rem rgba(191, 219, 254, 0.45);
+        color: #f9fbff;
+    }
+    .status-select option {
+        color: #111827;
+    }
+    .status-pill-list {
+        margin-top: 2px;
+    }
+
+    /* ===== 아르바이트 리스트: 칩 스타일 (파란 배경에 어울리게 조정) ===== */
     .vlist { display:flex; flex-wrap:wrap; gap:8px; }
     .pill {
         display:flex; align-items:center; gap:8px; padding:8px 10px;
-        border-radius:999px; border:1px solid #e9ecef; background:#fff; cursor:pointer;
-        font-size:.9rem; transition: background .15s, box-shadow .15s, border-color .15s;
+        border-radius:999px;
+        border:1px solid rgba(191, 219, 254, 0.7);
+        background: rgba(15, 23, 42, 0.18);
+        cursor:pointer;
+        font-size:.9rem;
+        transition: background .15s, box-shadow .15s, border-color .15s, transform .08s;
+        color:#e5eeff;
     }
-    .pill:hover { background:#fafafa; border-color:#dee2e6; }
+    .pill:hover {
+        background: rgba(15, 23, 42, 0.28);
+        border-color: rgba(248, 250, 252, 0.95);
+        transform: translateY(-1px);
+        box-shadow: 0 6px 16px rgba(15, 23, 42, 0.45);
+    }
     .pill.active {
-        border-color: rgba(13,110,253,.45);
-        box-shadow:0 0 0 3px rgba(13,110,253,.15) inset; background:#f0f6ff;
+        border-color: rgba(191, 219, 254, 0.95);
+        box-shadow: 0 0 0 2px rgba(191, 219, 254, 0.7), 0 10px 25px rgba(15, 23, 42, 0.55);
+        background: rgba(15, 23, 42, 0.4);
+        transform: translateY(-1px);
     }
-    .pill .dot { width:12px; height:12px; border-radius:50%; border:1px solid rgba(0,0,0,.08); flex:0 0 12px; }
+    .pill .dot {
+        width:12px; height:12px; border-radius:50%;
+        border:1px solid rgba(15, 23, 42,.15);
+        flex:0 0 12px;
+        box-shadow: 0 0 0 2px rgba(15, 23, 42, 0.2);
+    }
     .pill .name { font-weight:600; }
-    .pill .meta { color:#6c757d; font-size:.8rem; }
+    .pill .meta { color:rgba(226, 232, 255, 0.8); font-size:.8rem; }
 
     /* ✅ 카드 헤더 sticky (네비 높이 반영) */
     #monthCardHeader { position: sticky; top: 0; z-index: 30; background: #fff; }
@@ -514,7 +618,7 @@
             memberPills.innerHTML = '';
 
             if(!filtered.length){
-                memberPills.innerHTML = `<span class="text-muted small">해당 상태의 아르바이트생이 없습니다.</span>`;
+                memberPills.innerHTML = `<span class="text-light small">해당 상태의 아르바이트생이 없습니다.</span>`;
                 setHighlight(null);
                 clearCalendarOnly();
                 // 기간 라벨은 유지
