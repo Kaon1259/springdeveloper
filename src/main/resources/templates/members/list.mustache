@@ -6,7 +6,8 @@
 
         <!-- ============ 패널 1: 상태 + 아르바이트 카드 리스트 (3열 카드) ============ -->
         <section class="panel panel-filter">
-            <header class="panel-header d-flex justify-content-between align-items-center">
+            <!-- ✅ 파란색 헤더 + 상단 라운드 -->
+            <header class="panel-header panel-header-blue d-flex justify-content-between align-items-center">
                 <div>
                     <div class="title-sm">STAFF FILTER</div>
                     <h2 class="title-lg">아르바이트 현황</h2>
@@ -53,7 +54,8 @@
 
         <!-- ============ 패널: 스케줄(주간템플릿만 표시) ============ -->
         <section class="panel panel-schedule" id="schedulePanel">
-            <header class="panel-header d-flex justify-content-between align-items-center">
+            <!-- ✅ 이미 파란색 헤더 + 상단 라운드 처리 -->
+            <header class="panel-header panel-header-blue d-flex justify-content-between align-items-center">
                 <div>
                     <div class="title-sm">SCHEDULE</div>
                     <h3 class="title-md mb-1" id="selectedMemberTitle">주간 템플릿 (월~일)</h3>
@@ -182,12 +184,60 @@
         border: 1px solid rgba(148,163,184,0.18);
         backdrop-filter: blur(14px);
         -webkit-backdrop-filter: blur(14px);
+        overflow: hidden; /* ✅ 헤더 라운드 모서리 자연스럽게 */
     }
 
     .panel-header {
         padding: 1.1rem 1.3rem 0.7rem 1.3rem;
         border-bottom: 1px solid rgba(226,232,240,0.9);
+        background: rgba(255,255,255,0.95);
     }
+
+    /* ✅ 상단/하단 헤더 공통 파란 스타일 + 위쪽 라운드 */
+    .panel-header-blue {
+        background: linear-gradient(135deg, #1d4ed8, #2563eb);
+        color: #e5eeff;
+        border-bottom-color: rgba(191, 219, 254, 0.7);
+        box-shadow: 0 14px 30px rgba(15, 23, 42, 0.25);
+        border-radius: 18px 18px 0 0; /* 상단 양쪽 라운드 */
+    }
+    .panel-header-blue .title-sm {
+        color: rgba(226,232,255,0.85);
+    }
+    .panel-header-blue .title-md,
+    .panel-header-blue .title-lg {
+        color: #f9fafb;
+    }
+    .panel-header-blue .text-muted {
+        color: rgba(226,232,255,0.85) !important;
+    }
+    .panel-header-blue .chip-ghost {
+        background: rgba(15,23,42,0.22);
+        color: #e5eeff;
+    }
+    .panel-header-blue .chip-outline {
+        border-color: rgba(191,219,254,0.9);
+        background: transparent;
+        color: #e5eeff;
+    }
+    .panel-header-blue .chip-outline:hover {
+        background: rgba(15,23,42,0.25);
+        color: #ffffff;
+        box-shadow: 0 8px 18px rgba(15,23,42,0.5);
+    }
+    .panel-header-blue .status-chip {
+        background: rgba(15,23,42,0.25);
+        color: #e5eeff;
+    }
+    .panel-header-blue .btn-save-template.btn-primary {
+        background-color: #0f172a;
+        border-color: #0f172a;
+    }
+    .panel-header-blue .btn-save-template.btn-primary:disabled {
+        background-color: rgba(15,23,42,0.5);
+        border-color: rgba(15,23,42,0.5);
+    }
+
     .panel-body {
         padding: 0.9rem 1.3rem 1.2rem 1.3rem;
     }

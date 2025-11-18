@@ -4,66 +4,77 @@
 <main class="schedule-shell py-4">
     <div class="schedule-layout container">
 
-        <!-- ============ 상단: 제목 + 상태 선택 + 상단 저장 버튼 ============ -->
-        <section class="panel card-info mb-3">
-            <header class="panel-header panel-header-compact d-flex justify-content-between align-items-center">
-                <div>
-                    <div class="title-sm">STAFF CREATE</div>
+        <!-- ============ 상단 파란 패널 + 아래 전체 폼/테이블을 하나의 패널로 합침 ============ -->
+        <section class="panel panel-merged mb-3">
 
-                    <div class="d-flex align-items-center flex-wrap gap-2">
-                        <h2 class="title-lg mb-0">아르바이트 정보 입력</h2>
+            <!-- 🔵 상단: 아르바이트 정보 입력 헤더 (status-panel-blue 스타일 적용) -->
+            <div class="member-header-blue status-panel-blue">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="title-sm text-light-emphasis">STAFF CREATE</span>
+                        </div>
 
-                        <!-- 상태 선택 드롭다운 -->
-                        <div class="status-inline ms-2">
-                            <span class="text-xs text-muted mb-0">상태</span>
-                            <select id="statusSelectTop"
-                                    class="form-select form-select-sm"
-                                    name="status"
-                                    form="memberEditForm"
-                                    required>
-                                <option value="WAITING">시작전</option>
-                                <option value="WORKING">근무중</option>
-                                <option value="RESTING">휴식중</option>
-                                <option value="PAUSED">일시중지</option>
-                                <option value="RESIGNED">퇴사</option>
-                            </select>
+                        <div class="status-title mt-1">
+                            아르바이트 정보 입력
+                        </div>
+
+                        <div class="status-subtitle-small">
+                            기본 인적사항과 급여 정보, 주간 템플릿까지 한 번에 등록할 수 있습니다.
+                        </div>
+
+                        <div class="text-xs mt-2 status-subtitle-small">
+                            (신규 등록)
+                        </div>
+
+                        <!-- ✅ 신규등록 텍스트 바로 아래: 상태 + 이름 (파란 배경 영역 안) -->
+                        <div class="mt-3 d-flex flex-wrap align-items-end gap-2 status-inline-row">
+                            <div class="d-flex flex-column">
+                                <span class="status-period-label-caption mb-1">상태</span>
+                                <select id="statusSelectTop"
+                                        class="form-select form-select-sm status-select-top"
+                                        name="status"
+                                        form="memberEditForm"
+                                        required>
+                                    <option value="WAITING">시작전</option>
+                                    <option value="WORKING">근무중</option>
+                                    <option value="RESTING">휴식중</option>
+                                    <option value="PAUSED">일시중지</option>
+                                    <option value="RESIGNED">퇴사</option>
+                                </select>
+                            </div>
+
+                            <div class="d-flex flex-column">
+                                <span class="status-period-label-caption mb-1">이름</span>
+                                <input type="text"
+                                       class="form-control form-control-sm status-name-input"
+                                       name="name"
+                                       form="memberEditForm"
+                                       placeholder="이름 입력"
+                                       required>
+                            </div>
                         </div>
                     </div>
 
-                    <div class="text-xs text-muted mt-1">
-                        <span>(신규 등록)</span>
+                    <!-- 오른쪽: 저장하기 버튼만 -->
+                    <div class="d-flex flex-column align-items-end gap-2">
+                        <button type="submit"
+                                form="memberEditForm"
+                                class="btn btn-sm btn-light fw-semibold shadow-sm member-save-btn">
+                            저장하기
+                        </button>
                     </div>
                 </div>
+            </div>
 
-                <!-- 오른쪽 끝: 상단 저장 버튼 -->
-                <div class="d-flex flex-column align-items-end gap-2">
-                    <button type="submit"
-                            form="memberEditForm"
-                            class="btn btn-sm btn-primary">
-                        저장하기
-                    </button>
-                </div>
-            </header>
-        </section>
-
-        <!-- ============ 패널: 기본 정보 입력 폼 ============ -->
-        <section class="panel mb-3">
-            <div class="panel-body">
+            <!-- ============ 아래: 아르바이트 입력정보 + 주간 템플릿 (하나의 패널-바디 안에 배치) ============ -->
+            <div class="panel-body panel-body-merged">
 
                 <!-- 🔹 action 은 프로젝트에 맞게 변경 -->
                 <form id="memberEditForm" method="post" action="/members/create" autocomplete="off">
 
-                    <!-- 1줄: 기본 정보 -->
+                    <!-- ✅ 1줄: 성별 / 이메일 / 전화번호 / (비움) -->
                     <div class="info-grid mb-3">
-                        <div class="info-item">
-                            <div class="label">이름</div>
-                            <input type="text"
-                                   class="form-control form-control-sm"
-                                   name="name"
-                                   value=""
-                                   required>
-                        </div>
-
                         <div class="info-item">
                             <div class="label">성별</div>
                             <select class="form-select form-select-sm"
@@ -73,6 +84,14 @@
                                 <option value="M">남</option>
                                 <option value="F">여</option>
                             </select>
+                        </div>
+
+                        <div class="info-item">
+                            <div class="label">이메일</div>
+                            <input type="email"
+                                   class="form-control form-control-sm"
+                                   name="email"
+                                   value="">
                         </div>
 
                         <div class="info-item">
@@ -86,11 +105,7 @@
                         </div>
 
                         <div class="info-item">
-                            <div class="label">이메일</div>
-                            <input type="email"
-                                   class="form-control form-control-sm"
-                                   name="email"
-                                   value="">
+                            <div class="label">&nbsp;</div>
                         </div>
                     </div>
 
@@ -264,6 +279,7 @@
                         </div>
                     </div>
 
+                    <!-- 메모 -->
                     <div class="info-grid mb-4">
                         <div class="info-item">
                             <div class="label">메모</div>
@@ -274,53 +290,56 @@
                         </div>
                     </div>
 
-                    <!-- ============ 주간 템플릿 편집 ============ -->
-                    <section class="panel panel-schedule mb-3 mt-4">
-                        <header class="panel-header d-flex justify-content-between align-items-center">
-                            <div>
-                                <div class="title-sm">SCHEDULE TEMPLATE</div>
-                                <h3 class="title-md mb-0">
-                                    아르바이트 — 주간 템플릿 (월~일)
-                                </h3>
-                            </div>
-                            <div class="text-end">
-                                <div class="text-xs text-muted">
-                                    10/30/60분 단위 · 드래그로 선택/해제<br>
-                                    <span class="text-primary">폼 저장 시 현재 템플릿이 함께 저장됩니다.</span>
+                    <!-- ============ 주간 템플릿 편집 (같은 패널 안의 섹션) ============ -->
+                    <section class="panel-schedule mb-3 mt-4">
+
+                        <!-- 🔵 주간 템플릿 헤더 전체 파란 영역 (제목 + 슬롯 버튼 + 설명) -->
+                        <header class="panel-schedule-header-blue">
+                            <div class="d-flex flex-wrap justify-content-between align-items-start gap-2">
+                                <div>
+                                    <div class="title-sm schedule-header-kicker">SCHEDULE TEMPLATE</div>
+                                    <h3 class="title-md mb-1 text-white">
+                                        아르바이트 — 주간 템플릿 (월~일)
+                                    </h3>
+                                    <div class="text-xs schedule-header-text">
+                                        10/30/60분 단위 · 드래그로 선택/해제<br>
+                                        <span class="schedule-header-strong">폼 저장 시 현재 템플릿이 함께 저장됩니다.</span>
+                                    </div>
                                 </div>
-                            </div>
-                        </header>
 
-                        <div class="panel-body">
+                                <!-- 🔵 슬롯 단위 & 버튼 툴바 (파란 헤더 안) -->
+                                <div class="panel-schedule-toolbar d-flex flex-column align-items-end gap-2">
+                                    <div class="d-flex flex-wrap align-items-center justify-content-end gap-2">
+                                        <span class="text-xs schedule-header-text">슬롯 단위</span>
 
-                            <div class="d-flex flex-wrap justify-content-between align-items-center mb-2 gap-2">
-                                <div class="d-flex align-items-center gap-2">
-                                    <span class="text-xs text-muted">슬롯 단위</span>
-                                    <div class="d-flex align-items-center gap-2">
-                                        <div class="btn-group btn-group-sm slot-btn-group" id="gridSlotButtons" role="group" aria-label="슬롯 단위 선택">
-                                            <button type="button" class="btn btn-outline-secondary active" data-grid-slot="10">10분</button>
-                                            <button type="button" class="btn btn-outline-secondary" data-grid-slot="30">30분</button>
-                                            <button type="button" class="btn btn-outline-secondary" data-grid-slot="60">1시간</button>
+                                        <!-- ✅ 라운드 직사각형 세그먼트 버튼 -->
+                                        <div class="slot-toggle-group" id="gridSlotButtons">
+                                            <button type="button" class="slot-toggle-btn active" data-grid-slot="10">10분</button>
+                                            <button type="button" class="slot-toggle-btn" data-grid-slot="30">30분</button>
+                                            <button type="button" class="slot-toggle-btn" data-grid-slot="60">1시간</button>
                                         </div>
 
                                         <button type="button"
-                                                class="btn btn-sm btn-outline-secondary"
+                                                class="btn btn-sm btn-outline-light subtle-outline-btn"
                                                 id="btnGridClear">
                                             초기화
                                         </button>
                                         <button type="button"
-                                                class="btn btn-sm btn-outline-secondary"
+                                                class="btn btn-sm btn-outline-light subtle-outline-btn"
                                                 id="btnGridRestore">
                                             원래대로
                                         </button>
                                     </div>
-                                </div>
-                                <div class="text-xs text-muted text-end">
-                                    마우스를 드래그하거나 클릭하여 <strong>주간 템플릿(계획)</strong>을 설정하세요.<br>
-                                    다시 선택하면 <span class="text-primary">해제</span>됩니다.
+
+                                    <div class="text-xs text-end schedule-header-text">
+                                        마우스를 드래그하거나 클릭하여 <strong>주간 템플릿(계획)</strong>을 설정하세요.<br>
+                                        다시 선택하면 <span class="schedule-header-strong">해제</span>됩니다.
+                                    </div>
                                 </div>
                             </div>
+                        </header>
 
+                        <div class="panel-schedule-body">
                             <div class="schedule-board">
                                 <div class="table-responsive schedule-table-wrap">
                                     <table class="table schedule-table text-center" id="tableWeek10m">
@@ -343,7 +362,6 @@
                                     <span class="legend-box legend-plan"></span> 선택된 템플릿 셀
                                 </div>
                             </div>
-
                         </div>
                     </section>
 
@@ -388,32 +406,84 @@
         -webkit-backdrop-filter: blur(14px);
     }
 
-    .panel-header {
-        padding: 1.1rem 1.3rem 0.7rem 1.3rem;
-        border-bottom: 1px solid rgba(226,232,240,0.9);
-    }
-    .panel-header-compact {
-        padding-bottom: 0.4rem;
-    }
     .panel-body {
         padding: 0.9rem 1.3rem 1.2rem 1.3rem;
     }
 
-    .card-info {
-        border-radius: 18px;
+    .panel-merged .panel-body-merged {
+        padding-top: 1.2rem;
+    }
+
+    /* ===== 🔵 상단 아르바이트 정보 입력 파란 헤더 ===== */
+    .status-panel-blue {
+        background: linear-gradient(135deg, #1d4ed8, #2563eb);
+        border-radius: 18px 18px 0 0;
+        padding: 16px 20px 18px;
+        box-shadow: 0 14px 30px rgba(15, 23, 42, 0.28);
+        color: #e5eeff;
+    }
+    .member-header-blue {
+        margin: -1px -1px 0 -1px; /* 패널 테두리와 자연스럽게 붙도록 */
+    }
+
+    .status-title {
+        font-size: 1.1rem;
+        font-weight: 700;
+        letter-spacing: .02em;
+    }
+    .status-subtitle-small {
+        font-size: .8rem;
+        margin-top: 2px;
+        color: rgba(226, 232, 255, 0.78);
+    }
+    .status-period-label-caption {
+        font-size: .75rem;
+        color: rgba(226, 232, 255, 0.9);
+    }
+
+    .status-select-top {
+        background: rgba(15, 23, 42, 0.2);
+        border-color: rgba(191, 219, 254, 0.9);
+        color: #e5eeff;
+        min-width: 120px;
+    }
+    .status-select-top:focus {
+        background: rgba(15, 23, 42, 0.35);
+        border-color: #bfdbfe;
+        box-shadow: 0 0 0 0.18rem rgba(191, 219, 254, 0.45);
+        color: #f9fbff;
+    }
+    .status-select-top option {
+        color: #111827;
+    }
+
+    .status-name-input {
+        min-width: 160px;
+        background: rgba(15, 23, 42, 0.15);
+        border-color: rgba(191,219,254,0.9);
+        color: #e5eeff;
+    }
+    .status-name-input::placeholder {
+        color: rgba(226,232,255,0.8);
+    }
+    .status-name-input:focus {
+        background: rgba(15,23,42,0.25);
+        border-color: #bfdbfe;
+        box-shadow: 0 0 0 0.18rem rgba(191,219,254,0.45);
+        color: #f9fbff;
+    }
+
+    .member-save-btn {
+        border-radius: 999px;
+        padding-inline: 14px;
     }
 
     .title-sm {
         font-size: 0.7rem;
         letter-spacing: .16em;
         text-transform: uppercase;
-        color: #9ca3af;
+        color: #cbd5f5;
         font-weight: 600;
-    }
-    .title-lg {
-        font-size: 1.1rem;
-        font-weight: 700;
-        color: #111827;
     }
     .title-md {
         font-size: 0.98rem;
@@ -450,19 +520,93 @@
         border-color:#2563eb;
     }
 
+    /* ===== 주간 템플릿 섹션 (카드 느낌, 같은 패널 내부) ===== */
     .panel-schedule {
-        border-radius: 18px;
+        border-radius: 14px;
+        border: 1px solid rgba(226,232,240,0.9);
+        background: rgba(248,250,252,0.8);
+        padding: 0;
+        overflow: hidden;
     }
 
-    .slot-btn-group .btn {
-        border-radius:999px;
-        font-size:0.76rem;
-        padding-inline:0.6rem;
+    /* 🔵 주간템플릿 파란 헤더 */
+    .panel-schedule-header-blue {
+        background: linear-gradient(135deg, #1d4ed8, #2563eb);
+        padding: 0.9rem 1rem 0.9rem 1rem;
+        border-bottom: 1px solid rgba(191, 219, 254, 0.7);
+        color: #e5eeff;
     }
-    .slot-btn-group .btn.active {
-        background:#0f172a;
-        color:#f9fafb;
-        border-color:#0f172a;
+    .schedule-header-kicker {
+        color: rgba(226,232,255,0.85);
+    }
+    .schedule-header-text {
+        color: rgba(226,232,255,0.85);
+    }
+    .schedule-header-strong {
+        color: #facc15;
+    }
+    .panel-schedule-toolbar {
+        min-width: 260px;
+    }
+
+    .panel-schedule-body {
+        padding: 0.8rem 0.9rem 0.9rem;
+    }
+
+    /* 🔵 슬롯 토글 세그먼트 버튼 */
+    .slot-toggle-group {
+        display: inline-flex;
+        align-items: center;
+        border-radius: 999px;
+        padding: 2px;
+        background: rgba(15, 23, 42, 0.18);
+        box-shadow: 0 0 0 1px rgba(191, 219, 254, 0.5);
+        gap: 2px;
+    }
+
+    .slot-toggle-btn {
+        border: none;
+        outline: none;
+        background: transparent;
+        color: rgba(226, 232, 255, 0.85);
+        font-size: 0.78rem;
+        font-weight: 500;
+        padding: 0.25rem 0.8rem;
+        border-radius: 999px;
+        min-width: 56px;
+        cursor: pointer;
+        transition:
+                background 0.15s ease,
+                color 0.15s ease,
+                box-shadow 0.15s ease,
+                transform 0.06s ease;
+        white-space: nowrap;
+    }
+
+    .slot-toggle-btn:hover {
+        background: rgba(15, 23, 42, 0.28);
+        color: #ffffff;
+        transform: translateY(-0.3px);
+    }
+
+    .slot-toggle-btn.active {
+        background: #0f172a;
+        color: #f9fafb;
+        box-shadow: 0 6px 14px rgba(15, 23, 42, 0.45);
+    }
+
+    /* 🔹 파란헤더 안의 보조 버튼(초기화/원래대로)을 조금 더 잔잔하게 */
+    .subtle-outline-btn {
+        border-radius: 999px;
+        border-color: rgba(191, 219, 254, 0.85);
+        color: rgba(226, 232, 255, 0.9);
+        background: transparent;
+        font-size: 0.76rem;
+        padding-inline: 0.7rem;
+    }
+    .subtle-outline-btn:hover {
+        background: rgba(15, 23, 42, 0.25);
+        color: #ffffff;
     }
 
     .schedule-board {
@@ -521,10 +665,11 @@
         transform: translateY(-0.5px);
     }
 
+    /* ✅ 선택 셀 초록색 */
     .cell-10m.schedule-on {
-        background: rgba(248, 164, 76, 0.6);
-        border-color: rgba(248, 164, 76, 0.9);
-        box-shadow: 0 0 0 1px rgba(248,164,76,0.8);
+        background: rgba(25,135,84,0.5);
+        border-color: rgba(25,135,84,0.95);
+        box-shadow: 0 0 0 1px rgba(25,135,84,0.85);
     }
 
     tr.hour-start > td, tr.hour-start > th {
@@ -545,26 +690,41 @@
         border:1px solid rgba(209,213,219,0.9);
     }
     .legend-plan {
-        background: rgba(248, 164, 76, 0.6);
-        border-color: rgba(248, 164, 76, 0.9);
+        background: rgba(25,135,84,0.5);
+        border-color: rgba(25,135,84,0.95);
     }
 
     @media (max-width: 768px) {
         .schedule-layout {
             gap:0.8rem;
         }
-    }
 
-    .status-inline {
-        display: inline-flex;
-        flex-wrap: nowrap;
-        align-items: center;
-        gap: 0.25rem;
-    }
+        .status-panel-blue {
+            padding: 14px 14px 16px;
+        }
 
-    .status-inline .form-select-sm {
-        width: auto;
-        min-width: 110px;
+        .status-inline-row {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .panel-schedule-header-blue {
+            padding: 0.8rem 0.8rem;
+        }
+
+        .panel-schedule-toolbar {
+            align-items: flex-start !important;
+        }
+
+        .slot-toggle-group {
+            width: 100%;
+            justify-content: space-between;
+        }
+        .slot-toggle-btn {
+            flex: 1 1 0;
+            text-align: center;
+            padding-inline: 0.4rem;
+        }
     }
 </style>
 

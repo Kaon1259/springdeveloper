@@ -3,24 +3,24 @@
 <main class="container my-4">
 
     <!-- ============ 상단: 아르바이트 상태별 보기 (칩 리스트) ============ -->
-    <div class="card mb-3 card-blue">
-        <div class="card-header card-header-blue d-flex justify-content-between align-items-center">
+    <div class="card mb-3">
+        <div class="card-header d-flex justify-content-between align-items-center">
             <span class="fw-bold">아르바이트 상태별 보기</span>
-            <a href="/members/new" class="btn btn-sm btn-light">추가등록</a>
+            <a href="/members/new" class="btn btn-sm btn-primary">추가등록</a>
         </div>
-        <div class="card-body card-body-blue">
+        <div class="card-body">
             <div class="row g-3">
                 <!-- 상태 선택 -->
                 <div class="col-12 col-md-4">
-                    <label for="statusSelect" class="form-label small text-white-50">상태</label>
-                    <select id="statusSelect" class="form-select form-select-on-blue">
+                    <label for="statusSelect" class="form-label small text-muted">상태</label>
+                    <select id="statusSelect" class="form-select">
                         <option value="WORKING" selected>근무중</option>
                         <option value="WAITING">시작전</option>
                         <option value="RESTING">휴식중</option>
                         <option value="PAUSED">일시중지</option>
                         <option value="RESIGNED">퇴사</option>
                     </select>
-                    <div class="form-text text-white-50">
+                    <div class="form-text">
                         상태를 바꾸면 아래 아르바이트 리스트와 급여 테이블이 함께 갱신됩니다.
                     </div>
                 </div>
@@ -28,7 +28,7 @@
                 <!-- 아르바이트 리스트 (칩 UI) -->
                 <div class="col-12 col-md-8">
                     <div class="d-flex justify-content-between align-items-center mb-2">
-                        <div class="small text-white-75">아르바이트 목록</div>
+                        <div class="small text-muted">아르바이트 목록</div>
                         <!-- ✅ 오른쪽 끝 “몇명” 배지는 유지 -->
                         <span id="memberCountBadge" class="badge bg-light text-dark">0명</span>
                     </div>
@@ -38,7 +38,7 @@
                         <!-- JS 렌더 -->
                     </div>
 
-                    <div class="small text-white-75 mt-2">
+                    <div class="small text-muted mt-2">
                         * 각 사람 옆의 색상은 근로자의 고유 색입니다. (급여 테이블과 다른 화면에서도 동일 색상 사용 예정)
                     </div>
                 </div>
@@ -46,57 +46,49 @@
         </div>
     </div>
 
-    <!-- ============ 하단: 급여 관리 영역 ============ -->
+    <!-- ============ 상단: 제목 + 월 내비 (공용, sticky) ============ -->
     <div class="pay-right-wrapper">
-        <!-- =========================================================
-             1) 실근무시간급여관리 (월단위) + 세금 표시
-             상단: "급여 관리 + 월 내비" + 바로 아래 "실근무시간급여관리" 를
-             하나의 파란 헤더 블럭으로 구성
-        ========================================================== -->
-        <div class="card mb-4 pay-main-card" id="cardActual">
-
-            <div class="card-header pay-main-header sticky-pay-header">
-                <!-- 상단: 제목 + 월 내비 (공용) -->
-                <div class="d-flex flex-wrap justify-content-between align-items-center mb-2 gap-2">
-                    <div class="d-flex flex-wrap align-items-center gap-2">
-                        <div>
-                            <span class="fw-bold h5 mb-0" id="pageTitle">급여 관리</span>
-                            <span id="selectedMemberName" class="ms-2 fw-semibold"></span>
-                            <span id="selectedMemberStatus" class="badge ms-2 d-none">-</span>
-                        </div>
-                        <!-- ✅ 실근무(저장 상태) 배지 -->
-                        <span id="payrollStatusBadge" class="badge ms-2 d-none">-</span>
-                    </div>
-
-                    <!-- 월단위 내비 (공용) -->
-                    <div id="monthNav" class="d-flex align-items-center small gap-2">
-                        <span id="monthRangeLabel">0000.00.01 ~ 00.00</span>
-                        <button type="button" class="btn btn-sm btn-outline-light" id="btnMonthPrev">◀ 이전 달</button>
-                        <button type="button" class="btn btn-sm btn-outline-light" id="btnMonthThis">이번 달</button>
-                        <button type="button" class="btn btn-sm btn-outline-light" id="btnMonthNext">다음 달 ▶</button>
-                    </div>
+        <div class="d-flex flex-wrap justify-content-between align-items-center mb-2 gap-2 sticky-pay-header">
+            <div class="d-flex flex-wrap align-items-center gap-2">
+                <div>
+                    <span class="fw-bold h5 mb-0" id="pageTitle">급여 관리</span>
+                    <span id="selectedMemberName" class="ms-2 text-primary fw-semibold"></span>
+                    <span id="selectedMemberStatus" class="badge bg-secondary ms-2 d-none">-</span>
                 </div>
-
-                <!-- 바로 아래: 실근무시간급여관리 라인 (같은 파란 헤더 블럭 안) -->
-                <div class="d-flex justify-content-between align-items-center pay-main-subheader">
-                    <span class="fw-bold">
-                        실근무시간급여관리 (월단위)
-                    </span>
-                    <!-- 버튼 영역은 실근무쪽에만 존재 -->
-                    <div class="d-flex justify-content-end gap-2">
-                        <button type="button" class="btn btn-sm btn-outline-light" id="btnSaveDraft">
-                            임시저장
-                        </button>
-                        <button type="button" class="btn btn-sm btn-outline-light" id="btnConfirm">
-                            확정
-                        </button>
-                        <button type="button" class="btn btn-sm btn-success" id="btnMarkPaid">
-                            지급완료
-                        </button>
-                    </div>
-                </div>
+                <!-- ✅ 실근무(저장 상태) 배지 -->
+                <span id="payrollStatusBadge" class="badge ms-2 d-none">-</span>
             </div>
 
+            <!-- 월단위 내비 (공용) -->
+            <div id="monthNav" class="d-flex align-items-center small text-muted gap-2">
+                <span id="monthRangeLabel">0000.00.01 ~ 00.00</span>
+                <button type="button" class="btn btn-sm btn-outline-secondary" id="btnMonthPrev">◀ 이전 달</button>
+                <button type="button" class="btn btn-sm btn-outline-secondary" id="btnMonthThis">이번 달</button>
+                <button type="button" class="btn btn-sm btn-outline-secondary" id="btnMonthNext">다음 달 ▶</button>
+            </div>
+        </div>
+
+        <!-- =========================================================
+             1) 실근무시간급여관리 (월단위) + 세금 표시
+        ========================================================== -->
+        <div class="card mb-4" id="cardActual">
+            <div class="card-header fw-bold d-flex justify-content-between align-items-center">
+                <span>
+                    실근무시간급여관리 (월단위)
+                </span>
+                <!-- 버튼 영역은 실근무쪽에만 존재 -->
+                <div class="d-flex justify-content-end gap-2">
+                    <button type="button" class="btn btn-sm btn-outline-secondary" id="btnSaveDraft">
+                        임시저장
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-primary" id="btnConfirm">
+                        확정
+                    </button>
+                    <button type="button" class="btn btn-sm btn-success" id="btnMarkPaid">
+                        지급완료
+                    </button>
+                </div>
+            </div>
             <div class="card-body">
 
                 <div class="small text-muted mb-2">
@@ -292,50 +284,6 @@
 </main>
 
 <style>
-    /* ===== 상단 아르바이트 카드: 파란 배경 (헤더 + 바디 모두) ===== */
-    .card-blue {
-        border-radius: 18px;
-        overflow: hidden;
-        box-shadow: 0 18px 40px rgba(15,23,42,0.08);
-        border: 1px solid rgba(148,163,184,0.18);
-        background: linear-gradient(135deg, #1d4ed8, #2563eb);
-        color: #e5eeff;
-    }
-    .card-header-blue {
-        background: transparent;
-        border-bottom: 1px solid rgba(191,219,254,0.7);
-        border-radius: 18px 18px 0 0;
-    }
-    .card-body-blue {
-        background: transparent;
-    }
-    .card-header-blue .fw-bold {
-        color: #f9fafb;
-    }
-    .card-header-blue .btn-light {
-        background-color: #f9fafb;
-        border-color: transparent;
-        color: #1d4ed8;
-    }
-    .card-header-blue .btn-light:hover {
-        background-color: #e5efff;
-    }
-    .card-blue .form-text {
-        color: rgba(226,232,255,0.85);
-    }
-    .text-white-50 { color: rgba(255,255,255,0.55) !important; }
-    .text-white-75 { color: rgba(255,255,255,0.75) !important; }
-
-    .form-select-on-blue {
-        background-color: #f9fafb;
-        color: #111827;
-        border-color: rgba(191,219,254,0.8);
-    }
-    .form-select-on-blue:focus {
-        border-color: #93c5fd;
-        box-shadow: 0 0 0 .15rem rgba(59,130,246,.35);
-    }
-
     /* ===== 상단 아르바이트 리스트: 칩 스타일 ===== */
     .vlist {
         display: flex;
@@ -367,70 +315,14 @@
     /* 급여 테이블 래퍼 – sticky 기준 컨테이너 */
     .pay-right-wrapper { position: relative; }
 
-    /* 하단 급여 메인 카드: 파란 헤더 + 상단 라운드 */
-    .pay-main-card {
-        border-radius: 18px;
-        overflow: hidden;
-        box-shadow: 0 18px 40px rgba(15,23,42,0.08);
-        border: 1px solid rgba(148,163,184,0.18);
-    }
-    .pay-main-header {
-        background: linear-gradient(135deg, #1d4ed8, #2563eb);
-        color: #e5eeff;
-        border-radius: 18px 18px 0 0;
-        border-bottom: 1px solid rgba(191,219,254,0.7);
-        padding-top: .6rem;
-        padding-bottom: .6rem;
-    }
-    .pay-main-header .h5,
-    .pay-main-header .fw-bold {
-        color: #f9fafb;
-    }
-    .pay-main-header .small,
-    .pay-main-header .text-muted {
-        color: rgba(226,232,255,0.85) !important;
-    }
-    .pay-main-header .badge {
-        background-color: rgba(15,23,42,0.3);
-        color: #e5eeff;
-    }
-    .pay-main-header #selectedMemberStatus {
-        background-color: rgba(15,23,42,0.3);
-    }
-    .pay-main-header #payrollStatusBadge {
-        background-color: rgba(248,250,252,0.15);
-    }
-
-    .pay-main-header #monthNav button.btn-outline-light {
-        border-color: rgba(191,219,254,0.8);
-        color: #e5eeff;
-        background-color: transparent;
-    }
-    .pay-main-header #monthNav button.btn-outline-light:hover {
-        background-color: rgba(15,23,42,0.25);
-    }
-
-    .pay-main-subheader {
-        margin-top: .15rem;
-    }
-    .pay-main-subheader .btn-outline-light {
-        border-color: rgba(191,219,254,0.8);
-        color: #e5eeff;
-        background-color: transparent;
-    }
-    .pay-main-subheader .btn-outline-light:hover {
-        background-color: rgba(15,23,42,0.25);
-    }
-    .pay-main-subheader .btn-success {
-        background-color: #22c55e;
-        border-color: #16a34a;
-    }
-
-    /* 공용 sticky 헤더 (파란 블럭 전체: 두 줄 다 포함) */
+    /* 공용 sticky 헤더 */
     .sticky-pay-header {
         position: sticky;
         top: 70px;
         z-index: 1030;
+        background:#ffffff;
+        padding-top: .25rem;
+        padding-bottom: .25rem;
     }
 
     /* ===== 일자 셀 안 라운드 Rect 두 개 ===== */
@@ -718,7 +610,7 @@
                 selectedMemberNameEl.textContent = '';
                 selectedMemberStatus.classList.add('d-none');
                 selectedMemberStatus.textContent = '-';
-                selectedMemberStatus.className = 'badge ms-2 d-none';
+                selectedMemberStatus.className = 'badge bg-secondary d-none';
                 updatePayrollStatusUI(null);
                 return;
             }
