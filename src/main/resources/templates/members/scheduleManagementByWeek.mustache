@@ -51,12 +51,20 @@
                 </span>
             </div>
 
-            <!-- 우측: 지난주 / [날짜범위] / 금주 / 다음주 -->
+            <!-- 우측: 지난주 / [날짜범위] / 금주 / 다음주 + PDF 출력 버튼 -->
             <div class="d-flex align-items-center gap-2">
                 <button id="btnPrevWeek" class="btn btn-sm btn-outline-light">◀ 지난주</button>
                 <span id="weekRangeLabelRight" class="small text-light px-1"></span>
                 <button id="btnThisWeek" class="btn btn-sm btn-outline-light">금주</button>
                 <button id="btnNextWeek" class="btn btn-sm btn-outline-light">다음주 ▶</button>
+
+                <!-- PDF 전체 / 개별 출력 버튼 -->
+                <button id="btnOpenPrintPage" class="btn btn-sm btn-light fw-semibold text-primary">
+                    PDF 출력
+                </button>
+                <button id="btnOpenPrintMemberPage" class="btn btn-sm btn-outline-light fw-semibold">
+                    PDF(개별)
+                </button>
             </div>
         </div>
         <div class="card-body weekly-card-body">
@@ -382,7 +390,7 @@
     .pill {
         display:flex; align-items:center; gap:8px; padding:8px 10px;
         border-radius:999px; border:1px solid #e9ecef; background:#fff; cursor:pointer;
-        font-size:.9rem; transition: background .15s, box-shadow .15s, border-color .15s;
+        font-size:.9rem; transition: background .15s, box-shadow .15s, border-color .15s, opacity .15s, filter .15s;
     }
     .pill .dot { width:12px; height:12px; border-radius:50%; border:1px solid rgba(0,0,0,.08); flex:0 0 12px; }
     .pill .name { font-weight:600; }
@@ -390,6 +398,24 @@
     .pill.active {
         border-color: rgba(13,110,253,.45);
         box-shadow: 0 0 0 3px rgba(13,110,253,.15) inset; background:#f0f6ff;
+    }
+
+    /* ★ 선택된 아르바이트생 외 나머지 블러/디밍 */
+    body.alba-has-selected .pill:not(.active) {
+        opacity: .35;
+        filter: grayscale(.4);
+    }
+    body.alba-has-selected .pill.active {
+        opacity: 1;
+        filter: none;
+    }
+    body.alba-has-selected .staff-tag:not(.selected-member-tag) {
+        opacity: .35;
+        filter: grayscale(.35);
+    }
+    body.alba-has-selected .staff-tag.selected-member-tag {
+        opacity: 1;
+        filter: none;
     }
 
     /* ===== 주간 타임테이블 카드 (하단 전체 파란 라운드) ===== */
@@ -417,7 +443,6 @@
     /* ===== 타임테이블 ===== */
     #weekStaffTable { border-collapse: separate; border-spacing: 0; }
 
-    /* 헤더: 시간 / 월~일 / 합계 – 파란 일체형 */
     #weekStaffTable thead th {
         background:#0d6efd !important;
         color:#ffffff !important;
@@ -427,7 +452,6 @@
         font-size:0.9rem;
     }
 
-    /* 요일 헤더 안쪽 래퍼 – 라운드 박스 제거, 텍스트만 */
     #weekStaffTable thead .day-head-rect{
         padding:0;
         margin:0;
@@ -459,17 +483,11 @@
         border-radius:999px;
     }
 
-    /* 현재 요일 헤더(th) – 주황색 배경 + 깜빡임 */
+    /* 현재 요일 헤더(th) – 주황색 */
     #weekStaffTable thead th.today-col-head{
         background: linear-gradient(135deg,#f97316,#ea580c) !important;
         color:#ffffff !important;
         border-color:#c0560a !important;
-        animation: dayHeadBlink 1.05s step-start infinite;
-    }
-    @keyframes dayHeadBlink {
-        0%   { filter:brightness(1.0); box-shadow:0 0 0 0 rgba(249,115,22,0.0); }
-        50%  { filter:brightness(1.08); box-shadow:0 0 0 4px rgba(249,115,22,0.6); }
-        100% { filter:brightness(1.0); box-shadow:0 0 0 0 rgba(249,115,22,0.0); }
     }
 
     .hour-row-header { font-variant-numeric: tabular-nums; background:#f8fafc; }
@@ -489,7 +507,6 @@
 
     tr.hour-separator > td, tr.hour-separator > th { border-top:2px solid #dee2e6 !important; }
 
-    /* 시간대 전체 묶음(월~일) – 라운드 박스 */
     .time-band-cell {
         border:none !important;
         background:transparent !important;
@@ -523,34 +540,25 @@
         border-radius:999px; padding:2px 6px; font-size:.75rem;
         background:#f8f9fa; border:1px solid #dee2e6; max-width:90px;
         white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
-        transition: background-color .15s ease, border-color .15s ease, transform .1s ease;
+        transition: background-color .15s ease, border-color .15s ease, transform .1s ease, opacity .15s ease, filter .15s ease;
     }
     .staff-tag-dot { width:10px; height:10px; border-radius:50%; border:1px solid rgba(0,0,0,.08); flex:0 0 10px; }
     .staff-count { font-weight:600; font-size:.9rem; }
 
-    /* 오늘 컬럼 본문 – 주황 계열 은은한 깜빡임 */
+    /* 오늘 컬럼 본문 – 은은한 강조만 (행 전체 연한 배경 제거) */
     td.today-col .time-band-inner {
         background: rgba(249,115,22,0.08);
-        animation: dayColBlink 1.05s step-start infinite;
-    }
-    @keyframes dayColBlink {
-        0%   { filter:brightness(1.0); }
-        50%  { filter:brightness(1.06); }
-        100% { filter:brightness(1.0); }
     }
 
-    /* 현재 시간대 행 강조 */
+    /* ★ 현재 시간행 배경 강조 제거: class는 유지하되 스타일은 기본과 동일 */
     .current-time-row .hour-row-header {
-        background:#fff7d6 !important;
-        position:sticky;
-        left:0;
-        z-index:1;
+        background:#f8fafc !important;
     }
     .current-time-row .time-band-inner {
-        background:rgba(255,249,196,0.6);
+        background:#f9fafb;
     }
     .current-time-row td.today-col .time-band-inner {
-        background:rgba(255,243,205,0.9);
+        background: rgba(249,115,22,0.08);
     }
 
     /* 선택된 아르바이트생 태그 강조 */
@@ -561,7 +569,7 @@
         transform: scale(1.02);
     }
 
-    /* 현재 시간대 아르바이트 태그 깜빡임 */
+    /* 현재 시간대 아르바이트 태그 깜빡임 (유지) */
     .staff-tag-current {
         animation: staffTagBlink 1.05s step-start infinite;
         background: rgba(255,193,7,0.95) !important;
@@ -597,7 +605,6 @@
         padding:.2rem .7rem;
     }
 
-    /* 주간 그리드 */
     .week-grid { width: 100%; border: 1px solid #e5e7eb; border-radius: 10px; overflow: hidden; user-select: none; background:#fff; }
     .week-grid table { width: 100%; border-collapse: separate; border-spacing: 0; table-layout: fixed; }
     .week-grid thead th {
@@ -636,7 +643,6 @@
     .grid-toolbar { display: flex; gap: 8px; align-items: center; justify-content: space-between; margin-bottom: .5rem; font-size: .85rem; }
     .grid-toolbar .left, .grid-toolbar .right { display: flex; gap: 8px; align-items: center; }
 
-    /* ===== 편집 모달용 스타일 ===== */
     .legend { display:inline-block; width:14px; height:14px; border-radius:3px; border:1px solid #ddd; vertical-align:middle; }
     .legend-plan { background: rgba(13,110,253,.25); border-color: rgba(13,110,253,.45); }
     .legend-actual { background: rgba(25,135,84,.25); border-color: rgba(25,135,84,.40); }
@@ -690,6 +696,8 @@
         const btnPrevWeek = document.getElementById('btnPrevWeek');
         const btnThisWeek = document.getElementById('btnThisWeek');
         const btnNextWeek = document.getElementById('btnNextWeek');
+        const btnOpenPrintPage        = document.getElementById('btnOpenPrintPage');
+        const btnOpenPrintMemberPage  = document.getElementById('btnOpenPrintMemberPage');
 
         const memberWeekCard      = document.getElementById('memberWeekCard');
         const memberWeekTitle     = document.getElementById('memberWeekTitle');
@@ -776,6 +784,20 @@
             if (btnPrevWeek) btnPrevWeek.addEventListener('click', async (e)=>{ e.preventDefault(); currentWeekStart = addDays(currentWeekStart, -7); await handleStatusChange(); });
             if (btnThisWeek) btnThisWeek.addEventListener('click', async (e)=>{ e.preventDefault(); currentWeekStart = toMonday(new Date()); await handleStatusChange(); });
             if (btnNextWeek) btnNextWeek.addEventListener('click', async (e)=>{ e.preventDefault(); currentWeekStart = addDays(currentWeekStart, +7); await handleStatusChange(); });
+
+            // PDF 전체 출력 페이지
+            if (btnOpenPrintPage) {
+                btnOpenPrintPage.addEventListener('click', () => {
+                    openPrintPage();
+                });
+            }
+
+            // ★ PDF(개별) 출력 페이지
+            if (btnOpenPrintMemberPage) {
+                btnOpenPrintMemberPage.addEventListener('click', () => {
+                    openPrintMemberPage();
+                });
+            }
 
             if (weekStaffTable) {
                 weekStaffTable.addEventListener('click', async (e) => {
@@ -869,6 +891,35 @@
             window.addEventListener('mouseup', ()=>{ modalDragging=false; });
         }
 
+        // PDF 전체 출력용 페이지
+        function openPrintPage() {
+            const status = statusSelect.value;
+            const weekStartIso = toIso(currentWeekStart);
+            const slot = slotMinutes;
+
+            const url = `/schedules/work/weekly/print?status=${encodeURIComponent(status)}&weekStart=${encodeURIComponent(weekStartIso)}&slot=${encodeURIComponent(slot)}`;
+            window.open(url, '_blank');
+        }
+
+        // ★ 선택된 아르바이트생만 출력하는 PDF 페이지
+        function openPrintMemberPage() {
+            if (!selectedMember) {
+                alert('선택된 아르바이트생이 없습니다.');
+                return;
+            }
+            const weekStartIso = toIso(currentWeekStart);
+            const slot = slotMinutes;
+
+            // 백엔드에서 이 URL을 개별 출력용으로 구현해 주세요.
+            const url =
+                    `/schedules/work/weekly/print/individual` +
+                    `?memberId=${encodeURIComponent(selectedMember.id)}` +
+                    `&weekStart=${encodeURIComponent(weekStartIso)}` +
+                    `&slot=${encodeURIComponent(slot)}`;
+
+            window.open(url, '_blank');
+        }
+
         function setSlotMinutes(mins){
             if (slotMinutes === mins) return;
             slotMinutes = mins;
@@ -956,6 +1007,13 @@
                 if (String(id) === String(selectedMember.id)) p.classList.add('active');
                 else p.classList.remove('active');
             });
+
+            // ★ 선택된 멤버가 있을 때 body에 class 부여(블러용)
+            if (selectedMember) {
+                document.body.classList.add('alba-has-selected');
+            } else {
+                document.body.classList.remove('alba-has-selected');
+            }
         }
 
         function renderWeekRangeLabel(weekStart){
@@ -1119,7 +1177,6 @@
                     cell.appendChild(inner);
                     tr.appendChild(cell);
 
-                    // 인원 셀
                     const countTd = document.createElement('td');
                     countTd.className = 'day-count-cell time-band-cell';
                     if (todayIdx !== -1 && dayIdx === todayIdx) {

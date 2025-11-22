@@ -37,110 +37,115 @@
     </div>
 
     <!-- 하단: 주간 타임테이블 -->
-    <div class="card">
-        <div class="card-header fw-bold d-flex justify-content-between align-items-center">
+    <div class="card weekly-card">
+        <div class="card-header fw-bold d-flex justify-content-between align-items-center weekly-card-header">
             <div class="d-flex flex-column">
                 <span>주간 타임테이블 (월~일)</span>
                 <div class="mt-1 btn-group btn-group-sm" role="group" aria-label="단위 선택">
-                    <button type="button" id="btnSlot10" class="btn btn-sm btn-outline-secondary">10분</button>
-                    <button type="button" id="btnSlot30" class="btn btn-sm btn-outline-secondary">30분</button>
-                    <button type="button" id="btnSlot60" class="btn btn-sm btn-outline-secondary active">1시간</button>
+                    <button type="button" id="btnSlot10" class="btn btn-sm btn-outline-light">10분</button>
+                    <button type="button" id="btnSlot30" class="btn btn-sm btn-outline-light">30분</button>
+                    <button type="button" id="btnSlot60" class="btn btn-sm btn-outline-light active">1시간</button>
                 </div>
-                <span class="small text-muted mt-1">
+                <span class="small text-light mt-1 opacity-75">
                     한 칸 = 선택된 단위, 각 요일 사이의 열은 해당 시간대 인원수, 마지막 열은 전체 인원수
                 </span>
             </div>
 
-            <!-- 우측: 지난주 / [날짜범위] / 금주 / 다음주 -->
+            <!-- 우측: 지난주 / [날짜범위] / 금주 / 다음주 + PDF 출력 버튼 -->
             <div class="d-flex align-items-center gap-2">
-                <button id="btnPrevWeek" class="btn btn-sm btn-outline-secondary">◀ 지난주</button>
-                <span id="weekRangeLabelRight" class="small text-muted px-1"></span>
-                <button id="btnThisWeek" class="btn btn-sm btn-outline-secondary">금주</button>
-                <button id="btnNextWeek" class="btn btn-sm btn-outline-secondary">다음주 ▶</button>
+                <button id="btnPrevWeek" class="btn btn-sm btn-outline-light">◀ 지난주</button>
+                <span id="weekRangeLabelRight" class="small text-light px-1"></span>
+                <button id="btnThisWeek" class="btn btn-sm btn-outline-light">금주</button>
+                <button id="btnNextWeek" class="btn btn-sm btn-outline-light">다음주 ▶</button>
+
+                <!-- ★ 추가: PDF 출력 버튼 -->
+                <button id="btnOpenPrintPage" class="btn btn-sm btn-light fw-semibold text-primary">
+                    PDF 출력
+                </button>
             </div>
         </div>
-        <div class="card-body">
+        <div class="card-body weekly-card-body">
             <div id="noMemberState" class="text-muted small d-none">
                 해당 상태의 아르바이트생이 없습니다.
             </div>
             <div id="timetableWrapper" class="table-responsive">
                 <table class="table table-bordered align-middle text-center" id="weekStaffTable">
-                    <thead class="table-light">
+                    <thead>
                     <tr>
                         <th style="width:80px;">시간</th>
 
-                        <!-- 월: 헤더 요일/인원 합치기 -->
-                        <th data-dow="0" class="dow-head" colspan="2">
+                        <!-- 월 -->
+                        <th data-dow="0" colspan="2">
                             <div class="day-head-rect">
                                 <div class="day-head-main">
                                     <span class="day-name">월</span>
-                                    <span class="day-date ms-1 small text-light opacity-75"></span>
+                                    <span class="day-date ms-1 small opacity-75"></span>
                                 </div>
                                 <div class="day-edit-wrap mt-1"></div>
                             </div>
                         </th>
 
                         <!-- 화 -->
-                        <th data-dow="1" class="dow-head" colspan="2">
+                        <th data-dow="1" colspan="2">
                             <div class="day-head-rect">
                                 <div class="day-head-main">
                                     <span class="day-name">화</span>
-                                    <span class="day-date ms-1 small text-light opacity-75"></span>
+                                    <span class="day-date ms-1 small opacity-75"></span>
                                 </div>
                                 <div class="day-edit-wrap mt-1"></div>
                             </div>
                         </th>
 
                         <!-- 수 -->
-                        <th data-dow="2" class="dow-head" colspan="2">
+                        <th data-dow="2" colspan="2">
                             <div class="day-head-rect">
                                 <div class="day-head-main">
                                     <span class="day-name">수</span>
-                                    <span class="day-date ms-1 small text-light opacity-75"></span>
+                                    <span class="day-date ms-1 small opacity-75"></span>
                                 </div>
                                 <div class="day-edit-wrap mt-1"></div>
                             </div>
                         </th>
 
                         <!-- 목 -->
-                        <th data-dow="3" class="dow-head" colspan="2">
+                        <th data-dow="3" colspan="2">
                             <div class="day-head-rect">
                                 <div class="day-head-main">
                                     <span class="day-name">목</span>
-                                    <span class="day-date ms-1 small text-light opacity-75"></span>
+                                    <span class="day-date ms-1 small opacity-75"></span>
                                 </div>
                                 <div class="day-edit-wrap mt-1"></div>
                             </div>
                         </th>
 
                         <!-- 금 -->
-                        <th data-dow="4" class="dow-head" colspan="2">
+                        <th data-dow="4" colspan="2">
                             <div class="day-head-rect">
                                 <div class="day-head-main">
                                     <span class="day-name">금</span>
-                                    <span class="day-date ms-1 small text-light opacity-75"></span>
+                                    <span class="day-date ms-1 small opacity-75"></span>
                                 </div>
                                 <div class="day-edit-wrap mt-1"></div>
                             </div>
                         </th>
 
                         <!-- 토 -->
-                        <th data-dow="5" class="dow-head" colspan="2">
+                        <th data-dow="5" colspan="2">
                             <div class="day-head-rect">
                                 <div class="day-head-main">
                                     <span class="day-name">토</span>
-                                    <span class="day-date ms-1 small text-light opacity-75"></span>
+                                    <span class="day-date ms-1 small opacity-75"></span>
                                 </div>
                                 <div class="day-edit-wrap mt-1"></div>
                             </div>
                         </th>
 
                         <!-- 일 -->
-                        <th data-dow="6" class="dow-head" colspan="2">
+                        <th data-dow="6" colspan="2">
                             <div class="day-head-rect">
                                 <div class="day-head-main">
                                     <span class="day-name">일</span>
-                                    <span class="day-date ms-1 small text-light opacity-75"></span>
+                                    <span class="day-date ms-1 small opacity-75"></span>
                                 </div>
                                 <div class="day-edit-wrap mt-1"></div>
                             </div>
@@ -162,20 +167,20 @@
         </div>
     </div>
 
-    <!-- 선택된 아르바이트생 개별 주간 일정 (하단, 기본 접힘) -->
-    <div class="card mt-3 d-none" id="memberWeekCard">
-        <div class="card-header d-flex justify-content-between align-items-center">
+    <!-- 선택된 아르바이트생 개별 주간 일정 (하단) -->
+    <div class="card mt-3 member-week-card d-none" id="memberWeekCard">
+        <div class="card-header d-flex justify-content-between align-items-center member-week-card-header">
             <div>
                 <span class="fw-bold" id="memberWeekTitle">개별 주간 일정</span>
-                <span class="badge bg-secondary ms-2" id="memberWeekNameBadge"></span>
+                <span class="badge bg-light text-white ms-2" id="memberWeekNameBadge"></span>
             </div>
             <div class="d-flex align-items-center gap-2">
-                <button type="button" class="btn btn-sm btn-outline-secondary" id="btnToggleMemberWeek">펼치기</button>
-                <span class="fw-bold" id="memberWeekSaveHint">(10단위 저장만 가능합니다.)</span>
-                <button type="submit" class="btn btn-sm btn-primary" form="memberWeekForm" id="btnSaveWeek" disabled>저장</button>
+                <button type="button" class="btn btn-sm btn-outline-light" id="btnToggleMemberWeek">펼치기</button>
+                <span class="fw-bold text-light small" id="memberWeekSaveHint">(10단위 저장만 가능합니다.)</span>
+                <button type="submit" class="btn btn-sm btn-light fw-semibold" form="memberWeekForm" id="btnSaveWeek" disabled>저장</button>
             </div>
         </div>
-        <div class="card-body d-none" id="memberWeekBody">
+        <div class="card-body member-week-card-body d-none" id="memberWeekBody">
             <div id="noPlanAlert" class="alert alert-warning py-2 px-3 d-none">
                 <strong>예정된 일정이 없습니다.</strong> 일정을 생성하세요.
             </div>
@@ -229,11 +234,6 @@
                     <span class="text-muted">/</span>
                     <span id="editTitleMember">알바생 이름</span>
                 </div>
-                <div class="d-flex gap-2">
-                    <button id="btnSaveEdit" class="btn btn-sm btn-primary" disabled>저장</button>
-                    <button id="btnCancelEdit" class="btn btn-sm btn-outline-secondary">취소</button>
-                    <button id="btnCloseModal" class="btn btn-sm btn-outline-dark">닫기</button>
-                </div>
             </div>
 
             <div class="edit-modal-body">
@@ -274,7 +274,7 @@
                             <div class="mt-2 small">
                                 <span class="legend legend-actual"></span> 원본 유지 블록
                                 &nbsp;·&nbsp;
-                                <span class="legend legend-plan" style="background: rgba(13,110,253,.16); border-color: rgba(13,110,253,.45)"></span> 새로 추가된 블록(파란색)
+                                <span class="legend legend-plan"></span> 새로 추가된 블록(파란색)
                             </div>
                         </div>
                     </div>
@@ -310,7 +310,11 @@
                     </div>
                 </div>
             </div>
-
+            <div class="d-flex justify-content-end gap-2 mt-2">
+                <button id="btnSaveEdit" class="btn btn-sm btn-primary" disabled>저장</button>
+                <button id="btnCancelEdit" class="btn btn-sm btn-outline-secondary">되돌리기</button>
+                <button id="btnCloseModal" class="btn btn-sm btn-outline-dark">닫기</button>
+            </div>
         </div>
     </div>
 </div>
@@ -320,7 +324,6 @@
     .status-card {
         border: none;
         border-radius: 18px;
-
         background: linear-gradient(135deg, #1d4ed8, #2563eb);
         color: #f8fafc;
         box-shadow: 0 10px 25px rgba(15, 23, 42, 0.18);
@@ -394,54 +397,48 @@
         box-shadow: 0 0 0 3px rgba(13,110,253,.15) inset; background:#f0f6ff;
     }
 
+    /* ===== 주간 타임테이블 카드 (하단 전체 파란 라운드) ===== */
+    .weekly-card {
+        border-radius: 18px;
+        overflow: hidden;
+        border: none;
+        box-shadow: 0 10px 25px rgba(15,23,42,0.12);
+    }
+    .weekly-card-header {
+        background: linear-gradient(135deg,#1d4ed8,#2563eb);
+        color:#ffffff;
+        border-bottom:none;
+    }
+    .weekly-card-header .btn-outline-light.active {
+        background-color:#ffffff;
+        color:#1d4ed8;
+        border-color:#ffffff;
+    }
+    .weekly-card-body {
+        background:#ffffff;
+        border-top:1px solid rgba(148,163,184,0.35);
+    }
+
     /* ===== 타임테이블 ===== */
     #weekStaffTable { border-collapse: separate; border-spacing: 0; }
-    .hour-row-header { font-variant-numeric: tabular-nums; }
-    .staff-cell {
-        vertical-align: middle;
-        font-size:.85rem;
-        cursor:pointer;
-        padding:0 !important; /* 라운드 박스용 inner에 패딩 위임 */
-    }
-    .day-count-cell {
-        font-size:0.75rem;
-        color:#6c757d;
-        padding:0 !important;
-        font-variant-numeric: tabular-nums;
-        line-height:1.1;
+
+    /* 헤더: 시간 / 월~일 / 합계 – 파란 일체형 */
+    #weekStaffTable thead th {
+        background:#0d6efd !important;
+        color:#ffffff !important;
+        border-color:#0b5ed7 !important;
+        vertical-align:top;
+        font-weight:600;
+        font-size:0.9rem;
     }
 
-    .staff-tags { display:flex; flex-wrap:wrap; gap:4px; justify-content:center; }
-    .staff-tag {
-        display:inline-flex; align-items:center; gap:4px;
-        border-radius:999px; padding:2px 6px; font-size:.75rem;
-        background:#f8f9fa; border:1px solid #dee2e6; max-width:90px;
-        white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
-        transition: background-color .15s ease, border-color .15s ease, transform .1s ease;
-    }
-    .staff-tag-dot { width:10px; height:10px; border-radius:50%; border:1px solid rgba(0,0,0,.08); flex:0 0 10px; }
-    .staff-count { font-weight:600; font-size:.9rem; }
-
-    tr.hour-separator > td, tr.hour-separator > th { border-top:2px solid #dee2e6 !important; }
-
-    .day-date { line-height: 1.1; }
-    .dow-head {
-        padding:4px 4px;
-        background:transparent !important;
-        border-bottom:none !important;
-        vertical-align: top;
-    }
-    .day-head-rect {
-        border-radius:14px;
-        padding:6px 10px;
-        background:linear-gradient(135deg, #1d4ed8, #2563eb);
-        color:#f9fafb;
-        box-shadow:0 10px 20px rgba(15,23,42,0.25);
-        position:relative;
-    }
-    /* 오늘 요일 헤더: 주황색 */
-    .day-head-rect.today-head {
-        background: linear-gradient(135deg, #f97316, #ea580c);
+    /* 요일 헤더 안쪽 래퍼 – 라운드 박스 제거, 텍스트만 */
+    #weekStaffTable thead .day-head-rect{
+        padding:0;
+        margin:0;
+        background:transparent;
+        border-radius:0;
+        box-shadow:none;
     }
     .day-head-main {
         display:flex;
@@ -453,12 +450,13 @@
         font-weight:700;
         font-size:0.9rem;
     }
+    .day-date { line-height: 1.1; color: rgba(255,255,255,.85); }
     .day-edit-wrap {
         min-height: 24px;
         display:flex;
         justify-content:flex-end;
         align-items:center;
-        margin-top:4px;
+        margin-top:2px;
     }
     .day-edit-btn {
         padding: 2px 8px;
@@ -466,9 +464,39 @@
         border-radius:999px;
     }
 
-    /* ===== 같은 시간대(월~일) 라운드 박스 ===== */
+    /* 현재 요일 헤더(th) – 주황색 배경 + 깜빡임 */
+    #weekStaffTable thead th.today-col-head{
+        background: linear-gradient(135deg,#f97316,#ea580c) !important;
+        color:#ffffff !important;
+        border-color:#c0560a !important;
+        animation: dayHeadBlink 1.05s step-start infinite;
+    }
+    @keyframes dayHeadBlink {
+        0%   { filter:brightness(1.0); box-shadow:0 0 0 0 rgba(249,115,22,0.0); }
+        50%  { filter:brightness(1.08); box-shadow:0 0 0 4px rgba(249,115,22,0.6); }
+        100% { filter:brightness(1.0); box-shadow:0 0 0 0 rgba(249,115,22,0.0); }
+    }
+
+    .hour-row-header { font-variant-numeric: tabular-nums; background:#f8fafc; }
+    .staff-cell {
+        vertical-align: middle;
+        font-size:.85rem;
+        cursor:pointer;
+        padding:0 !important;
+    }
+    .day-count-cell {
+        font-size:0.75rem;
+        color:#6c757d;
+        padding:0 !important;
+        font-variant-numeric: tabular-nums;
+        line-height:1.1;
+    }
+
+    tr.hour-separator > td, tr.hour-separator > th { border-top:2px solid #dee2e6 !important; }
+
+    /* 시간대 전체 묶음(월~일) – 라운드 박스 */
     .time-band-cell {
-        border:none !important;       /* 테이블 cell 보더 제거 */
+        border:none !important;
         background:transparent !important;
     }
     .time-band-inner {
@@ -494,12 +522,29 @@
         border-bottom-right-radius:12px;
     }
 
-    /* 오늘 컬럼 기본 강조 (라운드 박스 안쪽 배경) */
+    .staff-tags { display:flex; flex-wrap:wrap; gap:4px; justify-content:center; }
+    .staff-tag {
+        display:inline-flex; align-items:center; gap:4px;
+        border-radius:999px; padding:2px 6px; font-size:.75rem;
+        background:#f8f9fa; border:1px solid #dee2e6; max-width:90px;
+        white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+        transition: background-color .15s ease, border-color .15s ease, transform .1s ease;
+    }
+    .staff-tag-dot { width:10px; height:10px; border-radius:50%; border:1px solid rgba(0,0,0,.08); flex:0 0 10px; }
+    .staff-count { font-weight:600; font-size:.9rem; }
+
+    /* 오늘 컬럼 본문 – 주황 계열 은은한 깜빡임 */
     td.today-col .time-band-inner {
-        background-color: rgba(40,167,69,0.04);
+        background: rgba(249,115,22,0.08);
+        animation: dayColBlink 1.05s step-start infinite;
+    }
+    @keyframes dayColBlink {
+        0%   { filter:brightness(1.0); }
+        50%  { filter:brightness(1.06); }
+        100% { filter:brightness(1.0); }
     }
 
-    /* 현재 시간대 행 강조 + 깜빡임용 */
+    /* 현재 시간대 행 강조 */
     .current-time-row .hour-row-header {
         background:#fff7d6 !important;
         position:sticky;
@@ -535,25 +580,56 @@
         100% { filter:brightness(1.0); box-shadow:0 0 0 0 rgba(255,193,7,0.0); }
     }
 
-    /* 오늘 요일 헤더 깜빡임 (주황 계열) */
-    .day-head-rect.current-time-day {
-        animation: dayHeadBlink 1.05s step-start infinite;
-        box-shadow:0 0 0 0 rgba(249,115,22,0.0);
+    /* 개별 주간 일정 카드 – 파란 라운드렉트 */
+    .member-week-card {
+        border-radius:18px;
+        overflow:hidden;
+        border:none;
+        box-shadow:0 10px 22px rgba(15,23,42,0.12);
     }
-    @keyframes dayHeadBlink {
-        0%   { filter:brightness(1.0); box-shadow:0 0 0 0 rgba(249,115,22,0.0); }
-        50%  { filter:brightness(1.1); box-shadow:0 0 0 4px rgba(249,115,22,0.7); }
-        100% { filter:brightness(1.0); box-shadow:0 0 0 0 rgba(249,115,22,0.0); }
+    .member-week-card-header {
+        background:linear-gradient(135deg,#1d4ed8,#2563eb);
+        color:#ffffff;
+        border-bottom:none;
     }
-
-    /* 개별 주간 일정 카드 */
-    #memberWeekCard .table-sm td, #memberWeekCard .table-sm th { padding: .35rem .5rem; }
+    .member-week-card-body {
+        background:#ffffff;
+        border-top:1px solid rgba(148,163,184,0.35);
+    }
+    .member-week-card-header .badge {
+        background-color:rgba(15,23,42,0.16) !important;
+        border-radius:999px;
+        padding:.2rem .7rem;
+    }
 
     /* 주간 그리드 */
     .week-grid { width: 100%; border: 1px solid #e5e7eb; border-radius: 10px; overflow: hidden; user-select: none; background:#fff; }
     .week-grid table { width: 100%; border-collapse: separate; border-spacing: 0; table-layout: fixed; }
-    .week-grid thead th { background: #f8fafc; color:#64748b; font-weight: 600; font-size: 0.9rem; border-bottom: 1px solid #e5e7eb; text-align: center; padding: .5rem .4rem; position: sticky; top: 0; z-index: 2; }
-    .week-grid tbody th { background: #fafafa; color:#6b7280; font-weight: 600; width: 74px; border-right: 1px solid #e5e7eb; text-align: center; padding: .25rem .25rem; font-size: .8rem; position: sticky; left: 0; z-index: 1; }
+    .week-grid thead th {
+        background: #0d6efd;
+        color:#ffffff;
+        font-weight: 600;
+        font-size: 0.9rem;
+        border-bottom: 1px solid #0b5ed7;
+        text-align: center;
+        padding: .5rem .4rem;
+        position: sticky;
+        top: 0;
+        z-index: 2;
+    }
+    .week-grid tbody th {
+        background: #fafafa;
+        color:#6b7280;
+        font-weight: 600;
+        width: 74px;
+        border-right: 1px solid #e5e7eb;
+        text-align: center;
+        padding: .25rem .25rem;
+        font-size: .8rem;
+        position: sticky;
+        left: 0;
+        z-index: 1;
+    }
 
     .slot-10m { border-bottom: 1px dashed #eef2f6; border-right: 1px dashed #eef2f6; height: 18px; cursor: pointer; background: #ffffff; border-radius: 6px; margin: 1px 0; }
     .slot-10m:hover { background: #f8fbff; }
@@ -592,7 +668,6 @@
 <script id="membersData" type="application/json">
 {{{membersJson}}}
 </script>
-
 <script>
     (function(){
         const API_BASE   = '/api/schedule/work';
@@ -620,6 +695,7 @@
         const btnPrevWeek = document.getElementById('btnPrevWeek');
         const btnThisWeek = document.getElementById('btnThisWeek');
         const btnNextWeek = document.getElementById('btnNextWeek');
+        const btnOpenPrintPage = document.getElementById('btnOpenPrintPage'); // ★ 추가
 
         const memberWeekCard      = document.getElementById('memberWeekCard');
         const memberWeekTitle     = document.getElementById('memberWeekTitle');
@@ -706,6 +782,13 @@
             if (btnPrevWeek) btnPrevWeek.addEventListener('click', async (e)=>{ e.preventDefault(); currentWeekStart = addDays(currentWeekStart, -7); await handleStatusChange(); });
             if (btnThisWeek) btnThisWeek.addEventListener('click', async (e)=>{ e.preventDefault(); currentWeekStart = toMonday(new Date()); await handleStatusChange(); });
             if (btnNextWeek) btnNextWeek.addEventListener('click', async (e)=>{ e.preventDefault(); currentWeekStart = addDays(currentWeekStart, +7); await handleStatusChange(); });
+
+            // ★ 추가: PDF 출력 페이지 열기 버튼
+            if (btnOpenPrintPage) {
+                btnOpenPrintPage.addEventListener('click', () => {
+                    openPrintPage();
+                });
+            }
 
             if (weekStaffTable) {
                 weekStaffTable.addEventListener('click', async (e) => {
@@ -797,6 +880,23 @@
                 });
             }
             window.addEventListener('mouseup', ()=>{ modalDragging=false; });
+        }
+
+        // ★ 추가: PDF 출력용 페이지 오픈 함수
+        function openPrintPage() {
+            // 현재 선택 상태
+            const status = statusSelect.value;
+            // 현재 주의 월요일
+            const weekStartIso = toIso(currentWeekStart);
+            // 현재 슬롯(10/30/60)
+            const slot = slotMinutes;
+
+            // TODO: 실제 프린트용 페이지 URL은 백엔드에서 구현 필요
+            // 예: @GetMapping("/schedule/work/weekly/print")
+            const url = `/schedules/work/weekly/print?status=${encodeURIComponent(status)}&weekStart=${encodeURIComponent(weekStartIso)}&slot=${encodeURIComponent(slot)}`;
+
+            // 새 창으로 프린트용 페이지 오픈 (그 페이지에서 window.print() or 'PDF로 저장')
+            window.open(url, '_blank');
         }
 
         function setSlotMinutes(mins){
@@ -912,22 +1012,15 @@
                     const cell = dayHeaderCells[i];
                     const dateSpan = cell.querySelector('.day-date');
                     if (dateSpan) dateSpan.textContent = `${mm}/${dd}`;
-                    cell.classList.remove('today-col');
 
-                    const rect = cell.querySelector('.day-head-rect');
-                    if (rect) {
-                        rect.classList.remove('current-time-day');
-                        rect.classList.remove('today-head');
-                    }
+                    cell.classList.remove('today-col-head');
                 }
 
                 const today    = new Date();
                 const todayIso = toIso(today);
                 const todayIdx = weekDates.indexOf(todayIso);
                 if (todayIdx !== -1) {
-                    dayHeaderCells[todayIdx].classList.add('today-col');
-                    const rect = dayHeaderCells[todayIdx].querySelector('.day-head-rect');
-                    if (rect) rect.classList.add('today-head');
+                    dayHeaderCells[todayIdx].classList.add('today-col-head');
                 }
             }
         }
@@ -1097,7 +1190,6 @@
 
             weekStaffTbody.querySelectorAll('.current-time-row').forEach(tr => tr.classList.remove('current-time-row'));
             weekStaffTbody.querySelectorAll('.staff-tag-current').forEach(el => el.classList.remove('staff-tag-current'));
-            document.querySelectorAll('.day-head-rect.current-time-day').forEach(el => el.classList.remove('current-time-day'));
 
             if (todayIdx === -1) return;
 
@@ -1118,12 +1210,6 @@
                     tag.classList.add('staff-tag-current');
                 });
             }
-
-            const headTh = document.querySelector(`#weekStaffTable thead th[data-dow="${todayIdx}"]`);
-            if (headTh) {
-                const rect = headTh.querySelector('.day-head-rect');
-                if (rect) rect.classList.add('current-time-day');
-            }
         }
 
         function showDayEditButton(dayIdx, iso){
@@ -1132,7 +1218,7 @@
             if (!head) return;
             const btn = document.createElement('button');
             btn.type = 'button';
-            btn.className = 'btn btn-primary btn-sm day-edit-btn';
+            btn.className = 'btn btn-outline-light btn-sm day-edit-btn';
             btn.textContent = '근무일정 수정';
             btn.dataset.dateIso = iso;
             btn.addEventListener('click', async ()=>{
@@ -1159,7 +1245,7 @@
             if (!head) return;
             const btn = document.createElement('button');
             btn.type = 'button';
-            btn.className = 'btn btn-success btn-sm day-edit-btn';
+            btn.className = 'btn btn-outline-light btn-sm day-edit-btn';
             btn.textContent = '일정생성하기';
             btn.dataset.dateIso = iso;
             btn.addEventListener('click', async ()=>{

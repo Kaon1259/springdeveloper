@@ -104,7 +104,36 @@ public class Member {
     private List<ScheduleItem> schedules = new ArrayList<>();
 
     public enum Status {
-        WAITING, WORKING, RESTING, PAUSED, RESIGNED
+        WAITING, WORKING, RESTING, PAUSED, RESIGNED;
+
+        public static Status from(String value) {
+            if (value == null || value.trim().isEmpty()) {
+                return WORKING;
+            }
+            try {
+                return Status.valueOf(value.trim().toUpperCase());
+            } catch (IllegalArgumentException e) {
+                return WAITING;
+            }
+        }
+
+        // Status → 한글 라벨
+        public static String label(Status status) {
+            if (status == null) return "-";
+
+            return switch (status) {
+                case WORKING  -> "근무중";
+                case WAITING  -> "시작전";
+                case RESTING  -> "휴식중";
+                case PAUSED   -> "일시중지";
+                case RESIGNED -> "퇴사";
+            };
+        }
+
+        // String status → 한글 라벨 (오버로드)
+        public static String label(String value) {
+            return label(from(value));
+        }
     }
 
     /* ================= 유틸 ================= */
