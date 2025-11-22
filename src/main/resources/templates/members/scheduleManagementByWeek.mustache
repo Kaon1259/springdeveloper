@@ -1,35 +1,55 @@
 {{>layouts/header}}
 
 <main class="container my-4">
-    <!-- 상단: 상태 선택 + 필터된 아르바이트 리스트 -->
-    <div class="card mb-3 status-card">
-        <div class="card-header d-flex justify-content-between align-items-center">
-            <div class="fw-bold">아르바이트 상태별 보기</div>
-            <div class="small">
-                <span id="weekRangeLabel"></span>
-            </div>
-        </div>
-        <div class="card-body">
-            <div class="row g-3">
-                <div class="col-12 col-md-4">
-                    <label class="form-label small" for="statusSelect">상태</label>
-                    <select id="statusSelect" class="form-select">
-                        <option value="WORKING" selected>근무중</option>
-                        <option value="WAITING">시작전</option>
-                        <option value="RESTING">휴식중</option>
-                        <option value="PAUSED">일시중지</option>
-                        <option value="RESIGNED">퇴사</option>
-                    </select>
-                    <div class="form-text">상태를 바꾸면 아래 리스트와 타임테이블이 함께 바뀝니다.</div>
-                </div>
-                <div class="col-12 col-md-8">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <span class="small">필터된 아르바이트생</span>
-                        <span id="memberCountBadge" class="badge bg-secondary">0명</span>
+    <!-- ============ 상단: 아르바이트 상태별 보기 (월간 화면과 동일 UI) ============ -->
+    <div class="card mb-3">
+        <div class="card-body p-0">
+            <div class="status-panel-blue">
+                <!-- 타이틀 + 조회 주간 -->
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div>
+                        <div class="status-title">아르바이트 상태별 보기</div>
+                        <div class="status-subtitle-small">
+                            상태별로 아르바이트생을 필터링하고, 선택한 상태의 주간 일정을 함께 확인할 수 있습니다.
+                        </div>
                     </div>
-                    <div id="memberList" class="vlist"></div>
-                    <div class="small mt-2">
-                        * 각 사람 옆의 색상은 해당 근로자의 고유 색입니다. (아래 타임테이블에도 동일 색 사용)
+                    <div class="d-flex flex-column align-items-end">
+                        <span class="status-period-label-caption">조회 주간</span>
+                        <!-- 주간 범위 라벨: JS에서 weekRangeLabel 로 채움 -->
+                        <span id="weekRangeLabel" class="status-period-label-value">0000.00.01 ~ 00.00</span>
+                    </div>
+                </div>
+
+                <!-- 본문: 상태 선택 + 칩 리스트 -->
+                <div class="row g-3 align-items-start">
+                    <!-- 왼쪽: 상태 선택 -->
+                    <div class="col-12 col-md-4">
+                        <label class="form-label small status-label" for="statusSelect">상태</label>
+                        <select id="statusSelect" class="form-select status-select">
+                            <option value="WORKING" selected>근무중</option>
+                            <option value="WAITING">시작전</option>
+                            <option value="RESTING">휴식중</option>
+                            <option value="PAUSED">일시중지</option>
+                            <option value="RESIGNED">퇴사</option>
+                        </select>
+                        <div class="form-text status-help-text">
+                            상태를 바꾸면 오른쪽 리스트와 아래 타임테이블이 함께 바뀝니다.
+                        </div>
+                    </div>
+
+                    <!-- 오른쪽: 필터된 아르바이트 생 칩 리스트 -->
+                    <div class="col-12 col-md-8">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="small status-subtitle">필터된 아르바이트생</span>
+                            <span id="memberCountBadge" class="badge bg-light text-dark status-count-badge">0명</span>
+                        </div>
+
+                        <!-- 칩 리스트 (월간 화면과 동일 pill UI) -->
+                        <div id="memberList" class="vlist status-pill-list"></div>
+
+                        <div class="small status-caption mt-2">
+                            * 각 사람 옆의 색상은 근로자의 고유 색입니다. (아래 주간 타임테이블에도 동일 색 사용)
+                        </div>
                     </div>
                 </div>
             </div>
@@ -323,84 +343,109 @@
 </div>
 
 <style>
-    /* ===== 상단 카드(아르바이트 상태별 보기) 파란 라운드렉트 스타일 ===== */
-    .status-card {
-        border: none;
-        border-radius: 18px;
+    /* ===== 🔵 상단 아르바이트 상태 패널 (월간 화면과 동일) ===== */
+    .status-panel-blue {
         background: linear-gradient(135deg, #1d4ed8, #2563eb);
-        color: #f8fafc;
-        box-shadow: 0 10px 25px rgba(15, 23, 42, 0.18);
+        border-radius: 18px;
+        padding: 16px 20px 18px;
+        box-shadow: 0 14px 30px rgba(15, 23, 42, 0.28);
+        color: #e5eeff;
     }
-    .status-card .card-header {
-        border-bottom: none;
-        background: transparent;
-        color: #e5edff;
-        padding-bottom: .5rem;
+    .status-title {
+        font-size: 1.1rem;
+        font-weight: 700;
+        letter-spacing: .02em;
     }
-    .status-card .card-body {
-        background: transparent;
-        color: #f9fafb;
-        padding-top: .5rem;
+    .status-subtitle-small {
+        font-size: .8rem;
+        margin-top: 2px;
+        color: rgba(226, 232, 255, 0.78);
     }
-    .status-card .form-text,
-    .status-card .small {
-        color: rgba(248, 250, 252, 0.75) !important;
+    .status-period-label-caption {
+        font-size: .75rem;
+        color: rgba(226, 232, 255, 0.7);
     }
-    .status-card label.form-label {
-        color: rgba(248, 250, 252, 0.85);
+    .status-period-label-value {
+        font-size: .85rem;
+        font-weight: 600;
+        margin-top: 1px;
+        padding: 2px 8px;
+        border-radius: 999px;
+        background: rgba(15, 23, 42, 0.32);
+        border: 1px solid rgba(191, 219, 254, 0.6);
     }
-    .status-card .form-select {
-        background: rgba(15, 23, 42, 0.18);
-        border-color: rgba(148, 163, 184, 0.6);
-        color: #e5edff;
+    .status-label {
+        color: rgba(226, 232, 255, 0.9) !important;
     }
-    .status-card .form-select:focus {
-        box-shadow: 0 0 0 .1rem rgba(191, 219, 254, .65);
-        border-color: rgba(191, 219, 254, .9);
-        background: rgba(15, 23, 42, 0.24);
-        color: #eff6ff;
+    .status-help-text {
+        color: rgba(226, 232, 255, 0.85) !important;
     }
-    .status-card .badge.bg-secondary {
-        background-color: rgba(15, 23, 42, 0.65) !important;
-        color: #e5edff !important;
+    .status-subtitle {
+        color: rgba(226, 232, 255, 0.9);
     }
-    .status-card #memberCountBadge {
-        background-color: #f9fafb !important;
-        color: #2563eb !important;
+    .status-caption {
+        color: rgba(226, 232, 255, 0.8);
     }
-    .status-card .pill {
-        background: #ffffff;
-        border-color: rgba(148, 163, 184, 0.5);
+    .status-legend-text {
+        color: rgba(226, 232, 255, 0.85);
     }
-    .status-card .pill.active {
-        background: #eff6ff;
-        border-color: rgba(59, 130, 246, 0.9);
-        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.35) inset;
+    .status-count-badge {
+        border-radius: 999px;
+        padding: 3px 10px;
+        font-weight: 600;
     }
-    .status-card .pill .meta {
-        color: #6b7280;
+    .status-select {
+        background: rgba(15, 23, 42, 0.25);
+        border-color: rgba(191, 219, 254, 0.6);
+        color: #e5eeff;
     }
-    .status-card .pill .name {
-        color: #000 !important;
-        font-weight: 700 !important;
+    .status-select:focus {
+        background: rgba(15, 23, 42, 0.35);
+        border-color: #bfdbfe;
+        box-shadow: 0 0 0 0.2rem rgba(191, 219, 254, 0.45);
+        color: #f9fbff;
+    }
+    .status-select option {
+        color: #111827;
+    }
+    .status-pill-list {
+        margin-top: 2px;
     }
 
-    /* ===== 상단 리스트 ===== */
+    /* ===== 아르바이트 리스트: 칩 스타일 (월간 화면과 동일) ===== */
     .vlist { display:flex; flex-wrap:wrap; gap:8px; }
     .pill {
         display:flex; align-items:center; gap:8px; padding:8px 10px;
-        border-radius:999px; border:1px solid #e9ecef; background:#fff; cursor:pointer;
-        font-size:.9rem; transition: background .15s, box-shadow .15s, border-color .15s, opacity .15s, filter .15s;
+        border-radius:999px;
+        border:1px solid rgba(191, 219, 254, 0.7);
+        background: rgba(15, 23, 42, 0.18);
+        cursor:pointer;
+        font-size:.9rem;
+        transition: background .15s, box-shadow .15s, border-color .15s, transform .08s, opacity .15s, filter .15s;
+        color:#e5eeff;
     }
-    .pill .dot { width:12px; height:12px; border-radius:50%; border:1px solid rgba(0,0,0,.08); flex:0 0 12px; }
-    .pill .name { font-weight:600; }
-    .pill .meta { color:#6c757d; font-size:.8rem; }
+    .pill:hover {
+        background: rgba(15, 23, 42, 0.28);
+        border-color: rgba(248, 250, 252, 0.95);
+        transform: translateY(-1px);
+        box-shadow: 0 6px 16px rgba(15, 23, 42, 0.45);
+    }
     .pill.active {
-        border-color: rgba(13,110,253,.45);
-        box-shadow: 0 0 0 3px rgba(13,110,253,.15) inset; background:#f0f6ff;
+        border-color: rgba(191, 219, 254, 0.95);
+        box-shadow: 0 0 0 2px rgba(191, 219, 254, 0.7), 0 10px 25px rgba(15, 23, 42, 0.55);
+        background: rgba(15, 23, 42, 0.4);
+        transform: translateY(-1px);
     }
+    .pill .dot {
+        width:12px; height:12px; border-radius:50%;
+        border:1px solid rgba(15, 23, 42,.15);
+        flex:0 0 12px;
+        box-shadow: 0 0 0 2px rgba(15, 23, 42, 0.2);
+    }
+    .pill .name { font-weight:600; }
+    .pill .meta { color:rgba(226, 232, 255, 0.8); font-size:.8rem; }
 
-    /* ★ 선택된 아르바이트생 외 나머지 블러/디밍 */
+    /* ★ 선택된 아르바이트생 외 나머지 블러/디밍 (주간 화면에서도 동일 느낌) */
     body.alba-has-selected .pill:not(.active) {
         opacity: .35;
         filter: grayscale(.4);
@@ -550,7 +595,7 @@
         background: rgba(249,115,22,0.08);
     }
 
-    /* ★ 현재 시간행 배경 강조 제거: class는 유지하되 스타일은 기본과 동일 */
+    /* 현재 시간행 배경 강조 제거: class는 유지하되 스타일은 기본과 동일 */
     .current-time-row .hour-row-header {
         background:#f8fafc !important;
     }
@@ -785,14 +830,12 @@
             if (btnThisWeek) btnThisWeek.addEventListener('click', async (e)=>{ e.preventDefault(); currentWeekStart = toMonday(new Date()); await handleStatusChange(); });
             if (btnNextWeek) btnNextWeek.addEventListener('click', async (e)=>{ e.preventDefault(); currentWeekStart = addDays(currentWeekStart, +7); await handleStatusChange(); });
 
-            // PDF 전체 출력 페이지
             if (btnOpenPrintPage) {
                 btnOpenPrintPage.addEventListener('click', () => {
                     openPrintPage();
                 });
             }
 
-            // ★ PDF(개별) 출력 페이지
             if (btnOpenPrintMemberPage) {
                 btnOpenPrintMemberPage.addEventListener('click', () => {
                     openPrintMemberPage();
@@ -891,7 +934,6 @@
             window.addEventListener('mouseup', ()=>{ modalDragging=false; });
         }
 
-        // PDF 전체 출력용 페이지
         function openPrintPage() {
             const status = statusSelect.value;
             const weekStartIso = toIso(currentWeekStart);
@@ -901,7 +943,6 @@
             window.open(url, '_blank');
         }
 
-        // ★ 선택된 아르바이트생만 출력하는 PDF 페이지
         function openPrintMemberPage() {
             if (!selectedMember) {
                 alert('선택된 아르바이트생이 없습니다.');
@@ -910,7 +951,6 @@
             const weekStartIso = toIso(currentWeekStart);
             const slot = slotMinutes;
 
-            // 백엔드에서 이 URL을 개별 출력용으로 구현해 주세요.
             const url =
                     `/schedules/work/weekly/print/individual` +
                     `?memberId=${encodeURIComponent(selectedMember.id)}` +
@@ -971,13 +1011,14 @@
             memberCountBadge.textContent = `${members.length}명`;
 
             if (members.length === 0) {
-                memberList.innerHTML = `<span class="text-muted small">해당 상태의 아르바이트생이 없습니다.</span>`;
+                memberList.innerHTML = `<span class="text-light small">해당 상태의 아르바이트생이 없습니다.</span>`;
                 return;
             }
 
             members.slice().sort((a,b)=>(a.name||'').localeCompare(b.name||'', 'ko')).forEach(m => {
                 const color = colorForMember(m);
-                const pill = document.createElement('div');
+                const pill = document.createElement('button');
+                pill.type = 'button';
                 pill.className = 'pill';
                 pill.dataset.memberId = String(m.id);
                 pill.innerHTML = `
@@ -985,8 +1026,14 @@
                 <span class="name">${escapeHtml(m.name ?? '-')}</span>
                 <span class="meta">${escapeHtml(m.phone ?? '')}</span>
             `;
-                pill.addEventListener('click', async () => {
-                    selectedMember = m;
+                pill.addEventListener('click', async (evt) => {
+                    evt.preventDefault();
+                    evt.stopPropagation();
+                    if (selectedMember && String(selectedMember.id) === String(m.id)) {
+                        selectedMember = null;
+                    } else {
+                        selectedMember = m;
+                    }
                     updatePillActive();
                     await fetchAndRenderWeekTable(currentStatusMembers, currentWeekStart);
                     await loadSelectedMemberWeek();
@@ -1008,7 +1055,6 @@
                 else p.classList.remove('active');
             });
 
-            // ★ 선택된 멤버가 있을 때 body에 class 부여(블러용)
             if (selectedMember) {
                 document.body.classList.add('alba-has-selected');
             } else {

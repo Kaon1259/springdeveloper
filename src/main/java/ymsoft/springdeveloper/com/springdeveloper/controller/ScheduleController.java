@@ -16,7 +16,9 @@ import ymsoft.springdeveloper.com.springdeveloper.entity.WorkSchedule;
 import ymsoft.springdeveloper.com.springdeveloper.service.WorkScheduleService;
 import ymsoft.springdeveloper.com.springdeveloper.service.memberService;
 
+import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 @Slf4j
@@ -132,4 +134,43 @@ public class ScheduleController {
         return "schedules/weeklyPrintIndividual"; // 머스태치 파일
     }
 
+
+    @GetMapping("/weeklyworktime/print")
+    public String weeklyWorktimePrint(
+            @RequestParam Long memberId,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            Model model
+    ) throws Exception {
+
+        log.info("weeklyWorktimePrint: memberId: " + memberId);
+
+        // 1) 기준 주 계산 (월요일 시작)
+        LocalDate base = (startDate != null) ? startDate : LocalDate.now();
+        LocalDate startOfWeek = base.with(DayOfWeek.MONDAY);
+        LocalDate endOfWeek   = startOfWeek.plusDays(6);
+
+        log.info("weeklyWorktimePrint: memberId: " + memberId);
+        log.info("weeklyWorktimePrint: startDate: " + startDate);
+        log.info("weeklyWorktimePrint: endDate: " + endDate);
+
+        model.addAttribute("weekRangeLabel",
+                String.format("%s ~ %s",
+                        startOfWeek.format(DateTimeFormatter.ofPattern("yyyy.MM.dd")),
+                        endOfWeek.format(DateTimeFormatter.ofPattern("MM.dd"))));
+
+        // ★ findById → 리스트로 감싸기
+        MemberDto member = memService.findById(memberId);
+
+        log.info("weeklyWorktimePrint member: {}", member);
+
+        model.addAttribute("member", member);
+        String memberJson = objectMapper.writeValueAsString(member); // ★ 배열 JSON
+        log.info("weeklyWorktimePrint memberJson: {}", memberJson);
+
+        model.addAttribute("memberJson", memberJson);
+        model.addAttribute("pageTitle", "월/주 실 근무시간 대시보드");
+
+        return "schedules/weeklyWorktimeIndividualPrint";
+    }
 }

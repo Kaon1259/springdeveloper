@@ -45,6 +45,8 @@
         <div class="card-header fw-bold d-flex justify-content-between align-items-center">
             <span>주간 캘린더 (월~일)</span>
             <div class="d-flex align-items-center gap-2">
+                <!-- ✅ 추가: PDF 버튼 (지난주 버튼 왼쪽) -->
+                <button id="btnOpenPrintPage" class="btn btn-sm btn-outline-secondary">PDF</button>
                 <button id="btnPrevWeek" class="btn btn-sm btn-outline-secondary">◀ 지난주</button>
                 <span id="weekRangeLabelRight" class="small text-muted px-1"></span>
                 <button id="btnThisWeek" class="btn btn-sm btn-outline-secondary">금주</button>
@@ -507,9 +509,10 @@
         const weekCalendarGrid    = document.getElementById('weekCalendarGrid');
         const weekActualRow       = document.getElementById('weekActualRow');
 
-        const btnPrevWeek = document.getElementById('btnPrevWeek');
-        const btnThisWeek = document.getElementById('btnThisWeek');
-        const btnNextWeek = document.getElementById('btnNextWeek');
+        const btnPrevWeek         = document.getElementById('btnPrevWeek');
+        const btnThisWeek         = document.getElementById('btnThisWeek');
+        const btnNextWeek         = document.getElementById('btnNextWeek');
+        const btnOpenPrintPage    = document.getElementById('btnOpenPrintPage'); // ✅ PDF 버튼
 
         // 개별 주간 그리드 DOM
         const memberWeekCard      = document.getElementById('memberWeekCard');
@@ -578,6 +581,13 @@
                 handleStatusChange();
             });
 
+            // ✅ PDF 버튼 클릭 → 새 창에서 PDF 보기
+            if (btnOpenPrintPage) {
+                btnOpenPrintPage.addEventListener('click', () => {
+                    openPrintPage();
+                });
+            }
+
             // 슬롯 단위 버튼
             if (gridSlotButtonsWrapper) {
                 gridSlotButtonsWrapper
@@ -626,6 +636,27 @@
             if (memberWeekForm) {
                 memberWeekForm.addEventListener('submit', onSubmitWeekForm);
             }
+        }
+
+        /* ✅ PDF 전체 출력용 페이지 오픈 */
+        function openPrintPage() {
+            // 1) 멤버 선택 여부 확인
+            if (!selectedMember) {
+                alert('출력할 아르바이트생을 먼저 선택해 주세요.');
+                return;
+            }
+
+            // 2) 현재 보고 있는 주의 시작/끝 날짜
+            const startIso = toIso(currentWeekStart);            // 월요일
+            const endIso   = toIso(addDays(currentWeekStart, 6)); // 일요일
+
+            const url =
+                    `/schedules/weeklyworktime/print` +
+                    `?memberId=${encodeURIComponent(selectedMember.id)}` +
+                    `&startDate=${encodeURIComponent(startIso)}` +
+                    `&endDate=${encodeURIComponent(endIso)}`;
+
+            window.open(url, '_blank');
         }
 
         /* 저장 / 근무시간채우기 버튼 활성/비활성 (10분만 활성) */

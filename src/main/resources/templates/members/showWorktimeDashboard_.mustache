@@ -87,7 +87,11 @@
                 <span class="badge bg-secondary ms-2" id="memberWeekNameBadge"></span>
             </div>
             <!-- 저장 버튼: 10분 단위에서만 활성화 -->
-            <button type="submit" id="btnSaveWeek" class="btn btn-sm btn-primary" form="memberWeekForm" disabled>근무시간수정</button>
+            <button type="submit"
+                    id="btnSaveWeek"
+                    class="btn btn-sm btn-primary"
+                    form="memberWeekForm"
+                    disabled>근무시간수정</button>
         </div>
         <div class="card-body">
             <!-- 수정용 타임테이블 (주간 그리드) -->
@@ -100,7 +104,14 @@
                             <button type="button" class="btn btn-outline-secondary" data-grid-slot="30">30분</button>
                             <button type="button" class="btn btn-outline-secondary active" data-grid-slot="60">1시간</button>
                         </div>
-                        <button type="button" class="btn btn-sm btn-outline-secondary ms-1" id="btnGridClearAll">전체 초기화</button>
+                        <button type="button"
+                                class="btn btn-sm btn-outline-secondary ms-1"
+                                id="btnGridClearAll">전체 초기화</button>
+                        <!-- ✅ 추가: 계획 그리드 기준으로 실제 근무 그리드 채우기 -->
+                        <button type="button"
+                                class="btn btn-sm btn-outline-success ms-1"
+                                id="btnFillFromPlan"
+                                disabled>근무시간채우기</button>
                     </div>
                     <div class="right small text-muted">
                         왼쪽은 <strong>근무계획</strong>, 오른쪽은 <strong>실제 근무시간</strong>입니다. (06:00 ~ 22:00, 실제 근무시간만 수정 가능)
@@ -476,9 +487,9 @@
 
 <script>
     (function(){
-        const API_WORK   = '/api/schedule';              // 계획: GET /{memberId}/{start}/{end}
-        const API_PLAN   = '/api/schedule/work';         // 실제: GET /{memberId}/{start}/{end}
-        const API_UPDATE = '/api/schedule/update';       // 저장: POST { memberId, date, segments[] }
+        const API_WORK   = '/api/schedule';        // 실제: GET /{memberId}/{start}/{end}
+        const API_PLAN   = '/api/schedule/work';   // 계획: GET /{memberId}/{start}/{end}
+        const API_UPDATE = '/api/schedule/update'; // 저장: POST { memberId, date, segments[] }
         const HOUR_START = 6;
         const HOUR_END   = 22;
 
@@ -509,6 +520,7 @@
         const gridSlotButtonsWrapper  = document.getElementById('gridSlotButtons');
         const btnGridClearAll         = document.getElementById('btnGridClearAll');
         const btnSaveWeek             = document.getElementById('btnSaveWeek');
+        const btnFillFromPlan         = document.getElementById('btnFillFromPlan'); // ✅ 계획 → 실제 복사 버튼
 
         // 데이터 상태
         let allMembers = [];
@@ -539,7 +551,7 @@
 
         attachHandlers();
         handleStatusChange();
-        updateSaveButtonByStep(); // 초기 상태(1시간) → 비활성화
+        updateSaveButtonByStep(); // 초기 상태(1시간) → 버튼 비활성화
 
         function attachHandlers(){
             statusSelect.addEventListener('change', handleStatusChange);
@@ -568,28 +580,32 @@
 
             // 슬롯 단위 버튼
             if (gridSlotButtonsWrapper) {
-                gridSlotButtonsWrapper.querySelectorAll('button[data-grid-slot]').forEach(btn => {
-                    btn.addEventListener('click', () => {
-                        const mins = parseInt(btn.dataset.gridSlot, 10);
-                        if (!mins) return;
+                gridSlotButtonsWrapper
+                        .querySelectorAll('button[data-grid-slot]')
+                        .forEach(btn => {
+                            btn.addEventListener('click', () => {
+                                const mins = parseInt(btn.dataset.gridSlot, 10);
+                                if (!mins) return;
 
-                        // 버튼 active 토글
-                        gridSlotButtonsWrapper.querySelectorAll('button[data-grid-slot]').forEach(b => b.classList.remove('active'));
-                        btn.classList.add('active');
+                                // 버튼 active 토글
+                                gridSlotButtonsWrapper
+                                        .querySelectorAll('button[data-grid-slot]')
+                                        .forEach(b => b.classList.remove('active'));
+                                btn.classList.add('active');
 
-                        // 스텝 변경
-                        if (gridStepMinutes !== mins) {
-                            gridStepMinutes = mins;
-                            buildMemberWeekGrid();
-                            hydratePlanGridFromMap(currentWeekPlanMap);
-                            hydrateWorkGridFromMap(selectedWeekDaysMap);
-                            if (highlightedDayIso) focusDayColumnInGrid(highlightedDayIso);
-                        }
+                                // 스텝 변경
+                                if (gridStepMinutes !== mins) {
+                                    gridStepMinutes = mins;
+                                    buildMemberWeekGrid();
+                                    hydratePlanGridFromMap(currentWeekPlanMap);
+                                    hydrateWorkGridFromMap(selectedWeekDaysMap);
+                                    if (highlightedDayIso) focusDayColumnInGrid(highlightedDayIso);
+                                }
 
-                        // ▼ 저장 버튼은 10분일 때만 활성화
-                        updateSaveButtonByStep();
-                    });
-                });
+                                // 저장 / 근무시간채우기 버튼은 10분일 때만 활성화
+                                updateSaveButtonByStep();
+                            });
+                        });
             }
 
             if (btnGridClearAll) {
@@ -602,17 +618,26 @@
                 });
             }
 
+            // ✅ 계획 → 실제 근무 그리드 채우기
+            if (btnFillFromPlan) {
+                btnFillFromPlan.addEventListener('click', onClickFillFromPlan);
+            }
+
             if (memberWeekForm) {
                 memberWeekForm.addEventListener('submit', onSubmitWeekForm);
             }
         }
 
-        /* 저장 버튼 활성/비활성 (10분만 활성) */
+        /* 저장 / 근무시간채우기 버튼 활성/비활성 (10분만 활성) */
         function updateSaveButtonByStep(){
+            const enable = (gridStepMinutes === 10);
             if (btnSaveWeek) {
-                const enable = (gridStepMinutes === 10);
                 btnSaveWeek.disabled = !enable;
                 btnSaveWeek.title = enable ? '' : '저장은 10분 단위에서만 가능합니다.';
+            }
+            if (btnFillFromPlan) {
+                btnFillFromPlan.disabled = !enable;
+                btnFillFromPlan.title = enable ? '' : '근무시간채우기는 10분 단위에서만 가능합니다.';
             }
         }
 
@@ -858,7 +883,8 @@
             const headTh = document.querySelector(`.week-grid thead th[data-day-offset="${dayOffset}"]`);
             if (headTh) headTh.classList.add('grid-col-selected');
 
-            memberWeekGridBody.querySelectorAll(`td > .slot-wrapper > .slot-actual[data-day-offset="${dayOffset}"]`)
+            memberWeekGridBody
+                    .querySelectorAll(`td > .slot-wrapper > .slot-actual[data-day-offset="${dayOffset}"]`)
                     .forEach(slot => {
                         const td = slot.closest('td');
                         if (td) td.classList.add('grid-col-selected');
@@ -890,7 +916,8 @@
             const endMin   = HOUR_END * 60;
             const totalRows = (endMin - startMin) / gridStepMinutes;
 
-            memberWeekGridBody.querySelectorAll(`.slot-10m.slot-actual[data-day-offset="${dayOffset}"]`)
+            memberWeekGridBody
+                    .querySelectorAll(`.slot-10m.slot-actual[data-day-offset="${dayOffset}"]`)
                     .forEach(el => el.classList.remove('slot-diff'));
 
             for (let idx = 0; idx < totalRows; idx++){
@@ -1160,11 +1187,45 @@
             return res;
         }
 
+        /* ✅ 계획 그리드 → 실제 근무 그리드로 전체 복사 */
+        function onClickFillFromPlan(){
+            // 10분 단위가 아닐 때는 사용 불가
+            if (gridStepMinutes !== 10) {
+                alert('근무시간채우기는 10분 단위에서만 가능합니다. 슬롯 버튼에서 10분을 선택해 주세요.');
+                return;
+            }
+            if (!memberWeekGridBody) return;
+
+            // 기존 실제 선택/DIFF 제거
+            memberWeekGridBody
+                    .querySelectorAll('.slot-10m.slot-actual.selected')
+                    .forEach(el => el.classList.remove('selected','slot-diff'));
+
+            // 계획(filled) 슬롯과 동일 위치의 실제 슬롯을 선택
+            memberWeekGridBody
+                    .querySelectorAll('.slot-plan.filled')
+                    .forEach(planEl => {
+                        const dayOffset = planEl.dataset.dayOffset;
+                        const idx       = planEl.dataset.idx;
+                        const actualEl  = memberWeekGridBody.querySelector(
+                                `.slot-10m.slot-actual[data-day-offset="${dayOffset}"][data-idx="${idx}"]`
+                        );
+                        if (actualEl) {
+                            actualEl.classList.add('selected');
+                        }
+                    });
+
+            // 현재 선택된 하이라이트 일자 기준으로 diff 재계산
+            if (highlightedDayIso) {
+                recomputeGridDiffForHighlightedDay();
+            }
+        }
+
         /* ===== 저장: 실제 근무시간 수정 저장 ===== */
         async function onSubmitWeekForm(e){
             e.preventDefault();
 
-            // ▼ 10분 단위가 아닐 때는 저장 불가
+            // 10분 단위가 아닐 때는 저장 불가
             if (gridStepMinutes !== 10) {
                 alert('저장은 10분 단위에서만 가능합니다. 슬롯 버튼에서 10분을 선택해 주세요.');
                 return;

@@ -47,7 +47,7 @@
                     • 상태 선택에 따라 위 카드 목록이 필터링됩니다.<br>
                     • 카드 상단 파란색 헤더(이름/상태/수정 버튼 영역)를 포함한 카드 전체를 클릭하면 아래 <strong>주간 템플릿</strong> 패널에 해당 아르바이트의 템플릿이 표시됩니다.<br>
                     • 카드 헤더의 <strong>수정</strong> 버튼을 누르면 해당 아르바이트의 <code>/members/{id}/edit</code> 화면으로 이동합니다.<br>
-                    • 카드 하단의 버튼으로 <strong>주간근무 템플릿 / 주간근무시간 / 월간근무시간</strong>을 바로 열 수 있습니다.
+                    • 카드 하단의 버튼으로 <strong>주간근무 템플릿 / 주간근무시간 / 월간근무시간 / 급여관리</strong>를 바로 열 수 있습니다.
                 </p>
             </div>
         </section>
@@ -100,8 +100,8 @@
                     </div>
 
                     <div class="schedule-board">
-                        <div class="table-responsive schedule-table-wrap">
-                            <table class="table schedule-table text-center" id="tableWeek10m">
+                        <div class="schedule-table-wrap">
+                            <table class="schedule-table" id="tableWeek10m">
                                 <thead>
                                 <tr id="theadWeek">
                                     <th class="time-col">시간</th>
@@ -121,6 +121,7 @@
                             <span class="legend-box legend-plan"></span> 선택된 템플릿 셀
                         </div>
                     </div>
+
                 </div>
 
             </div>
@@ -184,7 +185,7 @@
         border: 1px solid rgba(148,163,184,0.18);
         backdrop-filter: blur(14px);
         -webkit-backdrop-filter: blur(14px);
-        overflow: hidden; /* ✅ 헤더 라운드 모서리 자연스럽게 */
+        overflow: hidden;
     }
 
     .panel-header {
@@ -343,7 +344,7 @@
         box-shadow: 0 0 0 1px rgba(59,130,246,0.4), 0 18px 36px rgba(37,99,235,0.26);
     }
 
-    /* 파란색 헤더 바 */
+    /* 파란색 헤더 바 (기본) */
     .member-card-header {
         padding: 0.6rem 0.9rem;
         background: linear-gradient(90deg, #2563eb, #1d4ed8);
@@ -351,6 +352,13 @@
         border-radius: 16px 16px 0 0;
         margin: 0;
     }
+
+    /* ✅ 선택된 카드(.active)의 헤더를 주황색으로 변경 */
+    .member-card.active .member-card-header {
+        background: linear-gradient(90deg, #fb923c, #f97316); /* 주황 그라데이션 */
+        color: #fff;
+    }
+
     .member-name {
         font-size: 0.95rem;
         font-weight: 700;
@@ -379,7 +387,7 @@
     /* 헤더 안 수정 버튼 */
     .member-edit-btn {
         border-radius:999px;
-        font-size:0.7rem;
+        font-size:0.9rem;
         padding:0.1rem 0.6rem;
         line-height:1.2;
     }
@@ -508,69 +516,87 @@
 
     /* ===== 스케줄 보드 ===== */
     .schedule-board {
-        border-radius:14px;
-        border:1px solid rgba(226,232,240,0.9);
-        padding:0.8rem;
-        background:linear-gradient(135deg, rgba(248,250,252,0.9), rgba(239,246,255,0.95));
+        border-radius: 10px;
+        border: 1px solid #e5e7eb;
+        background: #ffffff;
+        overflow: hidden;
+        padding: 0.6rem 0.6rem 0.7rem;
     }
     .schedule-table-wrap {
         max-height: 520px;
-        overflow:auto;
+        overflow: auto;
     }
+
     .schedule-table {
-        margin-bottom:0;
-        border-collapse:separate;
-        border-spacing:0;
-        font-size:0.78rem;
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        table-layout: fixed;
+        font-size: 0.78rem;
     }
     .schedule-table thead th {
+        background: #f8fafc;
+        color:#64748b;
+        font-weight: 600;
+        font-size: 0.9rem;
+        border-bottom: 1px solid #e5e7eb;
+        text-align: center;
+        padding: .5rem .4rem;
         position: sticky;
         top: 0;
-        z-index: 3;
-        background: linear-gradient(135deg,#e5edff,#f9fafb);
-        border-bottom:1px solid rgba(209,213,219,0.9);
-        font-size:0.75rem;
-        font-weight:600;
-        color:#4b5563;
+        z-index: 2;
     }
-    .schedule-table th, .schedule-table td {
-        border:0;
-        padding:2px 2px;
-        vertical-align:middle;
-    }
-    .schedule-table .time-col {
-        width:70px;
-        font-variant-numeric:tabular-nums;
-        font-size:0.7rem;
+    .schedule-table tbody th.time-col {
+        background: #fafafa;
         color:#6b7280;
-        background:rgba(15,23,42,0.04);
+        font-weight: 600;
+        width: 74px;
+        border-right: 1px solid #e5e7eb;
+        text-align: center;
+        padding: .25rem .25rem;
+        font-size: .8rem;
         position: sticky;
-        left:0;
-        z-index:2;
+        left: 0;
+        z-index: 1;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .schedule-table th,
+    .schedule-table td {
+        border: 0;
+        padding: 2px 3px;
+        vertical-align: middle;
     }
 
     .cell-10m {
-        height: 14px;
-        border-radius: 4px;
+        height: 18px;
+        margin: 1px 0;
+        border-radius: 6px;                 /* ✅ 라운드 렉트 */
+        border: 1px solid #eef2f6;
         background: #ffffff;
         cursor: pointer;
         user-select: none;
-        border:1px solid rgba(229,231,235,0.85);
-        transition: background .08s, border-color .08s, box-shadow .08s, transform .04s;
+        transition: background .15s ease,
+        box-shadow .15s ease,
+        border-color .15s ease,
+        transform .08s ease;
     }
+
     .cell-10m:hover {
-        box-shadow: 0 0 0 1px rgba(59,130,246,0.45);
+        background: #f8fbff;
+        box-shadow: 0 0 0 1px rgba(148,163,184,0.35);
         transform: translateY(-0.5px);
     }
 
     .cell-10m.schedule-on {
-        background: rgba(248, 164, 76, 0.6);
-        border-color: rgba(248, 164, 76, 0.9);
-        box-shadow: 0 0 0 1px rgba(248,164,76,0.8);
+        background: rgba(102, 187, 106, 0.55);
+        border-color: rgba(46, 160, 67, 0.6);
+        box-shadow: inset 0 0 0 1px rgba(46, 160, 67, 0.6);
     }
 
-    tr.hour-start > td, tr.hour-start > th {
-        border-top: 1px dashed rgba(148,163,184,0.5) !important;
+    tr.hour-start > td,
+    tr.hour-start > th {
+        border-top: 2px solid #e5e7eb !important;
     }
 
     .legend-row {
@@ -578,6 +604,7 @@
         align-items:center;
         gap:0.5rem;
         flex-wrap:wrap;
+        margin-top: 0.5rem;
     }
     .legend-box {
         display:inline-block;
@@ -588,8 +615,8 @@
         vertical-align:middle;
     }
     .legend-plan {
-        background: rgba(248, 164, 76, 0.6);
-        border-color: rgba(248, 164, 76, 0.9);
+        background: rgba(102,187,106,0.55);
+        border-color: rgba(46,160,67,0.6);
     }
 
     .slot-btn-group .btn {
@@ -620,9 +647,10 @@
         const HOUR_END   = 22;
 
         const API_BASE_PLAN     = '/api/member';          // 주간 "템플릿" GET + POST(update)
+        const PAYMENT_POPUP_URL = '/payment/individual/popup'; // ✅ 급여관리 팝업 엔드포인트
 
         const DOW_LABELS = ['월','화','수','목','금','토','일'];
-        const DAY_CODES = ['MON','TUE','WED','THU','FRI','SAT','SUN'];
+        const DAY_CODES  = ['MON','TUE','WED','THU','FRI','SAT','SUN'];
 
         // DOM
         const statusSelect      = document.getElementById('statusSelect');
@@ -677,12 +705,18 @@
         let gridDragAdding     = true;
 
         // 멤버 데이터 파싱
-        try{
-            allMembers = JSON.parse(document.getElementById('membersData').textContent||'[]');
-        }catch(e){
+        try {
+            allMembers = JSON.parse(document.getElementById('membersData').textContent || '[]');
+        } catch(e) {
             allMembers = [];
         }
-        if(Array.isArray(allMembers) && allMembers.length>0){
+
+        /* ✅ 단일 객체로 넘어와도 항상 배열로 정규화 */
+        if (!Array.isArray(allMembers)) {
+            allMembers = allMembers ? [allMembers] : [];
+        }
+
+        if (allMembers.length > 0) {
             statusSelect.value = allMembers[0].status || 'WORKING';
         }
 
@@ -725,7 +759,7 @@
                 return;
             }
 
-            // 카드 하단 3개 버튼
+            // 카드 하단 버튼들
             if (actionBtn) {
                 const memberId = actionBtn.dataset.memberId;
                 const action   = actionBtn.dataset.action;
@@ -746,6 +780,9 @@
                 } else if (action === 'month') {
                     // 월간 근무시간 팝업
                     openMonthSummaryPopupWindow();
+                } else if (action === 'payment') {
+                    // ✅ 급여관리 팝업
+                    openPaymentIndividualPopupWindow();
                 }
                 return;
             }
@@ -766,25 +803,25 @@
 
         // ===== 상태 변경 시 카드 리스트 렌더링 =====
         function handleStatusChange(){
-            const status=statusSelect.value;
-            const filtered=(allMembers||[]).filter(m=>m.status===status);
+            const status = statusSelect.value;
+            const filtered = (allMembers || []).filter(m => m.status === status);
             renderMemberList(filtered);
 
-            if(filtered.length){
+            if (filtered.length){
                 const keep = filtered.find(m=>String(m.id)===String(selectedMemberId)) || filtered[0];
                 selectMember(keep);
-            }else{
-                selectedMemberId=null;
+            } else {
+                selectedMemberId = null;
                 clearRight();
             }
         }
 
         function renderMemberList(members){
-            memberList.innerHTML='';
-            memberCountBadge.textContent=`${members.length}명`;
+            memberList.innerHTML = '';
+            memberCountBadge.textContent = `${members.length}명`;
 
-            if(!members.length){
-                memberList.innerHTML='<div class="text-xs text-muted">해당 상태의 아르바이트생이 없습니다.</div>';
+            if (!members.length){
+                memberList.innerHTML = '<div class="text-xs text-muted">해당 상태의 아르바이트생이 없습니다.</div>';
                 return;
             }
 
@@ -792,16 +829,16 @@
                     .slice()
                     .sort((a,b)=>(a.name||'').localeCompare(b.name||'','ko'))
                     .forEach(m=>{
-                        const card=document.createElement('article');
-                        card.className='member-card';
-                        card.dataset.memberId=String(m.id);
-                        const color=colorForMember(m);
-                        const healthStr = healthLabel(m);
-                        const paydayStr = formatPayday(m.payday);
-                        const taxStr    = yesNoLabel(m.applyTax);
+                        const card = document.createElement('article');
+                        card.className = 'member-card';
+                        card.dataset.memberId = String(m.id);
+                        const color      = colorForMember(m);
+                        const healthStr  = healthLabel(m);
+                        const paydayStr  = formatPayday(m.payday);
+                        const taxStr     = yesNoLabel(m.applyTax);
                         const includeWeeklyStr = yesNoLabel(m.includeWeeklyHolidayAllowance);
                         const createdStr = createdAtStr(m);
-                        const hourlyStr = (typeof m.hourlyWage==='number') ? krw(m.hourlyWage) : '-';
+                        const hourlyStr  = (typeof m.hourlyWage==='number') ? krw(m.hourlyWage) : '-';
 
                         card.innerHTML = `
                         <div class="member-card-header">
@@ -815,7 +852,7 @@
                                         class="btn btn-sm btn-outline-light member-edit-btn"
                                         data-role="editMember"
                                         data-member-id="${m.id}">
-                                        수정
+                                        상세보기
                                     </button>
                                     <span class="status-badge ${statusClass(m.status)}">${statusLabel(m.status)}</span>
                                 </div>
@@ -883,6 +920,13 @@
                                 data-member-id="${m.id}">
                                 월간근무시간
                             </button>
+                            <!-- ✅ 새로 추가된 급여관리 버튼 -->
+                            <button type="button"
+                                class="card-schedule-btn"
+                                data-action="payment"
+                                data-member-id="${m.id}">
+                                급여관리
+                            </button>
                         </div>
                     `;
                         memberList.appendChild(card);
@@ -892,8 +936,8 @@
         }
 
         async function selectMember(member){
-            currentMember=member;
-            selectedMemberId=member.id;
+            currentMember   = member;
+            selectedMemberId= member.id;
             updateMemberListActive();
             await renderAll(member);
         }
@@ -916,7 +960,7 @@
             currentWeekDates = weekDates;
             renderWeekHeadDates(weekDates);
 
-            lastPlanMap   = {};
+            lastPlanMap = {};
 
             try{
                 const urlPlan = `${API_BASE_PLAN}/${encodeURIComponent(member.id)}/schedule`;
@@ -969,9 +1013,9 @@
 
         // ===== 주간 템플릿 그리드 =====
         function buildWeekGrid(){
-            tbodyWeek.innerHTML='';
+            tbodyWeek.innerHTML = '';
             const totalMinutes = (HOUR_END - HOUR_START) * 60;
-            const totalRows = totalMinutes / gridStepMinutes;
+            const totalRows    = totalMinutes / gridStepMinutes;
 
             for(let idx=0; idx<totalRows; idx++){
                 const absMin = HOUR_START*60 + idx*gridStepMinutes;
@@ -981,22 +1025,22 @@
                 const tr = document.createElement('tr');
                 if(m===0) tr.classList.add('hour-start');
                 tr.innerHTML = `
-                <th class="timecell time-col" scope="row">${hm}</th>
-                <td data-col="1"><div class="cell-10m"></div></td>
-                <td data-col="2"><div class="cell-10m"></div></td>
-                <td data-col="3"><div class="cell-10m"></div></td>
-                <td data-col="4"><div class="cell-10m"></div></td>
-                <td data-col="5"><div class="cell-10m"></div></td>
-                <td data-col="6"><div class="cell-10m"></div></td>
-                <td data-col="7"><div class="cell-10m"></div></td>
-            `;
+                    <th class="time-col" scope="row">${hm}</th>
+                    <td data-col="1"><div class="cell-10m"></div></td>
+                    <td data-col="2"><div class="cell-10m"></div></td>
+                    <td data-col="3"><div class="cell-10m"></div></td>
+                    <td data-col="4"><div class="cell-10m"></div></td>
+                    <td data-col="5"><div class="cell-10m"></div></td>
+                    <td data-col="6"><div class="cell-10m"></div></td>
+                    <td data-col="7"><div class="cell-10m"></div></td>
+                `;
                 tbodyWeek.appendChild(tr);
             }
         }
 
         function renderWeekHeadDates(weekDates){
             const ths = theadWeek.querySelectorAll('th');
-            for(let i=0;i<7;i++){
+            for(let i=0; i<7; i++){
                 const th = ths[i+1];
                 if(!th) continue;
                 const d = new Date(weekDates[i]);
@@ -1021,9 +1065,9 @@
             const rows = Array.from(tbodyWeek.querySelectorAll('tr'));
 
             for(let dayIdx=0; dayIdx<7; dayIdx++){
-                const iso = weekDates[dayIdx];
+                const iso   = weekDates[dayIdx];
                 const entry = planMap[iso];
-                const segs = entry?.segments || [];
+                const segs  = entry?.segments || [];
                 if(!segs.length) continue;
 
                 rows.forEach((tr, rIdx)=>{
@@ -1117,8 +1161,8 @@
 
             try{
                 for(let idx = 0; idx < currentWeekDates.length; idx++){
-                    const iso = currentWeekDates[idx];
-                    const dayCode = DAY_CODES[idx];
+                    const iso      = currentWeekDates[idx];
+                    const dayCode  = DAY_CODES[idx];
                     const segments = byDate[iso] || [];
 
                     const payload = {
@@ -1263,6 +1307,44 @@
             );
         }
 
+        // ✅ 새로 추가: 급여관리 팝업
+        function openPaymentIndividualPopupWindow() {
+            if (!currentMember) {
+                alert('선택된 아르바이트가 없습니다.');
+                return;
+            }
+
+            let anchorIso = null;
+
+            // 1순위: 현재 주 배열
+            if (currentWeekDates && currentWeekDates.length) {
+                anchorIso = currentWeekDates[0];
+            } else if (weekRangeLabelEl && weekRangeLabelEl.textContent) {
+                // 2순위: weekRangeLabel에서 파싱
+                const parsed = parseWeekRangeToDates(weekRangeLabelEl.textContent);
+                anchorIso = parsed.weekStartIso;
+            }
+
+            // 3순위: 오늘 날짜
+            if (!anchorIso) {
+                anchorIso = toIso(new Date());
+            }
+
+            const memberId = currentMember.id;
+
+            const url =
+                    `${PAYMENT_POPUP_URL}` +
+                    `?memberId=${encodeURIComponent(memberId)}` +
+                    `&month=${encodeURIComponent(anchorIso)}` +
+                    `&week=${encodeURIComponent(anchorIso)}`;
+
+            window.open(
+                    url,
+                    'paymentIndividualPopup',
+                    'width=1600,height=800,scrollbars=yes,resizable=yes'
+            );
+        }
+
         // ===== 초기화 =====
         function clearRight(){
             selectedMemberTitle.textContent   = '주간 템플릿 (월~일)';
@@ -1271,7 +1353,7 @@
 
             tbodyWeek.innerHTML               = '';
             if(tbodyWeekSummary) tbodyWeekSummary.innerHTML        = '';
-            if(calendarGrid) calendarGrid.innerHTML            = '';
+            if(calendarGrid) calendarGrid.innerHTML                = '';
 
             if(weekPlannedTotalCell) weekPlannedTotalCell.textContent  = '0시간';
             if(weekActualTotalCell)  weekActualTotalCell.textContent   = '0시간';
@@ -1287,7 +1369,7 @@
             if(monthRangeLabel)      monthRangeLabel.textContent       = '0000.00.01 ~ 00.00';
 
             currentWeekDates = [];
-            lastPlanMap = {};
+            lastPlanMap      = {};
             updateSaveButtonByStep();
         }
 
@@ -1384,10 +1466,10 @@
 
         function statusClass(s){
             const map = {
-                WORKING:'bg-success text-white',
-                WAITING:'bg-secondary text-white',
-                RESTING:'bg-info text-white',
-                PAUSED:'bg-warning text-dark',
+                WORKING :'bg-success text-white',
+                WAITING :'bg-secondary text-white',
+                RESTING :'bg-info text-white',
+                PAUSED  :'bg-warning text-dark',
                 RESIGNED:'bg-danger text-white'
             };
             return map[s] || '';
@@ -1395,10 +1477,10 @@
 
         function statusLabel(s){
             const map = {
-                WORKING:'근무중',
-                WAITING:'시작전',
-                RESTING:'휴식중',
-                PAUSED:'일시중지',
+                WORKING :'근무중',
+                WAITING :'시작전',
+                RESTING :'휴식중',
+                PAUSED  :'일시중지',
                 RESIGNED:'퇴사'
             };
             return map[s] || (s || '-');

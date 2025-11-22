@@ -1,0 +1,816 @@
+{{>layouts/header_}}
+
+<main class="container my-4">
+
+    <!-- ===== 상단: 멤버 정보 + 주간 범위 ===== -->
+    <div class="card mb-3 status-card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <span class="fw-bold">
+                주간 근무시간 요약
+            </span>
+            <span class="small opacity-75">
+                {{weekRangeLabel}}
+            </span>
+        </div>
+        <div class="card-body">
+            <div class="row g-3 align-items-center">
+                <!-- 왼쪽: 멤버 기본 정보 -->
+                <div class="col-12 col-md-6">
+                    <div class="d-flex flex-column gap-1">
+                        <div class="small text-light-50">아르바이트생</div>
+                        <div class="d-flex align-items-center flex-wrap gap-2">
+                            <span class="fw-bold fs-5" id="memberName">{{member.name}}</span>
+                            <span class="badge rounded-pill bg-secondary px-3 py-2" id="memberStatusBadge">
+                                {{member.status}}
+                            </span>
+                        </div>
+                        <div class="small mt-1">
+                            연락처: <span id="memberPhone">{{member.phone}}</span><br>
+                            이메일: <span id="memberCode">{{member.email}}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 오른쪽: 급여 정보 / 요약 -->
+                <div class="col-12 col-md-6">
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <div class="small text-light-50">시급</div>
+                            <div class="fw-semibold" id="hourlyWageCell">-</div>
+                        </div>
+                        <div class="col-6">
+                            <div class="small text-light-50">주간 근무시간 합계</div>
+                            <div class="fw-semibold" id="weekTotalHoursCell">-</div>
+                        </div>
+                        <div class="col-6">
+                            <div class="small text-light-50">주간 예상 급여</div>
+                            <div class="fw-semibold text-warning" id="weekTotalPayCell">-</div>
+                        </div>
+                        <div class="col-6">
+                            <div class="small text-light-50">비고</div>
+                            <div class="small">
+                                계획/실제 근무시간을 기준으로 자동 계산됩니다.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- (선택) 인쇄 버튼 - 브라우저 기본 인쇄 연동 -->
+            <div class="mt-3 text-end d-print-none">
+                <button type="button" class="btn btn-sm btn-light border" onclick="window.print();">
+                    인쇄 / PDF 저장
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== 주간 캘린더 (월~일) ===== -->
+    <div class="card">
+        <div class="card-header fw-bold d-flex align-items-center justify-content-between">
+            <span>주간 캘린더 (계획 / 실제 근무시간)</span>
+            <span class="small text-muted">주간 범위: <span id="weekRangeLabelPrint">{{weekRangeLabel}}</span></span>
+        </div>
+        <div class="card-body">
+            <div class="week-calendar-grid" id="weekCalendarGrid">
+                <!-- JS 렌더: 7일 셀 -->
+            </div>
+
+            <div class="mt-3">
+                <div class="d-flex justify-content-between">
+                    <div class="small text-muted">
+                        · 상단 박스는 <strong>근무계획(일정)</strong>, 가운데 박스는 <strong>실제 근무시간</strong>입니다.<br>
+                        · 하단 합계는 해당 일자의 실제 근무시간 총 합계입니다.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== 주간 타임테이블 그리드 (시간 x 요일) ===== -->
+    <div class="card mt-3">
+        <div class="card-header fw-bold d-flex align-items-center justify-content-between">
+            <span>주간 타임테이블 (06:00 ~ 22:00)</span>
+            <div class="d-flex align-items-center gap-2">
+                <div class="small text-muted d-none d-sm-inline">
+                    왼쪽: 계획(일정), 오른쪽: 실제 근무시간
+                </div>
+                <!-- 슬롯 단위 선택 버튼 -->
+                <div class="btn-group btn-group-sm d-print-none" id="weekSlotButtons" role="group" aria-label="슬롯 단위 선택">
+                    <button type="button" class="btn btn-outline-secondary" data-slot="10">10분</button>
+                    <button type="button" class="btn btn-outline-secondary" data-slot="30">30분</button>
+                    <button type="button" class="btn btn-outline-secondary active" data-slot="60">1시간</button>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="week-grid">
+                <table>
+                    <thead>
+                    <tr>
+                        <th style="width:74px;">시간</th>
+                        <th data-day-offset="0">월<br><span class="small text-muted">계획 / 근무</span></th>
+                        <th data-day-offset="1">화<br><span class="small text-muted">계획 / 근무</span></th>
+                        <th data-day-offset="2">수<br><span class="small text-muted">계획 / 근무</span></th>
+                        <th data-day-offset="3">목<br><span class="small text-muted">계획 / 근무</span></th>
+                        <th data-day-offset="4">금<br><span class="small text-muted">계획 / 근무</span></th>
+                        <th data-day-offset="5">토<br><span class="small text-muted">계획 / 근무</span></th>
+                        <th data-day-offset="6">일<br><span class="small text-muted">계획 / 근무</span></th>
+                    </tr>
+                    </thead>
+                    <tbody id="weekGridBodyPrint">
+                    <!-- JS 렌더 -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="small text-muted mt-2">
+                · 각 시간 행은 선택한 단위(10/30/60분)로 표시됩니다. 연녹색은 <strong>계획(일정)</strong>, 연파랑은 <strong>실제 근무시간</strong>입니다.<br>
+                · 인쇄용 페이지이므로 편집 기능 없이 <strong>읽기 전용</strong>으로 표시됩니다.
+            </div>
+        </div>
+    </div>
+
+</main>
+
+<style>
+    /* ===== 상단 카드(아르바이트 상태보기) – 주간/월간 통일 톤 ===== */
+    .status-card {
+        border: none;
+        border-radius: 18px;
+        background: linear-gradient(135deg, #0d6efd, #3b82f6);
+        color: #f8fafc;
+        box-shadow: 0 10px 25px rgba(15, 23, 42, 0.18);
+    }
+    .status-card .card-header {
+        border-bottom: none;
+        background: transparent;
+        color: #e5edff;
+        padding-bottom: .5rem;
+    }
+    .status-card .card-body {
+        background: transparent;
+        color: #f9fafb;
+        padding-top: .5rem;
+    }
+    .status-card .form-text,
+    .status-card .small {
+        color: rgba(248, 250, 252, 0.85) !important;
+    }
+    .status-card .badge.bg-secondary {
+        background-color: rgba(15, 23, 42, 0.65) !important;
+    }
+    .text-light-50 { color: rgba(248, 250, 252, 0.75); }
+
+    /* ===== 주간 캘린더 (상단 요약) ===== */
+    .week-calendar-grid {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 8px;
+    }
+    .week-cell {
+        border: 1px solid #e9ecef;
+        border-radius: 10px;
+        padding: 8px;
+        min-height: 130px;
+        background: #fff;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        break-inside: avoid;
+        page-break-inside: avoid;
+    }
+    .week-cell .date-head {
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        font-weight:600;
+        font-size:.95rem;
+        gap:4px;
+    }
+    .week-cell .left-date {
+        display:flex;
+        align-items:center;
+        gap:4px;
+    }
+    .week-cell .dow-mini {
+        color:#6c757d;
+        font-weight:500;
+        font-size:.85rem;
+    }
+
+    .week-cell-rect {
+        border-radius: 8px;
+        padding: 4px 6px;
+        min-height: 32px;
+        margin-top: 3px;
+    }
+    /* 계획(일정) 박스 */
+    .week-cell-rect-plan {
+        border: 1px solid rgba(25,135,84,0.5);
+        background: rgba(25,135,84,0.04);
+    }
+    /* 실제 근무 박스 */
+    .week-cell-rect-actual {
+        border: 1px solid #e9ecef;
+        background: #f8f9fa;
+    }
+    /* 일 합계 박스 */
+    .week-cell-rect-total {
+        border: 1px solid #e9ecef;
+        background: #fcfcfc;
+        text-align: right;
+        font-size: .875rem;
+        color:#212529;
+    }
+
+    .week-cell .segments {
+        display:flex;
+        flex-wrap:wrap;
+        gap:6px;
+        align-items:flex-start;
+    }
+
+    .week-cell.muted { background:#fcfcfc; color:#adb5bd; }
+    .week-cell.today { outline: 2px solid #51cf66; outline-offset: 2px; }
+
+    /* 칩 공통 */
+    .chip {
+        display:inline-flex;
+        align-items:center;
+        gap:6px;
+        border:1px solid #e9ecef;
+        border-radius:14px;
+        padding:3px 7px;
+        background:#fff;
+        font-size: .75rem;
+    }
+    .chip .dot {
+        width:8px;
+        height:8px;
+        border-radius:50%;
+        border:1px solid rgba(0,0,0,.08);
+    }
+
+    /* ===== 주간 타임테이블 그리드 ===== */
+    .week-grid {
+        width: 100%;
+        border: 1px solid #e5e7eb;
+        border-radius: 10px;
+        overflow: hidden;
+        background:#fff;
+        user-select: none;
+    }
+    .week-grid table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        table-layout: fixed;
+    }
+    .week-grid thead th {
+        background: #f8fafc;
+        color:#64748b;
+        font-weight: 600;
+        font-size: 0.9rem;
+        border-bottom: 1px solid #e5e7eb;
+        text-align: center;
+        padding: .5rem .4rem;
+    }
+    .week-grid tbody th {
+        background: #fafafa;
+        color:#6b7280;
+        font-weight: 600;
+        width: 74px;
+        border-right: 1px solid #e5e7eb;
+        text-align: center;
+        padding: .25rem .25rem;
+        font-size: .8rem;
+    }
+    .grid-day-cell .slot-wrapper {
+        display:flex;
+        gap:1px;
+    }
+
+    /* 기본 슬롯 */
+    .slot-plan,
+    .slot-actual {
+        height: 18px;
+        margin: 1px 0;
+        border-bottom: 1px solid  #eef2f6;
+        border-right: 1px solid  #eef2f6;
+        background: #ffffff;
+        border-radius: 0;
+    }
+
+    /* 왼쪽: 근무계획(읽기 전용) */
+    .slot-plan {
+        flex: 1;
+        border-radius: 6px 0 0 6px;
+        background: #f8f9fa;
+        opacity: .9;
+    }
+    .slot-plan.filled {
+        background: rgba(102, 187, 106, 0.55);
+        box-shadow: inset 0 0 0 1px rgba(46, 160, 67, 0.6);
+    }
+
+    /* 오른쪽: 실제 근무시간(읽기 전용) */
+    .slot-actual {
+        flex: 1;
+        border-radius: 0 6px 6px 0;
+    }
+    .slot-actual.selected {
+        background: rgba(25,135,84,.18);
+        box-shadow: inset 0 0 0 1px rgba(25,135,84,.25);
+    }
+
+    .row-hour-start td,
+    .row-hour-start th {
+        border-top: 2px solid #e5e7eb !important;
+    }
+    .timecell {
+        font-variant-numeric: tabular-nums;
+    }
+
+    /* 인쇄 최적화 */
+    @media print {
+        body {
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+        .d-print-none {
+            display:none !important;
+        }
+        .status-card {
+            box-shadow: none;
+        }
+        .card {
+            break-inside: avoid;
+            page-break-inside: avoid;
+        }
+        .week-calendar-grid {
+            page-break-inside: avoid;
+        }
+        .week-grid {
+            page-break-inside: avoid;
+        }
+    }
+</style>
+
+<!-- 컨트롤러에서 내려준 JSON: 단일 멤버 -->
+<script id="memberData" type="application/json">
+{{{memberJson}}}
+</script>
+
+<script>
+    (function(){
+        const API_PLAN = '/api/schedule/work';   // 계획
+        const API_WORK = '/api/schedule';        // 실제
+
+        const HOUR_START = 6;
+        const HOUR_END   = 22;
+
+        // 그리드 단위(분) - 버튼으로 10/30/60 변경
+        let gridStepMinutes = 60;
+
+        const DOW_LABELS = ['월','화','수','목','금','토','일'];
+
+        // DOM
+        const weekCalendarGrid   = document.getElementById('weekCalendarGrid');
+        const weekRangeLabelEl   = document.getElementById('weekRangeLabelPrint');
+
+        const weekTotalHoursCell = document.getElementById('weekTotalHoursCell');
+        const weekTotalPayCell   = document.getElementById('weekTotalPayCell');
+        const hourlyWageCell     = document.getElementById('hourlyWageCell');
+        const memberStatusBadge  = document.getElementById('memberStatusBadge');
+
+        const weekGridBodyPrint  = document.getElementById('weekGridBodyPrint');
+        const weekSlotButtons    = document.getElementById('weekSlotButtons');
+
+        // 전역 상태 (슬롯 단위 변경 시 재사용)
+        let weekStartIsoGlobal = null;
+        let planMapGlobal      = {};
+        let actualMapGlobal    = {};
+
+        // 멤버 JSON 파싱
+        let member = null;
+        try {
+            member = JSON.parse(document.getElementById('memberData').textContent || 'null');
+        } catch(e){ member = null; }
+
+        if (!member) {
+            console.error('memberJson 파싱 실패');
+            if (weekCalendarGrid) {
+                weekCalendarGrid.innerHTML =
+                        '<div class="text-muted">멤버 정보가 없습니다.</div>';
+            }
+            return;
+        }
+
+        // 시급 / 상태 뱃지 표시
+        if (typeof member.hourlyWage === 'number') {
+            hourlyWageCell.textContent = krw(member.hourlyWage);
+        } else {
+            hourlyWageCell.textContent = '-';
+        }
+        if (memberStatusBadge && member.status) {
+            memberStatusBadge.textContent = member.status;
+            memberStatusBadge.className = 'badge rounded-pill ' + statusClass(member.status) + ' px-3 py-2';
+        }
+
+        // 주간 범위 파싱 (weekRangeLabel: "yyyy.MM.dd ~ MM.dd")
+        const parsedWeek = parseWeekRange(weekRangeLabelEl ? weekRangeLabelEl.textContent : '');
+        const weekStartIso = parsedWeek.weekStartIso;
+        const weekEndIso   = parsedWeek.weekEndIso;
+
+        // 초기 전역 값 세팅
+        weekStartIsoGlobal = weekStartIso;
+
+        // 주간 데이터 로딩 후 렌더
+        loadAndRenderWeek(member, weekStartIso, weekEndIso)
+                .then(() => {
+                    // 필요하면 자동 인쇄
+                    // setTimeout(() => window.print(), 500);
+                })
+                .catch(err => console.error(err));
+
+        // 슬롯 단위 버튼 이벤트
+        if (weekSlotButtons) {
+            weekSlotButtons.querySelectorAll('button[data-slot]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const mins = parseInt(btn.dataset.slot, 10);
+                    if (!mins || mins === gridStepMinutes) return;
+
+                    gridStepMinutes = mins;
+
+                    // 버튼 active 토글
+                    weekSlotButtons.querySelectorAll('button[data-slot]')
+                            .forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+
+                    // 데이터가 이미 로드되어 있으면, 그리드만 재렌더
+                    if (weekStartIsoGlobal) {
+                        buildWeekGridPrint(weekStartIsoGlobal, planMapGlobal, actualMapGlobal);
+                    }
+                });
+            });
+        }
+
+        async function loadAndRenderWeek(member, startIso, endIso) {
+            let planMap   = {};
+            let actualMap = {};
+
+            try {
+                const planUrl = `${API_PLAN}/${encodeURIComponent(member.id)}/${startIso}/${endIso}`;
+                const resp = await fetch(planUrl, { headers: { 'Accept':'application/json' } });
+                if (resp.ok) {
+                    const data = await resp.json();
+                    planMap = normalizeDays(data, false);
+                }
+            } catch(e){
+                console.error('plan fetch error:', e);
+            }
+
+            try {
+                const workUrl = `${API_WORK}/${encodeURIComponent(member.id)}/${startIso}/${endIso}`;
+                const resp = await fetch(workUrl, { headers: { 'Accept':'application/json' } });
+                if (resp.ok) {
+                    const data = await resp.json();
+                    actualMap = normalizeDays(data, true);
+                }
+            } catch(e){
+                console.error('actual fetch error:', e);
+            }
+
+            // 전역 상태 업데이트
+            weekStartIsoGlobal = startIso;
+            planMapGlobal      = planMap;
+            actualMapGlobal    = actualMap;
+
+            const mergedMap = mergePlanActual(planMap, actualMap);
+            renderWeekCalendar(member, startIso, mergedMap);
+            buildWeekGridPrint(startIso, planMap, actualMap);   // ▼ 타임테이블 그리드 렌더
+        }
+
+        function renderWeekCalendar(member, startIso, dayMap) {
+            if (!weekCalendarGrid) return;
+            weekCalendarGrid.innerHTML = '';
+
+            const weekStartDate = parseIsoDate(startIso);
+            const todayIso      = toIso(new Date());
+            const color         = colorForMember(member);
+
+            let weekMinutes = 0;
+
+            for (let offset = 0; offset < 7; offset++) {
+                const date = addDays(weekStartDate, offset);
+                const iso  = toIso(date);
+                const dow  = offset; // 0 = 월 ~ 6 = 일
+
+                const data = dayMap[iso] || { planSegments:[], actualSegments:[], minutes:0 };
+
+                weekMinutes += (data.minutes || 0);
+
+                const cell = document.createElement('div');
+                cell.className = 'week-cell';
+                cell.dataset.date = iso;
+                if (iso === todayIso) cell.classList.add('today');
+
+                const mm = String(date.getMonth()+1).padStart(2,'0');
+                const dd = String(date.getDate()).padStart(2,'0');
+
+                const planHtml = data.planSegments.length
+                        ? data.planSegments.map(s => chipHtml('#198754', s.start, s.end)).join(' ')
+                        : '<span class="text-muted small">-</span>';
+
+                const actualHtml = data.actualSegments.length
+                        ? data.actualSegments.map(s => chipHtml(color, s.start, s.end)).join(' ')
+                        : '<span class="text-muted small">-</span>';
+
+                const totalLabel = formatMins(data.minutes || 0);
+
+                cell.innerHTML = `
+                    <div class="date-head">
+                        <span class="left-date">
+                            <span>${mm}/${dd}</span>
+                            <span class="dow-mini">${DOW_LABELS[dow] || ''}</span>
+                        </span>
+                    </div>
+
+                    <!-- 계획 -->
+                    <div class="week-cell-rect week-cell-rect-plan">
+                        <div class="segments">${planHtml}</div>
+                    </div>
+
+                    <!-- 실제 근무 -->
+                    <div class="week-cell-rect week-cell-rect-actual">
+                        <div class="segments">${actualHtml}</div>
+                    </div>
+
+                    <!-- 일 합계 -->
+                    <div class="week-cell-rect week-cell-rect-total">
+                        ${totalLabel}
+                    </div>
+                `;
+
+                weekCalendarGrid.appendChild(cell);
+            }
+
+            // 주간 합계 / 급여
+            weekTotalHoursCell.textContent = formatMins(weekMinutes);
+            const wage = (typeof member.hourlyWage === 'number') ? member.hourlyWage : null;
+            if (wage != null) {
+                const pay = Math.round((weekMinutes / 60) * wage);
+                weekTotalPayCell.textContent = krw(pay);
+            } else {
+                weekTotalPayCell.textContent = '-';
+            }
+        }
+
+        /* ===== 주간 타임테이블(그리드) 생성 및 채우기 ===== */
+        function buildWeekGridPrint(startIso, planMap, actualMap) {
+            if (!weekGridBodyPrint) return;
+
+            weekGridBodyPrint.innerHTML = '';
+
+            const weekStartDate = parseIsoDate(startIso);
+            const startMin = HOUR_START * 60;
+            const endMin   = HOUR_END   * 60;
+            const totalRows = (endMin - startMin) / gridStepMinutes;
+
+            for (let idx = 0; idx < totalRows; idx++) {
+                const tMin = startMin + idx * gridStepMinutes;
+                const h = Math.floor(tMin / 60);
+                const m = tMin % 60;
+                const hmLabel = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+
+                const tr = document.createElement('tr');
+                if (m === 0) tr.classList.add('row-hour-start');
+
+                const th = document.createElement('th');
+                th.className = 'timecell';
+                th.textContent = (m === 0) ? hmLabel : '';
+                tr.appendChild(th);
+
+                for (let dayOffset = 0; dayOffset < 7; dayOffset++) {
+                    const td = document.createElement('td');
+                    td.className = 'grid-day-cell';
+
+                    const wrap = document.createElement('div');
+                    wrap.className = 'slot-wrapper';
+
+                    const divPlan = document.createElement('div');
+                    divPlan.className = 'slot-plan';
+                    divPlan.dataset.dayOffset = String(dayOffset);
+                    divPlan.dataset.idx = String(idx);
+
+                    const divActual = document.createElement('div');
+                    divActual.className = 'slot-actual';
+                    divActual.dataset.dayOffset = String(dayOffset);
+                    divActual.dataset.idx = String(idx);
+
+                    wrap.appendChild(divPlan);
+                    wrap.appendChild(divActual);
+                    td.appendChild(wrap);
+                    tr.appendChild(td);
+                }
+
+                weekGridBodyPrint.appendChild(tr);
+            }
+
+            hydratePlanGridPrint(weekStartDate, planMap);
+            hydrateActualGridPrint(weekStartDate, actualMap);
+        }
+
+        function hydratePlanGridPrint(weekStartDate, planMap) {
+            if (!weekGridBodyPrint) return;
+
+            const startMin = HOUR_START * 60;
+            const endMin   = HOUR_END   * 60;
+            const totalRows = (endMin - startMin) / gridStepMinutes;
+
+            weekGridBodyPrint
+                    .querySelectorAll('.slot-plan.filled')
+                    .forEach(el => el.classList.remove('filled'));
+
+            for (let dayOffset = 0; dayOffset < 7; dayOffset++) {
+                const date = addDays(weekStartDate, dayOffset);
+                const iso  = toIso(date);
+                const segments = (planMap[iso]?.segments) || [];
+                if (!segments.length) continue;
+
+                segments.forEach(seg => {
+                    const segStartMin = hmToMin(seg.start);
+                    const segEndMin   = hmToMin(seg.end);
+
+                    const a = Math.max(startMin, segStartMin);
+                    const b = Math.min(endMin,   segEndMin);
+                    if (a >= b) return;
+
+                    const sIdx = Math.floor((a - startMin) / gridStepMinutes);
+                    const eIdx = Math.ceil ((b - startMin) / gridStepMinutes) - 1;
+
+                    for (let idx = Math.max(0, sIdx); idx <= Math.min(totalRows-1, eIdx); idx++) {
+                        const slot = weekGridBodyPrint.querySelector(
+                                `.slot-plan[data-day-offset="${dayOffset}"][data-idx="${idx}"]`
+                        );
+                        if (slot) slot.classList.add('filled');
+                    }
+                });
+            }
+        }
+
+        function hydrateActualGridPrint(weekStartDate, actualMap) {
+            if (!weekGridBodyPrint) return;
+
+            const startMin = HOUR_START * 60;
+            const endMin   = HOUR_END   * 60;
+            const totalRows = (endMin - startMin) / gridStepMinutes;
+
+            weekGridBodyPrint
+                    .querySelectorAll('.slot-actual.selected')
+                    .forEach(el => el.classList.remove('selected'));
+
+            for (let dayOffset = 0; dayOffset < 7; dayOffset++) {
+                const date = addDays(weekStartDate, dayOffset);
+                const iso  = toIso(date);
+                const segments = (actualMap[iso]?.segments) || [];
+                if (!segments.length) continue;
+
+                segments.forEach(seg => {
+                    const segStartMin = hmToMin(seg.start);
+                    const segEndMin   = hmToMin(seg.end);
+
+                    const a = Math.max(startMin, segStartMin);
+                    const b = Math.min(endMin,   segEndMin);
+                    if (a >= b) return;
+
+                    const sIdx = Math.floor((a - startMin) / gridStepMinutes);
+                    const eIdx = Math.ceil ((b - startMin) / gridStepMinutes) - 1;
+
+                    for (let idx = Math.max(0, sIdx); idx <= Math.min(totalRows-1, eIdx); idx++) {
+                        const slot = weekGridBodyPrint.querySelector(
+                                `.slot-actual[data-day-offset="${dayOffset}"][data-idx="${idx}"]`
+                        );
+                        if (slot) slot.classList.add('selected');
+                    }
+                });
+            }
+        }
+
+        /* ===== 데이터 merge / normalize ===== */
+        function normalizeDays(apiData, needMinutes){
+            const map = {};
+            const arr = Array.isArray(apiData?.days) ? apiData.days : [];
+            arr.forEach(d=>{
+                const date = String(d.date);
+                const segments = Array.isArray(d.segments) ? d.segments : [];
+                let minutes = d.minutes;
+                if (needMinutes) {
+                    minutes = (typeof d.minutes === 'number')
+                            ? d.minutes
+                            : segments.reduce((acc,s)=> acc + (hmToMin(s.end) - hmToMin(s.start)), 0);
+                }
+                map[date] = needMinutes ? { segments, minutes } : { segments };
+            });
+            return map;
+        }
+
+        function mergePlanActual(planMap, actualMap){
+            const merged = {};
+            const dates = new Set([...Object.keys(planMap), ...Object.keys(actualMap)]);
+            dates.forEach(date => {
+                merged[date] = {
+                    planSegments:   planMap[date]?.segments   || [],
+                    actualSegments: actualMap[date]?.segments || [],
+                    minutes:        actualMap[date]?.minutes  || 0
+                };
+            });
+            return merged;
+        }
+
+        /* ===== weekRangeLabel 파싱 ("yyyy.MM.dd ~ MM.dd") ===== */
+        function parseWeekRange(label){
+            const m = String(label).match(/(\d{4})\.(\d{2})\.(\d{2})/);
+            if (!m) {
+                const today = new Date();
+                const monday = toMonday(today);
+                const end    = addDays(monday, 6);
+                return { weekStartIso: toIso(monday), weekEndIso: toIso(end) };
+            }
+            const y = parseInt(m[1],10);
+            const mo= parseInt(m[2],10);
+            const d = parseInt(m[3],10);
+            const start = new Date(y, mo-1, d);
+            const end   = addDays(start, 6);
+            return { weekStartIso: toIso(start), weekEndIso: toIso(end) };
+        }
+
+        /* ===== 공통 유틸 ===== */
+        function toMonday(date){
+            const d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+            const day = d.getDay();
+            const diff = (day === 0 ? -6 : 1 - day); // 월=1, 일=0
+            d.setDate(d.getDate() + diff);
+            return d;
+        }
+        function addDays(d, n){ const x = new Date(d); x.setDate(x.getDate()+n); return x; }
+        function toIso(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+        function parseIsoDate(iso){ const [y,m,d]=iso.split('-').map(n=>parseInt(n,10)); return new Date(y,m-1,d); }
+
+        function hmToMin(hm){
+            if(!hm) return 0;
+            const [h,m]=String(hm).split(':').map(n=>parseInt(n,10));
+            return (h||0)*60+(m||0);
+        }
+        function formatMins(mins){
+            const v=Math.max(0, mins|0);
+            const h=Math.floor(v/60), m=v%60;
+            return m===0?`${h}시간`:`${h}시간 ${m}분`;
+        }
+        function krw(v){
+            if (v == null || isNaN(v)) return '-';
+            return new Intl.NumberFormat('ko-KR', {
+                style: 'currency',
+                currency: 'KRW',
+                maximumFractionDigits: 0
+            }).format(v);
+        }
+
+        function chipHtml(color, start, end){
+            return `<span class="chip"><span class="dot" style="background:${color}"></span><span class="small">${start} ~ ${end}</span></span>`;
+        }
+        function statusClass(s){
+            const map = {
+                WORKING:'bg-success',
+                WAITING:'bg-secondary',
+                RESTING:'bg-info',
+                PAUSED:'bg-warning',
+                RESIGNED:'bg-danger'
+            };
+            return map[s] || 'bg-secondary';
+        }
+        function colorForMember(m){
+            const key = (m?.id!=null ? String(m.id) : (m?.name || 'x'));
+            const h = seededHash(key)%360, s=65, l=55;
+            return hslToHex(h,s,l);
+        }
+        function seededHash(str){
+            let h=2166136261>>>0;
+            for(let i=0;i<str.length;i++){
+                h^=str.charCodeAt(i);
+                h=(h*16777619)>>>0;
+            }
+            return h>>>0;
+        }
+        function hslToHex(h,s,l){
+            s/=100; l/=100;
+            const k=n=>(n+h/30)%12, a=s*Math.min(l,1-l);
+            const f=n=>l-a*Math.max(-1,Math.min(k(n)-3,Math.min(9-k(n),1)));
+            const toHex=x=>Math.round(255*x).toString(16).padStart(2,'0');
+            return `#${toHex(f(0))}${toHex(f(8))}${toHex(f(4))}`;
+        }
+    })();
+</script>
+
+{{>layouts/footer}}

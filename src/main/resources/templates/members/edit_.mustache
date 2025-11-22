@@ -6,7 +6,7 @@
 
         <!-- ============ 상단: 한 명의 이름 + 상태 선택 + 상단 저장 버튼 ============ -->
         <section class="panel card-info mb-3">
-            <header class="panel-header panel-header-compact panel-header-orange d-flex justify-content-between align-items-center">
+            <header class="panel-header panel-header-compact d-flex justify-content-between align-items-center">
                 <div>
                     <div class="title-sm">STAFF EDIT</div>
 
@@ -49,28 +49,20 @@
                     </div>
                 </div>
 
-                <!-- 오른쪽 끝: 상단 편집/저장 버튼 -->
+                <!-- 오른쪽 끝: 상단 저장 버튼 -->
                 <div class="d-flex flex-column align-items-end gap-2">
-                    <a href="/members"
-                       class="btn btn-sm btn-outline-secondary">
-                        목록으로
-                    </a>
 
-                    <div class="d-flex align-items-center gap-2">
-                        <button type="button"
-                                id="btnToggleEditMode"
-                                class="btn btn-sm btn-outline-light">
-                            편집
-                        </button>
+                        <a href="/members"
+                           class="btn btn-sm btn-outline-secondary">
+                            목록으로
+                        </a>
 
-                        <button type="submit"
-                                form="memberEditForm"
-                                id="btnFormSave"
-                                class="btn btn-sm btn-dark"
-                                disabled>
-                            저장하기
-                        </button>
-                    </div>
+                    <button type="submit"
+                            form="memberEditForm"
+                            class="btn btn-sm btn-primary">
+                        저장하기
+                    </button>
+                    <!-- 버튼 영역 (하단) -->
                 </div>
             </header>
         </section>
@@ -282,7 +274,7 @@
 
                     <!-- ============ 주간 템플릿 편집 ============ -->
                     <section class="panel panel-schedule mb-3 mt-4">
-                        <header class="panel-header panel-header-blue d-flex justify-content-between align-items-center">
+                        <header class="panel-header d-flex justify-content-between align-items-center">
                             <div>
                                 <div class="title-sm">SCHEDULE TEMPLATE</div>
                                 <h3 class="title-md mb-0">
@@ -390,7 +382,6 @@
     .panel-header {
         padding: 1.1rem 1.3rem 0.7rem 1.3rem;
         border-bottom: 1px solid rgba(226,232,240,0.9);
-        background: rgba(255,255,255,0.95);
     }
     .panel-header-compact {
         padding-bottom: 0.4rem;
@@ -401,7 +392,6 @@
 
     .card-info {
         border-radius: 18px;
-        overflow: hidden; /* ✅ 헤더 상단 라운드가 깔끔하게 보이도록 */
     }
 
     .title-sm {
@@ -466,51 +456,11 @@
         border-color:#2563eb;
     }
 
-    /* ===== 헤더 색상 & 라운드 ===== */
-
-    /* 최상단 패널: 주황색 단색 배경 + 상단 라운드 */
-    .panel-header-orange {
-        background: #fb923c;
-        border-bottom-color: #ea580c;
-        color: #fff;
-        border-radius: 18px 18px 0 0; /* ✅ 상단 좌우 라운드 */
-    }
-    .panel-header-orange .title-sm,
-    .panel-header-orange .title-lg,
-    .panel-header-orange .text-muted {
-        color: #fefce8 !important;
-    }
-    .panel-header-orange .name-pill {
-        background: #0f172a;
-        color: #f9fafb;
-    }
-    .panel-header-orange .form-select-sm {
-        background: rgba(255,255,255,0.9);
-    }
-
-    /* SCHEDULE TEMPLATE 헤더: 파란색 단색 배경 + 상단 라운드 */
+    /* ===== 주간 템플릿용 추가 스타일 ===== */
     .panel-schedule {
         border-radius: 18px;
-        overflow: hidden; /* ✅ 헤더 파란 라운드가 잘 보이도록 */
     }
 
-    .panel-header-blue {
-        background: #2563eb;
-        border-bottom-color: #1d4ed8;
-        color: #e5eeff;
-        border-radius: 18px 18px 0 0; /* ✅ 상단 좌우 라운드 */
-    }
-    .panel-header-blue .title-sm {
-        color: #dbeafe;
-    }
-    .panel-header-blue .title-md {
-        color: #f9fafb;
-    }
-    .panel-header-blue .text-muted {
-        color: #e5e7eb !important;
-    }
-
-    /* ===== 주간 템플릿용 추가 스타일 ===== */
     .slot-btn-group .btn {
         border-radius:999px;
         font-size:0.76rem;
@@ -523,89 +473,69 @@
     }
 
     .schedule-board {
-        border-radius: 10px;
-        border: 1px solid #e5e7eb;
-        background: #ffffff;
-        overflow: hidden;
-        padding: 0.6rem 0.6rem 0.7rem;
+        border-radius:14px;
+        border:1px solid rgba(226,232,240,0.9);
+        padding:0.8rem;
+        background:linear-gradient(135deg, rgba(248,250,252,0.9), rgba(239,246,255,0.95));
     }
     .schedule-table-wrap {
         max-height: 520px;
-        overflow: auto;
+        overflow:auto;
     }
-
     .schedule-table {
-        width: 100%;
-        border-collapse: separate;
-        border-spacing: 0;
-        table-layout: fixed;
-        font-size: 0.78rem;
+        margin-bottom:0;
+        border-collapse:separate;
+        border-spacing:0;
+        font-size:0.78rem;
     }
-
-    /* 하단 타임테이블 헤더(시간 ~ 일) 파란색 단색 배경 */
     .schedule-table thead th {
-        background: #2563eb;
-        color:#e5eeff;
-        font-weight: 600;
-        font-size: 0.9rem;
-        border-bottom: 1px solid #1d4ed8;
-        text-align: center;
-        padding: .5rem .4rem;
         position: sticky;
         top: 0;
-        z-index: 2;
+        z-index: 3;
+        background: linear-gradient(135deg,#e5edff,#f9fafb);
+        border-bottom:1px solid rgba(209,213,219,0.9);
+        font-size:0.75rem;
+        font-weight:600;
+        color:#4b5563;
     }
-
-    .schedule-table th,
-    .schedule-table td {
-        border: 0;
-        padding: 2px 3px;
-        vertical-align: middle;
+    .schedule-table th, .schedule-table td {
+        border:0;
+        padding:2px 2px;
+        vertical-align:middle;
     }
     .schedule-table .time-col {
-        background: #fafafa;
+        width:70px;
+        font-variant-numeric:tabular-nums;
+        font-size:0.7rem;
         color:#6b7280;
-        font-weight: 600;
-        width: 74px;
-        border-right: 1px solid #e5e7eb;
-        text-align: center;
-        padding: .25rem .25rem;
-        font-size: .8rem;
+        background:rgba(15,23,42,0.04);
         position: sticky;
-        left: 0;
-        z-index: 3;
-        font-variant-numeric: tabular-nums;
+        left:0;
+        z-index:2;
     }
 
     .cell-10m {
-        height: 18px;
-        margin: 1px 0;
-        border-radius: 6px;
-        border: 1px solid #eef2f6;
+        height: 14px;
+        border-radius: 4px;
         background: #ffffff;
         cursor: pointer;
         user-select: none;
-        transition: background .15s ease,
-        box-shadow .15s ease,
-        border-color .15s ease,
-        transform .08s ease;
+        border:1px solid rgba(229,231,235,0.85);
+        transition: background .08s, border-color .08s, box-shadow .08s, transform .04s;
     }
-
     .cell-10m:hover {
-        background: #f8fbff;
-        box-shadow: 0 0 0 1px rgba(148,163,184,0.35);
+        box-shadow: 0 0 0 1px rgba(59,130,246,0.45);
         transform: translateY(-0.5px);
     }
 
     .cell-10m.schedule-on {
-        background: rgba(102, 187, 106, 0.55);
-        border-color: rgba(46, 160, 67, 0.6);
-        box-shadow: inset 0 0 0 1px rgba(46, 160, 67, 0.6);
+        background: rgba(248, 164, 76, 0.6);
+        border-color: rgba(248, 164, 76, 0.9);
+        box-shadow: 0 0 0 1px rgba(248,164,76,0.8);
     }
 
-    tr.hour-start > td,
-    tr.hour-start > th {
-        border-top: 2px solid #e5e7eb !important;
+    tr.hour-start > td, tr.hour-start > th {
+        border-top: 1px dashed rgba(148,163,184,0.5) !important;
     }
 
     .legend-row {
@@ -613,7 +543,6 @@
         align-items:center;
         gap:0.5rem;
         flex-wrap:wrap;
-        margin-top: 0.5rem;
     }
     .legend-box {
         display:inline-block;
@@ -624,8 +553,8 @@
         vertical-align:middle;
     }
     .legend-plan {
-        background: rgba(102,187,106,0.55);
-        border-color: rgba(46,160,67,0.6);
+        background: rgba(248, 164, 76, 0.6);
+        border-color: rgba(248, 164, 76, 0.9);
     }
 
     @media (max-width: 768px) {
@@ -666,17 +595,12 @@
         const btnGridRestore    = document.getElementById('btnGridRestore');
         const form              = document.getElementById('memberEditForm');
 
-        const editToggleBtn     = document.getElementById('btnToggleEditMode');
-        const saveBtn           = document.getElementById('btnFormSave');
-
         let gridStepMinutes     = 10;
         let scheduleMapByDay    = {};
         let originalScheduleMapByDay = {};
 
         let gridDragging        = false;
         let gridDragAdding      = true;
-
-        let editMode            = false;
 
         let member = {};
         try {
@@ -699,7 +623,6 @@
         attachSlotButtons();
         attachFormSubmitHandler();
         attachResetButtons();
-        initEditModeToggle();   // ✅ 편집/읽기전용 토글 초기화
 
         function initBasicFieldsFromMember(m) {
             if (!form || !m) return;
@@ -873,7 +796,6 @@
             tbodyWeek.addEventListener('mousedown', (e) => {
                 const cell = e.target.closest('.cell-10m');
                 if (!cell || !tbodyWeek.contains(cell)) return;
-                if (!editMode) return;   // ✅ 읽기전용일 땐 무시
 
                 e.preventDefault();
 
@@ -889,7 +811,6 @@
                 if (!gridDragging) return;
                 const cell = e.target.closest('.cell-10m');
                 if (!cell || !tbodyWeek.contains(cell)) return;
-                if (!editMode) return;   // ✅ 읽기전용일 땐 무시
                 toggleCell(cell, gridDragAdding);
             });
 
@@ -913,7 +834,6 @@
 
             gridSlotButtons.querySelectorAll('button[data-grid-slot]').forEach(btn => {
                 btn.addEventListener('click', () => {
-                    if (!editMode) return;   // ✅ 편집 모드에서만 동작
                     const mins = parseInt(btn.dataset.gridSlot, 10);
                     if (!mins || mins === gridStepMinutes) return;
 
@@ -933,13 +853,11 @@
         function attachResetButtons() {
             if (btnGridClear) {
                 btnGridClear.addEventListener('click', () => {
-                    if (!editMode) return;
                     clearGridSelection();
                 });
             }
             if (btnGridRestore) {
                 btnGridRestore.addEventListener('click', () => {
-                    if (!editMode) return;
                     clearGridSelection();
                     paintScheduleFromMap(originalScheduleMapByDay);
                 });
@@ -1050,41 +968,6 @@
             input.name  = name;
             input.value = value;
             form.appendChild(input);
-        }
-
-        /* ===== 편집 / 읽기전용 토글 ===== */
-        function initEditModeToggle() {
-            // 초기: 읽기전용
-            setEditMode(false);
-
-            if (editToggleBtn) {
-                editToggleBtn.addEventListener('click', () => {
-                    setEditMode(!editMode);
-                });
-            }
-        }
-
-        function setEditMode(on) {
-            editMode = on;
-
-            if (saveBtn) {
-                saveBtn.disabled = !on;
-            }
-
-            if (editToggleBtn) {
-                editToggleBtn.textContent = on ? '읽기전용' : '편집';
-            }
-
-            if (!form) return;
-
-            const controls = form.querySelectorAll('input, select, textarea, button');
-
-            controls.forEach(el => {
-                // hidden 필드는 비활성화하면 서버로 안 나가므로 그대로 둠
-                if (el.type === 'hidden') return;
-                // 폼 내의 모든 입력/버튼을 편집 모드에 따라 enable/disable
-                el.disabled = !on;
-            });
         }
 
     })();
