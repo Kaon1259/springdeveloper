@@ -1,0 +1,346 @@
+{{>layouts/header_}}
+
+<style>
+    body { background: #fff !important; }
+
+    .print-container {
+        margin: 20px auto;
+        padding: 10px;
+        transition: all .2s ease;
+    }
+
+    .print-container.portrait-mode { max-width: 800px; }
+    .print-container.landscape-mode { max-width: 1180px; }
+
+    .print-header {
+        padding-bottom: 15px;
+        border-bottom: 2px solid #1d4ed8;
+        margin-bottom: 20px;
+    }
+
+    .title { font-size: 1.5rem; font-weight: 700; color: #1d4ed8; }
+    .meta  { font-size: .95rem; color: #444; }
+
+    table#printTable {
+        width: 100%;
+        border-collapse: collapse;
+        table-layout: fixed;
+        font-size: .85rem;
+    }
+
+    table#printTable th, table#printTable td {
+        border: 1px solid #ccc;
+        padding: 6px 4px;
+        text-align: center;
+        vertical-align: middle;
+    }
+
+    table#printTable thead th { background: #e2e8f0; font-weight: 700; }
+
+    .slot-cell { height: 26px; background: #f8fafc; }
+    .slot-has-work { background: #eff6ff !important; }
+
+    .staff-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        border-radius: 999px;
+        padding: 2px 6px;
+        font-size: .78rem;
+        background: #fff;
+        border: 1px solid #e5e7eb;
+        max-width: 120px;
+        white-space: nowrap;
+        overflow: hidden;
+        margin: 1px 2px;
+    }
+
+    .staff-dot {
+        width: 10px; height: 10px;
+        border-radius: 50%;
+        border: 1px solid rgba(0,0,0,.1);
+    }
+
+    .staff-name { font-weight: 600; }
+
+    @media print {
+        .no-print { display: none !important; }
+        table#printTable th, table#printTable td {
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+    }
+</style>
+
+<div class="print-container portrait-mode" id="printContainer">
+
+    <div class="print-header d-flex justify-content-between align-items-center">
+
+        <!-- 왼쪽: 제목 + 조건 텍스트 -->
+        <div>
+            <div class="title">
+                주간근무 - {{member.name}}
+                <span class="meta ms-2">
+                    (기간 : {{weekLabel}} · 단위 : {{slotMinutes}}분)
+                </span>
+            </div>
+            {{#member.phone}}
+                <div class="meta mt-1">
+                    연락처 : {{member.phone}}
+                </div>
+            {{/member.phone}}
+        </div>
+
+        <!-- 오른쪽: 버튼 그대로 -->
+        <div class="no-print d-flex align-items-center gap-2">
+            <button class="btn btn-primary btn-sm" onclick="window.print()">PDF 저장</button>
+            <button id="btnPortrait" class="btn btn-primary btn-sm">세로보기</button>
+            <button id="btnLandscape" class="btn btn-outline-primary btn-sm">가로보기</button>
+        </div>
+    </div>
+
+    <script>
+        // 개별 멤버 정보
+        window.PRINT_MEMBER = {
+            id: {{member.id}},
+            name: "{{member.name}}",
+            phone: "{{member.phone}}"
+        };
+
+        // 주간 설정
+        window.PRINT_CONFIG = {
+            weekStartIso: "{{weekStartIso}}",
+            weekEndIso: "{{weekEndIso}}",
+            slotMinutes: {{slotMinutes}}
+        };
+    </script>
+
+    <table id="printTable">
+        <thead>
+        <tr>
+            <th style="width:70px;">시간</th>
+            <th>월</th><th>화</th><th>수</th>
+            <th>목</th><th>금</th><th>토</th><th>일</th>
+        </tr>
+        </thead>
+        <tbody id="printTableBody"></tbody>
+    </table>
+</div>
+
+
+<script>
+    /* ========== 화면 방향 전환 ========== */
+    function setOrientation(mode) {
+        const c = document.getElementById("printContainer");
+        const bp = document.getElementById("btnPortrait");
+        const bl = document.getElementById("btnLandscape");
+
+        if (mode === "landscape") {
+            c.classList.remove("portrait-mode");
+            c.classList.add("landscape-mode");
+
+            bl.classList.remove("btn-outline-primary");
+            bl.classList.add("btn-primary");
+
+            bp.classList.remove("btn-primary");
+            bp.classList.add("btn-outline-primary");
+        } else {
+            c.classList.add("portrait-mode");
+            c.classList.remove("landscape-mode");
+
+            bp.classList.add("btn-primary");
+            bp.classList.remove("btn-outline-primary");
+
+            bl.classList.add("btn-outline-primary");
+            bl.classList.remove("btn-primary");
+        }
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+        const btnPortrait  = document.getElementById("btnPortrait");
+        const btnLandscape = document.getElementById("btnLandscape");
+
+        if (btnPortrait)  btnPortrait.onclick  = () => setOrientation("portrait");
+        if (btnLandscape) btnLandscape.onclick = () => setOrientation("landscape");
+
+        setOrientation("portrait");
+
+        // 데이터 렌더링 시작
+        renderIndividualWeekly();
+    });
+
+
+    /* ========== 개별 멤버 주간 데이터 렌더링 ========== */
+    function renderIndividualWeekly() {
+        const API_BASE   = "/api/schedule/work";
+        const HOUR_START = 6;
+        const HOUR_END   = 22;
+
+        const member = window.PRINT_MEMBER;
+        const cfg    = window.PRINT_CONFIG;
+
+        const weekStart = isoToDate(cfg.weekStartIso);
+        const weekDates = Array.from({ length: 7 }, (_, i) =>
+                toIso(addDays(weekStart, i))
+        );
+
+        const slotMinutes   = cfg.slotMinutes;
+        const totalStartMin = HOUR_START * 60;
+        const totalEndMin   = HOUR_END * 60;
+
+        // 시간 슬롯 생성
+        const slots = [];
+        for (let t = totalStartMin; t < totalEndMin; t += slotMinutes) {
+            slots.push({ start: t, end: t + slotMinutes });
+        }
+
+        // slotData[slotIdx][dayIdx] = true/false
+        const slotData = slots.map(() => Array.from({ length: 7 }, () => false));
+
+        // API 호출
+        (async function () {
+            try {
+                const url  = `${API_BASE}/${encodeURIComponent(member.id)}/${cfg.weekStartIso}/${cfg.weekEndIso}`;
+                const resp = await fetch(url, { headers: { "Accept": "application/json" } });
+                if (!resp.ok) {
+                    console.warn("[weeklyPrintIndividual] fetch fail:", resp.status);
+                    renderTable(slots, slotData, member);
+                    return;
+                }
+
+                const json   = await resp.json().catch(() => null);
+                const dayMap = normalizeDays(json);
+
+                // 날짜별 segment → 슬롯 매핑
+                weekDates.forEach((iso, dayIdx) => {
+                    const day = dayMap[iso];
+                    if (!day || !Array.isArray(day.segments)) return;
+
+                    day.segments.forEach(seg => {
+                        const segStart = hmToMin(seg.start);
+                        const segEnd   = hmToMin(seg.end);
+                        slots.forEach((slot, si) => {
+                            if (segEnd > slot.start && segStart < slot.end) {
+                                slotData[si][dayIdx] = true;
+                            }
+                        });
+                    });
+                });
+
+                renderTable(slots, slotData, member);
+            } catch (e) {
+                console.error("[weeklyPrintIndividual] error:", e);
+                renderTable(slots, slotData, member);
+            }
+        })();
+
+        function renderTable(slots, slotData, member) {
+            const tbody = document.getElementById("printTableBody");
+            if (!tbody) return;
+            tbody.innerHTML = "";
+
+            const color = colorFor(member.id);
+
+            slots.forEach((slot, si) => {
+                const tr = document.createElement("tr");
+                tr.innerHTML = `<th>${minToHm(slot.start)}</th>`;
+
+                for (let d = 0; d < 7; d++) {
+                    const td = document.createElement("td");
+                    td.classList.add("slot-cell");
+
+                    if (slotData[si][d]) {
+                        td.classList.add("slot-has-work");
+                        td.innerHTML =
+                                `<span class="staff-tag">
+                                <span class="staff-dot" style="background:${color}"></span>
+                                <span class="staff-name">${escapeHtml(member.name)}</span>
+                             </span>`;
+                    } else {
+                        td.textContent = "";
+                    }
+
+                    tr.appendChild(td);
+                }
+
+                tbody.appendChild(tr);
+            });
+        }
+
+        /* ==== UTIL ==== */
+        function isoToDate(i) {
+            const [y, m, d] = i.split("-");
+            return new Date(y, m - 1, d);
+        }
+        function addDays(d, n) {
+            const x = new Date(d);
+            x.setDate(x.getDate() + n);
+            return x;
+        }
+        function toIso(d) {
+            return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+        }
+        function pad2(n) { return String(n).padStart(2, "0"); }
+
+        function hmToMin(hm) {
+            const [h, m] = hm.split(":").map(Number);
+            return h * 60 + m;
+        }
+        function minToHm(min) {
+            return `${pad2(Math.floor(min / 60))}:${pad2(min % 60)}`;
+        }
+
+        function normalizeDays(data) {
+            const map = {};
+            if (data?.days) {
+                data.days.forEach(d => map[d.date] = { segments: d.segments || [] });
+            } else if (Array.isArray(data)) {
+                data.forEach(d => map[d.date] = { segments: d.segments || [] });
+            } else if (typeof data === "object" && data !== null) {
+                Object.keys(data).forEach(k => {
+                    map[k] = { segments: (data[k]?.segments) || [] };
+                });
+            }
+            return map;
+        }
+
+        function colorFor(id) {
+            const h = (seeded(String(id)) % 360);
+            return hsl(h, 65, 65);
+        }
+
+        function seeded(s) {
+            let h = 2166136261;
+            for (let i = 0; i < s.length; i++) {
+                h ^= s.charCodeAt(i);
+                h = Math.imul(h, 16777619);
+            }
+            return h >>> 0;
+        }
+
+        function hsl(h, s, l) {
+            s /= 100; l /= 100;
+            const c = (1 - Math.abs(2 * l - 1)) * s;
+            const x = c * (1 - Math.abs((h / 60) % 2 - 1));
+            const m = l - c / 2;
+            let r = 0, g = 0, b = 0;
+            if (h < 60)      { r = c; g = x; }
+            else if (h < 120){ r = x; g = c; }
+            else if (h < 180){ g = c; b = x; }
+            else if (h < 240){ g = x; b = c; }
+            else if (h < 300){ r = x; b = c; }
+            else             { r = c; b = x; }
+            const toHex = v => Math.round((v + m) * 255).toString(16).padStart(2, "0");
+            return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+        }
+
+        function escapeHtml(s) {
+            return String(s ?? "")
+                    .replace(/&/g, "&amp;")
+                    .replace(/</g, "&lt;")
+                    .replace(/>/g, "&gt;");
+        }
+    }
+</script>
+
+{{>layouts/footer}}

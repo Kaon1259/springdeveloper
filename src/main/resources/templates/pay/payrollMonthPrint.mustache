@@ -1,0 +1,553 @@
+{{>layouts/header_}}
+<style>
+    /* 인쇄용 기본 설정 */
+    @page {
+        size: A4;
+        margin: 16mm;
+    }
+
+    body {
+        font-size: 12px;
+        color: #212529;
+    }
+
+    .pay-print-wrapper {
+        max-width: 900px;
+        margin: 0 auto;
+    }
+
+    .title-area {
+        text-align: center;
+        margin-bottom: 1.5rem;
+    }
+
+    .title-area h1 {
+        font-size: 1.6rem;
+        margin-bottom: .4rem;
+    }
+
+    .title-area .sub {
+        font-size: .9rem;
+        color: #6c757d;
+    }
+
+    .section-title {
+        font-weight: 700;
+        font-size: 1rem;
+        margin-bottom: .4rem;
+        border-left: 4px solid #0d6efd;
+        padding-left: .5rem;
+    }
+
+    .table-sm td, .table-sm th {
+        padding: .25rem .5rem;
+    }
+
+    .text-right {
+        text-align: right !important;
+    }
+
+    .badge-status {
+        font-size: .75rem;
+    }
+
+    .footnote {
+        font-size: .8rem;
+        color: #6c757d;
+        margin-top: 1rem;
+    }
+
+    /* 화면에서만 보이고, 인쇄 시 안 보이게 */
+    @media print {
+        .no-print {
+            display: none !important;
+        }
+    }
+
+    /* ====== 실근무 타임테이블용 스타일 (월 캘린더 형태) ====== */
+
+    .table-timetable th,
+    .table-timetable td {
+        font-size: 0.75rem;
+        vertical-align: top;
+    }
+
+    .day-cell {
+        padding: 3px 3px;
+        font-size: .75rem;
+        line-height: 1.3;
+        vertical-align: top;
+    }
+
+    .day-rect-wrap {
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+        min-height: 46px;
+    }
+
+    .day-rect {
+        border-radius: 6px;
+        border: 1px solid #dee2e6;
+        padding: 2px 4px;
+        background: #f8f9fa;
+        text-align: left;
+    }
+
+    .day-date {
+        font-weight: 600;
+        font-size: .7rem;
+        color: #495057;
+        margin-right: 4px;
+        flex: 0 0 auto;
+    }
+
+    .day-rect-body {
+        flex: 1 1 auto;
+        text-align: left;
+    }
+
+    .seg-chip {
+        display: inline-block;
+        padding: 1px 4px;
+        margin: 1px 2px 1px 0;
+        border-radius: 999px;
+        border: 1px solid #e9ecef;
+        background: #ffffff;
+        font-size: .7rem;
+        white-space: nowrap;
+    }
+
+    .day-outside {
+        color: #adb5bd;
+        background: #f8f9fa;
+    }
+    .day-outside .day-rect {
+        background: #f8f9fa;
+        opacity: 0.7;
+    }
+
+    .day-weekend {
+        background: #fff8f0;
+    }
+    .day-weekend .day-rect {
+        background: #fff8f0;
+    }
+
+    .text-time {
+        color: #198754;
+        font-weight: 600;
+    }
+
+    .timetable-week-label small {
+        font-size: .7rem;
+        color: #6c757d;
+    }
+</style>
+
+
+<div class="pay-print-wrapper">
+
+    <!-- 상단 타이틀 -->
+    <div class="title-area">
+        <h1>월 실근무 급여 내역서</h1>
+        <div class="sub">
+            ({{year}}년 {{month}}월 / {{monthStart}} ~ {{monthEnd}})
+        </div>
+    </div>
+
+    <!-- 근무자 정보 -->
+    <section class="mb-3">
+        <div class="section-title">근로자 정보</div>
+        <table class="table table-bordered table-sm mb-0">
+            <tbody>
+            <tr>
+                <th style="width: 20%;">이름</th>
+                <td style="width: 30%;">{{member.name}}</td>
+                <th style="width: 20%;">연락처</th>
+                <td style="width: 30%;">{{member.phone}}</td>
+            </tr>
+            <tr>
+                <th>시급</th>
+                <td>{{member.hourlyWage}}원</td>
+                <th>급여지급일</th>
+                <td>{{paydayLabel}}</td>
+            </tr>
+            <tr>
+                <th>주휴수당</th>
+                <td>
+                    {{#includeWeeklyHolidayAllowance}}적용{{/includeWeeklyHolidayAllowance}}
+                    {{^includeWeeklyHolidayAllowance}}미적용{{/includeWeeklyHolidayAllowance}}
+                </td>
+                <th>세금(3.3%)</th>
+                <td>
+                    {{#applyTax}}적용{{/applyTax}}
+                    {{^applyTax}}미적용{{/applyTax}}
+                </td>
+            </tr>
+            <tr>
+                <th>은행</th>
+                <td>{{bankName}}</td>
+                <th>계좌번호</th>
+                <td>{{bankAccount}}</td>
+            </tr>
+            </tbody>
+        </table>
+    </section>
+
+    <!-- 월 급여 요약 -->
+    <section class="mb-3">
+        <div class="section-title">월 급여 요약 (실근무 기준)</div>
+
+        {{#hasPay}}
+            <table class="table table-bordered table-sm mb-0 align-middle">
+                <tbody>
+                <tr>
+                    <th style="width: 25%;">월 실근무시간 합계</th>
+                    <td style="width: 75%;">
+                        {{monthWorkTimeStr}}
+                        {{#pay.monthWorkMinutes}} ({{pay.monthWorkMinutes}}분){{/pay.monthWorkMinutes}}
+                    </td>
+                </tr>
+                <tr>
+                    <th>월 주휴수당 시간 합계</th>
+                    <td>
+                        {{#includeWeeklyHolidayAllowance}}
+                            {{monthJuhyuTimeStr}}
+                            {{#pay.monthJuhyuMinutes}} ({{pay.monthJuhyuMinutes}}분){{/pay.monthJuhyuMinutes}}
+                        {{/includeWeeklyHolidayAllowance}}
+                        {{^includeWeeklyHolidayAllowance}}
+                            주휴수당 미적용
+                        {{/includeWeeklyHolidayAllowance}}
+                    </td>
+                </tr>
+                <tr>
+                    <th>월 근무수당 합계</th>
+                    <td>{{monthWorkPayStr}}</td>
+                </tr>
+                <tr>
+                    <th>월 주휴수당 합계</th>
+                    <td>
+                        {{#includeWeeklyHolidayAllowance}}
+                            {{monthJuhyuPayStr}}
+                        {{/includeWeeklyHolidayAllowance}}
+                        {{^includeWeeklyHolidayAllowance}}
+                            주휴수당 미적용
+                        {{/includeWeeklyHolidayAllowance}}
+                    </td>
+                </tr>
+                <tr>
+                    <th>월 합계 (세전)</th>
+                    <td><strong>{{monthTotalPayStr}}</strong></td>
+                </tr>
+                <tr>
+                    <th>세금 공제액 (3.3%)</th>
+                    <td>
+                        {{#applyTax}}
+                            {{taxAmountStr}}
+                        {{/applyTax}}
+                        {{^applyTax}}
+                            미적용
+                        {{/applyTax}}
+                    </td>
+                </tr>
+                <tr>
+                    <th>세후 실수령액</th>
+                    <td><strong>{{afterTaxStr}}</strong></td>
+                </tr>
+                <tr>
+                    <th>급여 상태</th>
+                    <td>
+                        {{statusLabel}}
+                        {{#pay.status}} ({{pay.status}}){{/pay.status}}
+                    </td>
+                </tr>
+                <tr>
+                    <th>확정일</th>
+                    <td>
+                        {{#confirmedAtStr}}{{confirmedAtStr}}{{/confirmedAtStr}}
+                        {{^confirmedAtStr}}-{{/confirmedAtStr}}
+                    </td>
+                </tr>
+                <tr>
+                    <th>지급완료일</th>
+                    <td>
+                        {{#paidAtStr}}{{paidAtStr}}{{/paidAtStr}}
+                        {{^paidAtStr}}-{{/paidAtStr}}
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        {{/hasPay}}
+
+        {{^hasPay}}
+            <div class="alert alert-warning mb-0">
+                해당 근무자의 {{year}}년 {{month}}월 급여 데이터가 없습니다.
+            </div>
+        {{/hasPay}}
+    </section>
+
+    <!-- ====== 추가: 월 실근무 타임테이블 ====== -->
+    <section class="mb-3">
+        <div class="section-title">월 실근무 타임테이블</div>
+
+        <table class="table table-bordered table-sm text-center table-timetable">
+            <thead class="table-light">
+            <tr>
+                <th style="width: 80px;">주차</th>
+                <th>월</th>
+                <th>화</th>
+                <th>수</th>
+                <th>목</th>
+                <th>금</th>
+                <th>토</th>
+                <th>일</th>
+                <th style="width: 110px;">주 합계(시간)</th>
+            </tr>
+            </thead>
+            <tbody id="printMonthScheduleBody">
+            <!-- JS에서 렌더링 -->
+            </tbody>
+        </table>
+
+        <div class="footnote">
+            * 각 셀은 해당 날짜의 실제 근무시간과 시간대(예: 10:00~14:00)를 표시합니다.
+            * 토·일은 배경색으로 구분되며, 회색 영역은 해당 월에 포함되지 않는 날짜입니다.
+        </div>
+    </section>
+
+    <div class="footnote">
+        <ul class="mb-1">
+            <li>본 내역서는 실근무시간을 기준으로 산정된 월 급여 요약 및 타임테이블입니다.</li>
+            <li>주휴수당은 주간 실근무시간이 15시간 이상인 주에만 발생하며, <code>주 실근무시간 ÷ 5</code> 시간분이 산정됩니다.</li>
+            <li>세후 실수령액은 급여 데이터와 세금 적용 여부를 기준으로 단순 계산된 값입니다.</li>
+        </ul>
+        <div class="text-end mt-2">
+            출력일시: {{now}}
+        </div>
+    </div>
+
+    <!-- 화면에서만 보이는 인쇄 버튼 (PDF 저장 시에도 무시됨) -->
+    <div class="mt-3 no-print text-end">
+        <button class="btn btn-sm btn-primary" onclick="window.print()">인쇄 / PDF 저장</button>
+    </div>
+
+</div>
+
+<!-- ====== 실근무 타임테이블 렌더링 스크립트 ====== -->
+<script>
+    (function() {
+        const API_BASE_ACTUAL = '/api/schedule'; // GET /{memberId}/{startIso}/{endIso}
+
+        const memberId   = {{member.id}};              // 컨트롤러에서 member 추가되어 있음
+        const monthStart = '{{monthStart}}';           // 예: 2025-11-01
+        const monthEnd   = '{{monthEnd}}';             // 예: 2025-11-30
+
+        const tbody = document.getElementById('printMonthScheduleBody');
+
+        if (!tbody || !memberId || !monthStart || !monthEnd) {
+            return;
+        }
+
+        document.addEventListener('DOMContentLoaded', initTimeTable);
+
+        async function initTimeTable() {
+            try {
+                const ms = new Date(monthStart);
+                const me = new Date(monthEnd);
+
+                const msIso = toIso(ms);
+                const meIso = toIso(me);
+
+                let dayMapActual = {};
+
+                const resp = await fetch(
+                        `${API_BASE_ACTUAL}/${encodeURIComponent(memberId)}/${msIso}/${meIso}`,
+                        { headers: { 'Accept': 'application/json' } }
+                );
+
+                if (resp.ok) {
+                    const data = await resp.json();
+                    dayMapActual = normalizeDays(data); // { 'yyyy-MM-dd': {segments, minutes} } 형태
+                }
+
+                renderTimeTable(ms, me, dayMapActual);
+            } catch (e) {
+                console.error('print timetable error', e);
+            }
+        }
+
+        function renderTimeTable(ms, me, dayMap) {
+            tbody.innerHTML = '';
+
+            const monthStartDate = new Date(ms.getFullYear(), ms.getMonth(), 1);
+            const monthEndDate   = new Date(me.getFullYear(), me.getMonth(), me.getDate());
+
+            // 월 전체 포함 주(월~일) 목록
+            const weeks = [];
+            let wStart = toMonday(monthStartDate);
+            while (wStart <= monthEndDate) {
+                weeks.push(new Date(wStart));
+                wStart.setDate(wStart.getDate() + 7);
+            }
+
+            let weekIndex = 0;
+
+            weeks.forEach(weekStart => {
+                const weekEnd = addDays(weekStart, 6);
+
+                const dayCells = [];
+                let weekMinutes = 0;
+
+                for (let i=0; i<7; i++) {
+                    const dayDate = addDays(weekStart, i);
+                    const iso     = toIso(dayDate);
+                    const inMonth = (dayDate >= monthStartDate && dayDate <= monthEndDate);
+                    const info    = inMonth ? (dayMap[iso] || { segments: [], minutes: 0 }) : { segments: [], minutes: 0 };
+                    const dayMinutes = info.minutes || 0;
+                    const segments   = Array.isArray(info.segments) ? info.segments : [];
+
+                    if (inMonth) {
+                        weekMinutes += dayMinutes;
+                    }
+
+                    const dayNum    = dayDate.getDate();
+                    const isWeekend = (i >= 5);
+
+                    const clsArr = ['day-cell'];
+                    if (!inMonth)            clsArr.push('day-outside');
+                    if (inMonth && isWeekend) clsArr.push('day-weekend');
+                    const cls = clsArr.join(' ');
+
+                    if (!inMonth) {
+                        dayCells.push(`<td class="${cls}"></td>`);
+                        continue;
+                    }
+
+                    const hasSeg  = segments.length > 0;
+                    const hasTime = dayMinutes > 0;
+
+                    // 위 Rect: 일정 세그먼트(있으면 칩으로 표시)
+                    let topBodyHtml = '';
+                    if (hasSeg) {
+                        topBodyHtml = segments.map(s =>
+                                `<span class="seg-chip">${displayHm(s.start)}~${displayHm(s.end)}</span>`
+                        ).join(' ');
+                    } else if (hasTime) {
+                        topBodyHtml = `<span class="text-muted small">일정 없음</span>`;
+                    } else {
+                        topBodyHtml = `<span class="text-muted small">-</span>`;
+                    }
+
+                    // 아래 Rect: 시간 합계
+                    const timeLabel = hasTime ? formatMins(dayMinutes) : '0시간';
+                    const bottomRectHtml = (hasSeg || hasTime)
+                            ? `<div class="day-rect">
+                               <div class="text-end">
+                                   ${hasTime ? `<span class="text-time">${timeLabel}</span>` : `<span class="text-muted small">${timeLabel}</span>`}
+                               </div>
+                           </div>`
+                            : '';
+
+                    const cellHtml = `
+                        <td class="${cls}">
+                            <div class="day-rect-wrap">
+                                <div class="day-rect">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <span class="day-date">${dayNum}</span>
+                                        <div class="day-rect-body">${topBodyHtml}</div>
+                                    </div>
+                                </div>
+                                ${bottomRectHtml}
+                            </div>
+                        </td>
+                    `;
+                    dayCells.push(cellHtml);
+                }
+
+                const weekWorkLabel = formatMins(weekMinutes);
+                const weekLabelRange =
+                        `${pad2(weekStart.getMonth()+1)}.${pad2(weekStart.getDate())} ~ ` +
+                        `${pad2(weekEnd.getMonth()+1)}.${pad2(weekEnd.getDate())}`;
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <th scope="row" class="align-middle timetable-week-label">
+                        ${++weekIndex}주차<br>
+                        <small>(${weekLabelRange})</small>
+                    </th>
+                    ${dayCells.join('')}
+                    <td class="align-middle">
+                        <span class="text-time">${weekWorkLabel}</span>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        /* ===== 유틸 함수들 ===== */
+        function toIso(d) {
+            return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
+        }
+
+        function pad2(n) {
+            return String(n).padStart(2, '0');
+        }
+
+        function addDays(d, n) {
+            const x = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+            x.setDate(x.getDate() + n);
+            return x;
+        }
+
+        function toMonday(date) {
+            const d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+            const w = d.getDay(); // 0=일
+            const offset = (w + 6) % 7; // 월=0
+            d.setDate(d.getDate() - offset);
+            return d;
+        }
+
+        function formatMins(mins) {
+            const v = Math.max(0, mins | 0);
+            const h = Math.floor(v / 60);
+            const m = v % 60;
+            if (m === 0) return `${h}시간`;
+            return `${h}시간 ${m}분`;
+        }
+
+        function normalizeDays(apiData) {
+            const map = {};
+            const arr = Array.isArray(apiData?.days) ? apiData.days : [];
+            arr.forEach(d => {
+                const date     = String(d.date);
+                const segments = Array.isArray(d.segments) ? d.segments : [];
+                const minutes  = (typeof d.minutes === 'number')
+                        ? d.minutes
+                        : segments.reduce((acc, s) => acc + diffMinutes(s.start, s.end), 0);
+                map[date] = { segments, minutes };
+            });
+            return map;
+        }
+
+        function diffMinutes(start, end) {
+            const s = parseHm(start), e = parseHm(end);
+            return (e.h * 60 + e.m) - (s.h * 60 + s.m);
+        }
+
+        function parseHm(hm) {
+            if (!hm || typeof hm !== 'string') return { h: 0, m: 0 };
+            const [h, m] = hm.split(':').map(n => parseInt(n, 10));
+            return { h: isNaN(h) ? 0 : h, m: isNaN(m) ? 0 : m };
+        }
+
+        function displayHm(v) {
+            if (!v) return '';
+            const [h, m] = String(v).split(':').map(n => parseInt(n, 10) || 0);
+            return `${pad2(h)}:${pad2(m)}`;
+        }
+
+    })();
+</script>
+
+{{>layouts/footer}}

@@ -3,7 +3,6 @@
 <main class="container my-4">
 
     <!-- ============ 상단: 아르바이트 상태별 보기 (칩 리스트) ============ -->
-    <!-- ✅ 파란 배경 + 상단 라운드용 state-card-blue 클래스 추가 -->
     <div class="card mb-3 state-card-blue">
         <div class="card-header d-flex justify-content-between align-items-center">
             <span class="fw-bold">아르바이트 상태별 보기</span>
@@ -30,7 +29,6 @@
                 <div class="col-12 col-md-8">
                     <div class="d-flex justify-content-between align-items-center mb-2">
                         <div class="small text-muted">아르바이트 목록</div>
-                        <!-- ✅ 오른쪽 끝 “몇명” 배지는 유지 -->
                         <span id="memberCountBadge" class="badge bg-light text-dark">0명</span>
                     </div>
 
@@ -72,14 +70,24 @@
         <!-- =========================================================
              1) 실근무시간급여관리 (월단위) + 세금 표시
         ========================================================== -->
-        <!-- ✅ 상단 모서리 라운드 + 파란 헤더를 위해 pay-card 클래스 추가 -->
         <div class="card mb-4 pay-card" id="cardActual">
             <div class="card-header fw-bold d-flex justify-content-between align-items-center">
-                <span>
-                    실근무시간급여관리 (월단위)
+
+                <!-- ✅ 제목 + 주간근무시간관리 버튼 묶음 -->
+                <span class="d-flex align-items-center gap-2">
+                    <span>실근무시간급여관리 (월단위)</span>
+                    <button type="button" class="btn btn-sm btn-outline-light" id="btnOpenWeekSummary">
+                        주간근무시간관리
+                    </button>
                 </span>
+
                 <!-- 버튼 영역은 실근무쪽에만 존재 -->
                 <div class="d-flex justify-content-end gap-2">
+                    <!-- ✅ 월 실근무 테이블 PDF 버튼 -->
+                    <button type="button" class="btn btn-sm btn-outline-light" id="btnOpenPayPdf">
+                        PDF
+                    </button>
+
                     <button type="button" class="btn btn-sm btn-outline-light" id="btnSaveDraft">
                         임시저장
                     </button>
@@ -100,7 +108,6 @@
                 </div>
 
                 <div class="table-responsive">
-                    <!-- ✅ 실근무 테이블 헤더에 파란색 배경을 적용하기 위해 table-pay-header 클래스로 변경 -->
                     <table class="table table-bordered align-middle text-center" id="monthPayTableActual">
                         <thead class="table-pay-header">
                         <tr>
@@ -167,13 +174,13 @@
                         </div>
                     </div>
 
-                    <!-- ✅ 급여지급일 표시 (은행정보 위) -->
+                    <!-- ✅ 급여지급일 표시 -->
                     <div class="mt-2">
                         <span class="small text-muted">급여지급일 :</span>
                         <span id="summaryPaydayActual" class="fw-bold text-danger">-</span>
                     </div>
 
-                    <!-- 은행정보 + 지급완료일 (실근무) -->
+                    <!-- 은행정보 + 지급완료일 -->
                     <div class="d-flex justify-content-between align-items-center mt-2">
                         <div class="small text-muted" id="bankInfoArea">
                             은행: <span id="bankName">-</span>
@@ -196,7 +203,6 @@
         <!-- =========================================================
              2) 계획일정급여관리 (월단위 예상) + 세금 표시
         ========================================================== -->
-        <!-- ✅ 동일하게 상단 라운드 + 파란 헤더 적용을 위해 pay-card 클래스 추가 -->
         <div class="card pay-card" id="cardPlan">
             <div class="card-header fw-bold">
                 계획일정급여관리 (월단위 예상)
@@ -251,7 +257,7 @@
                         <div id="summaryMonthJuhyuPayPlan">-</div>
                     </div>
 
-                    <!-- ✅ 계획 세금 부과 여부/공제액/세후 예상 합계 -->
+                    <!-- ✅ 계획 세금 -->
                     <div class="d-flex justify-content-between">
                         <div class="small text-muted">세금부과 여부 (3.3%)</div>
                         <div id="summaryTaxApplyPlan">미부과</div>
@@ -345,10 +351,8 @@
     .pill .name { font-weight:600; }
     .pill .meta { color:#6c757d; font-size:.8rem; }
 
-    /* 급여 테이블 래퍼 – sticky 기준 컨테이너 */
     .pay-right-wrapper { position: relative; }
 
-    /* 공용 sticky 헤더 */
     .sticky-pay-header {
         position: sticky;
         top: 70px;
@@ -358,7 +362,6 @@
         padding-bottom: .25rem;
     }
 
-    /* ===== 급여 카드(실근무/계획) 상단 라운드 + 파란 헤더 ===== */
     .pay-card {
         border-radius: 1rem;
         overflow: hidden;
@@ -371,19 +374,16 @@
         border-radius: 1rem 1rem 0 0;
     }
 
-    /* ===== 실근무 테이블 헤더 파란색 배경 ===== */
     .table-pay-header th {
         background: #0d6efd !important;
         color: #fff !important;
         border-color: #0b5ed7 !important;
         vertical-align: middle;
     }
-    /* 토/일 헤더도 파란색과 어울리도록 살짝 톤 유지 */
     .table-pay-header .weekend-header {
         background: #0b5ed7 !important;
     }
 
-    /* ===== 일자 셀 안 라운드 Rect 두 개 ===== */
     .day-cell { padding: 4px 4px; font-size: .8rem; line-height: 1.3; vertical-align: top; }
     .day-rect-wrap { display:flex; flex-direction:column; gap:4px; min-height: 52px; }
     .day-rect { border-radius:8px; border:1px solid #dee2e6; padding:3px 6px; background:#f8f9fa; text-align:left; }
@@ -406,15 +406,12 @@
         text-align:right;
     }
 
-    /* ✅ 다음 액션 하이라이트용 (실근무 버튼들) */
     .pay-action-next { box-shadow: 0 0 0 2px rgba(13,110,253,.35); transform: translateY(-1px); }
 
-    /* 강조 색상 */
     .text-time { color:#198754; font-weight:600; }
     .text-money { color:#0d6efd; font-weight:600; }
 </style>
 
-<!-- ✅ 부트스트랩 토스트 영역 -->
 <div class="position-fixed bottom-0 end-0 p-3" style="z-index:1080;">
     <div id="mainToast" class="toast align-items-center text-bg-success border-0" role="alert"
          aria-live="assertive" aria-atomic="true">
@@ -426,7 +423,6 @@
     </div>
 </div>
 
-<!-- ✅ 지급완료 일자 선택 모달 (실근무용) -->
 <div class="modal fade" id="paidDateModal" tabindex="-1" aria-labelledby="paidDateModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -448,27 +444,20 @@
     </div>
 </div>
 
-<!-- 서버에서 내려준 멤버 JSON -->
 <script id="membersData" type="application/json">
 {{{membersJson}}}
 </script>
 
 <script>
     (function() {
-        /* ===== API =====
-           - 실제 근무(분 단위 합계/segments): /api/schedule/{memberId}/{startIso}/{endIso}
-           - 계획 일정(segments 기반):        /api/schedule/work/{memberId}/{startIso}/{endIso}
-        */
-        const API_BASE_ACTUAL   = '/api/schedule';       // GET /{memberId}/{startIso}/{endIso}
-        const API_BASE_PLAN     = '/api/schedule/work';  // GET /{memberId}/{startIso}/{endIso}
+        const API_BASE_ACTUAL   = '/api/schedule';
+        const API_BASE_PLAN     = '/api/schedule/work';
         const PAYROLL_SAVE_API  = '/api/payroll/month';
 
-        // 상단 상태/리스트
         const statusSelect         = document.getElementById('statusSelect');
         const memberPills          = document.getElementById('memberPills');
         const memberCountBadge     = document.getElementById('memberCountBadge');
 
-        // 헤더/내비 공용
         const pageTitle            = document.getElementById('pageTitle');
         const selectedMemberNameEl = document.getElementById('selectedMemberName');
         const selectedMemberStatus = document.getElementById('selectedMemberStatus');
@@ -478,7 +467,6 @@
         const btnMonthThis         = document.getElementById('btnMonthThis');
         const btnMonthNext         = document.getElementById('btnMonthNext');
 
-        // 실근무 테이블/요약
         const monthPayBodyActual         = document.getElementById('monthPayBodyActual');
         const summaryHourlyWageActual    = document.getElementById('summaryHourlyWageActual');
         const summaryMonthWorkTimeActual = document.getElementById('summaryMonthWorkTimeActual');
@@ -486,12 +474,10 @@
         const summaryMonthJuhyuPayActual = document.getElementById('summaryMonthJuhyuPayActual');
         const summaryMonthTotalActual    = document.getElementById('summaryMonthTotalActual');
 
-        // ✅ 실근무 세금
-        const summaryTaxApplyActual         = document.getElementById('summaryTaxApplyActual');
-        const summaryTaxAmountActual        = document.getElementById('summaryTaxAmountActual');
+        const summaryTaxApplyActual           = document.getElementById('summaryTaxApplyActual');
+        const summaryTaxAmountActual          = document.getElementById('summaryTaxAmountActual');
         const summaryMonthTotalAfterTaxActual = document.getElementById('summaryMonthTotalAfterTaxActual');
 
-        // 계획 테이블/요약
         const monthPayBodyPlan         = document.getElementById('monthPayBodyPlan');
         const summaryHourlyWagePlan    = document.getElementById('summaryHourlyWagePlan');
         const summaryMonthWorkTimePlan = document.getElementById('summaryMonthWorkTimePlan');
@@ -499,38 +485,31 @@
         const summaryMonthJuhyuPayPlan = document.getElementById('summaryMonthJuhyuPayPlan');
         const summaryMonthTotalPlan    = document.getElementById('summaryMonthTotalPlan');
 
-        // ✅ 계획 세금
-        const summaryTaxApplyPlan          = document.getElementById('summaryTaxApplyPlan');
-        const summaryTaxAmountPlan         = document.getElementById('summaryTaxAmountPlan');
+        const summaryTaxApplyPlan           = document.getElementById('summaryTaxApplyPlan');
+        const summaryTaxAmountPlan          = document.getElementById('summaryTaxAmountPlan');
         const summaryMonthTotalAfterTaxPlan = document.getElementById('summaryMonthTotalAfterTaxPlan');
 
-        // 은행/계좌/지급완료일 (실근무)
         const bankNameEl      = document.getElementById('bankName');
         const bankAccountEl   = document.getElementById('bankAccount');
         const paidDateLabelEl = document.getElementById('paidDateLabel');
         const paidDateValueEl = document.getElementById('paidDateValue');
 
-        // ✅ 급여지급일(실근무)
         const summaryPaydayActual = document.getElementById('summaryPaydayActual');
+        const juhyuApplyTextEl    = document.getElementById('juhyuApplyText');
 
-        // ✅ 주휴수당 적용/미적용 텍스트
-        const juhyuApplyTextEl = document.getElementById('juhyuApplyText');
+        const btnSaveDraft        = document.getElementById('btnSaveDraft');
+        const btnConfirm          = document.getElementById('btnConfirm');
+        const btnMarkPaid         = document.getElementById('btnMarkPaid');
+        const btnOpenPayPdf       = document.getElementById('btnOpenPayPdf');
+        const btnOpenWeekSummary  = document.getElementById('btnOpenWeekSummary');
 
-        // 급여 상태 버튼(실근무)
-        const btnSaveDraft = document.getElementById('btnSaveDraft');
-        const btnConfirm   = document.getElementById('btnConfirm');
-        const btnMarkPaid  = document.getElementById('btnMarkPaid');
-
-        // 지급완료 모달(실근무)
         const paidDateModalEl    = document.getElementById('paidDateModal');
         const paidDateInput      = document.getElementById('paidDateInput');
         const btnPaidDateConfirm = document.getElementById('btnPaidDateConfirm');
 
-        // 토스트
         const toastEl   = document.getElementById('mainToast');
         const toastBody = document.getElementById('mainToastBody');
 
-        // 상태
         let allMembers = [];
         try {
             allMembers = JSON.parse(document.getElementById('membersData').textContent || '[]');
@@ -540,21 +519,19 @@
 
         let currentMember     = null;
         let selectedMemberId  = null;
-        let currentMonthStart = firstDayOfMonth(new Date()); // 현재 달 1일
+        let currentMonthStart = firstDayOfMonth(new Date());
 
-        // 최근 계산된 “실근무” 월 급여 데이터만 저장/확정/지급에 사용
         let lastPayrollPayload = null;
-
-        // 서버 저장된 급여 상태/지급일(실근무)
-        let currentPayrollStatus = null; // null / 'DRAFT' / 'CONFIRMED' / 'PAID'
+        let currentPayrollStatus = null;
         let currentPaidDate      = null;
 
-        // 초기 상태값
+        // ✅ 주간근무시간관리 팝업용 주간 날짜(ISO 문자열 7개)
+        let currentWeekDates = [];
+
         if (Array.isArray(allMembers) && allMembers.length > 0) {
             statusSelect.value = allMembers[0].status || 'WORKING';
         }
 
-        // 이벤트 바인딩
         statusSelect.addEventListener('change', handleStatusChange);
         btnMonthPrev.addEventListener('click', () => {
             currentMonthStart = new Date(currentMonthStart.getFullYear(), currentMonthStart.getMonth()-1, 1);
@@ -569,12 +546,20 @@
             reloadForCurrentMember();
         });
 
-        // 실근무 상태 버튼
         btnSaveDraft.addEventListener('click', () => savePayrollWithStatus('DRAFT', '임시저장 되었습니다.'));
         btnConfirm.addEventListener('click', () => savePayrollWithStatus('CONFIRMED', '급여가 확정되었습니다.'));
         btnMarkPaid.addEventListener('click', onMarkPaidClick);
 
-        // 지급완료 모달 저장
+        // ✅ 월 실근무 PDF 버튼
+        if (btnOpenPayPdf) {
+            btnOpenPayPdf.addEventListener('click', openPayPdfPage);
+        }
+
+        // ✅ 주간근무시간관리 버튼 → 팝업
+        if (btnOpenWeekSummary) {
+            btnOpenWeekSummary.addEventListener('click', openWeekSummaryPopupWindow);
+        }
+
         if (btnPaidDateConfirm) {
             btnPaidDateConfirm.addEventListener('click', () => {
                 const dateValue = paidDateInput.value;
@@ -590,10 +575,8 @@
             });
         }
 
-        // 초기 실행
         handleStatusChange();
 
-        /* ===== 상단 상태 변경 → 멤버 칩 렌더 ===== */
         function handleStatusChange() {
             const status = statusSelect.value;
             const filtered = (allMembers || []).filter(m => m.status === status);
@@ -602,7 +585,7 @@
 
         function renderMembersByStatus(members) {
             memberPills.innerHTML = '';
-            memberCountBadge.textContent = `${members.length}명`; // ✅ 오른쪽 끝 배지 유지
+            memberCountBadge.textContent = `${members.length}명`;
 
             if (!members.length) {
                 memberPills.innerHTML = `<span class="text-muted small">해당 상태의 아르바이트생이 없습니다.</span>`;
@@ -612,7 +595,6 @@
                 return;
             }
 
-            // 현재 선택 유지 or 첫 번째
             let toSelect = null;
             if (currentMember && members.some(m => String(m.id) === String(currentMember.id))) {
                 toSelect = members.find(m => String(m.id) === String(currentMember.id));
@@ -629,10 +611,10 @@
                         btn.dataset.memberId = String(m.id);
                         const color = colorForMember(m);
                         btn.innerHTML = `
-                    <span class="dot" style="background:${color}"></span>
-                    <span class="name">${escapeHtml(m.name ?? '-')}</span>
-                    <span class="meta">${escapeHtml(m.phone ?? '')}</span>
-                `;
+                        <span class="dot" style="background:${color}"></span>
+                        <span class="name">${escapeHtml(m.name ?? '-')}</span>
+                        <span class="meta">${escapeHtml(m.phone ?? '')}</span>
+                    `;
                         btn.addEventListener('click', (e) => {
                             e.preventDefault();
                             selectMember(m);
@@ -651,8 +633,8 @@
             updateMemberListActive();
             renderMemberHeader(member);
             setBankInfo(member);
-            setPayday(member);                  // ✅ 급여지급일 표시
-            updateJuhyuApplyText(member);       // ✅ “주휴수당(적용/미적용)” 문구 반영
+            setPayday(member);
+            updateJuhyuApplyText(member);
             reloadForCurrentMember();
         }
 
@@ -694,7 +676,6 @@
             if (bankAccountEl) bankAccountEl.textContent = bankAccount;
         }
 
-        // ✅ 급여지급일 표시
         function setPayday(member) {
             if (!summaryPaydayActual) return;
             const v = member?.payday;
@@ -712,7 +693,6 @@
             return s;
         }
 
-        // ✅ 상단 안내문 “주휴수당(적용/미적용)” 표시
         function updateJuhyuApplyText(member) {
             const applied = !!member?.includeWeeklyHolidayAllowance;
             if (juhyuApplyTextEl) {
@@ -721,10 +701,8 @@
         }
 
         function clearTables() {
-            // 공용 라벨
             monthRangeLabel.textContent = '0000.00.01 ~ 00.00';
 
-            // 실근무
             monthPayBodyActual.innerHTML = '';
             summaryHourlyWageActual.textContent    = '-';
             summaryMonthWorkTimeActual.textContent = '0시간';
@@ -732,7 +710,6 @@
             summaryMonthJuhyuPayActual.textContent = '-';
             summaryMonthTotalActual.textContent    = '-';
 
-            // 실근무 세금 초기화
             if (summaryTaxApplyActual)      summaryTaxApplyActual.textContent      = '미적용';
             if (summaryTaxAmountActual)     summaryTaxAmountActual.textContent     = '-';
             if (summaryMonthTotalAfterTaxActual) summaryMonthTotalAfterTaxActual.textContent = '-';
@@ -744,7 +721,6 @@
             if (paidDateValueEl)  paidDateValueEl.textContent = '';
             if (summaryPaydayActual) summaryPaydayActual.textContent = '-';
 
-            // 계획
             monthPayBodyPlan.innerHTML = '';
             summaryHourlyWagePlan.textContent    = '-';
             summaryMonthWorkTimePlan.textContent = '0시간';
@@ -752,13 +728,14 @@
             summaryMonthJuhyuPayPlan.textContent = '-';
             summaryMonthTotalPlan.textContent    = '-';
 
-            // 계획 세금 초기화
             if (summaryTaxApplyPlan)          summaryTaxApplyPlan.textContent          = '미부과';
             if (summaryTaxAmountPlan)         summaryTaxAmountPlan.textContent         = '-';
             if (summaryMonthTotalAfterTaxPlan) summaryMonthTotalAfterTaxPlan.textContent = '-';
 
             renderMemberHeader(null);
             if (juhyuApplyTextEl) juhyuApplyTextEl.textContent = '주휴수당(적용/미적용)';
+
+            currentWeekDates = [];
         }
 
         function reloadForCurrentMember() {
@@ -769,12 +746,14 @@
             loadMonthDataBoth(currentMember, currentMonthStart);
         }
 
-        /* ===== 월 데이터: 실근무 + 계획 동시 로딩 ===== */
         async function loadMonthDataBoth(member, monthStartDate) {
             const ms    = firstDayOfMonth(monthStartDate);
             const me    = lastDayOfMonth(monthStartDate);
             const msIso = toIso(ms);
             const meIso = toIso(me);
+
+            // ✅ 현재 월 기준 주간근무 팝업용 주간 날짜 세팅
+            updateCurrentWeekDates(ms, me);
 
             monthRangeLabel.textContent =
                     `${ms.getFullYear()}.${pad2(ms.getMonth()+1)}.01 ~ ${pad2(me.getMonth()+1)}.${pad2(me.getDate())}`;
@@ -790,26 +769,24 @@
 
                 if (respActual.ok) {
                     const dataA = await respActual.json();
-                    dayMapActual = normalizeDays(dataA); // minutes 보장
+                    dayMapActual = normalizeDays(dataA);
                 }
                 if (respPlan.ok) {
                     const dataP = await respPlan.json();
-                    dayMapPlan = normalizeDays(dataP); // segments → minutes 계산 포함
+                    dayMapPlan = normalizeDays(dataP);
                 }
             } catch (e) {
                 console.error('loadMonthDataBoth error', e);
             }
 
-            // ✅ memberDto.includeWeeklyHolidayAllowance 플래그를 적용
             const includeJuhyu = !!member?.includeWeeklyHolidayAllowance;
 
             renderMonthPayTable('actual', currentMember, ms, me, dayMapActual, includeJuhyu);
             renderMonthPayTable('plan',   currentMember, ms, me, dayMapPlan,   includeJuhyu);
 
-            await loadPayrollStatus(currentMember, ms); // 실근무 저장상태
+            await loadPayrollStatus(currentMember, ms);
         }
 
-        /* ===== 서버 저장 급여 상태 조회(실근무) ===== */
         async function loadPayrollStatus(member, monthStartDate) {
             const year  = monthStartDate.getFullYear();
             const month = monthStartDate.getMonth() + 1;
@@ -834,17 +811,9 @@
             }
         }
 
-        /**
-         * 공용 렌더러
-         * type: 'actual' | 'plan'
-         *  - actual: 실근무시간 기준(저장 payload 생성 + 세금 계산)
-         *  - plan:   계획일정 기준(계산만 + 세금 계산)
-         * includeJuhyu: boolean (memberDto.includeWeeklyHolidayAllowance)
-         */
         function renderMonthPayTable(type, member, ms, me, dayMap, includeJuhyu) {
             const isActual = (type === 'actual');
 
-            // 타겟 요소 결정
             const tbodyEl   = isActual ? monthPayBodyActual   : monthPayBodyPlan;
             const wageEl    = isActual ? summaryHourlyWageActual    : summaryHourlyWagePlan;
             const timeEl    = isActual ? summaryMonthWorkTimeActual : summaryMonthWorkTimePlan;
@@ -860,7 +829,6 @@
             let monthMinutes      = 0;
             let monthJuhyuMinutes = 0;
 
-            // 월 전체 포함 주(월~일) 목록
             const weeks   = [];
             let wStart    = toMonday(ms);
             const monthEnd = new Date(me);
@@ -906,7 +874,6 @@
                     const hasSeg  = segments.length > 0;
                     const hasTime = dayMinutes > 0;
 
-                    // 위 Rect: 일정 세그먼트(있으면 칩으로, 없으면 표시)
                     let topBodyHtml = '';
                     if (hasSeg) {
                         topBodyHtml = segments.map(s =>
@@ -918,31 +885,29 @@
                         topBodyHtml = `<span class="text-muted small">-</span>`;
                     }
 
-                    // 아래 Rect: 시간 합계(실근무/계획 공용)
                     const timeLabel      = hasTime ? formatMins(dayMinutes) : '0시간';
                     const bottomRectHtml = (hasSeg || hasTime)
                             ? `<div class="day-rect">
-                           <div class="text-end">${hasTime ? `<span class="text-time">${timeLabel}</span>` : `<span class="text-muted small">${timeLabel}</span>`}</div>
-                       </div>`
+                               <div class="text-end">${hasTime ? `<span class="text-time">${timeLabel}</span>` : `<span class="text-muted small">${timeLabel}</span>`}</div>
+                           </div>`
                             : '';
 
                     const cellHtml = `
-                    <td class="${cls}">
-                        <div class="day-rect-wrap">
-                            <div class="day-rect">
-                                <div class="d-flex justify-content-between align-items-start">
-                                    <span class="day-date">${dayNum}</span>
-                                    <div class="day-rect-body">${topBodyHtml}</div>
+                        <td class="${cls}">
+                            <div class="day-rect-wrap">
+                                <div class="day-rect">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <span class="day-date">${dayNum}</span>
+                                        <div class="day-rect-body">${topBodyHtml}</div>
+                                    </div>
                                 </div>
+                                ${bottomRectHtml}
                             </div>
-                            ${bottomRectHtml}
-                        </div>
-                    </td>
-                `;
+                        </td>
+                    `;
                     dayCells.push(cellHtml);
                 }
 
-                // ✅ includeJuhyu=false면 주휴수당 "전혀 계산되지 않음"
                 const juhyuMinutes = includeJuhyu ? calcWeeklyJuhyuMinutes(weekMinutes) : 0;
                 monthJuhyuMinutes += juhyuMinutes;
 
@@ -957,7 +922,6 @@
                 const weekLabelRange =
                         `${pad2(weekStart.getMonth()+1)}.${pad2(weekStart.getDate())} ~ ${pad2(weekEnd.getMonth()+1)}.${pad2(weekEnd.getDate())}`;
 
-                // 주휴수당 셀
                 let weekJuhyuCellHtml = '-';
                 if (includeJuhyu) {
                     if (juhyuMinutes > 0 && weekJuhyuPay != null) {
@@ -981,21 +945,20 @@
 
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
-                <th scope="row" class="align-middle">
-                    ${++weekIndex}주차<br>
-                    <small class="text-muted">(${weekLabelRange})</small>
-                </th>
-                ${dayCells.join('')}
-                <td class="text-end align-middle">${weekWorkCellHtml}</td>
-                <td class="text-end align-middle">${weekJuhyuCellHtml}</td>
-                <td class="text-end align-middle">
-                    ${weekPayLabel !== '-' ? `<span class="text-money">${weekPayLabel}</span>` : '-'}
-                </td>
-            `;
+                    <th scope="row" class="align-middle">
+                        ${++weekIndex}주차<br>
+                        <small class="text-muted">(${weekLabelRange})</small>
+                    </th>
+                    ${dayCells.join('')}
+                    <td class="text-end align-middle">${weekWorkCellHtml}</td>
+                    <td class="text-end align-middle">${weekJuhyuCellHtml}</td>
+                    <td class="text-end align-middle">
+                        ${weekPayLabel !== '-' ? `<span class="text-money">${weekPayLabel}</span>` : '-'}
+                    </td>
+                `;
                 tbodyEl.appendChild(tr);
             });
 
-            // 월 합계
             timeEl.textContent = formatMins(monthMinutes);
 
             let monthWorkPay  = null;
@@ -1011,8 +974,7 @@
             juhyuEl.textContent   = (wage != null && includeJuhyu) ? krw(monthJuhyuPay) : (includeJuhyu ? '-' : '미적용');
             totalEl.textContent   = (monthTotal    != null) ? krw(monthTotal)    : '-';
 
-            // ✅ 세금 계산
-            const applyTax  = isTaxApplied(member);  // member.applyTax 해석
+            const applyTax  = isTaxApplied(member);
             const taxRate   = 0.033;
             let taxAmount   = null;
             let totalAfterTax = null;
@@ -1023,7 +985,6 @@
             }
 
             if (isActual) {
-                // 실근무 세금 UI
                 if (summaryTaxApplyActual) {
                     summaryTaxApplyActual.textContent = applyTax ? '적용 (3.3%)' : '미적용';
                 }
@@ -1035,7 +996,6 @@
                             (applyTax && totalAfterTax != null) ? krw(totalAfterTax) : '-';
                 }
 
-                // 저장 payload는 기존 필드만 유지 (백엔드 변경 X)
                 lastPayrollPayload = (member && wage != null && monthWorkPay != null && monthTotal != null)
                         ? {
                             memberId:          member.id,
@@ -1050,7 +1010,6 @@
                         }
                         : null;
             } else {
-                // 계획 세금 UI
                 if (summaryTaxApplyPlan) {
                     summaryTaxApplyPlan.textContent = applyTax ? '부과 (3.3%)' : '미부과';
                 }
@@ -1064,7 +1023,6 @@
             }
         }
 
-        /* ===== 실근무: 급여 저장/확정/지급 ===== */
         async function savePayrollWithStatus(status, successMessage, paidDate) {
             if (!currentMember) {
                 showToast('먼저 근무자를 선택해주세요.', 'danger');
@@ -1098,7 +1056,6 @@
             }
         }
 
-        /* 지급완료 클릭 시 모달 */
         function onMarkPaidClick() {
             if (!currentMember) {
                 showToast('먼저 근무자를 선택해주세요.', 'danger');
@@ -1119,7 +1076,6 @@
             bootstrap.Modal.getOrCreateInstance(paidDateModalEl).show();
         }
 
-        /* 급여 상태/버튼/지급일 UI(실근무) */
         function updatePayrollStatusUI(status) {
             if (!payrollStatusBadge) return;
 
@@ -1171,7 +1127,49 @@
             }
         }
 
-        /* ===== 토스트 ===== */
+        /* ===== 월 실근무시간급여관리 PDF 출력 페이지 오픈 ===== */
+        function openPayPdfPage() {
+            if (!currentMember) {
+                showToast('먼저 근무자를 선택해주세요.', 'danger');
+                return;
+            }
+
+            const year  = currentMonthStart.getFullYear();
+            const month = currentMonthStart.getMonth() + 1;
+
+            const url =
+                    `/payment/payroll/month/print` +
+                    `?memberId=${encodeURIComponent(currentMember.id)}` +
+                    `&year=${encodeURIComponent(year)}` +
+                    `&month=${encodeURIComponent(month)}`;
+
+            window.open(url, '_blank');
+        }
+
+        /* ===== ✅ 주간근무시간관리 팝업 윈도우 오픈 ===== */
+        function openWeekSummaryPopupWindow() {
+            if (!currentMember || !currentWeekDates.length) {
+                alert('선택된 아르바이트 또는 주간 정보가 없습니다.');
+                return;
+            }
+
+            const memberId   = currentMember.id;
+            const startDate  = currentWeekDates[0];
+            const endDate    = currentWeekDates[6];
+
+            const url =
+                    `/members/showworktimedashboardpopup` +
+                    `?memberId=${encodeURIComponent(memberId)}` +
+                    `&startDate=${encodeURIComponent(startDate)}` +
+                    `&endDate=${encodeURIComponent(endDate)}`;
+
+            window.open(
+                    url,
+                    'weekSummaryPopup',
+                    'width=1600,height=800,scrollbars=yes,resizable=yes'
+            );
+        }
+
         function showToast(message, type) {
             if (!toastEl || !toastBody) return;
             toastBody.textContent = message;
@@ -1292,10 +1290,28 @@
             return false;
         }
 
+        // ✅ 현재 월 기준으로 "오늘이 속한 주" (없으면 월 1일이 속한 주)를 currentWeekDates에 저장
+        function updateCurrentWeekDates(monthStartDate, monthEndDate) {
+            const monthEnd = new Date(monthEndDate.getFullYear(), monthEndDate.getMonth(), monthEndDate.getDate());
+            const ms       = new Date(monthStartDate.getFullYear(), monthStartDate.getMonth(), monthStartDate.getDate());
+
+            const today = new Date();
+            let baseDate = today;
+
+            // 오늘이 해당 월 범위 밖이면, 월 1일 기준
+            if (baseDate < ms || baseDate > monthEnd) {
+                baseDate = ms;
+            }
+
+            const weekStart = toMonday(baseDate);
+            currentWeekDates = [];
+            for (let i=0; i<7; i++) {
+                const d = addDays(weekStart, i);
+                currentWeekDates.push(toIso(d));
+            }
+        }
+
     })();
 </script>
 
 {{>layouts/footer}}
-
-
-

@@ -6,7 +6,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ymsoft.springdeveloper.com.springdeveloper.dto.*;
 import ymsoft.springdeveloper.com.springdeveloper.entity.Member;
-import ymsoft.springdeveloper.com.springdeveloper.entity.ScheduleItem;
 import ymsoft.springdeveloper.com.springdeveloper.entity.WorkSchedule;
 import ymsoft.springdeveloper.com.springdeveloper.repository.memberRepository;
 import ymsoft.springdeveloper.com.springdeveloper.repository.WorkScheduleRepository;
@@ -328,6 +327,19 @@ public class WorkScheduleService {
         });
 
         return resp;
+    }
+
+    public List<WorkSchedule> getWeeklyWork(Long memberId, LocalDate start, LocalDate end) {
+        validateParams(memberId, start, end);
+
+        // (선택) 멤버 존재 여부 체크
+        if (!memberRepository.existsById(memberId)) {
+            throw new IllegalArgumentException("존재하지 않는 근로자입니다. memberId=" + memberId);
+        }
+
+        return workScheduleRepository.findByMemberIdAndWorkDateBetweenOrderByWorkDateAscStartAsc(
+                        memberId, start, end
+                );
     }
 
     @Transactional

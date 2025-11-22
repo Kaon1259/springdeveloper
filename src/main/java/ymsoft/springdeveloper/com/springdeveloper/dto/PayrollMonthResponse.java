@@ -1,11 +1,13 @@
 package ymsoft.springdeveloper.com.springdeveloper.dto;
 
 
+import lombok.ToString;
 import ymsoft.springdeveloper.com.springdeveloper.entity.PayrollMonth;
 import ymsoft.springdeveloper.com.springdeveloper.enums.PayrollStatus;
 
 import java.time.LocalDateTime;
 
+@ToString
 public class PayrollMonthResponse {
 
     private Long id;

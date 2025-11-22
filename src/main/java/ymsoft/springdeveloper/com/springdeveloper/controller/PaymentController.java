@@ -11,12 +11,17 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import ymsoft.springdeveloper.com.springdeveloper.dto.MemberDto;
+import ymsoft.springdeveloper.com.springdeveloper.dto.PayrollMonthResponse;
+import ymsoft.springdeveloper.com.springdeveloper.service.PayrollMonthService;
 import ymsoft.springdeveloper.com.springdeveloper.service.WorkScheduleService;
 import ymsoft.springdeveloper.com.springdeveloper.service.memberService;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 
 @Slf4j
 @Controller
@@ -25,6 +30,9 @@ import java.util.List;
 public class PaymentController {
     @Autowired
     private memberService memService;
+
+    @Autowired
+    private PayrollMonthService payrollMonthService;
 
     private final ObjectMapper objectMapper; // ✅ 스프링이 모듈 등록된 ObjectMapper를 주입
 
@@ -118,5 +126,161 @@ public class PaymentController {
         // 5) 페이지 타이틀
         model.addAttribute("pageTitle", "월/주 실 근무시간 대시보드");
         return "members/payManagerDashboard";
+    }
+
+    @GetMapping("/payroll/month/print")
+    public String printMonthPayroll(
+            @RequestParam Long memberId,
+            @RequestParam int year,
+            @RequestParam int month,
+            Model model
+    ) {
+        // 1) 멤버 정보
+        MemberDto member = memService.findById(memberId);
+
+        // 2) 해당 월의 시작/끝
+        LocalDate monthStart = LocalDate.of(year, month, 1);
+        LocalDate monthEnd   = monthStart.withDayOfMonth(monthStart.lengthOfMonth());
+
+        // 3) 해당 월 급여(월 단위) 데이터 조회
+        //    - 보통 1건이라고 가정, 여러 건이면 가장 최근(updatedAt 기준) 1건 사용
+        List<PayrollMonthResponse> pays =
+                payrollMonthService.getMonth(memberId, year, month).stream().toList();
+
+        log.info("/pay/payroll/month/print memberId={}, year={}, month={}, pays={}",
+                memberId, year, month, pays);
+
+        PayrollMonthResponse pay = null;
+        if (!pays.isEmpty()) {
+            pay = pays.stream()
+                    .max(Comparator.comparing(p -> p.getUpdatedAt() != null ? p.getUpdatedAt() : p.getCreatedAt()))
+                    .orElse(pays.get(0));
+        }
+
+        // 주휴수당/세금 플래그
+        boolean includeWeeklyHolidayAllowance = member.getIncludeWeeklyHolidayAllowance();
+        boolean applyTax = member.getApplyTax();
+
+        // 4) 월 합계/세금/세후 금액 계산
+        Long monthTotalPay = (pay != null ? pay.getMonthTotalPay() : null);
+        Long taxAmount = null;
+        Long afterTax = null;
+
+        if (applyTax && monthTotalPay != null) {
+            taxAmount = Math.round(monthTotalPay * 0.033);
+            afterTax = monthTotalPay - taxAmount;
+        } else if (monthTotalPay != null) {
+            // 세금 미적용이면 세후 = 세전
+            afterTax = monthTotalPay;
+        }
+
+        // 5) 분 → "시/분" 문자열로 변환
+        String monthWorkTimeStr = null;
+        String monthJuhyuTimeStr = null;
+        if (pay != null) {
+            monthWorkTimeStr = formatMinutes(pay.getMonthWorkMinutes());
+            monthJuhyuTimeStr = formatMinutes(pay.getMonthJuhyuMinutes());
+        }
+
+        // 6) 상태/날짜 문자열
+        String statusLabel = (pay != null ? toStatusLabel(pay.getStatus()) : "미저장");
+        String confirmedAtStr = formatDateTime(pay != null ? pay.getConfirmedAt() : null);
+        String paidAtStr      = formatDateTime(pay != null ? pay.getPaidAt() : null);
+
+        // 7) 통화 포맷(원 단위)
+        String monthWorkPayStr   = (pay != null ? formatKrw(pay.getMonthWorkPay()) : "-");
+        String monthJuhyuPayStr  = (pay != null ? formatKrw(pay.getMonthJuhyuPay()) : "-");
+        String monthTotalPayStr  = (monthTotalPay != null ? formatKrw(monthTotalPay) : "-");
+        String taxAmountStr      = (taxAmount != null ? formatKrw(taxAmount) : "-");
+        String afterTaxStr       = (afterTax != null ? formatKrw(afterTax) : "-");
+
+        // 8) 급여지급일(멤버 설정값)
+        String paydayLabel = formatPayday(member.getPayday());
+
+        // 9) 모델 바인딩
+        model.addAttribute("member", member);
+        model.addAttribute("pay", pay);
+        model.addAttribute("hasPay", pay != null);
+
+        model.addAttribute("year", year);
+        model.addAttribute("month", month);
+        model.addAttribute("monthStart", monthStart);
+        model.addAttribute("monthEnd", monthEnd);
+
+        model.addAttribute("includeWeeklyHolidayAllowance", includeWeeklyHolidayAllowance);
+        model.addAttribute("applyTax", applyTax);
+
+        model.addAttribute("monthWorkTimeStr", monthWorkTimeStr);
+        model.addAttribute("monthJuhyuTimeStr", monthJuhyuTimeStr);
+
+        model.addAttribute("statusLabel", statusLabel);
+        model.addAttribute("confirmedAtStr", confirmedAtStr);
+        model.addAttribute("paidAtStr", paidAtStr);
+
+        model.addAttribute("monthWorkPayStr", monthWorkPayStr);
+        model.addAttribute("monthJuhyuPayStr", monthJuhyuPayStr);
+        model.addAttribute("monthTotalPayStr", monthTotalPayStr);
+        model.addAttribute("taxAmountStr", taxAmountStr);
+        model.addAttribute("afterTaxStr", afterTaxStr);
+
+        model.addAttribute("paydayLabel", paydayLabel);
+
+        // 은행 정보
+        model.addAttribute("bankName", member.getBankName());
+        model.addAttribute("bankAccount", member.getBankAccount());
+
+        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+
+        // ✅ 여기 때문에 에러났었음: now 추가
+        model.addAttribute("now", LocalDateTime.now().format(dtf));
+
+        // PDF로 뽑기 좋은 단순 출력용 뷰
+        // src/main/resources/templates/pay/payrollMonthPrint.mustache
+        return "pay/payrollMonthPrint";
+    }
+
+    /** 분 -> "n시간 m분" */
+    private String formatMinutes(Integer minutes) {
+        if (minutes == null || minutes <= 0) return "0시간";
+        int h = minutes / 60;
+        int m = minutes % 60;
+        if (m == 0) return h + "시간";
+        return h + "시간 " + m + "분";
+    }
+
+    /** 상태 -> 한글 라벨 */
+    private String toStatusLabel(String status) {
+        if (status == null) return "미저장";
+        return switch (status.toUpperCase()) {
+            case "DRAFT"     -> "임시저장";
+            case "CONFIRMED" -> "확정";
+            case "PAID"      -> "지급완료";
+            default          -> status;
+        };
+    }
+
+    /** LocalDateTime -> "yyyy-MM-dd HH:mm" */
+    private String formatDateTime(LocalDateTime dt) {
+        if (dt == null) return null;
+        DateTimeFormatter f = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm", Locale.KOREA);
+        return dt.format(f);
+    }
+
+    /** Long 원화 포맷 (null -> "-") */
+    private String formatKrw(Long value) {
+        if (value == null) return "-";
+        return String.format("%,d원", value);
+    }
+
+    /** 지급일 포맷(EOM 또는 숫자) */
+    private String formatPayday(String v) {
+        if (v == null || v.trim().isEmpty()) return "미지정";
+        String s = v.trim().toUpperCase();
+        if (s.equals("EOM")) return "말일";
+        if (s.matches("\\d+")) {
+            int n = Integer.parseInt(s);
+            if (n >= 1 && n <= 31) return n + "일";
+        }
+        return v;
     }
 }

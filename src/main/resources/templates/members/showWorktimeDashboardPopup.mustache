@@ -105,7 +105,13 @@
                             <button type="button" class="btn btn-outline-secondary" data-grid-slot="30">30분</button>
                             <button type="button" class="btn btn-outline-secondary active" data-grid-slot="60">1시간</button>
                         </div>
-                        <button type="button" class="btn btn-sm btn-outline-secondary ms-1" id="btnGridClearAll">전체 초기화(실제)</button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary ms-1" id="btnGridClearAll">
+                            전체 초기화(실제)
+                        </button>
+                        <!-- ✅ 추가: 계획 그리드 기준으로 실제 근무 그리드 채우기 -->
+                        <button type="button" class="btn btn-sm btn-outline-success ms-1" id="btnFillFromPlan" disabled>
+                            근무시간채우기
+                        </button>
                     </div>
                     <div class="right small text-muted">
                         왼쪽은 <strong>근무계획</strong>, 오른쪽은 <strong>실제 근무시간</strong>입니다.<br>
@@ -485,6 +491,7 @@
         const btnGridClearAll         = document.getElementById('btnGridClearAll');
         const btnSaveWeek             = document.getElementById('btnSaveWeek');
         const btnSavePlanWeek         = document.getElementById('btnSavePlanWeek');
+        const btnFillFromPlan         = document.getElementById('btnFillFromPlan'); // ✅ 추가: 계획 → 실제 복사 버튼
 
         // 데이터 상태
         let allMembers = [];
@@ -596,7 +603,7 @@
                             if (highlightedDayIso) focusDayColumnInGrid(highlightedDayIso);
                         }
 
-                        // 저장 버튼은 10분일 때만 활성화
+                        // 저장/복사 버튼은 10분일 때만 활성화
                         updateSaveButtonByStep();
                     });
                 });
@@ -612,6 +619,11 @@
                 });
             }
 
+            // ✅ 계획 → 실제 근무시간 채우기 버튼 핸들러
+            if (btnFillFromPlan) {
+                btnFillFromPlan.addEventListener('click', onClickFillFromPlan);
+            }
+
             if (memberWeekForm) {
                 memberWeekForm.addEventListener('submit', onSubmitWeekForm);
             }
@@ -621,7 +633,7 @@
             }
         }
 
-        /* 저장 버튼 활성/비활성 (10분만 활성) */
+        /* 저장/복사 버튼 활성/비활성 (10분만 활성) */
         function updateSaveButtonByStep(){
             const enable = (gridStepMinutes === 10);
             if (btnSaveWeek) {
@@ -631,6 +643,10 @@
             if (btnSavePlanWeek) {
                 btnSavePlanWeek.disabled = !enable;
                 btnSavePlanWeek.title = enable ? '' : '저장은 10분 단위에서만 가능합니다.';
+            }
+            if (btnFillFromPlan) {
+                btnFillFromPlan.disabled = !enable;
+                btnFillFromPlan.title = enable ? '' : '근무시간채우기는 10분 단위에서만 가능합니다.';
             }
         }
 
@@ -1333,6 +1349,40 @@
             } catch (e) {
                 console.error(e);
                 alert('근무일정(계획) 저장 중 오류가 발생했습니다.');
+            }
+        }
+
+        /* ✅ 계획 그리드 → 실제 근무 그리드로 전체 복사 */
+        function onClickFillFromPlan(){
+            // 10분 단위가 아닐 때는 사용 불가
+            if (gridStepMinutes !== 10) {
+                alert('근무시간채우기는 10분 단위에서만 가능합니다. 슬롯 버튼에서 10분을 선택해 주세요.');
+                return;
+            }
+            if (!memberWeekGridBody) return;
+
+            // 기존 실제 선택/DIFF 제거
+            memberWeekGridBody
+                    .querySelectorAll('.slot-10m.slot-actual.selected')
+                    .forEach(el => el.classList.remove('selected','slot-diff'));
+
+            // 계획(filled) 슬롯과 동일 위치의 실제 슬롯을 선택
+            memberWeekGridBody
+                    .querySelectorAll('.slot-plan.filled')
+                    .forEach(planEl => {
+                        const dayOffset = planEl.dataset.dayOffset;
+                        const idx       = planEl.dataset.idx;
+                        const actualEl  = memberWeekGridBody.querySelector(
+                                `.slot-10m.slot-actual[data-day-offset="${dayOffset}"][data-idx="${idx}"]`
+                        );
+                        if (actualEl) {
+                            actualEl.classList.add('selected');
+                        }
+                    });
+
+            // 현재 선택된 하이라이트 일자 기준으로 diff 재계산
+            if (highlightedDayIso) {
+                recomputeGridDiffForHighlightedDay();
             }
         }
 

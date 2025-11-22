@@ -27,6 +27,7 @@ import java.time.LocalTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@ToString
 public class WorkSchedule {
 
     @Id
