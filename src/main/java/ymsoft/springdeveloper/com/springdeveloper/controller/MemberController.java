@@ -555,4 +555,52 @@ public class MemberController {
             return "redirect:/members/" + id + "/edit";
         }
     }
+
+
+    //인사정보 보기
+    @GetMapping("/members/individual/print")
+    public String printMember(@RequestParam Long memberId,
+                             Model model) throws Exception {
+
+        try {
+            log.info("printMember: {}", memberId);
+            MemberDto member = memService.findById(memberId);
+            member.getHealthCertExpiryStr();
+
+            model.addAttribute("member", member);
+
+            // 1) 기준 주(월요일~일요일) 계산
+            LocalDate base =  LocalDate.now();
+            LocalDate startOfWeek = base.with(java.time.DayOfWeek.MONDAY);
+            LocalDate endOfWeek   = startOfWeek.plusDays(6);
+
+            // 2) 라벨/URL
+            DateTimeFormatter ymd = DateTimeFormatter.ofPattern("yyyy.MM.dd");
+            DateTimeFormatter md  = DateTimeFormatter.ofPattern("MM.dd");
+
+            String weekRangeLabel = String.format("%s ~ %s",
+                    startOfWeek.format(ymd), endOfWeek.format(md));
+
+            // 예: /members?week=2025-11-03
+            String weekPrevUrl = "/members?week=" + startOfWeek.minusWeeks(1);
+            String weekNextUrl = "/members?week=" + startOfWeek.plusWeeks(1);
+
+
+            // 4) 주간 네비게이션 바인딩
+            model.addAttribute("weekRangeLabel", weekRangeLabel);
+            model.addAttribute("weekPrevUrl", weekPrevUrl);
+            model.addAttribute("weekNextUrl", weekNextUrl);
+
+            String memberJson = objectMapper.writeValueAsString(member);
+            model.addAttribute("memberJson", memberJson);
+
+            log.info(member.toString());
+
+            return "members/memberInfoPrint";
+
+        } catch (Exception ex) {
+            log.info("Exception : printMember: {}", ex.toString());
+            return "redirect:/members/" + memberId + "/edit";
+        }
+    }
 }

@@ -63,6 +63,13 @@
                             편집
                         </button>
 
+                        <!-- 🔹 PDF 버튼 추가 -->
+                        <button type="button"
+                                id="btnOpenPdf"
+                                class="btn btn-sm btn-outline-light">
+                            PDF
+                        </button>
+
                         <button type="submit"
                                 form="memberEditForm"
                                 id="btnFormSave"
@@ -273,10 +280,10 @@
                     <div class="info-grid mb-4">
                         <div class="info-item">
                             <div class="label">메모</div>
-                            <textarea class="form-control form-control-sm"
+                            <textarea class="form-control form-control-sm memo-box-textarea"
                                       name="memo"
                                       rows="2"
-                                      placeholder="간단 메모를 남겨두세요."></textarea>
+                                      placeholder="간단 메모를 남겨두세요.">{{#member.memo}}{{member.memo}}{{/member.memo}}</textarea>
                         </div>
                     </div>
 
@@ -397,6 +404,10 @@
     }
     .panel-body {
         padding: 0.9rem 1.3rem 1.2rem 1.3rem;
+    }
+
+    .memo-box-textarea {
+        text-align: left !important;
     }
 
     .card-info {
@@ -1082,6 +1093,8 @@
             controls.forEach(el => {
                 // hidden 필드는 비활성화하면 서버로 안 나가므로 그대로 둠
                 if (el.type === 'hidden') return;
+                // 🔹 예상 급여 보기 버튼은 항상 활성화
+                if (el.id === 'btnOpenPayEstimate') return;
                 // 폼 내의 모든 입력/버튼을 편집 모드에 따라 enable/disable
                 el.disabled = !on;
             });
@@ -1091,47 +1104,70 @@
 
     document.addEventListener('DOMContentLoaded', function () {
         const btn = document.getElementById('btnOpenPayEstimate');
-        if (!btn) return;
+        const btnPdf = document.getElementById('btnOpenPdf');
 
-        btn.addEventListener('click', function () {
-            const memberId = '{{member.id}}';
+        // 🔹 공통으로 사용할 memberId
+        const memberId = '{{member.id}}';
 
-            if (!memberId) {
-                alert('예상 급여를 조회할 아르바이트 ID를 찾을 수 없습니다.');
-                return;
-            }
+        if (btn) {
+            btn.addEventListener('click', function () {
+                if (!memberId) {
+                    alert('예상 급여를 조회할 아르바이트 ID를 찾을 수 없습니다.');
+                    return;
+                }
 
-            const today = new Date();
+                const today = new Date();
 
-            const monday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-            const day    = monday.getDay();
-            const offset = (day + 6) % 7;
-            monday.setDate(monday.getDate() - offset);
+                const monday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+                const day    = monday.getDay();
+                const offset = (day + 6) % 7;
+                monday.setDate(monday.getDate() - offset);
 
-            const sunday = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + 6);
+                const sunday = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + 6);
 
-            function pad2(n) {
-                return String(n).padStart(2, '0');
-            }
-            function toIso(d) {
-                return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate());
-            }
+                function pad2(n) {
+                    return String(n).padStart(2, '0');
+                }
+                function toIso(d) {
+                    return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate());
+                }
 
-            const weekStart = toIso(monday);
-            const weekEnd   = toIso(sunday);
+                const weekStart = toIso(monday);
+                const weekEnd   = toIso(sunday);
 
-            const url =
-                    '/members/pay-estimate'
-                    + '?memberId=' + encodeURIComponent(memberId)
-                    + '&weekStart=' + encodeURIComponent(weekStart)
-                    + '&weekEnd=' + encodeURIComponent(weekEnd);
+                const url =
+                        '/members/pay-estimate'
+                        + '?memberId=' + encodeURIComponent(memberId)
+                        + '&weekStart=' + encodeURIComponent(weekStart)
+                        + '&weekEnd=' + encodeURIComponent(weekEnd);
 
-            window.open(
-                    url,
-                    'payEstimatePopup',
-                    'width=1200,height=900,scrollbars=yes,resizable=yes'
-            );
-        });
+                window.open(
+                        url,
+                        'payEstimatePopup',
+                        'width=1200,height=900,scrollbars=yes,resizable=yes'
+                );
+            });
+        }
+
+        // 🔹 PDF 버튼: /members/individual/print?memberId=... 새 창 열기
+        if (btnPdf) {
+            btnPdf.addEventListener('click', function () {
+                if (!memberId) {
+                    alert('PDF를 출력할 아르바이트 ID를 찾을 수 없습니다.');
+                    return;
+                }
+
+                const url =
+                        '/members/individual/print'
+                        + '?memberId=' + encodeURIComponent(memberId);
+
+                window.open(
+                        url,
+                        'memberPdfPopup',
+                        'width=1200,height=900,scrollbars=yes,resizable=yes'
+                );
+            });
+        }
     });
 </script>
 

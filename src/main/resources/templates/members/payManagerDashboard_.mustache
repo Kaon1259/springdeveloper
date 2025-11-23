@@ -71,8 +71,6 @@
                         <th style="width:140px;" class="text-end">주휴수당</th>
                         <th style="width:140px;" class="text-end">세금(3.3%)</th>
                         <th style="width:140px;" class="text-end">실수령액</th>
-                        <!-- ✅ 실수령액 옆 지급일 컬럼 추가 -->
-                        <th style="width:120px;">지급일</th>
                     </tr>
                     </thead>
                     <tbody id="weeklyPayBody">
@@ -80,13 +78,11 @@
                     </tbody>
                     <tfoot>
                     <tr class="table-secondary fw-bold">
-                        <!-- 전체 11컬럼: 6 + 4 + 1 -->
                         <td colspan="6" class="text-end">월 합계</td>
                         <td class="text-end" id="monthWorkPaySum">-</td>
                         <td class="text-end" id="monthJuhyuPaySum">-</td>
                         <td class="text-end" id="monthTaxSum">-</td>
                         <td class="text-end" id="monthNetSum">-</td>
-                        <td></td>
                     </tr>
                     </tfoot>
                 </table>
@@ -267,7 +263,7 @@
             setFooterSums(0,0,0,0);
 
             if (!filteredMembers.length){
-                weeklyPayBody.innerHTML = `<tr><td colspan="11" class="text-muted">표시할 멤버가 없습니다.</td></tr>`;
+                weeklyPayBody.innerHTML = `<tr><td colspan="10" class="text-muted">표시할 멤버가 없습니다.</td></tr>`;
                 return;
             }
 
@@ -363,7 +359,7 @@
                     const weekLabel = `${pad2(weekStart.getMonth()+1)}.${pad2(weekStart.getDate())} ~ ${pad2(weekEnd.getMonth()+1)}.${pad2(weekEnd.getDate())}`;
                     tr.innerHTML = `
           <td class="week-label">${idx+1}주차<br><small class="text-muted">(${weekLabel})</small></td>
-          <td colspan="10" class="text-muted text-start">해당 주 실근무 내역이 없습니다.</td>
+          <td colspan="9" class="text-muted text-start">해당 주 실근무 내역이 없습니다.</td>
         `;
                     weeklyPayBody.appendChild(tr);
                     return;
@@ -395,8 +391,6 @@
           <td class="text-end">${krw(r.juhyuPay)}</td>
           <td class="text-end">${r.applyTax ? krw(r.taxAmount) : '-'}</td>
           <td class="text-end"><span class="fw-bold text-primary">${krw(r.netTotal)}</span></td>
-          <!-- ✅ 지급일(payday) 출력 -->
-          <td class="text-center small">(매월)${formatPayday(r.member.payday)}</td>
         `;
                     weeklyPayBody.appendChild(tr);
                 });
@@ -502,18 +496,6 @@
                 return s === 'Y' || s === 'TRUE' || s === 'T' || s === '1';
             }
             return false;
-        }
-
-        // ✅ payday 포맷팅 (MemberDto.payday 사용)
-        function formatPayday(v){
-            if (!v) return '미지정';
-            const s = String(v).trim().toUpperCase();
-            if (s === 'EOM') return '말일';
-            if (/^\d+$/.test(s)) {
-                const n = parseInt(s, 10);
-                if (n >= 1 && n <= 31) return `${n}일`;
-            }
-            return s;
         }
 
     })();

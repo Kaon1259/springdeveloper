@@ -61,6 +61,9 @@ public class MemberDto {
 
     private Boolean applyTax;
 
+    /** ✅ 메모 (신규 필드) */
+    private String memo;
+
     @NotNull
     private Member.Status status;           // Member 엔티티의 Status enum 사용
 
@@ -135,7 +138,7 @@ public class MemberDto {
                 // [추가 매핑]
                 .payday(m.getPayday())
                 .includeWeeklyHolidayAllowance(m.getIncludeWeeklyHolidayAllowance())
-                //
+                .memo((m.getMemo() == null)? "" : m.getMemo())
                 .applyTax(m.getApplyTax())
                 .status(m.getStatus())
                 .createdAt(m.getCreatedAt())
@@ -165,6 +168,7 @@ public class MemberDto {
                 .bankAccount(dto.getBankAccount())
                 // [추가 매핑]
                 .payday(dto.getPayday())
+                .memo((dto.getMemo()==null) ? "" : dto.getMemo())
                 .includeWeeklyHolidayAllowance(Boolean.TRUE.equals(dto.getIncludeWeeklyHolidayAllowance()))
                 .applyTax(Boolean.TRUE.equals(dto.getApplyTax()))
                 .status(dto.getStatus())

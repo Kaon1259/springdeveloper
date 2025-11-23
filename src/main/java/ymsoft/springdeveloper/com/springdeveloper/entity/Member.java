@@ -66,14 +66,10 @@ public class Member {
     @Column(length = 20, nullable = false)
     private Status status = Status.WORKING;
 
-    /** ====== [추가] 급여지급일 / 주휴수당 적용 여부 ====== */
-    /**
-     * 급여지급일 코드
-     * - "EOM" = 말일
-     * - "1" ~ "31" = 해당 일자
-     *
-     * 프런트에서 select name="payday" 로 내려온 값을 그대로 저장합니다.
-     */
+    /** ====== [추가] 메모 ====== */
+    @Column(length = 250, nullable = true)
+    private String memo;
+
     @Column(length = 8)
     @Builder.Default
     private String payday = null;   // 미지정 가능

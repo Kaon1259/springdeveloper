@@ -1,0 +1,736 @@
+{{>layouts/header_}}
+
+<main class="print-shell">
+    <div class="print-container">
+
+        <!-- 상단: 제목 + 기준 주 정보 -->
+        <header class="print-header">
+            <div>
+                <div class="title-sm">STAFF PROFILE</div>
+                <h1 class="title-lg">아르바이트 인사 정보</h1>
+            </div>
+            <div class="text-right">
+                <div class="label-sm">기준 주</div>
+                <div class="week-label">{{weekRangeLabel}}</div>
+            </div>
+        </header>
+
+        <!-- 기본 정보 카드 -->
+        <section class="card card-main">
+            <div class="card-header card-header-main">
+                <div class="left">
+                    <div class="title-sm">BASIC INFO</div>
+                    <h2 class="title-md">{{member.name}}</h2>
+                    <div class="sub">
+                        등록일:
+                        {{#member.createdAt}}{{member.createdAt}}{{/member.createdAt}}
+                        {{^member.createdAt}}-{{/member.createdAt}}
+                    </div>
+                </div>
+                <div class="right">
+                    <!-- 🔸 상태 출력 -->
+                    <div class="pill-name">
+                        {{member.status}}
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-body">
+
+                <!-- 1. 인적 정보 -->
+                <h3 class="section-title">1. 인적 정보</h3>
+                <table class="info-table">
+                    <tbody>
+                    <tr>
+                        <th>이름</th>
+                        <td>{{member.name}}</td>
+                        <th>성별</th>
+                        <td>{{member.gender}}</td>
+                    </tr>
+                    <tr>
+                        <th>전화번호</th>
+                        <td>{{member.phone}}</td>
+                        <th>이메일</th>
+                        <td>{{member.email}}</td>
+                    </tr>
+                    <tr>
+                        <th>근무 시작일</th>
+                        <td>{{member.startDate}}</td>
+                        <th>상태</th>
+                        <td>{{member.status}}</td>
+                    </tr>
+                    </tbody>
+                </table>
+
+                <!-- 2. 급여/계좌 정보 -->
+                <h3 class="section-title">2. 급여 및 계좌 정보</h3>
+                <table class="info-table">
+                    <tbody>
+                    <tr>
+                        <th>시급</th>
+                        <td>
+                            {{member.hourlyWage}}
+                            <span class="unit">원</span>
+                        </td>
+                        <th>급여지급일</th>
+                        <td>{{member.payday}}</td>
+                    </tr>
+                    <tr>
+                        <th>주휴수당 적용</th>
+                        <td>
+                            {{#member.includeWeeklyHolidayAllowance}}예{{/member.includeWeeklyHolidayAllowance}}
+                            {{^member.includeWeeklyHolidayAllowance}}아니오{{/member.includeWeeklyHolidayAllowance}}
+                        </td>
+                        <th>세금 적용</th>
+                        <td>
+                            {{#member.applyTax}}예 (소득세 공제 적용){{/member.applyTax}}
+                            {{^member.applyTax}}아니오{{/member.applyTax}}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>은행</th>
+                        <td>{{member.bankName}}</td>
+                        <th>계좌번호</th>
+                        <td>{{member.bankAccount}}</td>
+                    </tr>
+                    </tbody>
+                </table>
+
+                <!-- 3. 보건증 정보 -->
+                <h3 class="section-title">3. 보건증 정보</h3>
+                <table class="info-table">
+                    <tbody>
+                    <tr>
+                        <th>보건증 보유 여부</th>
+                        <td>
+                            {{#member.hasHealthCertificate}}예{{/member.hasHealthCertificate}}
+                            {{^member.hasHealthCertificate}}아니오{{/member.hasHealthCertificate}}
+                        </td>
+                        <th>보건증 유효기간</th>
+                        <td>{{member.healthCertExpiryStr}}</td>
+                    </tr>
+                    </tbody>
+                </table>
+
+                <!-- 4. 메모 -->
+                <h3 class="section-title">4. 메모</h3>
+                <div class="memo-box">{{#member.memo}}{{member.memo}}{{/member.memo}}{{^member.memo}}-{{/member.memo}}</div>
+            </div>
+        </section>
+
+        <!-- 주간 템플릿 (계획) -->
+        <section class="card card-schedule">
+            <div class="card-header card-header-schedule">
+                <div class="left">
+                    <div class="title-sm">SCHEDULE TEMPLATE</div>
+                    <h2 class="title-md">{{member.name}} — 주간 근무 템플릿 (월~일)</h2>
+                </div>
+
+                <!-- 🔹 우측: 10/30/1시간 분할 버튼 (라운드렉트, 1시간 기본 선택) -->
+                <div class="right">
+                    <div class="slot-btn-pill" id="gridSlotButtons">
+                        <button type="button" class="slot-btn" data-grid-slot="10">10분</button>
+                        <button type="button" class="slot-btn" data-grid-slot="30">30분</button>
+                        <button type="button" class="slot-btn active" data-grid-slot="60">1시간</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-body">
+
+                <div class="legend-row">
+                    <span class="legend-box legend-plan"></span>
+                    <span class="legend-label">선택된 근무 시간 (계획)</span>
+                </div>
+
+                <div class="schedule-board">
+                    <div class="table-responsive">
+                        <table class="schedule-table">
+                            <thead>
+                            <tr id="theadWeek">
+                                <th class="time-col">시간</th>
+                                <th>월</th>
+                                <th>화</th>
+                                <th>수</th>
+                                <th>목</th>
+                                <th>금</th>
+                                <th>토</th>
+                                <th>일</th>
+                            </tr>
+                            </thead>
+                            <tbody id="tbodyWeekPrint"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <footer class="print-footer">
+            <span class="footer-left">
+                출력일: <span id="printDate"></span>
+            </span>
+            <span class="footer-right">
+                Staff ID: {{member.id}}
+            </span>
+        </footer>
+
+        <!-- 🔹 하단 PDF 출력 버튼 (화면에만 보이고, 인쇄/PDF에는 나오지 않게) -->
+        <div class="print-actions">
+            <button type="button" id="btnPrintPdf" class="btn-print">
+                PDF로 출력
+            </button>
+        </div>
+
+    </div>
+</main>
+
+<style>
+    :root {
+        --border-color: #e5e7eb;
+        --text-muted: #6b7280;
+        --text-main: #111827;
+        --primary: #2563eb;
+        --bg-soft: #f9fafb;
+    }
+
+    html, body {
+        margin: 0;
+        padding: 0;
+        background: #ffffff;
+        color: var(--text-main);
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+        font-size: 13px;
+    }
+
+    @page {
+        size: A4;
+        margin: 15mm;
+    }
+
+    .print-shell {
+        padding: 0;
+    }
+
+    .print-container {
+        max-width: 800px;
+        margin: 0 auto;
+    }
+
+    .print-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        margin-bottom: 12px;
+        border-bottom: 1px solid var(--border-color);
+        padding-bottom: 8px;
+    }
+
+    .title-sm {
+        font-size: 10px;
+        letter-spacing: .16em;
+        text-transform: uppercase;
+        color: var(--text-muted);
+        font-weight: 600;
+    }
+
+    .title-lg {
+        font-size: 20px;
+        margin: 2px 0 0;
+        font-weight: 700;
+        color: var(--text-main);
+    }
+
+    .title-md {
+        font-size: 15px;
+        margin: 0;
+        font-weight: 600;
+        color: var(--text-main);
+    }
+
+    .text-right {
+        text-align: right;
+    }
+
+    .label-sm {
+        font-size: 11px;
+        color: var(--text-muted);
+        margin-bottom: 2px;
+    }
+
+    .week-label {
+        font-size: 13px;
+        font-weight: 600;
+    }
+
+    .card {
+        border: 1px solid var(--border-color);
+        border-radius: 18px;
+        margin-bottom: 12px;
+        page-break-inside: avoid;
+    }
+
+    .card-header {
+        padding: 8px 10px;
+        border-bottom: 1px solid var(--border-color);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: #f3f4f6; /* 기본값, 아래에서 카드별로 override */
+    }
+
+    /* 🔸 BASIC INFO 오렌지 헤더 */
+    .card-main .card-header-main {
+        background: #fb923c;
+        color: #fff;
+    }
+    .card-main .card-header-main .title-sm,
+    .card-main .card-header-main .title-md,
+    .card-main .card-header-main .sub {
+        color: #fefce8;
+    }
+
+    /* BASIC INFO (주황) 상단 라운드 */
+    .card-main {
+        border-radius: 12px;
+        overflow: hidden;
+    }
+    .card-main .card-header-main {
+        border-top-left-radius: 12px;
+        border-top-right-radius: 12px;
+    }
+
+    /* SCHEDULE TEMPLATE (파랑) 상단 라운드 */
+    .card-schedule {
+        border-radius: 12px;
+        overflow: hidden;
+    }
+    .card-schedule .card-header-schedule {
+        border-top-left-radius: 12px;
+        border-top-right-radius: 12px;
+    }
+
+    .card-header .left .sub {
+        font-size: 11px;
+        color: var(--text-muted);
+        margin-top: 3px;
+    }
+
+    .card-main .card-header-main .left .sub {
+        color: #fefce8;
+    }
+
+    .card-header .right {
+        text-align: right;
+    }
+
+    .pill-name {
+        display: inline-flex;
+        align-items: center;
+        padding: 3px 10px;
+        border-radius: 999px;
+        background: #111827;
+        color: #f9fafb;
+        font-size: 11px;
+        font-weight: 500;
+    }
+
+    .card-body {
+        padding: 10px 10px 12px;
+    }
+
+    .section-title {
+        font-size: 13px;
+        font-weight: 600;
+        margin: 10px 0 6px;
+        border-left: 3px solid var(--primary);
+        padding-left: 6px;
+    }
+
+    .info-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 8px;
+        table-layout: fixed;
+    }
+
+    .info-table th,
+    .info-table td {
+        border: 1px solid var(--border-color);
+        padding: 4px 6px;
+        font-size: 12px;
+        vertical-align: middle;
+    }
+
+    .info-table th {
+        width: 18%;
+        background: #f3f4f6;
+        text-align: left;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    .info-table td {
+        width: 32%;
+    }
+
+    .unit {
+        color: var(--text-muted);
+        font-size: 11px;
+        margin-left: 2px;
+    }
+
+    .memo-box {
+        max-height: 40px;
+        border-radius: 6px;
+        border: 1px solid var(--border-color);
+        padding: 4px 8px;
+        background: #f9fafb;
+        font-size: 12px;
+        white-space: pre-wrap;
+        word-break: break-all;
+    }
+
+    /* 🔵 SCHEDULE TEMPLATE 헤더 파란색 */
+    .card-schedule .card-header-schedule {
+        background: #2563eb;
+        color: #e5eeff;
+    }
+    .card-schedule .card-header-schedule .title-sm {
+        color: #dbeafe;
+    }
+    .card-schedule .card-header-schedule .title-md {
+        color: #f9fafb;
+    }
+
+    /* 슬롯 버튼 pill */
+    .slot-btn-pill {
+        display: inline-flex;
+        align-items: center;
+        padding: 2px;
+        border-radius: 999px;
+        background: rgba(15, 23, 42, 0.18);
+        gap: 2px;
+    }
+
+    .slot-btn {
+        border: none;
+        outline: none;
+        padding: 2px 8px;
+        border-radius: 999px;
+        font-size: 11px;
+        cursor: pointer;
+        background: transparent;
+        color: #e5edff;
+        font-weight: 500;
+        line-height: 1.4;
+        white-space: nowrap;
+    }
+
+    .slot-btn.active {
+        background: #ffffff;
+        color: #1e293b;
+    }
+
+    /* 스케줄 영역 */
+    .legend-row {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin-bottom: 6px;
+        font-size: 11px;
+        color: var(--text-muted);
+    }
+
+    .legend-box {
+        width: 14px;
+        height: 14px;
+        border-radius: 3px;
+        border: 1px solid #22c55e;
+    }
+
+    .legend-plan {
+        background: rgba(34, 197, 94, 0.35);
+    }
+
+    .legend-label {
+        font-size: 11px;
+    }
+
+    .schedule-board {
+        border-radius: 6px;
+        border: 1px solid var(--border-color);
+        background: #ffffff;
+        overflow: hidden;
+    }
+
+    .schedule-table {
+        width: 100%;
+        border-collapse: collapse;
+        table-layout: fixed;
+        font-size: 11px;
+    }
+
+    .schedule-table thead th {
+        background: #e5edff;
+        color: #1e293b;
+        font-weight: 600;
+        border-bottom: 1px solid var(--border-color);
+        padding: 4px 3px;
+        text-align: center;
+    }
+
+    .schedule-table th,
+    .schedule-table td {
+        border: 1px solid #e5e7eb;
+        padding: 1px 2px;
+        vertical-align: middle;
+    }
+
+    .schedule-table .time-col {
+        background: #f3f4f6;
+        font-weight: 600;
+        width: 55px;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .cell {
+        height: 12px;
+        border-radius: 3px;
+    }
+
+    .cell.schedule-on {
+        background: rgba(34, 197, 94, 0.35);
+    }
+
+    .print-footer {
+        margin-top: 8px;
+        padding-top: 6px;
+        border-top: 1px solid var(--border-color);
+        font-size: 10px;
+        color: var(--text-muted);
+        display: flex;
+        justify-content: space-between;
+    }
+
+    /* 하단 PDF 출력 버튼 영역 */
+    .print-actions {
+        margin-top: 10px;
+        text-align: right;
+    }
+
+    .btn-print {
+        padding: 6px 12px;
+        font-size: 12px;
+        border-radius: 999px;
+        border: 1px solid #4b5563;
+        background: #111827;
+        color: #f9fafb;
+        cursor: pointer;
+    }
+
+    .btn-print:hover {
+        background: #020617;
+    }
+
+    @media print {
+        body {
+            background: #ffffff;
+        }
+        .print-container {
+            margin: 0;
+        }
+        .print-actions {
+            display: none;  /* 🔹 PDF/프린트에는 버튼 안 나오도록 */
+        }
+    }
+</style>
+
+<!-- memberJson: JS에서 스케줄 렌더링용 -->
+<script id="memberData" type="application/json">
+{{{memberJson}}}
+</script>
+
+<script>
+    (function () {
+        const HOUR_START = 6;
+        const HOUR_END   = 22;
+        const DAY_CODES  = ['MON','TUE','WED','THU','FRI','SAT','SUN'];
+        const DOW_LABELS = ['월','화','수','목','금','토','일'];
+
+        const tbodyWeek       = document.getElementById('tbodyWeekPrint');
+        const theadWeek       = document.getElementById('theadWeek');
+        const gridSlotButtons = document.getElementById('gridSlotButtons');
+        const btnPrintPdf     = document.getElementById('btnPrintPdf');
+        const printDateEl     = document.getElementById('printDate');
+
+        // 기본 분할 단위: 1시간 (60분)
+        let gridStep = 60;
+
+        // 헤더 요일 렌더링
+        if (theadWeek) {
+            const ths = theadWeek.querySelectorAll('th');
+            for (let i = 0; i < 7; i++) {
+                const th = ths[i + 1];
+                if (!th) continue;
+                th.textContent = DOW_LABELS[i];
+            }
+        }
+
+        let member = {};
+        try {
+            member = JSON.parse(document.getElementById('memberData').textContent || '{}');
+        } catch (e) {
+            member = {};
+        }
+
+        const scheduleMapByDay = buildScheduleMapFromMember(member);
+
+        buildWeekGrid();
+        paintScheduleFromMap(scheduleMapByDay);
+        attachSlotButtons();
+        initPrintButton();
+        fillPrintDate();
+
+        function buildScheduleMapFromMember(m) {
+            const map = {};
+            DAY_CODES.forEach(dc => map[dc] = []);
+
+            if (!m || !Array.isArray(m.schedule)) return map;
+
+            m.schedule.forEach(row => {
+                if (!row) return;
+                const dayCode = String(row.day || '').toUpperCase();
+                if (!DAY_CODES.includes(dayCode)) return;
+
+                const startRaw = row.start != null ? String(row.start) : '';
+                const endRaw   = row.end   != null ? String(row.end)   : '';
+
+                const startHm = startRaw.slice(0,5);
+                const endHm   = endRaw.slice(0,5);
+
+                if (!startHm || !endHm) return;
+
+                map[dayCode].push({ start: startHm, end: endHm });
+            });
+
+            return map;
+        }
+
+        function buildWeekGrid() {
+            if (!tbodyWeek) return;
+            tbodyWeek.innerHTML = '';
+
+            const totalMinutes = (HOUR_END - HOUR_START) * 60;
+            const totalRows    = totalMinutes / gridStep;
+
+            for (let idx = 0; idx < totalRows; idx++) {
+                const absMin = HOUR_START * 60 + idx * gridStep;
+                const h = Math.floor(absMin / 60);
+                const m = absMin % 60;
+                const hm = pad2(h) + ':' + pad2(m);
+
+                const tr = document.createElement('tr');
+
+                let html = `<th class="time-col">${hm}</th>`;
+                for (let col = 0; col < 7; col++) {
+                    html += `<td data-row="${idx}" data-day-index="${col}">
+                                <div class="cell"></div>
+                             </td>`;
+                }
+                tr.innerHTML = html;
+                tbodyWeek.appendChild(tr);
+            }
+        }
+
+        function paintScheduleFromMap(map) {
+            if (!tbodyWeek) return;
+            const rows = Array.from(tbodyWeek.querySelectorAll('tr'));
+
+            for (let dayIdx = 0; dayIdx < 7; dayIdx++) {
+                const dayCode = DAY_CODES[dayIdx];
+                const segs = map[dayCode] || [];
+                if (!segs.length) continue;
+
+                rows.forEach((tr, rIdx) => {
+                    const cellTd = tr.querySelector(`td[data-day-index="${dayIdx}"]`);
+                    if (!cellTd) return;
+                    const cellDiv = cellTd.querySelector('.cell');
+                    if (!cellDiv) return;
+
+                    const interval = rowToInterval(rIdx);
+                    const startMin = interval.startMin;
+                    const endMin   = interval.endMin;
+
+                    const overlaps = segs.some(seg => {
+                        const ss = hmToMin(seg.start);
+                        const ee = hmToMin(seg.end);
+                        return !(ee <= startMin || ss >= endMin);
+                    });
+
+                    if (overlaps) {
+                        cellDiv.classList.add('schedule-on');
+                    }
+                });
+            }
+        }
+
+        function attachSlotButtons() {
+            if (!gridSlotButtons) return;
+
+            gridSlotButtons.querySelectorAll('button[data-grid-slot]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const mins = parseInt(btn.dataset.gridSlot, 10);
+                    if (!mins || mins === gridStep) return;
+
+                    gridStep = mins;
+
+                    // active 상태 변경
+                    gridSlotButtons.querySelectorAll('button[data-grid-slot]').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+
+                    // 그리드 재생성 + 스케줄 다시 칠하기
+                    buildWeekGrid();
+                    paintScheduleFromMap(scheduleMapByDay);
+                });
+            });
+        }
+
+        function initPrintButton() {
+            if (!btnPrintPdf) return;
+            btnPrintPdf.addEventListener('click', function () {
+                window.print();
+            });
+        }
+
+        function fillPrintDate() {
+            if (!printDateEl) return;
+            const now = new Date();
+            const y = now.getFullYear();
+            const mo = pad2(now.getMonth() + 1);
+            const d = pad2(now.getDate());
+            const hh = pad2(now.getHours());
+            const mm = pad2(now.getMinutes());
+            printDateEl.textContent = y + '-' + mo + '-' + d + ' ' + hh + ':' + mm;
+        }
+
+        function rowToInterval(rowIdx) {
+            const startMin = HOUR_START * 60 + rowIdx * gridStep;
+            const endMin   = startMin + gridStep;
+            return { startMin, endMin };
+        }
+
+        function hmToMin(hm) {
+            const parts = String(hm).split(':');
+            const h = parseInt(parts[0] || '0', 10);
+            const m = parseInt(parts[1] || '0', 10);
+            return h * 60 + m;
+        }
+
+        function pad2(n) {
+            return String(n).padStart(2, '0');
+        }
+    })();
+</script>
+
+{{>layouts/footer}}
