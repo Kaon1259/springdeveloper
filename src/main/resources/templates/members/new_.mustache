@@ -15,13 +15,16 @@
                             <span class="title-sm text-light-emphasis">STAFF CREATE</span>
                         </div>
 
-                        <div>
-                            <div class="status-title mt-1">
-                                아르바이트 정보 입력
-                            </div>
-                            <div class="status-subtitle-small">
-                                기본 인적사항과 급여 정보, 주간 템플릿까지 한 번에 등록할 수 있습니다.
-                            </div>
+                        <div class="status-title mt-1">
+                            아르바이트 정보 입력
+                        </div>
+
+                        <div class="status-subtitle-small">
+                            기본 인적사항과 급여 정보, 주간 템플릿까지 한 번에 등록할 수 있습니다.
+                        </div>
+
+                        <div class="text-xs mt-2 status-subtitle-small">
+                            (신규 등록)
                         </div>
 
                         <!-- ✅ 신규등록 텍스트 바로 아래: 상태 + 이름 (파란 배경 영역 안) -->
@@ -321,6 +324,11 @@
                                                 id="btnGridClear">
                                             초기화
                                         </button>
+                                        <button type="button"
+                                                class="btn btn-sm btn-outline-light subtle-outline-btn"
+                                                id="btnGridRestore">
+                                            원래대로
+                                        </button>
                                     </div>
 
                                     <div class="text-xs text-end schedule-header-text">
@@ -356,6 +364,14 @@
                             </div>
                         </div>
                     </section>
+
+                    <!-- 버튼 영역 (하단) -->
+                    <div class="d-flex justify-content-between align-items-center mt-3">
+                        <a href="/members"
+                           class="btn btn-sm btn-outline-secondary">
+                            ← 목록으로
+                        </a>
+                    </div>
                 </form>
 
             </div>
@@ -593,95 +609,71 @@
         color: #ffffff;
     }
 
-    /* ====== 🔁 SCHEDULE 타임 그리드: 기존 EDIT 페이지와 동일 스타일 ====== */
     .schedule-board {
-        border-radius: 10px;
-        border: 1px solid #e5e7eb;
-        background: #ffffff;
-        overflow: hidden;
-        padding: 0.6rem 0.6rem 0.7rem;
+        border-radius:14px;
+        border:1px solid rgba(226,232,240,0.9);
+        padding:0.8rem;
+        background:linear-gradient(135deg, rgba(248,250,252,0.9), rgba(239,246,255,0.95));
     }
     .schedule-table-wrap {
         max-height: 520px;
-        overflow: auto;
+        overflow:auto;
     }
-
     .schedule-table {
-        width: 100%;
-        border-collapse: separate;
-        border-spacing: 0;
-        table-layout: fixed;
-        font-size: 0.78rem;
-        margin-bottom: 0;
+        margin-bottom:0;
+        border-collapse:separate;
+        border-spacing:0;
+        font-size:0.78rem;
     }
-
-    /* 헤더: 파란색 단색 배경 + sticky */
     .schedule-table thead th {
-        background: #2563eb;
-        color:#e5eeff;
-        font-weight: 600;
-        font-size: 0.9rem;
-        border-bottom: 1px solid #1d4ed8;
-        text-align: center;
-        padding: .5rem .4rem;
         position: sticky;
         top: 0;
-        z-index: 2;
-    }
-
-    .schedule-table th,
-    .schedule-table td {
-        border: 0;
-        padding: 2px 3px;
-        vertical-align: middle;
-    }
-
-    /* 왼쪽 시간 컬럼: 회색 배경 + sticky */
-    .schedule-table .time-col {
-        background: #fafafa;
-        color:#6b7280;
-        font-weight: 600;
-        width: 74px;
-        border-right: 1px solid #e5e7eb;
-        text-align: center;
-        padding: .25rem .25rem;
-        font-size: .8rem;
-        position: sticky;
-        left: 0;
         z-index: 3;
-        font-variant-numeric: tabular-nums;
+        background: linear-gradient(135deg,#e5edff,#f9fafb);
+        border-bottom:1px solid rgba(209,213,219,0.9);
+        font-size:0.75rem;
+        font-weight:600;
+        color:#4b5563;
+    }
+    .schedule-table th, .schedule-table td {
+        border:0;
+        padding:2px 2px;
+        vertical-align:middle;
+    }
+    .schedule-table .time-col {
+        width:70px;
+        font-variant-numeric:tabular-nums;
+        font-size:0.7rem;
+        color:#6b7280;
+        background:rgba(15,23,42,0.04);
+        position: sticky;
+        left:0;
+        z-index:2;
     }
 
     .cell-10m {
-        height: 18px;
-        margin: 1px 0;
-        border-radius: 6px;
-        border: 1px solid #eef2f6;
+        height: 14px;
+        border-radius: 4px;
         background: #ffffff;
         cursor: pointer;
         user-select: none;
-        transition: background .15s ease,
-        box-shadow .15s ease,
-        border-color .15s ease,
-        transform .08s ease;
+        border:1px solid rgba(229,231,235,0.85);
+        transition: background .08s, border-color .08s, box-shadow .08s, transform .04s;
     }
-
     .cell-10m:hover {
-        background: #f8fbff;
-        box-shadow: 0 0 0 1px rgba(148,163,184,0.35);
+        box-shadow: 0 0 0 1px rgba(59,130,246,0.45);
         transform: translateY(-0.5px);
     }
 
+    /* ✅ 선택 셀 초록색 */
     .cell-10m.schedule-on {
-        background: rgba(102, 187, 106, 0.55);
-        border-color: rgba(46, 160, 67, 0.6);
-        box-shadow: inset 0 0 0 1px rgba(46, 160, 67, 0.6);
+        background: rgba(25,135,84,0.5);
+        border-color: rgba(25,135,84,0.95);
+        box-shadow: 0 0 0 1px rgba(25,135,84,0.85);
     }
 
-    /* 매 정시마다 진한 가로 경계선 */
-    tr.hour-start > td,
-    tr.hour-start > th {
-        border-top: 2px solid #e5e7eb !important;
+    tr.hour-start > td, tr.hour-start > th {
+        border-top: 1px dashed rgba(148,163,184,0.5) !important;
     }
 
     .legend-row {
@@ -689,7 +681,6 @@
         align-items:center;
         gap:0.5rem;
         flex-wrap:wrap;
-        margin-top: 0.5rem;
     }
     .legend-box {
         display:inline-block;
@@ -697,11 +688,10 @@
         height:14px;
         border-radius:4px;
         border:1px solid rgba(209,213,219,0.9);
-        vertical-align:middle;
     }
     .legend-plan {
-        background: rgba(102,187,106,0.55);
-        border-color: rgba(46,160,67,0.6);
+        background: rgba(25,135,84,0.5);
+        border-color: rgba(25,135,84,0.95);
     }
 
     @media (max-width: 768px) {
@@ -743,10 +733,6 @@
     {}
 </script>
 
-<script id="memberData" type="application/json">
-    {}
-</script>
-
 <script>
     (function () {
         const HOUR_START = 6;
@@ -754,18 +740,25 @@
         const DAY_CODES  = ['MON','TUE','WED','THU','FRI','SAT','SUN'];
         const DOW_LABELS = ['월','화','수','목','금','토','일'];
 
-        const tbodyWeek       = document.getElementById('tbodyWeek10m');
-        const theadWeek       = document.getElementById('theadWeek');
-        const gridSlotButtons = document.getElementById('gridSlotButtons');
-        const btnGridClear    = document.getElementById('btnGridClear');
-        const form            = document.getElementById('memberEditForm');
+        const tbodyWeek         = document.getElementById('tbodyWeek10m');
+        const theadWeek         = document.getElementById('theadWeek');
+        const gridSlotButtons   = document.getElementById('gridSlotButtons');
+        const btnGridClear      = document.getElementById('btnGridClear');
+        const btnGridRestore    = document.getElementById('btnGridRestore');
+        const form              = document.getElementById('memberEditForm');
 
-        let gridStepMinutes   = 10;
-        let scheduleMapByDay  = buildEmptyScheduleMap();   // 현재 스케줄 상태
-        let gridDragging      = false;
-        let gridDragAdding    = true;
+        let gridStepMinutes     = 10;
+        let scheduleMapByDay    = {};
+        let originalScheduleMapByDay = {};
 
-        // 초기: 10분 단위 그리드 생성
+        let gridDragging        = false;
+        let gridDragAdding      = true;
+
+        // 빈 스케줄 맵 생성
+        scheduleMapByDay = buildEmptyScheduleMap();
+        originalScheduleMapByDay = cloneScheduleMap(scheduleMapByDay);
+
+        // 초기 그리드 생성 + 헤더 + 칠하기
         buildWeekGrid();
         renderWeekHeadDays();
         paintScheduleFromMap(scheduleMapByDay);
@@ -775,14 +768,20 @@
         attachFormSubmitHandler();
         attachResetButtons();
 
-        /* ================== 기본 맵/그리드 ================== */
+        // ===== functions =====
         function buildEmptyScheduleMap() {
             const map = {};
-            // 🔧 문법 수정: 중괄호 블록 추가
-            DAY_CODES.forEach(dc => {
-                map[dc] = [];
-            });
+            DAY_CODES.forEach(dc => map[dc] = []);
             return map;
+        }
+
+        function cloneScheduleMap(src) {
+            const dst = {};
+            DAY_CODES.forEach(dc => {
+                const arr = src[dc] || [];
+                dst[dc] = arr.map(s => ({ start: s.start, end: s.end }));
+            });
+            return dst;
         }
 
         function buildWeekGrid() {
@@ -802,9 +801,7 @@
 
                 let tds = '';
                 for (let col = 1; col <= 7; col++) {
-                    tds += `<td data-col="${col}">
-                                <div class="cell-10m" data-row="${idx}" data-day-index="${col-1}"></div>
-                            </td>`;
+                    tds += `<td data-col="${col}"><div class="cell-10m" data-row="${idx}" data-day-index="${col-1}"></div></td>`;
                 }
 
                 tr.innerHTML = `
@@ -820,12 +817,14 @@
             for (let i = 0; i < 7; i++) {
                 const th = ths[i + 1];
                 if (!th) continue;
-                th.textContent = DOW_LABELS[i];
+                th.innerHTML = DOW_LABELS[i];
             }
         }
 
         function paintScheduleFromMap(map) {
-            tbodyWeek.querySelectorAll('.cell-10m').forEach(c => c.classList.remove('schedule-on'));
+            tbodyWeek.querySelectorAll('.cell-10m').forEach(c => {
+                c.classList.remove('schedule-on');
+            });
 
             const rows = Array.from(tbodyWeek.querySelectorAll('tr'));
 
@@ -838,7 +837,9 @@
                     const cellDiv = tr.querySelector(`td[data-col="${dayIdx+1}"] .cell-10m`);
                     if (!cellDiv) return;
 
-                    const { startMin, endMin } = rowToInterval(rIdx);
+                    const interval = rowToInterval(rIdx);
+                    const startMin = interval.startMin;
+                    const endMin   = interval.endMin;
 
                     const overlaps = segs.some(seg => {
                         const ss = hmToMin(seg.start);
@@ -860,9 +861,9 @@
         }
 
         function hmToMin(hm) {
-            const [hStr, mStr] = String(hm).split(':');
-            const h = parseInt(hStr || '0', 10);
-            const m = parseInt(mStr || '0', 10);
+            const parts = String(hm).split(':');
+            const h = parseInt(parts[0] || '0', 10);
+            const m = parseInt(parts[1] || '0', 10);
             return h * 60 + m;
         }
 
@@ -875,16 +876,16 @@
         }
 
         function clearGridSelection() {
+            if (!tbodyWeek) return;
             tbodyWeek.querySelectorAll('.cell-10m').forEach(c => {
                 c.classList.remove('schedule-on');
             });
         }
 
-        /* ================== 드래그/클릭 편집 ================== */
+        // ===== 드래그/클릭 선택 =====
         function attachCellDragHandlers() {
             if (!tbodyWeek) return;
 
-            // 이벤트 위임 방식이라, 그리드 다시 그려져도 계속 동작
             tbodyWeek.addEventListener('mousedown', (e) => {
                 const cell = e.target.closest('.cell-10m');
                 if (!cell || !tbodyWeek.contains(cell)) return;
@@ -907,16 +908,21 @@
             });
 
             window.addEventListener('mouseup', () => {
-                gridDragging = false;
+                if (gridDragging) {
+                    gridDragging = false;
+                }
             }, { passive: true });
         }
 
         function toggleCell(cell, on) {
-            if (on) cell.classList.add('schedule-on');
-            else    cell.classList.remove('schedule-on');
+            if (on) {
+                cell.classList.add('schedule-on');
+            } else {
+                cell.classList.remove('schedule-on');
+            }
         }
 
-        /* ================== 슬롯 단위 변경(10/30/60) ================== */
+        // ===== 슬롯 단위 버튼 =====
         function attachSlotButtons() {
             if (!gridSlotButtons) return;
 
@@ -925,37 +931,35 @@
                     const mins = parseInt(btn.dataset.gridSlot, 10);
                     if (!mins || mins === gridStepMinutes) return;
 
-                    // 현재 그리드에서 선택 상태를 먼저 map으로 반영
-                    scheduleMapByDay = collectSegmentsFromGrid();
-
-                    // 활성화 버튼 UI 갱신
-                    gridSlotButtons.querySelectorAll('button[data-grid-slot]')
-                            .forEach(b => b.classList.remove('active'));
-                    btn.classList.add('active');
-
-                    // 슬롯 단위 변경
                     gridStepMinutes = mins;
 
-                    // 새로운 슬롯 단위로 그리드 재구성 + 기존 스케줄 다시 칠하기
+                    gridSlotButtons.querySelectorAll('button[data-grid-slot]').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+
                     buildWeekGrid();
                     renderWeekHeadDays();
                     paintScheduleFromMap(scheduleMapByDay);
+                    attachCellDragHandlers();
                 });
             });
         }
 
-        /* ================== 초기화 버튼 ================== */
+        // ===== 초기화 / 원래대로 버튼 =====
         function attachResetButtons() {
             if (btnGridClear) {
                 btnGridClear.addEventListener('click', () => {
                     clearGridSelection();
-                    // 선택을 모두 지우고 스케줄 상태도 비우기
-                    scheduleMapByDay = buildEmptyScheduleMap();
+                });
+            }
+            if (btnGridRestore) {
+                btnGridRestore.addEventListener('click', () => {
+                    clearGridSelection();
+                    paintScheduleFromMap(originalScheduleMapByDay);
                 });
             }
         }
 
-        /* ================== submit 시 hidden 필드 생성 ================== */
+        // 체크박스를 true/false 로 강제 변환
         function normalizeBooleanCheckbox(id, fieldName) {
             if (!form) return;
             const cb = document.getElementById(id);
@@ -971,6 +975,7 @@
             appendHidden(fieldName, cb.checked ? 'true' : 'false');
         }
 
+        // 폼 submit 시: 불리언 + 그리드 상태를 hidden input으로 생성
         function attachFormSubmitHandler() {
             if (!form) return;
 
@@ -987,16 +992,15 @@
                 DAY_CODES.forEach(dayCode => {
                     const segs = daySegMap[dayCode] || [];
                     segs.forEach(seg => {
-                        appendHidden(`schedule[${idx}].day`,   dayCode);
+                        appendHidden(`schedule[${idx}].day`, dayCode);
                         appendHidden(`schedule[${idx}].start`, seg.start);
-                        appendHidden(`schedule[${idx}].end`,   seg.end);
+                        appendHidden(`schedule[${idx}].end`, seg.end);
                         idx++;
                     });
                 });
             });
         }
 
-        /* ================== 그리드 → 구간 맵으로 변환 ================== */
         function collectSegmentsFromGrid() {
             const result = {};
             DAY_CODES.forEach(dc => result[dc] = []);
@@ -1031,7 +1035,6 @@
                 });
             }
 
-            // 현재 상태를 유지
             scheduleMapByDay = result;
             return result;
         }

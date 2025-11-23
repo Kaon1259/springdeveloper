@@ -44,7 +44,17 @@
     <!-- ============ 상단: 제목 + 월 내비 (공용, sticky) ============ -->
     <div class="d-flex flex-wrap justify-content-between align-items-center mb-2 gap-2 sticky-top"
          style="top:70px;background:#fff;padding:.25rem 0;z-index:5;">
-        <div class="h5 mb-0 fw-bold">주차별 급여 테이블 (실근무 기준)</div>
+        <!-- 🔹 제목 + PDF 버튼 묶음 -->
+        <div class="d-flex align-items-center gap-2">
+            <div class="h5 mb-0 fw-bold">주차별 급여 테이블 (실근무 기준)</div>
+            <!-- 🔹 PDF 버튼 (새 창으로 출력용 페이지 호출) -->
+            <a id="pdfBtn"
+               class="btn btn-sm btn-outline-primary"
+               target="_blank">
+                PDF
+            </a>
+        </div>
+
         <div class="d-flex align-items-center small text-muted gap-2">
             <span id="monthRangeLabel">0000.00.01 ~ 00.00</span>
             <button type="button" class="btn btn-sm btn-outline-secondary" id="btnMonthPrev">◀ 이전 달</button>
@@ -163,6 +173,18 @@
         border-radius:0.75rem;
         overflow:hidden;
     }
+
+    /* ✅ 주차별 가로 구분선: 주 마지막 행 하단 보더 두껍게 */
+    #weeklyPayTable tbody tr.week-end-border td{
+        border-bottom-width:3px;
+        border-bottom-color:#0d6efd;
+    }
+
+    /* ✅ 주차 컬럼(td, rowspan 적용된 셀)에도 동일하게 굵은 하단선 */
+    #weeklyPayTable tbody td.week-label-border{
+        border-bottom-width:3px;
+        border-bottom-color:#0d6efd;
+    }
 </style>
 
 <!-- 서버에서 내려준 멤버 JSON -->
@@ -225,6 +247,12 @@
             loadWeeklyTable();
         });
 
+        // 🔹 PDF 버튼 – 현재 상태값을 쿼리로 붙여서 호출
+        document.getElementById('pdfBtn').addEventListener('click', function(e){
+            const status = document.getElementById('statusSelect').value;
+            this.href = `/payment/paymanagerdashboard/print?status=${encodeURIComponent(status)}`;
+        });
+
         refreshMembers();
 
         /* ===== 멤버 필터/칩 렌더 ===== */
@@ -267,7 +295,10 @@
             setFooterSums(0,0,0,0);
 
             if (!filteredMembers.length){
-                weeklyPayBody.innerHTML = `<tr><td colspan="11" class="text-muted">표시할 멤버가 없습니다.</td></tr>`;
+                const tr = document.createElement('tr');
+                tr.classList.add('week-end-border'); // 주가 아예 없을 때도 하단선 유지
+                tr.innerHTML = `<td colspan="11" class="text-muted">표시할 멤버가 없습니다.</td>`;
+                weeklyPayBody.appendChild(tr);
                 return;
             }
 
@@ -362,9 +393,10 @@
                     const tr = document.createElement('tr');
                     const weekLabel = `${pad2(weekStart.getMonth()+1)}.${pad2(weekStart.getDate())} ~ ${pad2(weekEnd.getMonth()+1)}.${pad2(weekEnd.getDate())}`;
                     tr.innerHTML = `
-          <td class="week-label">${idx+1}주차<br><small class="text-muted">(${weekLabel})</small></td>
+          <td class="week-label week-label-border">${idx+1}주차<br><small class="text-muted">(${weekLabel})</small></td>
           <td colspan="10" class="text-muted text-start">해당 주 실근무 내역이 없습니다.</td>
         `;
+                    tr.classList.add('week-end-border'); // 주 마지막 행
                     weeklyPayBody.appendChild(tr);
                     return;
                 }
@@ -379,7 +411,7 @@
                 rows.forEach((r, i)=>{
                     const tr = document.createElement('tr');
                     const weekCell = (i===0)
-                            ? `<td class="week-label" rowspan="${rowSpan}">
+                            ? `<td class="week-label week-label-border" rowspan="${rowSpan}">
                ${idx+1}주차<br><small class="text-muted">(${weekLabel})</small>
              </td>`
                             : '';
@@ -398,6 +430,12 @@
           <!-- ✅ 지급일(payday) 출력 -->
           <td class="text-center small">(매월)${formatPayday(r.member.payday)}</td>
         `;
+
+                    // ✅ 이 주(week)의 마지막 행이면, 가로 구분선 클래스 추가
+                    if (i === rows.length - 1) {
+                        tr.classList.add('week-end-border');
+                    }
+
                     weeklyPayBody.appendChild(tr);
                 });
 

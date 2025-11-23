@@ -1,0 +1,398 @@
+{{>layouts/header}}
+<style>
+    body {
+        background-color: #f8f9fa;
+    }
+
+    /* 상단 선택 정보 바 */
+    .top-status-bar {
+        position: sticky;
+        top: 0;
+        z-index: 20;
+        background-color: #ffffff;
+        border-bottom: 1px solid #dee2e6;
+        padding: 0.75rem 1rem;
+    }
+
+    .menu-card {
+        cursor: pointer;
+        transition: transform 0.1s ease, box-shadow 0.1s ease, border-color 0.1s ease;
+        border-width: 2px;
+        border-color: transparent;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .menu-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 0.4rem 1rem rgba(0, 0, 0, 0.08);
+    }
+
+    .menu-card.selected {
+        border-color: #0d6efd;
+        box-shadow: 0 0.4rem 1rem rgba(13, 110, 253, 0.25);
+    }
+
+    .menu-name {
+        font-size: 2rem;           /* 크게 */
+        font-weight: 800;
+        text-align: center;        /* 가운데 정렬 */
+    }
+
+    .menu-tag {
+        font-size: 0.9rem;
+        border-radius: 999px;
+        padding: 0.1rem 0.5rem;
+    }
+
+    .selected-menu-chip {
+        font-size: 0.95rem;
+        border-radius: 999px;
+        padding: 0.2rem 0.7rem;
+        cursor: default;
+    }
+
+    .selected-menu-chip + .selected-menu-chip {
+        margin-left: 0.25rem;
+    }
+
+    .card-count-badge {
+        font-size: 0.85rem;
+    }
+
+    /* ===== 메뉴 카드 그리드 (3 x 2, 화면 꽉 채우기) ===== */
+    .menu-grid-wrapper {
+        height: calc(100vh - 210px);     /* 상단바/여백 고려값, 필요 시 미세조정 */
+        max-height: calc(100vh - 210px);
+        overflow-y: auto;                /* 6개 초과 시에만 스크롤 */
+    }
+
+    .menu-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));   /* 항상 3열 */
+        grid-auto-rows: 1fr;                               /* 행 높이 균등 분배 */
+        grid-auto-flow: row;
+        gap: 1rem;
+        height: 100%;
+    }
+
+    .menu-grid-item {
+        display: flex;
+    }
+
+    .menu-grid-item .menu-card {
+        width: 100%;
+    }
+
+    /* ===== 레시피 팝업(모달) ===== */
+    .recipe-modal {
+        position: fixed;
+        inset: 0;
+        z-index: 1050;
+        display: none;              /* .show 일 때 flex로 바뀜 */
+        align-items: center;
+        justify-content: center;
+    }
+
+    .recipe-modal.show {
+        display: flex;
+    }
+
+    .recipe-modal-backdrop {
+        position: absolute;
+        inset: 0;
+        background-color: rgba(0, 0, 0, 0.45);
+    }
+
+    .recipe-modal-dialog {
+        position: relative;
+        z-index: 1060;
+        background-color: #ffffff;
+        border-radius: 0.75rem;
+
+        /* 팝업 가로 크기 더 크게 */
+        max-width: 1040px;
+        width: 100%;
+
+        /* 화면 상하 초과 방지 */
+        max-height: 85vh;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+
+        box-shadow: 0 0.75rem 1.5rem rgba(0, 0, 0, 0.25);
+        padding: 1.25rem 1.5rem 1.5rem;
+        margin: 0 1rem;
+    }
+
+    .recipe-modal-header {
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+    }
+
+    .recipe-modal-title {
+        font-size: 1.6rem;
+        font-weight: 700;
+        margin: 0;
+    }
+
+    .recipe-modal-body {
+        flex-grow: 1;
+        overflow-y: auto;      /* 팝업 자체는 고정, 내부만 스크롤 */
+        padding-right: 0.5rem;
+    }
+
+    /* 계단(스텝) 스타일 + 글씨 크게 (기존 대비 약 2배) */
+    .recipe-step {
+        position: relative;
+        background-color: #ffffff;
+        border-radius: 0.5rem;
+        padding: 0.9rem 1.1rem;
+        margin-bottom: 0.8rem;
+        box-shadow: 0 0.35rem 0.8rem rgba(0, 0, 0, 0.08);
+        border-left: 6px solid #0d6efd;
+
+        font-size: 1.8rem;
+        line-height: 1.45;
+    }
+
+    .step-index {
+        font-weight: 900;
+        margin-right: 0.7rem;
+    }
+
+    .step-text {
+        display: inline-block;
+        vertical-align: middle;
+    }
+
+    .btn-close {
+        border: none;
+        background: transparent;
+        font-size: 1.7rem;
+        line-height: 1;
+    }
+</style>
+
+<div class="container-fluid py-3">
+
+    <!-- 상단 선택 상태 바 -->
+    <div class="top-status-bar d-flex flex-wrap align-items-center justify-content-between mb-3">
+        <div class="d-flex flex-column flex-sm-row flex-wrap align-items-sm-center gap-2">
+            <div class="fw-bold">
+                주요 메뉴를 선택하세요
+                <span class="text-muted ms-1">(한 번에 하나만 선택)</span>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <span class="badge bg-primary card-count-badge">
+                    선택한 메뉴
+                    <span id="selected-count" class="fw-bold ms-1">0</span> / 1
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 선택한 메뉴 리스트(칩) -->
+    <div class="mb-3">
+        <div class="small text-muted mb-1">현재 선택한 메뉴</div>
+        <div id="selected-menu-chips" class="d-flex flex-wrap gap-1">
+            <!-- JS로 chip 추가 -->
+        </div>
+    </div>
+
+    <!-- 메뉴 카드 그리드 (3 x 2, 화면 꽉 채우기) -->
+    <div class="menu-grid-wrapper mb-4">
+        <div class="menu-grid">
+            {{#menuList}}
+                <div class="menu-grid-item">
+                    <div class="card menu-card"
+                         data-menu-id="{{id}}"
+                         data-menu-name="{{name}}">
+                        <div class="card-body d-flex flex-column justify-content-center align-items-center">
+                            <!-- 가운데 크게 메뉴 이름 -->
+                            <div class="menu-name mb-2">
+                                {{name}}
+                            </div>
+                            <!-- 아래에 카테고리 / 태그들 -->
+                            <div class="d-flex flex-column align-items-center gap-2">
+                                {{#category}}
+                                    <span class="badge text-bg-light">
+                                        {{category}}
+                                    </span>
+                                {{/category}}
+                                <div class="d-flex justify-content-center align-items-center gap-2">
+                                    {{#isSignature}}
+                                        <span class="badge text-bg-warning">시그니처</span>
+                                    {{/isSignature}}
+                                    {{^isSignature}}
+                                        <span class="badge text-bg-secondary">일반</span>
+                                    {{/isSignature}}
+
+                                    {{#hotOrIced}}
+                                        <span class="menu-tag bg-light text-muted">
+                                            {{hotOrIced}}
+                                        </span>
+                                    {{/hotOrIced}}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {{/menuList}}
+
+            {{^menuList}}
+                <div class="menu-grid-item">
+                    <div class="alert alert-warning mb-0 w-100">
+                        표시할 메뉴가 없습니다. 서버에서 <code>menuList</code> 데이터를 주입해 주세요.
+                    </div>
+                </div>
+            {{/menuList}}
+        </div>
+    </div>
+</div>
+
+<!-- 레시피 팝업(모달) -->
+<div id="recipe-modal" class="recipe-modal">
+    <div class="recipe-modal-backdrop" id="recipe-modal-backdrop"></div>
+    <div class="recipe-modal-dialog">
+        <div class="recipe-modal-header">
+            <h5 class="recipe-modal-title" id="recipe-modal-title">레시피</h5>
+            <button type="button" class="btn-close" id="btn-close-recipe" aria-label="Close">&times;</button>
+        </div>
+        <div class="recipe-modal-body" id="recipe-modal-body">
+            <p class="text-muted small mb-0">
+                선택한 메뉴의 레시피가 여기 계단형으로 표시됩니다.
+            </p>
+        </div>
+    </div>
+</div>
+
+<!-- JS: 단일 선택 + 팝업 레시피 -->
+<script>
+    (function () {
+        const cards = document.querySelectorAll('.menu-card');
+        const selectedCountSpan = document.getElementById('selected-count');
+        const chipsContainer = document.getElementById('selected-menu-chips');
+
+        const recipeModal = document.getElementById('recipe-modal');
+        const recipeModalBackdrop = document.getElementById('recipe-modal-backdrop');
+        const recipeModalTitle = document.getElementById('recipe-modal-title');
+        const recipeModalBody = document.getElementById('recipe-modal-body');
+        const btnCloseRecipe = document.getElementById('btn-close-recipe');
+
+        let currentSelectedMenu = null; // {id, name}
+        let currentSelectedCard = null;
+
+        function updateSelectedCount() {
+            selectedCountSpan.textContent = currentSelectedMenu ? '1' : '0';
+        }
+
+        function renderSelectedChip() {
+            chipsContainer.innerHTML = '';
+            if (!currentSelectedMenu) return;
+
+            const span = document.createElement('span');
+            span.className = 'badge bg-primary-subtle text-primary-emphasis selected-menu-chip';
+            span.textContent = currentSelectedMenu.name;
+            chipsContainer.appendChild(span);
+        }
+
+        function clearAllSelections() {
+            cards.forEach(c => c.classList.remove('selected'));
+            currentSelectedMenu = null;
+            currentSelectedCard = null;
+            renderSelectedChip();
+            updateSelectedCount();
+        }
+
+        function openRecipeModal(menu) {
+            // 실제 구현 시 여기서 menu.id 로 레시피 데이터 조회
+            recipeModalTitle.textContent = menu.name + ' 레시피';
+
+            recipeModalBody.innerHTML = '';
+
+            // TODO: 실제 레시피 리스트로 교체 (예: menu.recipes)
+            const dummySteps = [
+                '에스프레소 샷 1잔을 추출한다.',
+                '얼음을 컵의 80% 정도 채운다.',
+                '시럽/소스를 기준량 만큼 넣는다.',
+                '우유 또는 물을 기준선까지 채운다.',
+                '뚜껑을 닫고 가볍게 흔든 뒤 서빙한다.'
+            ];
+
+            dummySteps.forEach((step, i) => {
+                const div = document.createElement('div');
+                div.className = 'recipe-step';
+
+                // 계단 형태: 단계가 내려갈수록 오른쪽으로 이동
+                const offset = i * 24; // px
+                div.style.marginLeft = offset + 'px';
+
+                div.innerHTML =
+                        '<span class="step-index">Step ' + (i + 1) + '.</span>' +
+                        '<span class="step-text">' + step + '</span>';
+
+                recipeModalBody.appendChild(div);
+            });
+
+            recipeModal.classList.add('show');
+        }
+
+        function closeRecipeModal() {
+            recipeModal.classList.remove('show');
+        }
+
+        cards.forEach(card => {
+            card.addEventListener('click', () => {
+                const id = card.dataset.menuId;
+                const name = card.dataset.menuName;
+
+                // 같은 카드 다시 클릭하면 선택 해제 + 모달 닫기
+                if (currentSelectedCard === card) {
+                    clearAllSelections();
+                    closeRecipeModal();
+                    return;
+                }
+
+                // 이전 선택 해제
+                clearAllSelections();
+
+                // 새 선택
+                card.classList.add('selected');
+                currentSelectedMenu = {id, name};
+                currentSelectedCard = card;
+
+                renderSelectedChip();
+                updateSelectedCount();
+                openRecipeModal(currentSelectedMenu);
+            });
+        });
+
+        // 모달 닫기 버튼
+        btnCloseRecipe.addEventListener('click', () => {
+            closeRecipeModal();
+        });
+
+        // 배경 클릭하면 닫기
+        recipeModalBackdrop.addEventListener('click', () => {
+            closeRecipeModal();
+        });
+
+        // ESC 키로 닫기
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeRecipeModal();
+            }
+        });
+
+        // 초기 상태
+        updateSelectedCount();
+    })();
+</script>
+
+{{>layouts/footer}}

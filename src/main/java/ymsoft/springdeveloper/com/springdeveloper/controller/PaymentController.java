@@ -1,19 +1,22 @@
 package ymsoft.springdeveloper.com.springdeveloper.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.server.ResponseStatusException;
 import ymsoft.springdeveloper.com.springdeveloper.dto.MemberDto;
 import ymsoft.springdeveloper.com.springdeveloper.dto.PayrollMonthResponse;
+import ymsoft.springdeveloper.com.springdeveloper.entity.Member;
 import ymsoft.springdeveloper.com.springdeveloper.service.PayrollMonthService;
-import ymsoft.springdeveloper.com.springdeveloper.service.WorkScheduleService;
 import ymsoft.springdeveloper.com.springdeveloper.service.memberService;
 
 import java.time.LocalDate;
@@ -146,6 +149,27 @@ public class PaymentController {
         return "members/payidManagement";
     }
 
+    @GetMapping("/payidmanager/print")
+    public String paidManagerPrint(@RequestParam("memberId") Long memberId,
+                                   Model model) throws JsonProcessingException {
+
+        MemberDto member = memService.findById(memberId);
+        if (member == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Member not found");
+        }
+
+        // 상태 코드 → 한글 라벨 맵핑
+        String statusLabel = Member.Status.label(member.getStatus());
+
+        String memberJson = objectMapper.writeValueAsString(member);
+
+        model.addAttribute("member", member);
+        model.addAttribute("memberJson", memberJson);
+        model.addAttribute("statusLabel", statusLabel);
+
+        return "members/payidManagerPrint"; // templates/payment/paidManagerPrint.mustache
+    }
+
     @GetMapping("/payiddashboard")
     public String payidDashboard(Model model) throws Exception {
         List<MemberDto> members = memService.findAll();
@@ -174,6 +198,24 @@ public class PaymentController {
         // 5) 페이지 타이틀
         model.addAttribute("pageTitle", "월/주 실 근무시간 대시보드");
         return "members/payManagerDashboard";
+    }
+
+    @GetMapping("/paymanagerdashboard/print")
+    public String payManagerDashboardPrint(@RequestParam String status,
+                                           Model model) throws Exception {
+        List<MemberDto> members = memService.findByStatus(Member.Status.from(status));
+        log.info("/paymanagerdashboard/print: {}", members);
+        model.addAttribute("members", members);
+
+        String membersJson = objectMapper.writeValueAsString(members);
+        log.info("membersJson: {}", membersJson);
+        model.addAttribute("membersJson", membersJson);
+        // 3) 상태 라벨 (머스태치에서 {{statusLabel}} 로 사용)
+        model.addAttribute("statusLabel", Member.Status.label(status));
+
+        // 5) 페이지 타이틀
+        model.addAttribute("pageTitle", "월/주 실 근무시간 대시보드");
+        return "members/payManagerDashboardPrint";
     }
 
     @GetMapping("/payroll/month/print")

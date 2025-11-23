@@ -75,11 +75,6 @@
                             <button class="nav-link" type="button" data-view="YEAR">연도별</button>
                         </li>
                     </ul>
-
-                    <!-- 🔹 PDF 버튼 (선택한 근무자의 지급내역 출력용 페이지 호출) -->
-                    <a href="#" id="paidPdfBtn" class="btn btn-sm btn-outline-primary" target="_blank">
-                        PDF
-                    </a>
                 </div>
             </div>
             <div class="card-body">
@@ -220,7 +215,6 @@
         cursor:pointer;
         font-size:.9rem;
         transition: background .15s, box-shadow .15s, border-color .15s;
-        color:#212529;
     }
     .pill:hover {
         background:#fafafa;
@@ -240,7 +234,6 @@
     }
     .pill .name {
         font-weight:600;
-        color:#212529;
     }
     .pill .meta {
         color:#6c757d;
@@ -255,7 +248,7 @@
     /* ✅ 상단 타이틀 + 선택한 근무자 정보 sticky */
     .sticky-pay-header {
         position: sticky;
-        top: 70px;
+        top: 70px;              /* 상단 navbar 높이에 맞춰 조정 */
         z-index: 1030;
         background:#ffffff;
         padding-top: .25rem;
@@ -272,7 +265,7 @@
     }
 
     .toast-top-center {
-        margin-top: 70px;
+        margin-top: 70px; /* 상단 네비바 아래쪽 여백 */
     }
 
     /* ✅ 월별/연도별 테이블 헤더 파란색 + 상단 모서리 라운드 */
@@ -319,6 +312,7 @@
 <script>
     (function() {
         // 급여 내역 조회 API
+        // GET /api/payroll/member/{memberId}
         const PAYROLL_MEMBER_API = '/api/payroll/member';
 
         // 상단 상태/리스트
@@ -348,9 +342,6 @@
         const summaryTotalJuhyuPay = document.getElementById('summaryTotalJuhyuPay');
         const summaryTotalPay      = document.getElementById('summaryTotalPay');
 
-        // PDF 버튼
-        const paidPdfBtn           = document.getElementById('paidPdfBtn');
-
         // 토스트
         const toastEl              = document.getElementById('mainToast');
         const toastBodyEl          = document.getElementById('mainToastBody');
@@ -365,7 +356,7 @@
 
         let currentMember = null;
         let selectedMemberId = null;
-        let currentPayView = 'MONTH';
+        let currentPayView = 'MONTH'; // 'MONTH' | 'YEAR'
         let lastMonthlyCount = 0;
         let lastYearlyCount  = 0;
 
@@ -399,16 +390,6 @@
             });
         });
 
-        // 🔹 PDF 버튼 클릭 → memberId 없으면 경고, 있으면 출력용 페이지 호출
-        paidPdfBtn.addEventListener('click', function(e){
-            if (!selectedMemberId) {
-                e.preventDefault();
-                showToast('근무자를 먼저 선택해 주세요.', 'warning');
-                return;
-            }
-            this.href = `/payment/payidmanager/print?memberId=${encodeURIComponent(selectedMemberId)}`;
-        });
-
         // 초기 실행
         handleStatusChange();
 
@@ -431,6 +412,7 @@
                 return;
             }
 
+            // 선택 유지 or 첫 번째
             let toSelect = null;
             if (currentMember && members.some(m => String(m.id) === String(currentMember.id))) {
                 toSelect = members.find(m => String(m.id) === String(currentMember.id));
@@ -462,6 +444,7 @@
                         memberPills.appendChild(btn);
                     });
 
+            // 선택 반영
             selectMember(toSelect);
         }
 
@@ -610,7 +593,7 @@
             let totalJuhyuPay = 0;
             let totalPay = 0;
 
-            const yearMap = {};
+            const yearMap = {}; // { [year]: { workMinutes, juhyuMinutes, workPay, juhyuPay, totalPay } }
 
             const monthRows = list.map(item => {
                 const year  = item.payYear ?? '-';
@@ -680,6 +663,7 @@
             payHistoryBodyMonth.innerHTML = monthRows.join('');
             lastMonthlyCount = list.length;
 
+            // 연도별 테이블 렌더링
             const years = Object.keys(yearMap).map(y => Number(y)).sort((a,b) => b - a);
             if (years.length === 0) {
                 payHistoryBodyYear.innerHTML = `
@@ -708,12 +692,14 @@
                 lastYearlyCount = years.length;
             }
 
+            // 현재 뷰에 맞게 건수 표시
             if (currentPayView === 'MONTH') {
                 payHistoryCount.textContent = `${lastMonthlyCount}건`;
             } else {
                 payHistoryCount.textContent = `${lastYearlyCount}건`;
             }
 
+            // 합계 반영
             summaryTotalWorkTime.textContent  = formatMins(totalWorkMinutes);
             summaryTotalJuhyuTime.textContent = formatMins(totalJuhyuMinutes);
             summaryTotalWorkPay.textContent   = totalWorkPay  ? krw(totalWorkPay)  : '-';
@@ -795,6 +781,7 @@
             return String(s)
                     .replace(/&/g,'&amp;')
                     .replace(/</g,'&lt;')
+                    .replace(/>/g,'&gt;')
                     .replace(/"/g,'&quot;')
                     .replace(/'/g,'&#39;');
         }
