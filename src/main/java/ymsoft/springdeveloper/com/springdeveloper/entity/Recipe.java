@@ -39,6 +39,9 @@ public class Recipe {
     @Column(length = 255)
     private String description;
 
+    @Column(nullable = false)
+    private boolean visible = false;   // 기본 비노출
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 10)
     private Temperature temperature;      // HOT / ICE

@@ -1,0 +1,346 @@
+{{>layouts/header}}
+
+<style>
+    body {
+        background-color: #f8f9fa;
+    }
+
+    .card-count-badge {
+        font-size: 0.85rem;
+    }
+
+    /* 카테고리 칩 스타일 */
+    .category-chip-group {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    .category-chip {
+        border-radius: 999px;
+        border: 1px solid #dee2e6;
+        background-color: #ffffff;
+        padding: 0.35rem 0.9rem;
+        font-size: 0.9rem;
+        cursor: pointer;
+        transition: background-color 0.1s ease, color 0.1s ease, box-shadow 0.1s ease, border-color 0.1s ease;
+        white-space: nowrap;
+    }
+
+    .category-chip:hover {
+        background-color: #f1f3f5;
+    }
+
+    .category-chip.selected {
+        background-color: #0d6efd;
+        color: #ffffff;
+        border-color: #0d6efd;
+        box-shadow: 0 0.3rem 0.7rem rgba(13, 110, 253, 0.35);
+    }
+
+    /* HOT / ICE, 컵 사이즈용 버튼 그룹 약간 크게 */
+    .temp-group .btn,
+    .cup-group .btn {
+        min-width: 80px;
+    }
+
+    .temp-group .btn-outline-danger,
+    .temp-group .btn-outline-primary {
+        font-weight: 600;
+    }
+
+    /* ✅ 상단 기본 입력 영역 라운드 렉트 (주황색 테두리) */
+    .form-wrapper {
+        border-radius: 1rem;
+        border: 2px solid #fd7e14;
+        padding: 1rem 1.25rem;
+        background-color: #ffffff;
+        margin-bottom: 1rem;
+    }
+
+    /* ✅ 레시피 단계 영역 라운드 렉트 (주황색 테두리) */
+    .step-wrapper {
+        border-radius: 1rem;
+        border: 2px solid #fd7e14;
+        padding: 0.75rem 0.75rem 0.25rem;
+        background-color: #ffffff;
+    }
+</style>
+
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8 col-md-10">
+
+            <!-- 제목 + 상단 목록 버튼 -->
+            <div class="mb-3 d-flex justify-content-between align-items-center">
+                <div>
+                    <h3 class="mb-0 fw-bold">☕ 메뉴 레시피 작성</h3>
+                    <div class="text-muted small mt-1">
+                        메뉴 이름, 작성자, HOT/ICE, 컵 사이즈, 카테고리, 레시피를 순서대로 입력해 주세요.
+                    </div>
+                </div>
+                <a href="/cafe/recipes" class="btn btn-sm btn-outline-secondary">
+                    목록
+                </a>
+            </div>
+
+            <!-- 레시피 작성 폼 -->
+            <form method="post" action="/cafe/recipe/save" id="recipe-form">
+
+                <!-- ✅ 기본 정보 영역 전체 라운드 박스 -->
+                <div class="form-wrapper">
+
+                    <!-- 메뉴 이름 + 노출 여부 체크박스 -->
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <label for="menuName" class="form-label fw-semibold mb-0">메뉴 이름</label>
+                            <div class="form-check">
+                                <!-- ✅ 기본값: 비선택 -->
+                                <input class="form-check-input"
+                                       type="checkbox"
+                                       id="visible"
+                                       name="visible">
+                                <label class="form-check-label small" for="visible">
+                                    노출 여부
+                                </label>
+                            </div>
+                        </div>
+                        <input type="text"
+                               class="form-control"
+                               id="menuName"
+                               name="menuName"
+                               placeholder="예) 바닐라라떼"
+                               required>
+                    </div>
+
+                    <!-- 작성자 -->
+                    <div class="mb-3">
+                        <label for="author" class="form-label fw-semibold">작성자</label>
+                        <input type="text"
+                               class="form-control"
+                               id="author"
+                               name="author"
+                               placeholder="본인 이름 또는 닉네임"
+                               required>
+                    </div>
+
+                    <!-- 간단 설명 (옵션) -->
+                    <div class="mb-3">
+                        <label for="description" class="form-label fw-semibold">
+                            간단 설명 <span class="text-muted small">(선택)</span>
+                        </label>
+                        <input type="text"
+                               class="form-control"
+                               id="description"
+                               name="description"
+                               placeholder="예) 아이스 전용, 연한 단맛, 초보 바리스타용">
+                    </div>
+
+                    <!-- HOT / ICE 선택 -->
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold d-block">HOT / ICE</label>
+                        <div class="btn-group temp-group" role="group" aria-label="Temperature select">
+                            <!-- Enum Temperature.HOT / Temperature.ICE -->
+                            <input type="radio" class="btn-check" name="temperature" id="tempHot" value="HOT" autocomplete="off" checked>
+                            <label class="btn btn-outline-danger" for="tempHot">HOT</label>
+
+                            <input type="radio" class="btn-check" name="temperature" id="tempIce" value="ICE" autocomplete="off">
+                            <label class="btn btn-outline-primary" for="tempIce">ICE</label>
+                        </div>
+                    </div>
+
+                    <!-- 컵 사이즈 선택 -->
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold d-block">컵 사이즈</label>
+                        <div class="btn-group cup-group" role="group" aria-label="Cup size select">
+                            <!-- Enum CupSize.OZ20 / OZ24 / OZ32 -->
+                            <input type="radio" class="btn-check" name="cupSize" id="cup20" value="OZ20" autocomplete="off" checked>
+                            <label class="btn btn-outline-secondary" for="cup20">20oz</label>
+
+                            <input type="radio" class="btn-check" name="cupSize" id="cup24" value="OZ24" autocomplete="off">
+                            <label class="btn btn-outline-secondary" for="cup24">24oz</label>
+
+                            <input type="radio" class="btn-check" name="cupSize" id="cup32" value="OZ32" autocomplete="off">
+                            <label class="btn btn-outline-secondary" for="cup32">32oz</label>
+                        </div>
+                        <div class="form-text text-muted small">
+                            기본 추천: HOT → 20oz, ICE → 24oz 이지만, 필요에 따라 자유롭게 변경할 수 있습니다.
+                        </div>
+                    </div>
+
+                    <!-- 카테고리 선택 (칩 형태) -->
+                    <div class="mb-1">
+                        <label class="form-label fw-semibold d-block">카테고리</label>
+                        <div class="category-chip-group" id="category-chip-group">
+                            <!-- RecipeCategory enum 이름과 data-value를 맞춰서 설정 -->
+                            <button type="button" class="category-chip" data-value="HOT_COFFEE">Hot 커피</button>
+                            <button type="button" class="category-chip" data-value="ICE_COFFEE">Ice 커피</button>
+                            <button type="button" class="category-chip" data-value="HOT_LATTE">Hot 라떼</button>
+                            <button type="button" class="category-chip" data-value="ICE_LATTE">Ice 라떼</button>
+                            <button type="button" class="category-chip" data-value="ICE_NONCOFFEE">Ice 논커피</button>
+                            <button type="button" class="category-chip" data-value="HOT_NONCOFFEE">Hot 논커피</button>
+                            <button type="button" class="category-chip" data-value="LATTE_COLDBREW">라떼 콜드브루</button>
+                            <button type="button" class="category-chip" data-value="SMOOTHIE_ADE">스무디 에이드</button>
+                            <button type="button" class="category-chip" data-value="JUICE">주스</button>
+                            <button type="button" class="category-chip" data-value="FRAPPE">프라페</button>
+                        </div>
+                        <!-- DTO의 RecipeCategory category 에 바인딩되는 hidden 필드 -->
+                        <input type="hidden" name="category" id="category-input" required>
+                        <div class="form-text text-muted small">
+                            위 카테고리 중 하나를 선택해 주세요.
+                        </div>
+                    </div>
+
+                </div> <!-- .form-wrapper 끝 -->
+
+                <!-- 레시피 스텝들 -->
+                <div class="mb-2 d-flex justify-content-between align-items-center">
+                    <label class="form-label fw-semibold mb-0">레시피 단계</label>
+                    <button type="button"
+                            class="btn btn-sm btn-outline-primary"
+                            id="btn-add-step">
+                        + 단계 추가
+                    </button>
+                </div>
+
+                <!-- ✅ 레시피 스텝 카드 전체를 주황 라운드 박스로 감싸기 -->
+                <div class="step-wrapper mb-3">
+                    <div id="steps-container" class="mb-1">
+                        <!-- JS로 Step 필드들이 그려집니다. (최소 1개 기본 생성) -->
+                    </div>
+                </div>
+
+                <!-- 저장 버튼 -->
+                <div class="d-flex justify-content-end gap-2">
+                    <a href="/cafe/recipes" class="btn btn-outline-secondary">
+                        취소
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        레시피 저장
+                    </button>
+                </div>
+            </form>
+
+        </div>
+    </div>
+</div>
+
+<script>
+    (function () {
+        /* =========================
+           레시피 단계 (Step) 관리
+           ========================= */
+        const stepsContainer = document.getElementById('steps-container');
+        const addStepBtn = document.getElementById('btn-add-step');
+
+        let stepIndex = 0;
+
+        function createStepElement(index) {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'card mb-2';
+            wrapper.dataset.stepIndex = index;
+
+            wrapper.innerHTML = `
+                <div class="card-body py-2">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <div class="fw-semibold">
+                            Step <span class="step-number">${index + 1}</span>
+                        </div>
+                        <button type="button"
+                                class="btn btn-sm btn-outline-danger btn-remove-step">
+                            삭제
+                        </button>
+                    </div>
+                    <textarea class="form-control step-textarea"
+                              name="steps"
+                              rows="2"
+                              placeholder="예) 에스프레소 샷 1잔을 추출한다."
+                              required></textarea>
+                </div>
+            `;
+            return wrapper;
+        }
+
+        function refreshStepNumbers() {
+            const stepCards = stepsContainer.querySelectorAll('.card');
+            stepCards.forEach((card, idx) => {
+                card.dataset.stepIndex = idx;
+                const numberSpan = card.querySelector('.step-number');
+                if (numberSpan) {
+                    numberSpan.textContent = idx + 1;
+                }
+            });
+            stepIndex = stepCards.length;
+        }
+
+        function addStep() {
+            const el = createStepElement(stepIndex);
+            stepsContainer.appendChild(el);
+            stepIndex++;
+
+            // 삭제 버튼 이벤트 연결
+            const removeBtn = el.querySelector('.btn-remove-step');
+            removeBtn.addEventListener('click', function () {
+                // 최소 1개는 남도록 방어
+                const total = stepsContainer.querySelectorAll('.card').length;
+                if (total <= 1) {
+                    alert('최소 1개 이상의 단계가 필요합니다.');
+                    return;
+                }
+                el.remove();
+                refreshStepNumbers();
+            });
+        }
+
+        // 초기 1개 Step 기본 생성
+        addStep();
+
+        // + 단계 추가 버튼
+        addStepBtn.addEventListener('click', function () {
+            addStep();
+        });
+
+        /* =========================
+           HOT / ICE & 컵 사이즈 기본값 (강제 변경 제거)
+           ========================= */
+        const cup20 = document.getElementById('cup20');
+        // const cup24 = document.getElementById('cup24');
+        // const cup32 = document.getElementById('cup32');
+        const tempHot = document.getElementById('tempHot');
+        const tempIce = document.getElementById('tempIce');
+
+        // 필요 시 기본값만 설정 (이미 HTML에서 HOT + 20oz checked 상태)
+        // 여기서는 온도 변경 시 컵 사이즈를 강제로 바꾸지 않고,
+        // 사용자가 자유롭게 선택하도록 둡니다.
+        function initDefault() {
+            tempHot.checked = true;
+            cup20.checked = true;
+        }
+        initDefault();
+
+        /* =========================
+           카테고리 칩 선택 관리
+           ========================= */
+        const categoryInput = document.getElementById('category-input');
+        const categoryGroup = document.getElementById('category-chip-group');
+        const categoryChips = categoryGroup.querySelectorAll('.category-chip');
+
+        categoryChips.forEach(chip => {
+            chip.addEventListener('click', function () {
+                // 기존 선택 모두 해제
+                categoryChips.forEach(c => c.classList.remove('selected'));
+                // 현재 선택
+                chip.classList.add('selected');
+                categoryInput.value = chip.dataset.value;
+            });
+        });
+
+        // 기본 카테고리 하나 자동 선택
+        const firstChip = categoryChips[0];
+        if (firstChip) {
+            firstChip.click();
+        }
+    })();
+</script>
+
+{{>layouts/footer}}

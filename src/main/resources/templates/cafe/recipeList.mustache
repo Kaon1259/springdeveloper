@@ -1,0 +1,356 @@
+{{>layouts/header}}
+
+<style>
+    body {
+        background-color: #f8f9fa;
+    }
+
+    .table-wrapper {
+        border-radius: 1rem;
+        overflow: hidden;
+        border: 1px solid #dee2e6;
+        background-color: #ffffff;
+    }
+
+    /* 테이블 헤더 녹색 */
+    .table-rounded thead th {
+        border-bottom-width: 1px;
+        background-color: #198754;
+        color: #ffffff;
+        border-color: #198754;
+        font-weight: 600;
+    }
+
+    .table-rounded thead th:first-child {
+        border-top-left-radius: 1rem;
+    }
+
+    .table-rounded thead th:last-child {
+        border-top-right-radius: 1rem;
+    }
+
+    /* 카테고리 영역 */
+    .category-cell {
+        background-color: #e7f5ff;
+    }
+
+    .category-badge {
+        font-size: 0.9rem;
+        padding: 0.35rem 0.9rem;
+        border-radius: 999px;
+        background-color: #fff;
+        color: #000;
+        display: inline-block;
+        border: 2px solid #000; /* 검정색 외곽선 */
+        font-weight: 600;
+    }
+
+    /* 레시피 pill 기본 */
+    .recipe-pill {
+        display: inline-block;
+        padding: 0.45rem 1rem;
+        border-radius: 999px;
+        font-weight: 600;
+        cursor: pointer;
+        white-space: nowrap;
+        border: 2px solid #dee2e6;
+        background-color: #ffffff;
+        transition: all 0.15s ease;
+        font-size: 0.95rem;
+    }
+
+    /* 외곽선 색 (기본) */
+    .recipe-pill[data-temp="HOT"] {
+        border-color: #dc3545;
+    }
+
+    .recipe-pill[data-temp="ICE"] {
+        border-color: #0d6efd;
+    }
+
+    /* 선택 시 배경색 */
+    .recipe-pill.selected[data-temp="HOT"] {
+        background-color: #dc3545;
+        color: #fff;
+        border-color: #b02a37;
+    }
+
+    .recipe-pill.selected[data-temp="ICE"] {
+        background-color: #0d6efd;
+        color: #fff;
+        border-color: #0a58ca;
+    }
+
+    .recipe-pill:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 0.25rem 0.6rem rgba(0,0,0,0.1);
+    }
+
+    /* ✅ visible == true 인 레시피 pill 깜빡이기 */
+    .recipe-pill.visible-blink {
+        animation: visibleBlink 1.3s ease-in-out infinite;
+    }
+
+    @keyframes visibleBlink {
+        0% {
+            box-shadow: 0 0 0 0 rgba(13, 110, 253, 0.5);
+            transform: translateY(0);
+        }
+        50% {
+            box-shadow: 0 0 0 6px rgba(13, 110, 253, 0);
+            transform: translateY(-1px);
+        }
+        100% {
+            box-shadow: 0 0 0 0 rgba(13, 110, 253, 0);
+            transform: translateY(0);
+        }
+    }
+
+    /* --- 모달 계단형 스타일 + 2배 확대 --- */
+    #recipeDetailModal .modal-title {
+        font-size: 2rem;
+        font-weight: 700;
+    }
+
+    #recipeDetailModal .modal-body {
+        font-size: 1.6rem;
+    }
+
+    .step-timeline {
+        position: relative;
+        padding-left: 3rem;
+        list-style: none;
+    }
+
+    .step-timeline::before {
+        content: "";
+        position: absolute;
+        left: 1.3rem;
+        top: 1.5rem;
+        bottom: 1.5rem;
+        width: 3px;
+        background-color: #dee2e6;
+    }
+
+    .step-item {
+        position: relative;
+        margin-bottom: 1.7rem;
+        padding-left: 1.2rem;
+    }
+
+    .step-item::before {
+        content: attr(data-step);
+        position: absolute;
+        left: -2rem;
+        top: 0.2rem;
+        width: 2.6rem;
+        height: 2.6rem;
+        border-radius: 50%;
+        background-color: #0d6efd;
+        color: #fff;
+        font-size: 1.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 2px 6px rgba(13,110,253,0.5);
+    }
+
+    .step-content {
+        background-color: #ffffff;
+        border-radius: 1rem;
+        padding: 1.2rem 1.5rem;
+        border: 1px solid #e9ecef;
+        font-size: 1.45rem;
+        line-height: 1.6;
+        transition: background-color 0.15s ease, color 0.15s ease, font-size 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    /* 계단 느낌 */
+    .step-item:nth-child(2) .step-content { margin-left: 12px; }
+    .step-item:nth-child(3) .step-content { margin-left: 24px; }
+    .step-item:nth-child(4) .step-content { margin-left: 36px; }
+    .step-item:nth-child(5) .step-content { margin-left: 48px; }
+    .step-item:nth-child(6) .step-content { margin-left: 60px; }
+
+    /* 팝업 내부에서 선택된 스텝 강조 */
+    .step-item.step-selected .step-content {
+        background-color: #0d6efd;
+        color: #fff;
+        font-size: 1.7rem;
+        box-shadow: 0 0.35rem 0.9rem rgba(13,110,253,0.45);
+    }
+</style>
+
+
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h3 class="fw-bold mb-0">☕ 레시피 목록</h3>
+            <div class="text-muted small mt-1">더블클릭하면 상세 레시피가 팝업으로 열립니다.</div>
+        </div>
+
+        <div class="d-flex gap-2">
+            <button class="btn btn-success btn-sm" onclick="location.href='/cafe/recipe/new'">레시피 만들기</button>
+            <button class="btn btn-outline-primary btn-sm" id="btn-edit-recipe" disabled>수정하기</button>
+        </div>
+    </div>
+
+    <div class="table-wrapper shadow-sm">
+        <table class="table table-rounded mb-0 align-middle">
+            <thead>
+            <tr>
+                <th style="width: 25%;">카테고리</th>
+                <th>레시피</th>
+            </tr>
+            </thead>
+            <tbody id="recipe-table-body">
+
+            {{#recipeGroups}}
+                <tr>
+                    <td class="category-cell">
+                        <span class="category-badge">{{categoryLabel}}</span>
+                    </td>
+                    <td>
+                        <div class="d-flex flex-wrap gap-2">
+                            {{#recipes}}
+                                <div class="recipe-pill-wrapper" data-id="{{id}}" data-name="{{menuName}}">
+                                    <!-- ✅ visible == true 이면 visible-blink 클래스 추가 -->
+                                    <span class="recipe-pill {{#visible}}visible-blink{{/visible}}" data-temp="{{temperature}}">
+                                        {{menuName}}
+                                    </span>
+
+                                    <div class="d-none recipe-steps" id="recipe-steps-{{id}}">
+                                        <ul class="step-timeline">
+                                            {{#steps}}
+                                                <li class="step-item" data-step="{{stepOrder}}">
+                                                    <div class="step-content">{{content}}</div>
+                                                </li>
+                                            {{/steps}}
+                                            {{^steps}}
+                                                <li class="step-item" data-step="1">
+                                                    <div class="step-content text-muted">등록된 스텝이 없습니다.</div>
+                                                </li>
+                                            {{/steps}}
+                                        </ul>
+                                    </div>
+                                </div>
+                            {{/recipes}}
+                        </div>
+                    </td>
+                </tr>
+            {{/recipeGroups}}
+
+            {{^recipeGroups}}
+                <tr>
+                    <td colspan="2" class="text-center py-4 text-muted">등록된 레시피가 없습니다.</td>
+                </tr>
+            {{/recipeGroups}}
+
+            </tbody>
+        </table>
+    </div>
+</div>
+
+
+<!-- 모달 -->
+<div class="modal fade" id="recipeDetailModal" tabindex="-1">
+    <div class="modal-dialog modal-xl modal-dialog-centered" style="max-width: 90%;">
+        <div class="modal-content rounded-3">
+            <div class="modal-header">
+                <h4 class="modal-title fw-bold" id="recipeDetailModalLabel">레시피 상세</h4>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body">
+                <div id="recipeDetailMeta" class="mb-3 text-muted" style="font-size: 1.3rem;"></div>
+                <div id="recipe-steps-content"></div>
+            </div>
+
+            <div class="modal-footer">
+                <button id="modal-edit-btn" class="btn btn-outline-primary btn-lg">이 레시피 수정하기</button>
+                <button class="btn btn-secondary btn-lg" data-bs-dismiss="modal">닫기</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    (function () {
+        const tableBody = document.getElementById("recipe-table-body");
+        const pillWrappers = tableBody.querySelectorAll(".recipe-pill-wrapper");
+        const editBtn = document.getElementById("btn-edit-recipe");
+        const modalEditBtn = document.getElementById("modal-edit-btn");
+
+        let selectedRecipeId = null;
+
+        function clearSelection() {
+            tableBody.querySelectorAll(".recipe-pill").forEach(p => p.classList.remove("selected"));
+            selectedRecipeId = null;
+            editBtn.disabled = true;
+        }
+
+        function selectRecipe(wrapper) {
+            clearSelection();
+            const pill = wrapper.querySelector(".recipe-pill");
+            pill.classList.add("selected");
+            selectedRecipeId = wrapper.dataset.id;
+            editBtn.disabled = false;
+        }
+
+        // 모달 안 단계(스텝) 클릭 시 하이라이트
+        function attachStepClickHandlers() {
+            const container = document.getElementById("recipe-steps-content");
+            if (!container) return;
+
+            const stepItems = container.querySelectorAll(".step-item");
+            stepItems.forEach(item => {
+                item.addEventListener("click", () => {
+                    stepItems.forEach(i => i.classList.remove("step-selected"));
+                    item.classList.add("step-selected");
+                });
+            });
+        }
+
+        pillWrappers.forEach(wrapper => {
+            const pill = wrapper.querySelector(".recipe-pill");
+
+            // 한 번 클릭 → 리스트에서 선택
+            pill.addEventListener("click", e => {
+                e.stopPropagation();
+                if (selectedRecipeId === wrapper.dataset.id) clearSelection();
+                else selectRecipe(wrapper);
+            });
+
+            // 더블클릭 → 선택 + 모달 열기
+            pill.addEventListener("dblclick", e => {
+                e.stopPropagation();
+                selectRecipe(wrapper);
+
+                const id = wrapper.dataset.id;
+                const name = wrapper.dataset.name;
+                const stepsContainer = document.getElementById("recipe-steps-" + id);
+
+                document.getElementById("recipeDetailModalLabel").innerText = name;
+                document.getElementById("recipeDetailMeta").innerText = "레시피 ID: " + id;
+                document.getElementById("recipe-steps-content").innerHTML =
+                        stepsContainer ? stepsContainer.innerHTML : "<p>스텝 없음</p>";
+
+                const modal = new bootstrap.Modal(document.getElementById("recipeDetailModal"));
+                modal.show();
+
+                attachStepClickHandlers();
+            });
+        });
+
+        // 수정하기 버튼
+        editBtn.addEventListener("click", () => {
+            if (selectedRecipeId) location.href = "/cafe/recipe/" + selectedRecipeId + "/edit";
+        });
+
+        modalEditBtn.addEventListener("click", () => {
+            if (selectedRecipeId) location.href = "/cafe/recipe/" + selectedRecipeId + "/edit";
+        });
+    })();
+</script>
+
+{{>layouts/footer}}

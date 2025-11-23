@@ -8,7 +8,9 @@ import ymsoft.springdeveloper.com.springdeveloper.enums.RecipeCategory;
 import ymsoft.springdeveloper.com.springdeveloper.enums.Temperature;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Data
 @Builder
@@ -17,9 +19,12 @@ import java.util.List;
 @ToString
 public class RecipeCreateRequestDto {
 
+    private Long id;
     private String menuName;
     private String author;
     private String description;
+
+    private boolean visible;
 
     /**🔥 이제 Enum 타입으로 직접 받는다 */
     private Temperature temperature;        // HOT / ICE
@@ -37,6 +42,7 @@ public class RecipeCreateRequestDto {
                 .author(author)
                 .description(description)
                 .temperature(temperature)
+                .visible(Boolean.TRUE.equals(visible))
                 .cupSize(cupSize)
                 .category(category)
                 .build();
@@ -61,5 +67,31 @@ public class RecipeCreateRequestDto {
         recipe.setSteps(stepEntities);
 
         return recipe;
+    }
+
+    public static RecipeCreateRequestDto toForm(Recipe recipe) {
+        return RecipeCreateRequestDto.builder()
+                .id(recipe.getId())
+                .menuName(recipe.getMenuName())
+                .author(recipe.getAuthor())
+                .description(recipe.getDescription())
+                .visible(recipe.isVisible())
+                .temperature(recipe.getTemperature())
+                .cupSize(recipe.getCupSize())
+                .category(recipe.getCategory())
+                .steps(
+                        recipe.getSteps() == null ? null :
+                                recipe.getSteps().stream()
+                                        .sorted(Comparator.comparing(RecipeStep::getStepOrder))
+                                        .map(RecipeStep::getContent)
+                                        .collect(Collectors.toList())
+                )
+                .build();
+    }
+
+    public static List<RecipeCreateRequestDto> toDto(List<Recipe> recipes) {
+        return recipes.stream()
+            .map(RecipeCreateRequestDto::toForm)
+            .collect(Collectors.toList());
     }
 }

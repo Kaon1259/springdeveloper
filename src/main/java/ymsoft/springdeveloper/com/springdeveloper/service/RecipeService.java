@@ -1,10 +1,19 @@
 package ymsoft.springdeveloper.com.springdeveloper.service;
 
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import ymsoft.springdeveloper.com.springdeveloper.dto.RecipeCreateRequestDto;
+import ymsoft.springdeveloper.com.springdeveloper.dto.RecipeGroupDto;
+import ymsoft.springdeveloper.com.springdeveloper.dto.RecipeStepViewDto;
+import ymsoft.springdeveloper.com.springdeveloper.dto.RecipeViewDto;
 import ymsoft.springdeveloper.com.springdeveloper.entity.Recipe;
+import ymsoft.springdeveloper.com.springdeveloper.entity.RecipeStep;
+import ymsoft.springdeveloper.com.springdeveloper.enums.RecipeCategory;
 import ymsoft.springdeveloper.com.springdeveloper.repository.RecipeRepository;
+
+import java.util.*;
+import java.util.stream.Collectors;
 
 // Service
 @Service
@@ -18,4 +27,149 @@ public class RecipeService {
         recipeRepository.save(recipe);
         return recipe.getId();
     }
+
+    public Recipe getRecipeById(Long id) {
+        return recipeRepository.findById(id).orElse(null);
+    }
+
+    public List<Recipe> getAllRecipes() {
+        return recipeRepository.findAll();
+    }
+
+    public  List<Recipe> getAllRecipeWithCategory() {
+        return recipeRepository.findAllByOrderByCategoryAscMenuNameAsc();
+    }
+
+    /** 리스트 화면용: 카테고리별로 그룹핑한 DTO 만들기 */
+    public List<RecipeGroupDto> getGroupedRecipes() {
+
+        List<Recipe> recipes = recipeRepository.findAllByOrderByCategoryAscMenuNameAsc();
+
+        // 1) 엔티티 → RecipeViewDto 로 변환
+        List<RecipeViewDto> viewDtos = recipes.stream()
+                .map(this::toRecipeViewDto)
+                .collect(Collectors.toList());
+
+        // 2) 카테고리(RecipeCategory enum name) 기준으로 그룹핑
+        Map<String, List<RecipeViewDto>> grouped =
+                viewDtos.stream()
+                        .collect(Collectors.groupingBy(RecipeViewDto::getCategory,
+                                LinkedHashMap::new, Collectors.toList()));
+
+        // 3) 그룹 → RecipeGroupDto 리스트로 변환 (카테고리 라벨 붙이기)
+        List<RecipeGroupDto> result = new ArrayList<>();
+
+        for (Map.Entry<String, List<RecipeViewDto>> entry : grouped.entrySet()) {
+            String categoryEnumName = entry.getKey();
+            List<RecipeViewDto> categoryRecipes = entry.getValue();
+
+            String label = toCategoryLabel(categoryEnumName);
+
+            RecipeGroupDto groupDto = RecipeGroupDto.builder()
+                    .categoryLabel(label)
+                    .recipes(categoryRecipes)
+                    .build();
+
+            result.add(groupDto);
+        }
+
+        return result;
+    }
+
+    @Transactional
+    public void updateRecipe(Long id, RecipeCreateRequestDto dto) {
+
+        Recipe recipe = recipeRepository.findById(id).orElse(null);
+
+        // 기본 필드 업데이트
+        recipe.setMenuName(dto.getMenuName());
+        recipe.setAuthor(dto.getAuthor());
+        recipe.setDescription(dto.getDescription());
+        recipe.setVisible(dto.isVisible());
+        recipe.setTemperature(dto.getTemperature());
+        recipe.setCupSize(dto.getCupSize());
+        recipe.setCategory(dto.getCategory());
+
+        // 기존 스텝 삭제 후 다시 추가 (가장 깔끔한 정리 방식)
+        recipe.getSteps().clear();
+        recipeRepository.flush();  // orphanRemoval=true → DB 실제 삭제 반영
+
+        int order = 1;
+        for (String content : dto.getSteps()) {
+            if (content == null || content.isBlank()) continue;
+
+            RecipeStep step = RecipeStep.builder()
+                    .recipe(recipe)
+                    .stepOrder(order++)
+                    .content(content.trim())
+                    .build();
+
+            recipe.addStep(step);
+        }
+    }
+
+    /** 단일 레시피를 리스트뷰용 DTO로 변환 */
+    private RecipeViewDto toRecipeViewDto(Recipe recipe) {
+
+        List<RecipeStepViewDto> stepDtos = Optional.ofNullable(recipe.getSteps())
+                .orElseGet(Collections::emptyList)
+                .stream()
+                .sorted(Comparator.comparing(RecipeStep::getStepOrder))
+                .map(step -> RecipeStepViewDto.builder()
+                        .stepOrder(step.getStepOrder())
+                        .content(step.getContent())
+                        .build())
+                .collect(Collectors.toList());
+
+        return RecipeViewDto.builder()
+                .id(recipe.getId())
+                .menuName(recipe.getMenuName())
+                .category(recipe.getCategory() != null ? recipe.getCategory().name() : null)
+                .visible(recipe.isVisible())
+                .temperature(recipe.getTemperature() != null ? recipe.getTemperature().name() : null)
+                .steps(stepDtos)
+                .build();
+    }
+
+    /** Enum 이름을 화면 표시용 한글 라벨로 변환 */
+    private String toCategoryLabel(String categoryEnumName) {
+        if (categoryEnumName == null) {
+            return "기타";
+        }
+
+        RecipeCategory category;
+        try {
+            category = RecipeCategory.valueOf(categoryEnumName);
+        } catch (IllegalArgumentException e) {
+            // Enum에 없는 값이면 그냥 원본 출력 or "기타"
+            return categoryEnumName;
+        }
+
+        // 실제 Enum에 맞게 라벨링 (예시는 이전에 쓰셨던 카테고리 기반)
+        switch (category) {
+            case HOT_COFFEE:
+                return "Hot 커피";
+            case ICE_COFFEE:
+                return "Ice 커피";
+            case HOT_LATTE:
+                return "Hot 라떼";
+            case ICE_LATTE:
+                return "Ice 라떼";
+            case ICE_NON_COFFEE:
+                return "Ice 논커피";
+            case HOT_NON_COFFEE:
+                return "Hot 논커피";
+            case LATTE_COLD_BREW:
+                return "라떼 콜드브루";
+            case SMOOTHIE_ADE:
+                return "스무디 · 에이드";
+            case JUICE:
+                return "주스";
+            case FRAPPE:
+                return "프라페";
+            default:
+                return category.name();
+        }
+    }
+
 }
