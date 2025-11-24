@@ -65,13 +65,74 @@
         padding: 0.75rem 0.75rem 0.25rem;
         background-color: #ffffff;
     }
+
+    /* =========================
+       템플릿 모달용 스타일
+       ========================= */
+    .template-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .template-card {
+        border-radius: 0.9rem;
+        border: 2px solid #dee2e6;
+        padding: 0.75rem 1rem;
+        background-color: #ffffff;
+        cursor: pointer;
+        transition: box-shadow 0.15s ease, border-color 0.15s ease, background-color 0.15s ease;
+    }
+
+    .template-card:hover {
+        box-shadow: 0 0.45rem 1rem rgba(0, 0, 0, 0.12);
+        border-color: #0d6efd;
+    }
+
+    .template-card.selected {
+        border-color: #0d6efd;
+        background-color: #e7f1ff;
+        box-shadow: 0 0.55rem 1.2rem rgba(13, 110, 253, 0.35);
+    }
+
+    .template-card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.35rem;
+    }
+
+    .template-title {
+        font-weight: 700;
+        font-size: 1rem;
+    }
+
+    .template-meta {
+        font-size: 0.8rem;
+        color: #6c757d;
+    }
+
+    .template-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.25rem;
+        margin-top: 0.25rem;
+    }
+
+    .template-tag {
+        border-radius: 999px;
+        padding: 0.1rem 0.5rem;
+        font-size: 0.75rem;
+        border: 1px solid #ced4da;
+        background-color: #f8f9fa;
+    }
 </style>
 
 <div class="container py-4">
     <div class="row justify-content-center">
         <div class="col-lg-8 col-md-10">
 
-            <!-- 제목 + 상단 목록 버튼 -->
+            <!-- 제목 + 상단 버튼들 (템플릿 불러오기 + 목록) -->
             <div class="mb-3 d-flex justify-content-between align-items-center">
                 <div>
                     <h3 class="mb-0 fw-bold">☕ 메뉴 레시피 작성</h3>
@@ -79,9 +140,19 @@
                         메뉴 이름, 작성자, HOT/ICE, 컵 사이즈, 카테고리, 레시피를 순서대로 입력해 주세요.
                     </div>
                 </div>
-                <a href="/cafe/recipes" class="btn btn-sm btn-outline-secondary">
-                    목록
-                </a>
+                <div class="d-flex gap-2">
+                    <!-- 템플릿 불러오기 버튼 (모달 팝업 오픈) -->
+                    <button type="button"
+                            class="btn btn-sm btn-outline-primary"
+                            data-bs-toggle="modal"
+                            data-bs-target="#templateModal">
+                        템플릿 불러오기
+                    </button>
+
+                    <a href="/cafe/recipes" class="btn btn-sm btn-outline-secondary">
+                        목록
+                    </a>
+                </div>
             </div>
 
             <!-- 레시피 작성 폼 -->
@@ -90,19 +161,31 @@
                 <!-- ✅ 기본 정보 영역 전체 라운드 박스 -->
                 <div class="form-wrapper">
 
-                    <!-- 메뉴 이름 + 노출 여부 체크박스 -->
+                    <!-- 메뉴 이름 + 노출 여부 체크박스 + 템플릿 등록 체크박스 -->
                     <div class="mb-3">
                         <div class="d-flex justify-content-between align-items-center mb-1">
                             <label for="menuName" class="form-label fw-semibold mb-0">메뉴 이름</label>
-                            <div class="form-check">
-                                <!-- ✅ 기본값: 비선택 -->
-                                <input class="form-check-input"
-                                       type="checkbox"
-                                       id="visible"
-                                       name="visible">
-                                <label class="form-check-label small" for="visible">
-                                    노출 여부
-                                </label>
+                            <div class="d-flex align-items-center gap-3">
+                                <!-- 노출 여부 -->
+                                <div class="form-check mb-0">
+                                    <input class="form-check-input"
+                                           type="checkbox"
+                                           id="visible"
+                                           name="visible">
+                                    <label class="form-check-label small" for="visible">
+                                        노출 여부
+                                    </label>
+                                </div>
+                                <!-- 템플릿 등록 -->
+                                <div class="form-check mb-0">
+                                    <input class="form-check-input"
+                                           type="checkbox"
+                                           id="template"
+                                           name="template">
+                                    <label class="form-check-label small" for="template">
+                                        템플릿 등록
+                                    </label>
+                                </div>
                             </div>
                         </div>
                         <input type="text"
@@ -179,7 +262,10 @@
                             <button type="button" class="category-chip" data-value="ICE_LATTE">Ice 라떼</button>
                             <button type="button" class="category-chip" data-value="ICE_NONCOFFEE">Ice 논커피</button>
                             <button type="button" class="category-chip" data-value="HOT_NONCOFFEE">Hot 논커피</button>
-                            <button type="button" class="category-chip" data-value="LATTE_COLDBREW">라떼 콜드브루</button>
+                            <button type="button" class="category-chip" data-value="HOT_COLD_BREW">HOT 콜드브루</button>
+                            <button type="button" class="category-chip" data-value="HOT_LATTE_COLD_BREW">HOT 콜드브루라떼</button>
+                            <button type="button" class="category-chip" data-value="ICE_COLD_BREW">ICE 콜드브루</button>
+                            <button type="button" class="category-chip" data-value="ICE_LATTE_COLD_BREW">ICE 콜드브루라떼</button>
                             <button type="button" class="category-chip" data-value="SMOOTHIE_ADE">스무디 에이드</button>
                             <button type="button" class="category-chip" data-value="JUICE">주스</button>
                             <button type="button" class="category-chip" data-value="FRAPPE">프라페</button>
@@ -225,6 +311,43 @@
     </div>
 </div>
 
+<!-- ✅ 템플릿 불러오기 모달 팝업 -->
+<div class="modal fade" id="templateModal" tabindex="-1" aria-labelledby="templateModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="templateModalLabel">템플릿 불러오기</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <div class="modal-body">
+                <div class="template-list" id="template-list">
+                    <!-- JS로 템플릿 카드들이 들어갑니다 -->
+                </div>
+                <div id="template-empty-text" class="text-muted small mt-2">
+                    {{^templateRecipes}}
+                        템플릿으로 등록된 레시피가 없습니다. (작성 화면에서 "템플릿 등록"에 체크하여 템플릿을 만들 수 있습니다.)
+                    {{/templateRecipes}}
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button"
+                        class="btn btn-outline-secondary"
+                        data-bs-dismiss="modal">
+                    취소
+                </button>
+                <button type="button"
+                        class="btn btn-primary"
+                        id="btn-apply-template"
+                        data-bs-dismiss="modal">
+                    적용
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
     (function () {
         /* =========================
@@ -235,7 +358,7 @@
 
         let stepIndex = 0;
 
-        function createStepElement(index) {
+        function createStepElement(index, content) {
             const wrapper = document.createElement('div');
             wrapper.className = 'card mb-2';
             wrapper.dataset.stepIndex = index;
@@ -255,7 +378,7 @@
                               name="steps"
                               rows="2"
                               placeholder="예) 에스프레소 샷 1잔을 추출한다."
-                              required></textarea>
+                              required>${content || ''}</textarea>
                 </div>
             `;
             return wrapper;
@@ -273,15 +396,9 @@
             stepIndex = stepCards.length;
         }
 
-        function addStep() {
-            const el = createStepElement(stepIndex);
-            stepsContainer.appendChild(el);
-            stepIndex++;
-
-            // 삭제 버튼 이벤트 연결
+        function bindRemoveEvent(el) {
             const removeBtn = el.querySelector('.btn-remove-step');
             removeBtn.addEventListener('click', function () {
-                // 최소 1개는 남도록 방어
                 const total = stepsContainer.querySelectorAll('.card').length;
                 if (total <= 1) {
                     alert('최소 1개 이상의 단계가 필요합니다.');
@@ -292,26 +409,35 @@
             });
         }
 
+        function addStep(content) {
+            const el = createStepElement(stepIndex, content);
+            stepsContainer.appendChild(el);
+            stepIndex++;
+            bindRemoveEvent(el);
+        }
+
+        function resetSteps() {
+            stepsContainer.innerHTML = '';
+            stepIndex = 0;
+        }
+
         // 초기 1개 Step 기본 생성
-        addStep();
+        addStep('');
 
         // + 단계 추가 버튼
         addStepBtn.addEventListener('click', function () {
-            addStep();
+            addStep('');
         });
 
         /* =========================
            HOT / ICE & 컵 사이즈 기본값 (강제 변경 제거)
            ========================= */
         const cup20 = document.getElementById('cup20');
-        // const cup24 = document.getElementById('cup24');
-        // const cup32 = document.getElementById('cup32');
+        const cup24 = document.getElementById('cup24');
+        const cup32 = document.getElementById('cup32');
         const tempHot = document.getElementById('tempHot');
         const tempIce = document.getElementById('tempIce');
 
-        // 필요 시 기본값만 설정 (이미 HTML에서 HOT + 20oz checked 상태)
-        // 여기서는 온도 변경 시 컵 사이즈를 강제로 바꾸지 않고,
-        // 사용자가 자유롭게 선택하도록 둡니다.
         function initDefault() {
             tempHot.checked = true;
             cup20.checked = true;
@@ -325,11 +451,22 @@
         const categoryGroup = document.getElementById('category-chip-group');
         const categoryChips = categoryGroup.querySelectorAll('.category-chip');
 
+        function selectCategoryByValue(value) {
+            categoryChips.forEach(c => c.classList.remove('selected'));
+            let matched = false;
+            categoryChips.forEach(chip => {
+                if (chip.dataset.value === value) {
+                    chip.classList.add('selected');
+                    categoryInput.value = value;
+                    matched = true;
+                }
+            });
+            return matched;
+        }
+
         categoryChips.forEach(chip => {
             chip.addEventListener('click', function () {
-                // 기존 선택 모두 해제
                 categoryChips.forEach(c => c.classList.remove('selected'));
-                // 현재 선택
                 chip.classList.add('selected');
                 categoryInput.value = chip.dataset.value;
             });
@@ -340,6 +477,146 @@
         if (firstChip) {
             firstChip.click();
         }
+
+        /* =========================
+           템플릿 데이터(JS 배열) 생성
+           컨트롤러에서 넘긴 templateRecipes(RecipeCreateRequestDto 리스트)를 기반으로 JS 배열 구성
+           ========================= */
+        const rawTemplateData = [
+            {{#templateRecipes}}
+                {
+                    id: {{id}},
+                    menuName: "{{menuName}}",
+                    author: "{{author}}",
+                    description: "{{description}}",
+                    temperature: "{{temperature}}",
+                    cupSize: "{{cupSize}}",
+                    category: "{{category}}",
+                visible: {{#visible}}true{{/visible}}{{^visible}}false{{/visible}},
+                template: {{#template}}true{{/template}}{{^template}}false{{/template}},
+                    steps: [
+                        {{#steps}}
+                            "{{.}}",
+                        {{/steps}}
+                    ]
+                },
+            {{/templateRecipes}}
+        ];
+
+        /* =========================
+           템플릿 목록 렌더링 & 선택 & 적용
+           ========================= */
+        const templateListEl = document.getElementById('template-list');
+        const templateEmptyTextEl = document.getElementById('template-empty-text');
+        const applyTemplateBtn = document.getElementById('btn-apply-template');
+
+        const menuNameInput = document.getElementById('menuName');
+        const authorInput = document.getElementById('author');
+        const descriptionInput = document.getElementById('description');
+        const visibleCheckbox = document.getElementById('visible');
+        const templateCheckbox = document.getElementById('template');
+
+        let selectedTemplateData = null;
+
+        function renderTemplateCards(templates) {
+            templateListEl.innerHTML = '';
+            selectedTemplateData = null;
+
+            if (!templates || templates.length === 0) {
+                // 아무 템플릿도 없으면 안내 문구만
+                if (templateEmptyTextEl) {
+                    templateEmptyTextEl.classList.remove('d-none');
+                }
+                return;
+            }
+
+            if (templateEmptyTextEl) {
+                templateEmptyTextEl.classList.add('d-none');
+            }
+
+            templates.forEach(tpl => {
+                const card = document.createElement('div');
+                card.className = 'template-card';
+                card.dataset.id = tpl.id;
+
+                card.innerHTML = `
+                    <div class="template-card-header">
+                        <div class="template-title">${tpl.menuName}</div>
+                        <div class="template-meta">
+                            ${tpl.author || '작성자 미입력'}
+                        </div>
+                    </div>
+                    <div class="template-meta">
+                        ${tpl.description || ''}
+                    </div>
+                    <div class="template-tags">
+                        <span class="template-tag">온도: ${tpl.temperature}</span>
+                        <span class="template-tag">컵: ${tpl.cupSize}</span>
+                        <span class="template-tag">카테고리: ${tpl.category}</span>
+                        ${tpl.visible ? '<span class="template-tag">노출</span>' : ''}
+                    </div>
+                `;
+
+                card.addEventListener('click', () => {
+                    templateListEl.querySelectorAll('.template-card')
+                            .forEach(c => c.classList.remove('selected'));
+                    card.classList.add('selected');
+                    selectedTemplateData = tpl;
+                });
+
+                templateListEl.appendChild(card);
+            });
+        }
+
+        // 페이지 로딩 시 바로 템플릿 카드 렌더링
+        renderTemplateCards(rawTemplateData);
+
+        // 적용 버튼 클릭 시 선택된 템플릿 데이터를 폼에 매핑
+        applyTemplateBtn?.addEventListener('click', () => {
+            if (!selectedTemplateData) {
+                return;
+            }
+
+            const tpl = selectedTemplateData;
+
+            // 기본 정보 채우기
+            menuNameInput.value = tpl.menuName || '';
+            authorInput.value = tpl.author || '';
+            descriptionInput.value = tpl.description || '';
+
+            // 노출/템플릿 체크박스
+            visibleCheckbox.checked = !!tpl.visible;
+            templateCheckbox.checked = !!tpl.template;
+
+            // 온도
+            if (tpl.temperature === 'ICE') {
+                tempIce.checked = true;
+            } else {
+                tempHot.checked = true;
+            }
+
+            // 컵 사이즈
+            if (tpl.cupSize === 'OZ24') {
+                cup24.checked = true;
+            } else if (tpl.cupSize === 'OZ32') {
+                cup32.checked = true;
+            } else {
+                cup20.checked = true;
+            }
+
+            // 카테고리
+            selectCategoryByValue(tpl.category);
+
+            // 스텝 입력값 설정
+            resetSteps();
+            if (tpl.steps && tpl.steps.length > 0) {
+                tpl.steps.forEach(stepText => {
+                    addStep(stepText);
+                });
+            } else {
+                addStep('');
+            }
+        });
     })();
 </script>
 

@@ -12,4 +12,6 @@ public interface RecipeRepository extends JpaRepository<Recipe, Long> {
     Recipe findById(long id);
 
     List<Recipe> findByVisibleTrueOrderByUpdatedAtDesc();
+
+    List<Recipe> findAllByTemplateTrueOrderByCategoryAscMenuNameAsc();
 }

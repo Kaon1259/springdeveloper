@@ -87,6 +87,7 @@ public class RecipeService {
         recipe.setAuthor(dto.getAuthor());
         recipe.setDescription(dto.getDescription());
         recipe.setVisible(dto.isVisible());
+        recipe.setTemplate(dto.isTemplate());
         recipe.setTemperature(dto.getTemperature());
         recipe.setCupSize(dto.getCupSize());
         recipe.setCategory(dto.getCategory());
@@ -127,6 +128,7 @@ public class RecipeService {
                 .menuName(recipe.getMenuName())
                 .category(recipe.getCategory() != null ? recipe.getCategory().name() : null)
                 .visible(recipe.isVisible())
+                .template(recipe.isTemplate())
                 .temperature(recipe.getTemperature() != null ? recipe.getTemperature().name() : null)
                 .steps(stepDtos)
                 .build();
@@ -160,8 +162,14 @@ public class RecipeService {
                 return "Ice 논커피";
             case HOT_NON_COFFEE:
                 return "Hot 논커피";
-            case LATTE_COLD_BREW:
-                return "라떼 콜드브루";
+            case HOT_COLD_BREW:
+                return "HOT 콜드브루";
+            case HOT_LATTE_COLD_BREW:
+                return "HOT 콜드브루라떼";
+            case ICE_COLD_BREW:
+                return "ICE 콜드브루";
+            case ICE_LATTE_COLD_BREW:
+                return "ICE 콜드브루라떼";
             case SMOOTHIE_ADE:
                 return "스무디 · 에이드";
             case JUICE:
@@ -205,11 +213,13 @@ public class RecipeService {
         return result;
     }
 
-    /**
-     * 편의 메서드: 4개씩 끊어서
-     */
     @Transactional(readOnly = true)
     public List<List<RecipeCreateRequestDto>> getVisibleRecipesByRowOf4() {
         return getVisibleRecipesChunked(4);
+    }
+
+    public List<RecipeCreateRequestDto> getTemplateRecipes() {
+        List<Recipe> recipes = recipeRepository.findAllByTemplateTrueOrderByCategoryAscMenuNameAsc();
+        return RecipeCreateRequestDto.toDto(recipes);
     }
 }

@@ -8,7 +8,10 @@ public enum RecipeCategory {
     ICE_LATTE("Ice 라떼"),
     ICE_NON_COFFEE("Ice 논커피"),
     HOT_NON_COFFEE("Hot 논커피"),
-    LATTE_COLD_BREW("라떼 콜드브루"),
+    HOT_COLD_BREW("Hot 콜드브루"),
+    HOT_LATTE_COLD_BREW("Hot 콜드브루라떼"),
+    ICE_COLD_BREW("Ice 콜드브루"),
+    ICE_LATTE_COLD_BREW("Ice 콜드브루라떼"),
     SMOOTHIE_ADE("스무디 에이드"),
     JUICE("주스"),
     FRAPPE("프라페");

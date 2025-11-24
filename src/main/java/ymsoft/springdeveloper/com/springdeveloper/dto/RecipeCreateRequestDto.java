@@ -25,6 +25,7 @@ public class RecipeCreateRequestDto {
     private String description;
 
     private boolean visible;
+    private boolean template;
 
     /**🔥 이제 Enum 타입으로 직접 받는다 */
     private Temperature temperature;        // HOT / ICE
@@ -43,6 +44,7 @@ public class RecipeCreateRequestDto {
                 .description(description)
                 .temperature(temperature)
                 .visible(Boolean.TRUE.equals(visible))
+                .template(Boolean.TRUE.equals(template))
                 .cupSize(cupSize)
                 .category(category)
                 .build();
@@ -76,6 +78,7 @@ public class RecipeCreateRequestDto {
                 .author(recipe.getAuthor())
                 .description(recipe.getDescription())
                 .visible(recipe.isVisible())
+                .template(recipe.isTemplate())
                 .temperature(recipe.getTemperature())
                 .cupSize(recipe.getCupSize())
                 .category(recipe.getCategory())

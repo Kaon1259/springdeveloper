@@ -17,6 +17,7 @@ public class RecipeViewDto {
     private String menuName;
 
     private boolean visible;
+    private boolean template;
 
     // Enum name 그대로 (HOT_COFFEE, ICE_COFFEE...)
     private String category;

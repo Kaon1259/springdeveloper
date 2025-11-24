@@ -52,7 +52,10 @@ public class CafeController {
 
 
     @GetMapping("/recipe/new")
-    public String showCreateForm() {
+    public String showCreateForm(Model model) {
+        List<RecipeCreateRequestDto>  templateRecipesDto = recipeService.getTemplateRecipes();
+        model.addAttribute("templateRecipes", templateRecipesDto);
+
         return "cafe/recipeNewForm";
     }
 

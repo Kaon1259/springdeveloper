@@ -47,7 +47,8 @@
 
     /* 레시피 pill 기본 */
     .recipe-pill {
-        display: inline-block;
+        display: inline-flex;
+        align-items: center;
         padding: 0.45rem 1rem;
         border-radius: 999px;
         font-weight: 600;
@@ -57,9 +58,26 @@
         background-color: #ffffff;
         transition: all 0.15s ease;
         font-size: 0.95rem;
+        position: relative;
     }
 
-    /* 외곽선 색 */
+    /* 별 아이콘 영역 */
+    .recipe-pill .star-icon {
+        font-size: 0.9rem;
+        margin-right: 0.15rem;
+        line-height: 1;
+        vertical-align: middle;
+    }
+
+    .recipe-pill .star-visible {
+        color: #0d6efd; /* 파란색 */
+    }
+
+    .recipe-pill .star-template {
+        color: #198754; /* 녹색 */
+    }
+
+    /* 외곽선 색 (온도별) */
     .recipe-pill[data-temp="HOT"] {
         border-color: #dc3545;
     }
@@ -67,7 +85,7 @@
         border-color: #0d6efd;
     }
 
-    /* 선택 시 배경 (요청: 유지) */
+    /* 선택 시 배경 (기존 유지) */
     .recipe-pill.selected[data-temp="HOT"] {
         background-color: #dc3545;
         color: #fff;
@@ -79,16 +97,17 @@
         border-color: #0a58ca;
     }
 
-    /* hover */
+    /* hover 효과 */
     .recipe-pill:hover {
         transform: translateY(-1px);
-        box-shadow: 0 0.25rem 0.6rem rgba(0,0,0,0.1);
+        box-shadow: 0 0.25rem 0.6rem rgba(0, 0, 0, 0.1);
     }
 
     /* visible blink */
     .recipe-pill.visible-blink {
         animation: visibleBlink 1.3s ease-in-out infinite;
     }
+
     @keyframes visibleBlink {
         0% { box-shadow: 0 0 0 0 rgba(13,110,253,0.5); transform: translateY(0); }
         50% { box-shadow: 0 0 0 6px rgba(13,110,253,0); transform: translateY(-1px); }
@@ -100,7 +119,7 @@
     /* -------------------------- */
 
     #recipeDetailModal .modal-dialog {
-        max-width: 1200px; /* 가로 더 넓게 */
+        max-width: 1200px;
         width: 95%;
     }
 
@@ -125,12 +144,10 @@
         font-size: 2rem !important;
     }
 
-    /* 본문 스텝 카드 스타일 (첫 번째 팝업 스타일) */
+    /* 팝업 내 스텝 카드 스타일 */
     #recipe-steps-content {
         padding-right: 0.5rem;
     }
-
-    .recipe-steps-wrapper {}
 
     .recipe-step {
         position: relative;
@@ -144,7 +161,6 @@
         font-size: 2.7rem; /* 1.5배 확대 */
         line-height: 1.45;
         cursor: pointer;
-
         transition: background-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
     }
 
@@ -216,6 +232,12 @@
                                 <div class="recipe-pill-wrapper" data-id="{{id}}" data-name="{{menuName}}">
                                     <span class="recipe-pill {{#visible}}visible-blink{{/visible}}"
                                           data-temp="{{temperature}}">
+                                        {{#visible}}
+                                            <span class="star-icon star-visible">★</span>
+                                        {{/visible}}
+                                        {{#template}}
+                                            <span class="star-icon star-template">★</span>
+                                        {{/template}}
                                         {{menuName}}
                                     </span>
 
@@ -295,7 +317,9 @@
         let selectedRecipeId = null;
 
         function clearSelection() {
-            tableBody.querySelectorAll(".recipe-pill").forEach(p => p.classList.remove("selected"));
+            tableBody
+                    .querySelectorAll(".recipe-pill")
+                    .forEach(p => p.classList.remove("selected"));
             selectedRecipeId = null;
             editBtn.disabled = true;
         }
@@ -303,18 +327,18 @@
         function selectRecipe(wrapper) {
             clearSelection();
             const pill = wrapper.querySelector(".recipe-pill");
+            if (!pill) return;
             pill.classList.add("selected");
             selectedRecipeId = wrapper.dataset.id;
             editBtn.disabled = false;
         }
 
-        /* 팝업 내부 스텝 클릭: 선택 상태 */
+        /* 팝업 내부 스텝 클릭: 선택 상태 토글 */
         function attachStepClickHandlers() {
             const container = document.getElementById("recipe-steps-content");
             if (!container) return;
 
             const steps = container.querySelectorAll(".recipe-step");
-
             steps.forEach(step => {
                 step.addEventListener("click", () => {
                     steps.forEach(s => s.classList.remove("step-selected"));
@@ -325,14 +349,16 @@
 
         pillWrappers.forEach(wrapper => {
             const pill = wrapper.querySelector(".recipe-pill");
+            if (!pill) return;
 
             /* 클릭 = 선택 */
             pill.addEventListener("click", e => {
                 e.stopPropagation();
-                if (selectedRecipeId === wrapper.dataset.id)
+                if (selectedRecipeId === wrapper.dataset.id) {
                     clearSelection();
-                else
+                } else {
                     selectRecipe(wrapper);
+                }
             });
 
             /* 더블클릭 = 팝업 오픈 */
@@ -346,8 +372,6 @@
                 const stepsHtml = document.getElementById("recipe-steps-" + id)?.innerHTML;
 
                 document.getElementById("recipeDetailModalLabel").innerText = name;
-
-
                 document.getElementById("recipe-steps-content").innerHTML =
                         stepsHtml ? stepsHtml : "<p>스텝 없음</p>";
 
@@ -358,15 +382,18 @@
             });
         });
 
-        /* 수정 버튼 */
+        /* 상단 수정 버튼 */
         editBtn.addEventListener("click", () => {
-            if (selectedRecipeId)
+            if (selectedRecipeId) {
                 location.href = "/cafe/recipe/" + selectedRecipeId + "/edit";
+            }
         });
 
+        /* 팝업 하단 '이 레시피 수정하기' 버튼 */
         modalEditBtn.addEventListener("click", () => {
-            if (selectedRecipeId)
+            if (selectedRecipeId) {
                 location.href = "/cafe/recipe/" + selectedRecipeId + "/edit";
+            }
         });
     })();
 </script>
