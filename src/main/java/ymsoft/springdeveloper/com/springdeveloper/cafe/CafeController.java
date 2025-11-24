@@ -24,16 +24,11 @@ public class CafeController {
     @GetMapping("")
     public String cafe(Model model) {
 
-        List<MenuDto> menuList = List.of(
-                MenuDto.builder().id(1L).name("아메리카노").category("커피").hotOrIced("HOT/ICED").isSignature(true).build(),
-                MenuDto.builder().id(2L).name("카페라떼").category("커피").hotOrIced("HOT/ICED").isSignature(false).build(),
-                MenuDto.builder().id(3L).name("바닐라라떼").category("커피").hotOrIced("ICED").isSignature(true).build(),
-                MenuDto.builder().id(4L).name("딸기스무디").category("스무디").hotOrIced("ICED").isSignature(false).build(),
-                MenuDto.builder().id(5L).name("카페라떼").category("커피").hotOrIced("ICED").isSignature(true).build(),
-                MenuDto.builder().id(6L).name("캐라멜마키아또").category("커피").hotOrIced("ICED").isSignature(false).build()
-        );
+        // visible == true 레시피를 4개씩 끊어서 가져오기
+        List<RecipeCreateRequestDto> recipes = recipeService.getVisibleRecipes();
 
-        model.addAttribute("menuList", menuList);
+        model.addAttribute("recipeRows", recipes);
+
         return "cafe/cafeRecipeSelector";
 
     }

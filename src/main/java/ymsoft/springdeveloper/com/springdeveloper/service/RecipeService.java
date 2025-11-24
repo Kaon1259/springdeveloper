@@ -1,6 +1,7 @@
 package ymsoft.springdeveloper.com.springdeveloper.service;
 
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
+//import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import ymsoft.springdeveloper.com.springdeveloper.dto.RecipeCreateRequestDto;
@@ -172,4 +173,43 @@ public class RecipeService {
         }
     }
 
+    /**
+     * visible == true 인 레시피 전체 조회 (DTO 리스트)
+     */
+    @Transactional(readOnly = true)
+    public List<RecipeCreateRequestDto> getVisibleRecipes() {
+        List<Recipe> recipes = recipeRepository.findByVisibleTrueOrderByUpdatedAtDesc();
+        return RecipeCreateRequestDto.toDto(recipes);
+    }
+
+    /**
+     * Mustache에서 한 행당 4개씩 카드 보여주기 편하도록
+     * 4개씩 끊어서 2차원 리스트로 리턴
+     *
+     * ex) [ [레시피1,2,3,4], [레시피5,6,7,8], ... ]
+     */
+    @Transactional(readOnly = true)
+    public List<List<RecipeCreateRequestDto>> getVisibleRecipesChunked(int chunkSize) {
+        List<RecipeCreateRequestDto> all = getVisibleRecipes();
+        List<List<RecipeCreateRequestDto>> result = new ArrayList<>();
+
+        if (all == null || all.isEmpty()) {
+            return result;
+        }
+
+        for (int i = 0; i < all.size(); i += chunkSize) {
+            int toIndex = Math.min(i + chunkSize, all.size());
+            result.add(all.subList(i, toIndex));
+        }
+
+        return result;
+    }
+
+    /**
+     * 편의 메서드: 4개씩 끊어서
+     */
+    @Transactional(readOnly = true)
+    public List<List<RecipeCreateRequestDto>> getVisibleRecipesByRowOf4() {
+        return getVisibleRecipesChunked(4);
+    }
 }

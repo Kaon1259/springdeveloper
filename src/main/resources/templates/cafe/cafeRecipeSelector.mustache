@@ -22,6 +22,11 @@
         height: 100%;
         display: flex;
         flex-direction: column;
+        border-radius: 1rem;
+
+        position: relative;   /* 접힌 코너용 */
+        overflow: hidden;     /* 코너가 카드 밖으로 나가지 않도록 */
+        background-color: #ffffff;
     }
 
     .menu-card:hover {
@@ -32,6 +37,27 @@
     .menu-card.selected {
         border-color: #0d6efd;
         box-shadow: 0 0.4rem 1rem rgba(13, 110, 253, 0.25);
+    }
+
+    /* === 큰 카드의 접힌 모서리 (좌측 상단) === */
+    .menu-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 56px;    /* 접힌 코너 크기 */
+        height: 56px;
+        clip-path: polygon(0 0, 100% 0, 0 100%); /* 삼각형 */
+        background-color: transparent;          /* 기본은 투명, 아래에서 색 지정 */
+        z-index: 0;
+    }
+
+    .menu-card[data-recipe-temp="HOT"]::before {
+        background-color: #dc3545; /* 빨간색 */
+    }
+
+    .menu-card[data-recipe-temp="ICE"]::before {
+        background-color: #0d6efd; /* 파란색 */
     }
 
     .menu-name {
@@ -61,17 +87,17 @@
         font-size: 0.85rem;
     }
 
-    /* ===== 메뉴 카드 그리드 (3 x 2, 화면 꽉 채우기) ===== */
+    /* ===== 레시피 카드 그리드 (4열) ===== */
     .menu-grid-wrapper {
-        height: calc(100vh - 210px);     /* 상단바/여백 고려값, 필요 시 미세조정 */
+        height: calc(100vh - 210px);     /* 상단바/여백 고려값 */
         max-height: calc(100vh - 210px);
-        overflow-y: auto;                /* 6개 초과 시에만 스크롤 */
+        overflow-y: auto;
     }
 
     .menu-grid {
         display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));   /* 항상 3열 */
-        grid-auto-rows: 1fr;                               /* 행 높이 균등 분배 */
+        grid-template-columns: repeat(4, minmax(0, 1fr));   /* 4열 */
+        grid-auto-rows: 1fr;
         grid-auto-flow: row;
         gap: 1rem;
         height: 100%;
@@ -83,6 +109,82 @@
 
     .menu-grid-item .menu-card {
         width: 100%;
+    }
+
+    /* 카드 안 내용이 접힌 코너 위에 오도록 */
+    .menu-card .card-body {
+        position: relative;
+        z-index: 1;
+    }
+
+    /* ===== HOT / ICE 배지 (라운드렉트 + 접힌 코너 + 이모지) ===== */
+    .temp-badge {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.4rem 1rem;
+        padding-left: 1.4rem;      /* 접힌 코너 영역만큼 살짝 여유 */
+        border-radius: 999px;
+        background-color: #ffffff;
+        border: 3px solid;
+        font-size: 1.3rem;         /* 좀 더 크게 */
+        font-weight: 800;          /* 굵게 */
+        gap: 0.25rem;
+        line-height: 1;
+        overflow: hidden;          /* 접힌 코너가 튀어나오지 않도록 */
+    }
+
+    /* 배지 접힌 코너(좌측 상단) */
+    .temp-badge::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 24px;
+        height: 24px;
+        clip-path: polygon(0 0, 100% 0, 0 100%);  /* 삼각형 모양 */
+    }
+
+    .temp-HOT {
+        border-color: #dc3545;
+        color: #dc3545;
+    }
+
+    .temp-ICE {
+        border-color: #0d6efd;
+        color: #0d6efd;
+    }
+
+    .temp-HOT::before {
+        background-color: #dc3545;      /* 접힌 코너 빨간색 */
+    }
+
+    .temp-ICE::before {
+        background-color: #0d6efd;      /* 접힌 코너 파란색 */
+    }
+
+    /* 이모지: 텍스트 오른쪽에 붙임 */
+    .temp-HOT::after {
+        content: "🔥";
+        margin-left: 0.3rem;
+        font-size: 1.4rem;
+    }
+
+    .temp-ICE::after {
+        content: "❄";
+        margin-left: 0.3rem;
+        font-size: 1.4rem;
+    }
+
+    /* OZ (컵 사이즈) 배지: 더 크고 굵게 */
+    .cup-badge {
+        font-size: 1.3rem;          /* 크게 */
+        font-weight: 800;           /* 굵게 */
+        padding: 0.2rem 0.8rem;
+        border-radius: 999px;
+        background-color: #f8f9fa;
+        border: 2px solid #adb5bd;
     }
 
     /* ===== 레시피 팝업(모달) ===== */
@@ -111,9 +213,9 @@
         background-color: #ffffff;
         border-radius: 0.75rem;
 
-        /* 팝업 가로 크기 더 크게 */
-        max-width: 1040px;
-        width: 100%;
+        /* 팝업 가로 크기 더 크게 (약 1.5배) */
+        max-width: 1280px;
+        width: 95%;
 
         /* 화면 상하 초과 방지 */
         max-height: 85vh;
@@ -136,7 +238,7 @@
     }
 
     .recipe-modal-title {
-        font-size: 1.6rem;
+        font-size: 2rem;   /* 제목 약간 더 크게 */
         font-weight: 700;
         margin: 0;
     }
@@ -147,18 +249,21 @@
         padding-right: 0.5rem;
     }
 
-    /* 계단(스텝) 스타일 + 글씨 크게 (기존 대비 약 2배) */
+    /* 계단(스텝) 스타일 + 글씨 좀 더 크게, 위아래 간격 더 넓게 */
     .recipe-step {
         position: relative;
         background-color: #ffffff;
         border-radius: 0.5rem;
-        padding: 0.9rem 1.1rem;
-        margin-bottom: 0.8rem;
+        padding: 1.3rem 1.5rem;   /* 상하 패딩 더 증가 */
+        margin-bottom: 1.8rem;    /* 스텝 간 간격 넓게 */
         box-shadow: 0 0.35rem 0.8rem rgba(0, 0, 0, 0.08);
         border-left: 6px solid #0d6efd;
 
-        font-size: 1.8rem;
-        line-height: 1.45;
+        font-size: 2.2rem;        /* 팝업 글씨 조금 더 크게 */
+        line-height: 1.6;
+
+        cursor: pointer;
+        transition: background-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
     }
 
     .step-index {
@@ -169,6 +274,13 @@
     .step-text {
         display: inline-block;
         vertical-align: middle;
+    }
+
+    /* 선택된 스텝 (파란색 배경) */
+    .recipe-step.step-selected {
+        background-color: #0d6efd;
+        color: #ffffff;
+        box-shadow: 0 0.35rem 0.9rem rgba(13, 110, 253, 0.45);
     }
 
     .btn-close {
@@ -185,39 +297,41 @@
     <div class="top-status-bar d-flex flex-wrap align-items-center justify-content-between mb-3">
         <div class="d-flex flex-column flex-sm-row flex-wrap align-items-sm-center gap-2">
             <div class="fw-bold">
-                주요 메뉴를 선택하세요
+                주요 레시피를 선택하세요
                 <span class="text-muted ms-1">(한 번에 하나만 선택)</span>
             </div>
             <div class="d-flex align-items-center gap-2">
                 <span class="badge bg-primary card-count-badge">
-                    선택한 메뉴
+                    선택한 레시피
                     <span id="selected-count" class="fw-bold ms-1">0</span> / 1
                 </span>
             </div>
         </div>
     </div>
 
-    <!-- 선택한 메뉴 리스트(칩) -->
+    <!-- 선택한 메뉴(레시피) 리스트(칩) -->
     <div class="mb-3">
-        <div class="small text-muted mb-1">현재 선택한 메뉴</div>
+        <div class="small text-muted mb-1">현재 선택한 레시피</div>
         <div id="selected-menu-chips" class="d-flex flex-wrap gap-1">
             <!-- JS로 chip 추가 -->
         </div>
     </div>
 
-    <!-- 메뉴 카드 그리드 (3 x 2, 화면 꽉 채우기) -->
+    <!-- 레시피 카드 그리드 (4열) -->
     <div class="menu-grid-wrapper mb-4">
         <div class="menu-grid">
-            {{#menuList}}
+            {{#recipeRows}}
                 <div class="menu-grid-item">
                     <div class="card menu-card"
-                         data-menu-id="{{id}}"
-                         data-menu-name="{{name}}">
+                         data-recipe-id="{{id}}"
+                         data-recipe-name="{{menuName}}"
+                         data-recipe-temp="{{temperature}}">
                         <div class="card-body d-flex flex-column justify-content-center align-items-center">
                             <!-- 가운데 크게 메뉴 이름 -->
                             <div class="menu-name mb-2">
-                                {{name}}
+                                {{menuName}}
                             </div>
+
                             <!-- 아래에 카테고리 / 태그들 -->
                             <div class="d-flex flex-column align-items-center gap-2">
                                 {{#category}}
@@ -225,33 +339,43 @@
                                         {{category}}
                                     </span>
                                 {{/category}}
-                                <div class="d-flex justify-content-center align-items-center gap-2">
-                                    {{#isSignature}}
-                                        <span class="badge text-bg-warning">시그니처</span>
-                                    {{/isSignature}}
-                                    {{^isSignature}}
-                                        <span class="badge text-bg-secondary">일반</span>
-                                    {{/isSignature}}
 
-                                    {{#hotOrIced}}
-                                        <span class="menu-tag bg-light text-muted">
-                                            {{hotOrIced}}
+                                <div class="d-flex justify-content-center align-items-center gap-2">
+                                    {{#temperature}}
+                                        <span class="temp-badge temp-{{temperature}}">
+                                            {{temperature}}
                                         </span>
-                                    {{/hotOrIced}}
+                                    {{/temperature}}
+
+                                    {{#cupSize}}
+                                        <span class="cup-badge">
+                                            {{cupSize}}
+                                        </span>
+                                    {{/cupSize}}
                                 </div>
+                            </div>
+
+                            <!-- 숨겨진 레시피 스텝 (모달용) -->
+                            <div class="d-none recipe-steps" id="recipe-steps-{{id}}">
+                                {{#steps}}
+                                    <div class="recipe-step-text">{{.}}</div>
+                                {{/steps}}
+                                {{^steps}}
+                                    <div class="recipe-step-text text-muted">등록된 스텝이 없습니다.</div>
+                                {{/steps}}
                             </div>
                         </div>
                     </div>
                 </div>
-            {{/menuList}}
+            {{/recipeRows}}
 
-            {{^menuList}}
+            {{^recipeRows}}
                 <div class="menu-grid-item">
                     <div class="alert alert-warning mb-0 w-100">
-                        표시할 메뉴가 없습니다. 서버에서 <code>menuList</code> 데이터를 주입해 주세요.
+                        표시할 레시피가 없습니다. <code>visible == true</code> 인 레시피를 등록해 주세요.
                     </div>
                 </div>
-            {{/menuList}}
+            {{/recipeRows}}
         </div>
     </div>
 </div>
@@ -266,7 +390,7 @@
         </div>
         <div class="recipe-modal-body" id="recipe-modal-body">
             <p class="text-muted small mb-0">
-                선택한 메뉴의 레시피가 여기 계단형으로 표시됩니다.
+                선택한 레시피의 스텝이 여기 계단형으로 표시됩니다.
             </p>
         </div>
     </div>
@@ -310,36 +434,59 @@
             updateSelectedCount();
         }
 
-        function openRecipeModal(menu) {
-            // 실제 구현 시 여기서 menu.id 로 레시피 데이터 조회
-            recipeModalTitle.textContent = menu.name + ' 레시피';
-
+        function buildStepsFromCard(recipeId) {
+            const container = document.getElementById('recipe-steps-' + recipeId);
             recipeModalBody.innerHTML = '';
 
-            // TODO: 실제 레시피 리스트로 교체 (예: menu.recipes)
-            const dummySteps = [
-                '에스프레소 샷 1잔을 추출한다.',
-                '얼음을 컵의 80% 정도 채운다.',
-                '시럽/소스를 기준량 만큼 넣는다.',
-                '우유 또는 물을 기준선까지 채운다.',
-                '뚜껑을 닫고 가볍게 흔든 뒤 서빙한다.'
-            ];
+            if (!container) {
+                recipeModalBody.innerHTML =
+                        '<p class="text-muted small mb-0">등록된 스텝이 없습니다.</p>';
+                return;
+            }
 
-            dummySteps.forEach((step, i) => {
+            const stepTexts = container.querySelectorAll('.recipe-step-text');
+
+            if (stepTexts.length === 0) {
+                recipeModalBody.innerHTML =
+                        '<p class="text-muted small mb-0">등록된 스텝이 없습니다.</p>';
+                return;
+            }
+
+            stepTexts.forEach((stepNode, index) => {
+                const text = stepNode.textContent.trim();
                 const div = document.createElement('div');
                 div.className = 'recipe-step';
 
                 // 계단 형태: 단계가 내려갈수록 오른쪽으로 이동
-                const offset = i * 24; // px
+                const offset = index * 24; // px
                 div.style.marginLeft = offset + 'px';
 
                 div.innerHTML =
-                        '<span class="step-index">Step ' + (i + 1) + '.</span>' +
-                        '<span class="step-text">' + step + '</span>';
+                        '<span class="step-index">Step ' + (index + 1) + '.</span>' +
+                        '<span class="step-text">' + (text || '내용 없음') + '</span>';
 
                 recipeModalBody.appendChild(div);
             });
 
+            // 스텝 DOM 생성 후: 첫 번째 스텝 자동 선택 + 클릭 핸들러 부착
+            const stepDivs = recipeModalBody.querySelectorAll('.recipe-step');
+            if (!stepDivs.length) return;
+
+            // 첫 번째 스텝 자동 선택
+            stepDivs[0].classList.add('step-selected');
+
+            // 클릭 시 선택 토글 (하나만 선택)
+            stepDivs.forEach(step => {
+                step.addEventListener('click', () => {
+                    stepDivs.forEach(s => s.classList.remove('step-selected'));
+                    step.classList.add('step-selected');
+                });
+            });
+        }
+
+        function openRecipeModal(menu) {
+            recipeModalTitle.textContent = menu.name + ' 레시피';
+            buildStepsFromCard(menu.id);
             recipeModal.classList.add('show');
         }
 
@@ -349,8 +496,8 @@
 
         cards.forEach(card => {
             card.addEventListener('click', () => {
-                const id = card.dataset.menuId;
-                const name = card.dataset.menuName;
+                const id = card.dataset.recipeId;
+                const name = card.dataset.recipeName;
 
                 // 같은 카드 다시 클릭하면 선택 해제 + 모달 닫기
                 if (currentSelectedCard === card) {
