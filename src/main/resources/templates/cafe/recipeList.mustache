@@ -29,7 +29,6 @@
         border-top-right-radius: 1rem;
     }
 
-    /* 카테고리 영역 */
     .category-cell {
         background-color: #e7f5ff;
     }
@@ -45,11 +44,11 @@
         font-weight: 600;
     }
 
-    /* 레시피 pill 기본 */
+    /* 레시피 pill */
     .recipe-pill {
         display: inline-flex;
         align-items: center;
-        padding: 0.45rem 1rem;
+        padding: 0.45rem 2.1rem 0.45rem 1rem;
         border-radius: 999px;
         font-weight: 600;
         cursor: pointer;
@@ -61,23 +60,70 @@
         position: relative;
     }
 
-    /* 별 아이콘 영역 */
-    .recipe-pill .star-icon {
-        font-size: 0.9rem;
-        margin-right: 0.15rem;
+    .menu-name-text {
+        margin-right: 0.35rem;
+    }
+
+    /* 선택 시 연필 아이콘 */
+    .pill-edit-icon {
+        position: absolute;
+        right: 0.55rem;
+        top: 50%;
+        transform: translateY(-50%);
+        display: none;
+        font-size: 1.3rem;         /* 조금 더 크게 */
+        cursor: pointer;
         line-height: 1;
-        vertical-align: middle;
+        color: #ffffff;            /* 잘 보이게 흰색 */
+        background-color: rgba(0, 0, 0, 0.45);
+        padding: 0.05rem 0.4rem;
+        border-radius: 999px;
     }
 
-    .recipe-pill .star-visible {
-        color: #0d6efd; /* 파란색 */
+    .recipe-pill.selected .pill-edit-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
     }
 
-    .recipe-pill .star-template {
-        color: #198754; /* 녹색 */
+    /* 상태 표시 원 (visible/template 공통) */
+    .star-icon {
+        margin-right: 0.35rem;
+        width: 1.4rem;
+        height: 1.4rem;
+        border-radius: 999px;
+        border: 2px solid transparent;
+        background-color: transparent;
+        box-sizing: border-box;
+        font-size: 0;   /* 안쪽 별 문자 제거 */
     }
 
-    /* 외곽선 색 (온도별) */
+    /* visible == true : 주황색 원(테두리와 동일 색으로 채움) */
+    .star-visible {
+        background-color: #fd7e14;
+        border-color: #fd7e14;
+        animation: starBorderBlinkOrange 1.2s ease-in-out infinite;
+    }
+
+    /* template == true : 녹색 원(테두리와 동일 색으로 채움) */
+    .star-template {
+        background-color: #198754;
+        border-color: #198754;
+        animation: starBorderBlinkGreen 1.2s ease-in-out infinite;
+    }
+
+    @keyframes starBorderBlinkOrange {
+        0%   { box-shadow: 0 0 0 0 rgba(253,126,20,0.7); }
+        50%  { box-shadow: 0 0 0 6px rgba(253,126,20,0); }
+        100% { box-shadow: 0 0 0 0 rgba(253,126,20,0); }
+    }
+
+    @keyframes starBorderBlinkGreen {
+        0%   { box-shadow: 0 0 0 0 rgba(25,135,84,0.7); }
+        50%  { box-shadow: 0 0 0 6px rgba(25,135,84,0); }
+        100% { box-shadow: 0 0 0 0 rgba(25,135,84,0); }
+    }
+
     .recipe-pill[data-temp="HOT"] {
         border-color: #dc3545;
     }
@@ -85,7 +131,6 @@
         border-color: #0d6efd;
     }
 
-    /* 선택 시 배경 (기존 유지) */
     .recipe-pill.selected[data-temp="HOT"] {
         background-color: #dc3545;
         color: #fff;
@@ -97,27 +142,23 @@
         border-color: #0a58ca;
     }
 
-    /* hover 효과 */
     .recipe-pill:hover {
         transform: translateY(-1px);
         box-shadow: 0 0.25rem 0.6rem rgba(0, 0, 0, 0.1);
     }
 
-    /* visible blink */
+    /* visible == true 인 pill 자체 깜빡임 (이동 없음) */
     .recipe-pill.visible-blink {
         animation: visibleBlink 1.3s ease-in-out infinite;
     }
 
     @keyframes visibleBlink {
-        0% { box-shadow: 0 0 0 0 rgba(13,110,253,0.5); transform: translateY(0); }
-        50% { box-shadow: 0 0 0 6px rgba(13,110,253,0); transform: translateY(-1px); }
-        100% { box-shadow: 0 0 0 0 rgba(13,110,253,0); transform: translateY(0); }
+        0%   { box-shadow: 0 0 0 0 rgba(13,110,253,0.5); }
+        50%  { box-shadow: 0 0 0 6px rgba(13,110,253,0); }
+        100% { box-shadow: 0 0 0 0 rgba(13,110,253,0); }
     }
 
-    /* -------------------------- */
-    /* 팝업 전체 확대 + 1.5배 스타일 */
-    /* -------------------------- */
-
+    /* 팝업 기본 스타일 */
     #recipeDetailModal .modal-dialog {
         max-width: 1200px;
         width: 95%;
@@ -144,11 +185,11 @@
         font-size: 2rem !important;
     }
 
-    /* 팝업 내 스텝 카드 스타일 */
     #recipe-steps-content {
         padding-right: 0.5rem;
     }
 
+    /* 팝업 내 스텝 카드 (계단 형태 + 선택 스타일) */
     .recipe-step {
         position: relative;
         background-color: #ffffff;
@@ -158,7 +199,7 @@
         box-shadow: 0 0.35rem 0.8rem rgba(0, 0, 0, 0.08);
         border-left: 6px solid #0d6efd;
 
-        font-size: 2.7rem; /* 1.5배 확대 */
+        font-size: 2.7rem;
         line-height: 1.45;
         cursor: pointer;
         transition: background-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
@@ -174,13 +215,13 @@
         vertical-align: middle;
     }
 
-    /* 계단 효과 */
-    .recipe-step:nth-child(2) { margin-left: 18px; }
-    .recipe-step:nth-child(3) { margin-left: 36px; }
-    .recipe-step:nth-child(4) { margin-left: 54px; }
-    .recipe-step:nth-child(5) { margin-left: 72px; }
-    .recipe-step:nth-child(6) { margin-left: 90px; }
-    .recipe-step:nth-child(7) { margin-left: 108px; }
+    /* 🔹 계단 효과 (팝업 안에서만) */
+    #recipe-steps-content .recipe-step:nth-child(2) { margin-left: 18px; }
+    #recipe-steps-content .recipe-step:nth-child(3) { margin-left: 36px; }
+    #recipe-steps-content .recipe-step:nth-child(4) { margin-left: 54px; }
+    #recipe-steps-content .recipe-step:nth-child(5) { margin-left: 72px; }
+    #recipe-steps-content .recipe-step:nth-child(6) { margin-left: 90px; }
+    #recipe-steps-content .recipe-step:nth-child(7) { margin-left: 108px; }
 
     .recipe-step.step-selected {
         background-color: #0d6efd;
@@ -233,12 +274,13 @@
                                     <span class="recipe-pill {{#visible}}visible-blink{{/visible}}"
                                           data-temp="{{temperature}}">
                                         {{#visible}}
-                                            <span class="star-icon star-visible">★</span>
+                                            <span class="star-icon star-visible"></span>
                                         {{/visible}}
                                         {{#template}}
-                                            <span class="star-icon star-template">★</span>
+                                            <span class="star-icon star-template"></span>
                                         {{/template}}
-                                        {{menuName}}
+                                        <span class="menu-name-text">{{menuName}}</span>
+                                        <span class="pill-edit-icon" title="레시피 수정하기">✎</span>
                                     </span>
 
                                     <div class="d-none recipe-steps" id="recipe-steps-{{id}}">
@@ -333,7 +375,6 @@
             editBtn.disabled = false;
         }
 
-        /* 팝업 내부 스텝 클릭: 선택 상태 토글 */
         function attachStepClickHandlers() {
             const container = document.getElementById("recipe-steps-content");
             if (!container) return;
@@ -351,7 +392,9 @@
             const pill = wrapper.querySelector(".recipe-pill");
             if (!pill) return;
 
-            /* 클릭 = 선택 */
+            const inlineEditIcon = wrapper.querySelector(".pill-edit-icon");
+
+            /* pill 클릭 = 선택 토글 */
             pill.addEventListener("click", e => {
                 e.stopPropagation();
                 if (selectedRecipeId === wrapper.dataset.id) {
@@ -360,6 +403,17 @@
                     selectRecipe(wrapper);
                 }
             });
+
+            /* 인라인 연필 아이콘 클릭 = 수정 페이지 이동 */
+            if (inlineEditIcon) {
+                inlineEditIcon.addEventListener("click", e => {
+                    e.stopPropagation();
+                    const id = wrapper.dataset.id;
+                    if (id) {
+                        location.href = "/cafe/recipe/" + id + "/edit";
+                    }
+                });
+            }
 
             /* 더블클릭 = 팝업 오픈 */
             pill.addEventListener("dblclick", e => {
@@ -379,6 +433,18 @@
                 modal.show();
 
                 attachStepClickHandlers();
+
+                /* 팝업 열릴 때 1 스텝 자동 선택 */
+                setTimeout(() => {
+                    const firstStep = document.querySelector("#recipe-steps-content .recipe-step");
+                    if (firstStep) {
+                        // 기존 선택 제거 후 1스텝만 선택
+                        document
+                                .querySelectorAll("#recipe-steps-content .recipe-step")
+                                .forEach(s => s.classList.remove("step-selected"));
+                        firstStep.classList.add("step-selected");
+                    }
+                }, 50);
             });
         });
 

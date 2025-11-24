@@ -11,8 +11,7 @@
         z-index: 20;
         background-color: #ffffff;
         border-bottom: 1px solid #dee2e6;
-        padding: 0.9rem 1.5rem;   /* 조금 더 넓게 */
-        min-height: 64px;         /* 행 높이 확보 (마이크 안 잘리도록) */
+        padding: 0.75rem 1rem;
     }
 
     .menu-card {
@@ -25,7 +24,7 @@
         flex-direction: column;
         border-radius: 1rem;
 
-        position: relative;   /* 접힌 코너용 */
+        position: relative;   /* 접힌 코너 + 마이크 버튼용 */
         overflow: hidden;     /* 코너가 카드 밖으로 나가지 않도록 */
         background-color: #ffffff;
     }
@@ -314,56 +313,36 @@
         transform: scale(1.05);
     }
 
-    /* 🎙 상단 공용 음성 인식 버튼 */
-    .top-mic-btn {
-        border-radius: 999px;
-        border: 2px solid rgba(15,23,42,0.4);
-        background-color: #ffffff;
-        width: 50px;     /* 조금 더 크게 */
-        height: 50px;
-        display: inline-flex;
+    /* 🎙 카드 우측 상단 마이크 버튼 */
+    .card-mic-btn {
+        position: absolute;
+        top: 6px;
+        right: 6px;
+        z-index: 2;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        border: 1px solid rgba(0,0,0,0.15);
+        background-color: rgba(255,255,255,0.9);
+        display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 2rem; /* 아이콘 크게 */
+        font-size: 1.3rem;
         cursor: pointer;
-        margin-left: 0.75rem;
-        box-shadow: 0 3px 10px rgba(15,23,42,0.25);
-        transition: background-color 0.12s ease, transform 0.08s ease,
-        box-shadow 0.12s ease, border-color 0.12s ease;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+        transition: background-color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease, border-color 0.12s ease;
     }
 
-    .top-mic-btn:hover {
+    .card-mic-btn:hover {
         transform: translateY(-1px);
-        box-shadow: 0 5px 14px rgba(15,23,42,0.35);
+        box-shadow: 0 3px 8px rgba(0,0,0,0.16);
     }
 
-    .top-mic-btn.listening {
+    .card-mic-btn.listening {
         background-color: #0d6efd;
         color: #ffffff;
         border-color: #0a58ca;
-        box-shadow: 0 0 0 4px rgba(13,110,253,0.45);
-        transform: translateY(0);
-    }
-
-    /* 레시피 없음 팝업 */
-    .no-recipe-popup {
-        position: fixed;
-        z-index: 2000;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        background: #ffffff;
-        border-radius: 0.75rem;
-        padding: 0.75rem 1.5rem;
-        box-shadow: 0 0.75rem 1.5rem rgba(0,0,0,0.25);
-        border: 1px solid #dee2e6;
-        font-size: 1rem;
-        font-weight: 600;
-        color: #343a40;
-        display: none;
-    }
-    .no-recipe-popup.show {
-        display: block;
+        box-shadow: 0 0 0 3px rgba(13,110,253,0.35);
     }
 </style>
 
@@ -372,19 +351,11 @@
     <!-- 상단 선택 상태 바 -->
     <div class="top-status-bar d-flex flex-wrap align-items-center justify-content-between mb-3">
         <div class="d-flex flex-column flex-sm-row flex-wrap align-items-sm-center gap-2">
-            <div class="fw-bold d-flex align-items-center">
-                <span>주요 레시피를 선택하세요</span>
+            <div class="fw-bold">
+                주요 레시피를 선택하세요
                 <span class="text-muted ms-1">(한 번에 하나만 선택)</span>
-
-                <!-- 🎙 상단 공용 마이크 버튼 -->
-                <button type="button"
-                        id="btn-voice-recipe"
-                        class="top-mic-btn"
-                        title="음성인식 꺼짐 · 누르고 '레시피 이름 / 다음 / 그만 / 음성인식 그만'을 말해보세요.">
-                    🎙
-                </button>
             </div>
-            <div class="d-flex align-items-center gap-2 mt-2 mt-sm-0">
+            <div class="d-flex align-items-center gap-2">
                 <span class="badge bg-primary card-count-badge">
                     선택한 레시피
                     <span id="selected-count" class="fw-bold ms-1">0</span> / 1
@@ -410,6 +381,12 @@
                          data-recipe-id="{{id}}"
                          data-recipe-name="{{menuName}}"
                          data-recipe-temp="{{temperature}}">
+                        <!-- 🎙 카드 우측 상단 마이크 버튼 -->
+                        <button type="button"
+                                class="card-mic-btn"
+                                title="이 레시피 이름을 말하면 열립니다 (예: '{{menuName}}')">
+                            🎙
+                        </button>
 
                         <div class="card-body d-flex flex-column justify-content-center align-items-center">
                             <!-- 가운데 크게 메뉴 이름 -->
@@ -490,15 +467,11 @@
     </div>
 </div>
 
-<!-- 레시피 없음 팝업 -->
-<div id="no-recipe-popup" class="no-recipe-popup">
-    레시피가 없습니다.
-</div>
-
-<!-- JS: 단일 선택 + 팝업 레시피 + TTS + 상단 공용 음성 인식(레시피 이름/다음/그만/음성인식 그만) -->
+<!-- JS: 단일 선택 + 팝업 레시피 + TTS(헤더 스피커 토글 & 스텝 선택시 읽기) + 카드별 음성 인식(마이크) -->
 <script>
     (function () {
         const cards = document.querySelectorAll('.menu-card');
+        const micButtons = document.querySelectorAll('.card-mic-btn');
         const selectedCountSpan = document.getElementById('selected-count');
         const chipsContainer = document.getElementById('selected-menu-chips');
 
@@ -509,11 +482,6 @@
         const btnCloseRecipe = document.getElementById('btn-close-recipe');
         const btnTtsToggle = document.getElementById('btn-tts-toggle');
 
-        const btnVoiceRecipe = document.getElementById('btn-voice-recipe');
-
-        const noRecipePopup = document.getElementById('no-recipe-popup');
-        let noRecipePopupTimer = null;
-
         let currentSelectedMenu = null; // {id, name}
         let currentSelectedCard = null;
 
@@ -523,18 +491,9 @@
         // 음성 인식 상태
         let recognition = null;
         let recognizing = false;
-        let voiceSessionActive = false; // "음성인식그만" 또는 버튼 OFF 하기 전까지 계속 듣기
+        let recognizingCard = null;
 
-        // ====== 유틸: 한글 텍스트 정규화 ======
-        function normalizeKoreanText(text) {
-            if (!text) return '';
-            return text
-                    .toLowerCase()
-                    .replace(/\s+/g, '')      // 공백 제거
-                    .replace(/[.!?,~\-\_]/g, '');  // 간단한 구두점 제거
-        }
-
-        // ====== TTS(음성 합성) 함수 (레시피 스텝 읽기용) ======
+        // ====== TTS(음성 합성) 함수 ======
         function speakText(text) {
             if (!('speechSynthesis' in window)) {
                 alert('이 브라우저에서는 음성 합성이 지원되지 않습니다.');
@@ -596,18 +555,6 @@
                     : '자동 음성 안내 켜기';
         }
 
-        function updateMicVisual(isOn) {
-            if (!btnVoiceRecipe) return;
-            btnVoiceRecipe.classList.toggle('listening', !!isOn);
-            btnVoiceRecipe.title = isOn
-                    ? "음성인식 켜짐 · '레시피 이름 / 다음 / 그만 / 음성인식 그만'을 말해보세요."
-                    : "음성인식 꺼짐 · 누르고 '레시피 이름 / 다음 / 그만 / 음성인식 그만'을 말해보세요.";
-        }
-
-        function isRecipeModalOpen() {
-            return recipeModal.classList.contains('show');
-        }
-
         function getSelectedStepDiv() {
             return recipeModalBody.querySelector('.recipe-step.step-selected');
         }
@@ -620,37 +567,6 @@
             if (!textNode) return;
             const text = textNode.textContent.trim();
             if (text) speakText(text);
-        }
-
-        // "다음" 명령 시: 다음 스텝 선택 + 음성 읽기 (TTS 토글 상관 없이 강제 재생)
-        function moveToNextStepAndSpeak() {
-            const steps = recipeModalBody.querySelectorAll('.recipe-step');
-            if (!steps.length) return;
-
-            let currentIdx = -1;
-            steps.forEach((s, idx) => {
-                if (s.classList.contains('step-selected')) {
-                    currentIdx = idx;
-                }
-            });
-
-            let nextIdx = currentIdx + 1;
-            if (currentIdx === -1) {
-                nextIdx = 0;
-            } else if (nextIdx >= steps.length) {
-                // 마지막이면 그냥 마지막을 다시 읽게
-                nextIdx = steps.length - 1;
-            }
-
-            steps.forEach(s => s.classList.remove('step-selected'));
-            const target = steps[nextIdx];
-            target.classList.add('step-selected');
-
-            const textNode = target.querySelector('.step-text');
-            if (textNode) {
-                const text = textNode.textContent.trim();
-                if (text) speakText(text); // "다음" 명령은 항상 읽어줌
-            }
         }
 
         function buildStepsFromCard(recipeId) {
@@ -715,19 +631,15 @@
             });
         }
 
-        // autoTts = true 이면 모달 열리면서 자동 음성 재생
-        function openRecipeModal(menu, options) {
-            const autoTts = options && options.autoTts;
-
+        function openRecipeModal(menu) {
             recipeModalTitle.textContent = menu.name + ' 레시피';
 
-            // autoTts 설정에 따라 TTS 상태 결정
-            ttsEnabled = !!autoTts;
+            // 모달 열 때 TTS는 기본 OFF로 시작
+            ttsEnabled = false;
             updateTtsToggleVisual();
             stopSpeak();
 
-            buildStepsFromCard(menu.id);   // 내부에서 ttsEnabled 상태를 보고 자동 재생
-
+            buildStepsFromCard(menu.id);
             recipeModal.classList.add('show');
         }
 
@@ -736,30 +648,13 @@
             stopSpeak(); // 모달을 닫을 때 음성도 중지
         }
 
-        // 레시피 없음 팝업 표시
-        function showNoRecipePopup() {
-            if (!noRecipePopup) return;
-            if (noRecipePopupTimer) {
-                clearTimeout(noRecipePopupTimer);
-                noRecipePopupTimer = null;
-            }
-            noRecipePopup.textContent = '레시피가 없습니다.';
-            noRecipePopup.classList.add('show');
-            noRecipePopupTimer = setTimeout(() => {
-                noRecipePopup.classList.remove('show');
-            }, 2000);
-        }
-
         // ========== 카드 선택 로직(공통 함수) ==========
-        // options.fromVoice === true 이면 자동 TTS ON
-        function handleCardSelect(card, options) {
+        function handleCardSelect(card) {
             const id = card.dataset.recipeId;
             const name = card.dataset.recipeName;
 
-            const fromVoice = options && options.fromVoice;
-
-            // 클릭으로 같은 카드 다시 선택하면 토글
-            if (currentSelectedCard === card && !fromVoice) {
+            // 같은 카드 다시 선택하면 해제 + 모달 닫기
+            if (currentSelectedCard === card) {
                 clearAllSelections();
                 closeRecipeModal();
                 return;
@@ -775,10 +670,17 @@
 
             renderSelectedChip();
             updateSelectedCount();
-            openRecipeModal(currentSelectedMenu, {autoTts: !!fromVoice});
+            openRecipeModal(currentSelectedMenu);
         }
 
         // ========== 음성 인식(SpeechRecognition) 관련 ==========
+        function updateMicVisual(card) {
+            micButtons.forEach(btn => btn.classList.remove('listening'));
+            if (!card) return;
+            const btn = card.querySelector('.card-mic-btn');
+            if (btn) btn.classList.add('listening');
+        }
+
         function initRecognition() {
             if (recognition) return recognition;
 
@@ -794,169 +696,83 @@
             recognition.maxAlternatives = 3;
 
             recognition.onresult = function (event) {
-                const rawTranscript = (event.results[0][0].transcript || '').trim();
-                console.log('음성 인식 결과:', rawTranscript);
+                recognizing = false;
+                const card = recognizingCard;
+                recognizingCard = null;
+                updateMicVisual(null);
 
-                let normTranscript = normalizeKoreanText(rawTranscript);
-                if (!normTranscript) return;
+                if (!card) return;
 
-                // === "음성인식 그만" → 음성 인식 완전 종료 + 음성 출력 정지 ===
-                if (normTranscript.includes('음성인식그만')) {
-                    stopVoiceSession();
-                    stopSpeak();
-                    return;
-                }
-
-                // === "그만" → 레시피 팝업 열려 있으면 닫기만 (음성인식은 계속 유지) ===
-                if (normTranscript.includes('그만')) {
-                    if (isRecipeModalOpen()) {
-                        closeRecipeModal(); // 내부에서 stopSpeak()도 호출
-                    }
-                    return;
-                }
-
-                // === "다음" → 다음 스텝 선택 + 읽기 (세션 유지) ===
-                if (normTranscript.includes('다음')) {
-                    if (isRecipeModalOpen()) {
-                        moveToNextStepAndSpeak();
-                    }
-                    return;
-                }
-
-                // === 레시피 이름 매칭 로직 ===
-                let bestCard = null;
-                let bestScore = 0;
-
-                function tryMatch(withNormTranscript) {
-                    let localBestCard = null;
-                    let localBestScore = 0;
-
-                    cards.forEach(card => {
-                        const name = card.dataset.recipeName || '';
-                        const normName = normalizeKoreanText(name);
-                        if (!normName) return;
-
-                        // 레시피명이 비슷하면 (포함 관계면) 매칭
-                        if (withNormTranscript.includes(normName) || normName.includes(withNormTranscript)) {
-                            const score = normName.length;
-                            if (score > localBestScore) {
-                                localBestScore = score;
-                                localBestCard = card;
-                            }
-                        }
-                    });
-
-                    if (localBestCard && localBestScore > bestScore) {
-                        bestCard = localBestCard;
-                        bestScore = localBestScore;
-                    }
-                }
-
-                // 1차: 기본 정규화 텍스트로 탐색
-                tryMatch(normTranscript);
-
-                // 2차: 공백 제거된 원문을 다시 정규화해서 한 번 더 탐색
-                if (!bestCard) {
-                    const joined = rawTranscript.replace(/\s+/g, '');
-                    const joinedNorm = normalizeKoreanText(joined);
-                    if (joinedNorm && joinedNorm !== normTranscript) {
-                        tryMatch(joinedNorm);
-                    }
-                }
-
-                if (bestCard) {
-                    // 음성으로 찾은 카드 선택 + 모달 오픈 + 첫 스텝 자동 음성
-                    handleCardSelect(bestCard, {fromVoice: true});
-                } else {
-                    // 음성 안내 대신 팝업 표기 (2초 후 자동 닫힘)
-                    showNoRecipePopup();
-                }
+                // ★ 여기서 인식된 내용과 상관없이, 해당 카드 클릭과 동일하게 동작
+                const transcript = event.results[0][0].transcript || '';
+                console.log('음성 인식 결과:', transcript);
+                handleCardSelect(card);
             };
 
             recognition.onerror = function (event) {
                 console.error('음성 인식 오류:', event.error);
                 recognizing = false;
-                if (!voiceSessionActive) {
-                    updateMicVisual(false);
-                }
+                recognizingCard = null;
+                updateMicVisual(null);
             };
 
             recognition.onend = function () {
                 recognizing = false;
-                // 세션이 살아있으면 자동 재시작
-                if (voiceSessionActive && recognition) {
-                    try {
-                        recognizing = true;
-                        recognition.start();
-                    } catch (e) {
-                        console.error('음성 인식 재시작 실패:', e);
-                        recognizing = false;
-                        voiceSessionActive = false;
-                        updateMicVisual(false);
-                    }
-                } else {
-                    updateMicVisual(false);
-                }
+                recognizingCard = null;
+                updateMicVisual(null);
             };
 
             return recognition;
         }
 
-        function startVoiceSession() {
+        function startVoiceRecognitionForCard(card) {
             const rec = initRecognition();
             if (!rec) return;
 
-            if (voiceSessionActive && recognizing) {
+            // 이미 같은 카드가 인식 중이면 중단
+            if (recognizing && recognizingCard === card) {
+                rec.stop();
+                recognizing = false;
+                recognizingCard = null;
+                updateMicVisual(null);
                 return;
             }
 
-            voiceSessionActive = true;
-            updateMicVisual(true);
-
-            if (!recognizing) {
-                recognizing = true;
-                try {
-                    rec.start();
-                } catch (e) {
-                    console.error('음성 인식 시작 실패:', e);
-                    recognizing = false;
-                    voiceSessionActive = false;
-                    updateMicVisual(false);
-                }
+            // 다른 카드 인식 중이면 먼저 중단
+            if (recognizing && recognition) {
+                recognition.stop();
             }
-        }
 
-        function stopVoiceSession() {
-            voiceSessionActive = false;
-            if (recognition && recognizing) {
-                try { recognition.stop(); } catch (e) {}
-            }
-            recognizing = false;
-            updateMicVisual(false);
-        }
+            recognizing = true;
+            recognizingCard = card;
+            updateMicVisual(card);
 
-        function toggleVoiceRecognition() {
-            if (voiceSessionActive) {
-                stopVoiceSession();
-            } else {
-                startVoiceSession();
+            try {
+                rec.start();
+            } catch (e) {
+                console.error('음성 인식 시작 실패:', e);
+                recognizing = false;
+                recognizingCard = null;
+                updateMicVisual(null);
             }
         }
 
         // 카드 클릭 → 선택 처리
         cards.forEach(card => {
             card.addEventListener('click', () => {
-                handleCardSelect(card, {fromVoice: false});
+                handleCardSelect(card);
             });
         });
 
-        // 상단 공용 마이크 버튼 클릭 → 음성 인식 ON/OFF
-        if (btnVoiceRecipe) {
-            btnVoiceRecipe.addEventListener('click', (e) => {
-                e.stopPropagation();
-                toggleVoiceRecognition();
+        // 카드 우측 상단 마이크 버튼 클릭 → 해당 카드 이름 음성 인식 후 카드 열기
+        micButtons.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation(); // 카드 클릭 이벤트와 분리
+                const card = btn.closest('.menu-card');
+                if (!card) return;
+                startVoiceRecognitionForCard(card);
             });
-        }
+        });
 
         // 모달 닫기 버튼
         btnCloseRecipe.addEventListener('click', () => {
@@ -975,7 +791,7 @@
             }
         });
 
-        // 🔊 TTS 토글 버튼 클릭 → ON/OFF 스위치 (자동 읽기 전용)
+        // 🔊 TTS 토글 버튼 클릭 → ON/OFF 스위치
         if (btnTtsToggle) {
             btnTtsToggle.addEventListener('click', () => {
                 ttsEnabled = !ttsEnabled;
@@ -993,7 +809,6 @@
         // 초기 상태
         updateSelectedCount();
         updateTtsToggleVisual();
-        updateMicVisual(false);
     })();
 </script>
 
