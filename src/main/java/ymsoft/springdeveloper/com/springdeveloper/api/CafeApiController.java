@@ -41,4 +41,14 @@ public class CafeApiController {
 
         return ResponseEntity.noContent().build();
     }
+
+    @PostMapping("/recipe/{recipeId}/delete")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public ResponseEntity<?> deleteRecipe(@PathVariable("recipeId") Long recipeId) {
+
+        log.info("delete recipe... " + recipeId);
+        recipeService.deleteRecipe(recipeId);
+
+        return ResponseEntity.noContent().build();
+    }
 }

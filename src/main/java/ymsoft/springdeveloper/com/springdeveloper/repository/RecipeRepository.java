@@ -26,4 +26,5 @@ public interface RecipeRepository extends JpaRepository<Recipe, Long> {
     @Modifying
     @Query("update Recipe r set r.template = :template where r.id = :id")
     int updateTemplate(@Param("id") Long id, @Param("template") boolean template);
+
 }

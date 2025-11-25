@@ -1289,14 +1289,12 @@
             clearAllDayEditButtons();
             const head = document.querySelector(`#weekStaffTable thead th[data-dow="${dayIdx}"] .day-edit-wrap`);
             if (!head) return;
-
-            // === 기존: 근무일정 수정 버튼 ===
             const btn = document.createElement('button');
             btn.type = 'button';
             btn.className = 'btn btn-outline-light btn-sm day-edit-btn';
             btn.textContent = '근무일정 수정';
             btn.dataset.dateIso = iso;
-            btn.addEventListener('click', async ()=> {
+            btn.addEventListener('click', async ()=>{
                 if (!selectedMember) return;
                 let segs = (selectedWeekDaysMap[iso]?.segments) || [];
                 if (!segs.length) {
@@ -1312,58 +1310,6 @@
                 openEditModal(iso, selectedMember, segs, 'edit');
             });
             head.appendChild(btn);
-
-            // === ✅ 추가: 해당 일자 일정 삭제 버튼 ===
-            const delBtn = document.createElement('button');
-            delBtn.type = 'button';
-            delBtn.className = 'btn btn-outline-light btn-sm day-edit-btn ms-1';
-            delBtn.textContent = '삭제';
-            delBtn.dataset.dateIso = iso;
-            delBtn.addEventListener('click', async () => {
-                if (!selectedMember) return;
-
-                const name = selectedMember.name || '';
-                const ok = confirm(
-                        `${iso} 날짜의 ${name} 근무 일정을 모두 삭제하시겠습니까?\n\n` +
-                        '이 날짜에 저장된 근무시간이 전부 제거됩니다.'
-                );
-                if (!ok) return;
-
-                try {
-                    const body = {
-                        memberId: selectedMember.id,
-                        date: iso,
-                        segments: []          // ← 이 날짜의 근무 구간을 모두 비우기
-                    };
-
-                    const resp = await fetch(API_UPDATE, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type':'application/json',
-                            'Accept':'application/json'
-                        },
-                        body: JSON.stringify(body)
-                    });
-
-                    if (!resp.ok) {
-                        const text = await resp.text().catch(() => '');
-                        alert(`삭제 실패: ${resp.status} ${text}`);
-                        return;
-                    }
-
-                    alert('해당 날짜의 근무 일정이 삭제되었습니다.');
-
-                    // 화면 갱신 (주간 타임테이블 + 개별 주간 그리드)
-                    await fetchAndRenderWeekTable(currentStatusMembers, currentWeekStart);
-                    await loadSelectedMemberWeek();
-                    clearAllDayEditButtons();
-                    updateCurrentTimeHighlight();
-                } catch (e) {
-                    console.error(e);
-                    alert('삭제 중 오류가 발생했습니다.');
-                }
-            });
-            head.appendChild(delBtn);
         }
 
         function showDayCreateButton(dayIdx, iso){

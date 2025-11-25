@@ -373,13 +373,27 @@
                             </div>
                         {{/recipe.steps}}
                     </div>
+
+                    <!-- 🔥 서버에서 내려온 stepTimes를 숨겨서 JS에서 매핑용으로 사용 -->
+                    <div id="initial-step-times" style="display:none;">
+                        {{#recipe.stepTimes}}
+                            <span class="init-step-time" data-time="{{.}}"></span>
+                        {{/recipe.stepTimes}}
+                    </div>
                 </div>
 
-                <!-- 저장 버튼 -->
+                <!-- 저장 / 삭제 버튼 -->
                 <div class="d-flex justify-content-end gap-2">
                     <a href="/cafe/recipes" class="btn btn-outline-secondary">
                         목록
                     </a>
+                    <!-- 🔥 삭제 버튼 추가 -->
+                    <button type="button"
+                            class="btn btn-outline-danger"
+                            id="btn-delete-recipe"
+                            data-recipe-id="{{recipeId}}">
+                        삭제
+                    </button>
                     <button type="submit" class="btn btn-primary">
                         변경사항 저장
                     </button>
@@ -494,6 +508,28 @@
             bindRemoveEvent(el);
         }
 
+        // 🔥 서버에서 내려온 stepTimes를 각 카드의 input에 매핑
+        function applyInitialStepTimes() {
+            const initContainer = document.getElementById('initial-step-times');
+            if (!initContainer) return;
+
+            const initTimes = initContainer.querySelectorAll('.init-step-time');
+            const stepCards = stepsContainer.querySelectorAll('.card');
+
+            stepCards.forEach((card, idx) => {
+                const timeInput = card.querySelector('.step-time-input');
+                if (!timeInput) return;
+
+                const span = initTimes[idx];
+                if (span) {
+                    const t = span.dataset.time;
+                    if (t !== undefined && t !== null && t !== '') {
+                        timeInput.value = t;
+                    }
+                }
+            });
+        }
+
         // 초기: 서버에서 렌더링된 스텝 카드가 있으면 그것을 기준으로 세팅
         (function initSteps() {
             const existingCards = stepsContainer.querySelectorAll('.card');
@@ -503,6 +539,9 @@
                 existingCards.forEach(card => bindRemoveEvent(card));
                 refreshStepNumbers();
             }
+
+            // 🔥 stepTimes 초기 값 적용
+            applyInitialStepTimes();
         })();
 
         addStepBtn.addEventListener('click', function () {
@@ -679,23 +718,34 @@
 
             previewStepsEl.innerHTML = '';
 
-            const stepTextareas = stepsContainer.querySelectorAll('.step-textarea');
+            // 🔥 각 카드에서 textarea + timeInput 둘 다 읽어서 미리보기 구성
+            const stepCards = stepsContainer.querySelectorAll('.card');
             let visibleIndex = 0;
 
-            stepTextareas.forEach((textarea) => {
+            stepCards.forEach((card) => {
+                const textarea = card.querySelector('.step-textarea');
+                if (!textarea) return;
+
                 const text = (textarea.value || '').trim();
-                if (!text) {
-                    return;
-                }
+                if (!text) return;
+
+                const timeInput = card.querySelector('.step-time-input');
+                const timeVal = timeInput ? (timeInput.value || '').trim() : '';
 
                 const row = document.createElement('div');
                 row.className = 'recipe-step';
 
                 const safeText = text.replace(/\n/g, '<br>');
 
+                let timeHtml = '';
+                if (timeVal) {
+                    timeHtml = `<span class="step-time-preview ms-2 text-muted" style="font-size:2.0rem;">(${timeVal}초)</span>`;
+                }
+
                 row.innerHTML = `
                     <span class="step-index">Step ${visibleIndex + 1}.</span>
                     <span class="step-text">${safeText}</span>
+                    ${timeHtml}
                 `;
 
                 previewStepsEl.appendChild(row);
@@ -728,6 +778,46 @@
             previewBtn.addEventListener('click', function () {
                 buildPreview();
                 openPreviewModal();
+            });
+        }
+
+        /* =========================
+           삭제 버튼 처리
+           ========================= */
+        const deleteBtn = document.getElementById('btn-delete-recipe');
+
+        async function deleteRecipe(recipeId) {
+            const ok = confirm('이 레시피를 삭제하시겠습니까?\n삭제 후에는 되돌릴 수 없습니다.');
+            if (!ok) return;
+
+            try {
+                const res = await fetch('/api/cafe/recipe/' + recipeId + '/delete', {
+                    method: 'POST'
+                    // CSRF 사용 시 여기서 헤더 추가
+                });
+
+                if (!res.ok && res.status !== 204) {
+                    alert('레시피 삭제에 실패했습니다. (' + res.status + ')');
+                    return;
+                }
+
+                // 성공 시 목록 페이지로 이동
+                window.location.href = '/cafe/recipes';
+            } catch (e) {
+                console.error(e);
+                alert('레시피 삭제 중 오류가 발생했습니다.');
+            }
+        }
+
+        if (deleteBtn) {
+            deleteBtn.addEventListener('click', function () {
+                const recipeId = deleteBtn.dataset.recipeId ||
+                        document.querySelector('input[name="id"]')?.value;
+                if (!recipeId) {
+                    alert('레시피 ID를 찾을 수 없습니다.');
+                    return;
+                }
+                deleteRecipe(recipeId);
             });
         }
     })();

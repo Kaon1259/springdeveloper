@@ -240,4 +240,12 @@ public class RecipeService {
             throw new IllegalArgumentException("레시피를 찾을 수 없습니다. id=" + recipeId);
         }
     }
+
+    @Transactional
+    public void deleteRecipe(Long recipeId) {
+        Recipe recipe = recipeRepository.findById(recipeId)
+                .orElseThrow(() -> new IllegalArgumentException("Recipe not found. id=" + recipeId));
+
+        recipeRepository.delete(recipe);
+    }
 }
