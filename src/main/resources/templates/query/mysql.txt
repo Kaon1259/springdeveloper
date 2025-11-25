@@ -1,0 +1,241 @@
+CREATE TABLE member (
+    id BIGINT NOT NULL AUTO_INCREMENT,
+
+    -- 이름
+    name VARCHAR(255) NOT NULL,
+
+    -- 성별
+    gender VARCHAR(10),
+
+    -- 아르바이트 시작일
+    start_date DATE NOT NULL,
+
+    -- 연락처
+    phone VARCHAR(255) NOT NULL,
+
+    -- 이메일
+    email VARCHAR(255),
+
+    -- 시급
+    hourly_wage INT NOT NULL,
+
+    -- 보건증 만료일
+    health_cert_expiry DATE,
+
+    -- 보건증 보유 여부
+    has_health_certificate BOOLEAN NOT NULL DEFAULT FALSE,
+
+    -- 은행명
+    bank_name VARCHAR(255),
+
+    -- 계좌번호
+    bank_account VARCHAR(255),
+
+    -- 상태 (Enum)
+    status VARCHAR(20) NOT NULL DEFAULT 'WORKING',
+
+    -- 메모
+    memo VARCHAR(250),
+
+    -- 급여지급일 (8자리 문자열 or 'EOM')
+    payday VARCHAR(8),
+
+    -- 주휴수당 적용 여부
+    include_weekly_holiday_allowance BOOLEAN NOT NULL DEFAULT FALSE,
+
+    -- 세금 적용 여부
+    apply_tax BOOLEAN NOT NULL DEFAULT FALSE,
+
+    -- 생성일/수정일
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+    PRIMARY KEY (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+
+/* ===========================
+   1. work_schedule
+   =========================== */
+CREATE TABLE work_schedule (
+    id BIGINT NOT NULL AUTO_INCREMENT,
+
+    member_id BIGINT NOT NULL,
+    work_date DATE NOT NULL,
+    start_time TIME NOT NULL,
+    end_time TIME NOT NULL,
+    source VARCHAR(20) NOT NULL,
+    note VARCHAR(500),
+
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+    CONSTRAINT pk_work_schedule PRIMARY KEY (id),
+
+    CONSTRAINT fk_work_schedule_member
+        FOREIGN KEY (member_id)
+        REFERENCES member (id)
+        ON DELETE CASCADE,
+
+    CONSTRAINT uk_work_schedule_member_date_start_end
+        UNIQUE (member_id, work_date, start_time, end_time),
+
+    CONSTRAINT chk_work_schedule_source
+        CHECK (source IN ('GENERATED', 'MANUAL', 'IMPORTED'))
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE INDEX idx_work_schedule_member_date
+    ON work_schedule (member_id, work_date);
+
+
+
+/* ===========================
+   2. PAYROLL_MONTH
+   =========================== */
+CREATE TABLE payroll_month (
+    id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+
+    -- 멤버 정보
+    member_id           BIGINT      NOT NULL,
+
+    -- 급여 연월
+    pay_year            INT         NOT NULL,   -- 예: 2025
+    pay_month           INT         NOT NULL,   -- 1~12
+
+    -- 기본 시급
+    hourly_wage         INT         NOT NULL,   -- 시급 (원)
+
+    -- 월 근무 시간(분)
+    month_work_minutes  INT         NOT NULL,   -- 실제 근무 분
+    month_juhyu_minutes INT         NOT NULL,   -- 주휴수당 분(해당 없으면 0)
+
+    -- 월 급여(원)
+    month_work_pay      BIGINT      NOT NULL,   -- 근무급여
+    month_juhyu_pay     BIGINT      NOT NULL,   -- 주휴수당
+    month_total_pay     BIGINT      NOT NULL,   -- 총 합계 (work + juhyu)
+
+    -- 상태
+    status              VARCHAR(20) NOT NULL DEFAULT 'DRAFT',
+    -- DRAFT(초안), CONFIRMED(확정), PAID(지급완료)
+
+    confirmed_at        TIMESTAMP   NULL,       -- 확정 시각
+    paid_at             TIMESTAMP   NULL,       -- 지급 완료 시각
+
+    created_at          TIMESTAMP   DEFAULT CURRENT_TIMESTAMP,
+    updated_at          TIMESTAMP   DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+    CONSTRAINT uq_payroll_month UNIQUE (member_id, pay_year, pay_month),
+
+    CONSTRAINT fk_payroll_month_member
+        FOREIGN KEY (member_id)
+        REFERENCES member(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+
+
+/* ===========================
+   3. PAYROLL_WEEK
+   =========================== */
+CREATE TABLE payroll_week (
+    id                      BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+
+    -- 어떤 월 급여에 속하는 주인지
+    payroll_month_id        BIGINT      NOT NULL,
+
+    -- 1주차, 2주차 ...
+    week_index              INT         NOT NULL,
+
+    -- 주 시작/끝 날짜
+    week_start_date         DATE        NOT NULL,
+    week_end_date           DATE        NOT NULL,
+
+    -- 주 근무 시간(분)
+    week_work_minutes       INT         NOT NULL,
+
+    -- 주 주휴 시간(분) (없으면 0)
+    week_juhyu_minutes      INT         NOT NULL,
+
+    -- 주 급여(원)
+    week_work_pay           BIGINT      NOT NULL,
+    week_juhyu_pay          BIGINT      NOT NULL,
+    week_total_pay          BIGINT      NOT NULL,
+
+    created_at              TIMESTAMP   DEFAULT CURRENT_TIMESTAMP,
+    updated_at              TIMESTAMP   DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+    CONSTRAINT fk_payroll_week_month
+        FOREIGN KEY (payroll_month_id)
+        REFERENCES payroll_month(id),
+
+    -- 한 월 급여당 week_index는 유니크
+    CONSTRAINT uq_payroll_week UNIQUE (payroll_month_id, week_index)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+
+
+
+
+/* ===========================
+   2. USERS 테이블
+   =========================== */
+DROP TABLE IF EXISTS users;
+
+CREATE TABLE users (
+    id BIGINT NOT NULL AUTO_INCREMENT,
+
+    nickname VARCHAR(30) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL,
+    email VARCHAR(100) NOT NULL UNIQUE,
+    phone VARCHAR(20),
+    agreed_terms BOOLEAN NOT NULL,
+
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+    PRIMARY KEY (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+
+
+/* ===========================
+   3. RECIPE / RECIPE_STEP 테이블
+   =========================== */
+CREATE TABLE recipe (
+    id BIGINT NOT NULL AUTO_INCREMENT,
+    menu_name VARCHAR(100) NOT NULL,
+    author VARCHAR(50) NOT NULL,
+    description VARCHAR(255),
+    temperature VARCHAR(10) NOT NULL,
+    cup_size VARCHAR(10) NOT NULL,
+    category VARCHAR(30) NOT NULL,
+    created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+    visible  BOOLEAN NOT NULL DEFAULT FALSE,
+    template BOOLEAN NOT NULL DEFAULT FALSE,
+
+    PRIMARY KEY (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+
+CREATE TABLE recipe_step (
+    id BIGINT NOT NULL AUTO_INCREMENT,
+    recipe_id BIGINT NOT NULL,
+    step_order INT NOT NULL,
+    content TEXT NOT NULL,
+    step_time INT NOT NULL DEFAULT 10,
+
+    CONSTRAINT pk_recipe_step PRIMARY KEY (id),
+
+    CONSTRAINT fk_recipe_step_recipe
+        FOREIGN KEY (recipe_id)
+        REFERENCES recipe(id)
+        ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+
+CREATE INDEX idx_recipe_step_recipe_id
+    ON recipe_step (recipe_id);
+
+
+
