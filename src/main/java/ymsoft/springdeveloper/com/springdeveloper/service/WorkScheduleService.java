@@ -25,9 +25,9 @@ public class WorkScheduleService {
 
     private static final int SLOT_MIN = 10;
     private static final LocalTime START_BOUND = LocalTime.of(6, 0);
-    private static final LocalTime END_BOUND   = LocalTime.of(22, 0); // exclusive
+    private static final LocalTime END_BOUND = LocalTime.of(22, 0); // exclusive
 
-    public List<WorkSchedule> findByWorkDateWithMember(LocalDate date){
+    public List<WorkSchedule> findByWorkDateWithMember(LocalDate date) {
         return workScheduleRepository.findByWorkDateWithMember(date);
     }
 
@@ -111,7 +111,7 @@ public class WorkScheduleService {
             if (st == null || en == null) continue;
 
             if (st.isBefore(START_BOUND)) st = START_BOUND;
-            if (en.isAfter(END_BOUND))    en = END_BOUND;
+            if (en.isAfter(END_BOUND)) en = END_BOUND;
             if (!st.isBefore(en)) continue;
 
             st = snapDownTo10(st);
@@ -145,7 +145,9 @@ public class WorkScheduleService {
                 curE = e2;
             } else {
                 merged.add(ScheduleDayUpdateRequest.Segment.builder().start(curS).end(curE).note(curNote).build());
-                curS = s2; curE = e2; curNote = n2;
+                curS = s2;
+                curE = e2;
+                curNote = n2;
             }
         }
         merged.add(ScheduleDayUpdateRequest.Segment.builder().start(curS).end(curE).note(curNote).build());
@@ -156,10 +158,12 @@ public class WorkScheduleService {
     private static boolean isTenMinUnit(LocalTime t) {
         return t.getMinute() % SLOT_MIN == 0 && t.getSecond() == 0 && t.getNano() == 0;
     }
+
     private static LocalTime snapDownTo10(LocalTime t) {
         int m = t.getMinute() - (t.getMinute() % SLOT_MIN);
         return LocalTime.of(t.getHour(), m);
     }
+
     private static LocalTime snapUpTo10(LocalTime t) {
         int mod = t.getMinute() % SLOT_MIN;
         int add = (mod == 0) ? 0 : (SLOT_MIN - mod);
@@ -338,8 +342,8 @@ public class WorkScheduleService {
         }
 
         return workScheduleRepository.findByMemberIdAndWorkDateBetweenOrderByWorkDateAscStartAsc(
-                        memberId, start, end
-                );
+                memberId, start, end
+        );
     }
 
     @Transactional
@@ -379,9 +383,15 @@ public class WorkScheduleService {
     }
 
 
-    /**
-     * 특정 멤버의 오늘자 스케줄 조회
-     */
+    public Integer deleteWorkScheduleByMemberAndDate(Long memberId, LocalDate date)
+    {
+        List<WorkSchedule> schedules = workScheduleRepository.findByMemberIdAndWorkDate(memberId, date);
+
+        Integer size = schedules.size();
+        workScheduleRepository.deleteAll(schedules);
+        return size;
+    }
+
     public List<WorkSchedule> getTodaySchedulesByMember(Long memberId) {
         LocalDate today = LocalDate.now();
         return getSchedulesByMemberAndDate(memberId, today);

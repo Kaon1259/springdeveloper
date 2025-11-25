@@ -20,7 +20,8 @@ public interface WorkScheduleRepository extends JpaRepository<WorkSchedule, Long
 
     List<WorkSchedule> findByMemberIdAndWorkDate(Long memberId, LocalDate workDate);
 
-    void deleteByMemberIdAndWorkDate(Long memberId, LocalDate workDate);
+    Long deleteByMemberIdAndWorkDate(Long memberId, LocalDate workDate);
+
 
     @Query("""
         select ws

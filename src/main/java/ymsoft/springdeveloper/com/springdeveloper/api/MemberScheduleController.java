@@ -51,8 +51,9 @@ public class MemberScheduleController {
 
     @GetMapping("/{id}/schedule")
     public ResponseEntity<List<MemberDto.ScheduleRow>> getMemberSchedule(@PathVariable Long id) throws Exception {
-        MemberDto member = memberService.findById(id);
 
+        log.info("MemberScheduleController.getMemberSchedule: memberId: " + id);
+        MemberDto member = memberService.findById(id);
         // 스케줄도 null-safe로 내려주기
         List<MemberDto.ScheduleRow> schedules =
                 (member.getSchedule() != null) ? member.getSchedule() : List.of();

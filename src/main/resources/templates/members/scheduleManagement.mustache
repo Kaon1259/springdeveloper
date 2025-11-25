@@ -106,8 +106,8 @@
                 </div>
             </div>
             <div class="small text-muted mt-2">
-                * 날짜 셀의 <b>사람별 배지</b>를 클릭하면 해당 근로자를 선택(배지 테두리 표시)합니다.
-                * <b>상단 칩으로 근로자를 하이라이트한 경우에만</b> 선택된 배지 위에 <b>‘근무일정 수정’</b> 버튼이 나타납니다.
+                * 날짜 셀의 <b>사람별 배지</b>를 클릭하면 해당 근로자를 선택(배지 테두리 표시)합니다.<br>
+                * <b>상단 칩으로 근로자를 하이라이트한 경우에만</b> 선택된 배지 기준으로 날짜 헤더에 <b>‘근무일정 수정 / 삭제’</b> 버튼이 나타납니다.<br>
                 * <b>하이라이트한 근로자의 일정이 없는 날짜 셀을 클릭</b>하면 우상단에 <b>‘일정 생성하기’</b> 버튼이 나타납니다.
             </div>
             <span id="monthLabel" class="d-none">0000-00-01</span>
@@ -180,7 +180,7 @@
                         </div>
                     </div>
 
-                    <!-- 우: 편집 그리드 -->
+                    <!-- 우: 편집 그리드 (라운드렉트 스타일) -->
                     <div class="col-12 col-md-7">
                         <div class="d-flex justify-content-between align-items-center mb-2">
                             <div class="btn-group btn-group-sm" id="slotStepButtons" role="group" aria-label="슬롯 단위">
@@ -349,14 +349,45 @@
         min-height:200px; background:#fff; display:flex; flex-direction:column;
         gap:8px; position:relative;
     }
-    .cell .date-head { display:flex; align-items:center; justify-content:space-between; font-weight:600; font-size:.95rem; gap:8px; }
+    .cell .date-head {
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        gap:4px;
+        margin-bottom:4px;
+    }
+    .date-left {
+        display:inline-flex;
+        align-items:center;
+        gap:6px; /* "몇일"과 버튼 사이 간격 */
+    }
+    .seg-btn-wrap {
+        display:inline-flex;
+        gap:4px; /* 수정/삭제 버튼 간 간격 */
+    }
+    .seg-edit-btn,
+    .seg-delete-btn {
+        font-size:.7rem;
+        line-height:1.2;
+        padding:2px 6px;
+    }
+
+    .cell .date-text {
+        font-weight:600;
+        font-size:.95rem;
+    }
+    .cell .dow-mini {
+        font-size:.8rem;
+        color:#6c757d;
+    }
+
     .cell .segments { display:flex; flex-direction:column; gap:6px; }
     .cell .day-total { margin-top:auto; text-align:right; font-size:.875rem; color:#212529; }
 
     .cell.muted { background:#fcfcfc; color:#96a0aa; }
     .cell.today { outline:2px solid #51cf66; outline-offset:2px; }
 
-    /* 사람별 배지(라운드 직사각형) + 선택 상태 + 상단 버튼 */
+    /* 사람별 배지(라운드 직사각형) */
     .member-badge {
         position: relative;
         display:flex; align-items:center; gap:8px;
@@ -371,15 +402,19 @@
     .member-badge .times { color:#495057; font-size:.82rem; }
     .member-badge.selected { box-shadow: 0 0 0 2px rgba(13,110,253,.25); }
 
-    .seg-edit-btn {
-        position: absolute; top: -6px; right: -6px;
-        transform: translateY(-100%);
-        font-size: .7rem; line-height: 1.2; padding: 2px 6px;
-    }
-
     /* 하이라이트(선택 근로자 강조 / 타인 흐리게) */
     .calendarGrid-hasHighlight .member-badge.dimmed { opacity:.35; }
-    .calendarGrid-hasHighlight .member-badge.highlight { opacity:1; outline:2px solid rgba(13,110,253,.25); outline-offset:1px; }
+    .calendarGrid-hasHighlight .member-badge.highlight {
+        opacity:1;
+        outline:2px solid rgba(13,110,253,.25);
+        outline-offset:1px;
+    }
+
+    /* ✅ 빈 셀에서 쓰는 ‘일정 생성하기’ 버튼 (셀 우상단 고정) */
+    .seg-create-btn{
+        position:absolute; top:6px; right:6px;
+        font-size:.7rem; line-height:1.2; padding:2px 6px;
+    }
 
     /* ===== 모달 공통 ===== */
     .modal { background:rgba(0,0,0,.35); position:fixed; inset:0; display:none; z-index:1055; }
@@ -391,35 +426,77 @@
     .summary-box .chip { display:inline-flex; align-items:center; gap:6px; padding:4px 8px; border:1px solid #e9ecef; border-radius:14px; background:#fff; }
     .chip .dot { width:10px;height:10px;border-radius:50%;border:1px solid rgba(0,0,0,.08); }
 
-    /* 하루 편집 그리드 */
+    /* 하루 편집 그리드 – 라운드렉트 스타일 */
     .day-grid {
-        width:100%; border:1px solid #e5e7eb; border-radius:10px;
-        overflow:hidden; user-select:none; background:#fff;
-        max-height:70vh; overflow-y:auto;
+        width:100%;
+        border-radius:12px;
+        background:#f9fafb;
+        padding:8px;
+        box-shadow: inset 0 0 0 1px #e5e7eb;
+        max-height:70vh;
+        overflow-y:auto;
+        user-select:none;
     }
-    .day-grid table { width:100%; border-collapse:separate; border-spacing:0; table-layout:fixed; }
+    .day-grid table {
+        width:100%;
+        border-collapse:separate;
+        border-spacing:0;
+        table-layout:fixed;
+        border-radius:10px;
+        overflow:hidden;
+        background:#ffffff;
+        box-shadow:0 1px 3px rgba(15,23,42,0.08);
+    }
     .day-grid thead th {
-        background:#f8fafc; color:#64748b; font-weight:600; font-size:.95rem;
-        border-bottom:1px solid #e5e7eb; text-align:center; padding:.6rem .4rem;
-        position:sticky; top:0; z-index:2;
+        background:linear-gradient(135deg,#eff6ff,#e0f2fe);
+        color:#334155;
+        font-weight:600;
+        font-size:.9rem;
+        border-bottom:1px solid #dbeafe;
+        text-align:center;
+        padding:.5rem .4rem;
+        position:sticky;
+        top:0;
+        z-index:2;
     }
     .day-grid tbody th.timecell {
-        background:#fafafa; color:#6b7280; font-weight:600; width:74px;
-        border-right:1px solid #e5e7eb; text-align:center; padding:.25rem .25rem;
-        font-size:.85rem; position:sticky; left:0; z-index:1; font-variant-numeric:tabular-nums;
+        background:#f9fafb;
+        color:#6b7280;
+        font-weight:600;
+        width:74px;
+        border-right:1px solid #e5e7eb;
+        text-align:center;
+        padding:.25rem .25rem;
+        font-size:.8rem;
+        position:sticky;
+        left:0;
+        z-index:1;
+        font-variant-numeric:tabular-nums;
     }
     .row-hour-start td, .row-hour-start th { border-top:2px solid #e5e7eb!important; }
 
-    .slot-cell { border-bottom:1px dashed #eef2f6; height:18px; cursor:pointer; background:#ffffff; transition: background .12s; }
-    .slot-cell:hover { background:#f8fbff; }
-    .slot-cell.selected { background:rgba(25,135,84,.18); box-shadow:inset 0 0 0 1px rgba(25,135,84,.25); }
+    .slot-cell {
+        border-bottom:1px dashed #eef2f6;
+        height:22px;
+        cursor:pointer;
+        background:#ffffff;
+        transition: background .12s, box-shadow .12s, transform .05s;
+        border-radius:8px;
+        margin:1px 4px;
+    }
+    .slot-cell:hover {
+        background:#f1f5f9;
+        box-shadow:0 0 0 1px rgba(148,163,184,0.45);
+        transform:translateY(-1px);
+    }
+    .slot-cell.selected {
+        background:rgba(25,135,84,.18);
+        box-shadow:inset 0 0 0 1px rgba(25,135,84,.4);
+    }
     /* ✅ 원본 일정에 없는데 새로 선택된 블록은 파란색 */
-    .slot-cell.selected.selected-diff { background:rgba(13,110,253,0.16); box-shadow:inset 0 0 0 1px rgba(13,110,253,0.45); border-color:rgba(13,110,253,0.55); }
-
-    /* ✅ 빈 셀에서 쓰는 ‘일정 생성하기’ 버튼 (셀 우상단 고정) */
-    .seg-create-btn{
-        position:absolute; top:6px; right:6px;
-        font-size:.7rem; line-height:1.2; padding:2px 6px;
+    .slot-cell.selected.selected-diff {
+        background:rgba(13,110,253,0.18);
+        box-shadow:inset 0 0 0 1px rgba(37,99,235,0.65);
     }
 </style>
 
@@ -483,6 +560,7 @@
         // ===== API =====
         const API_ENDPOINT = '/api/schedule/work';
         const API_UPDATE_ENDPOINT = '/api/schedule/work/update';
+        const API_DELETE_ENDPOINT_TEMPLATE = '/api/schedule/work/{memberId}/delete';
 
         // ===== 상태 =====
         let allMembers = [];
@@ -582,7 +660,7 @@
 
                         // 원본을 새 step 기준으로 슬롯세트화
                         originalSlotSet = segmentsToSlotSet(originalSegments, stepMinutes);
-                        // 현재 선택도 원본 기준으로 초기화(필요 시 최근 선택 유지하려면 주석 처리)
+                        // 현재 선택도 원본 기준으로 초기화
                         slotState = new Set([...originalSlotSet]);
 
                         buildDayGrid();
@@ -600,7 +678,7 @@
             // 저장은 10분 단위에서만 가능
             btnSaveEdit.disabled = (stepMinutes !== 10);
 
-            // ✅ 모달 모드에 따라 라벨 변경
+            // 모달 모드에 따라 라벨 변경
             const mode = editModal.dataset.mode || 'edit';
             btnSaveEdit.textContent = (mode === 'create') ? '일정 생성' : '저장';
         }
@@ -682,7 +760,7 @@
                 monthSelectedMemberTotalWrap.classList.add('d-none');
             }
 
-            // 하이라이트 변경 시 달력 배지 선택 및 빈 셀 선택 초기화
+            // 하이라이트 변경 시 달력 배지 선택 및 빈셀 선택 초기화
             selectedBadge = null;
             selectedEmptyDateIso = null;
 
@@ -712,7 +790,6 @@
                     currentMonthStart.getMonth()+offset,
                     1
             ));
-            // 다른 달로 넘어가면 배지 선택/빈셀 선택 해제
             selectedBadge = null;
             selectedEmptyDateIso = null;
             renderAllMembersMonth(currentMonthStart);
@@ -816,14 +893,9 @@
                                 <span class="color" style="background:${color}; border-color:${color}"></span>
                                 <span class="label">${escapeHtml(member.name ?? '-')}</span>
                                 <span class="times">${segmentsToLabel(day.segments||[])}</span>
-                                ${
-                                        (isSelected && isHighlightTarget)
-                                                ? `<button type="button" class="btn btn-xs btn-primary seg-edit-btn" data-date="${iso}" data-member="${member.id}">근무일정 수정</button>`
-                                                : ``
-                                }
                             `;
 
-                                // 배지 클릭: 선택 토글(버튼 노출 조건 충족 시에만 버튼이 보임)
+                                // 배지 클릭: 선택 토글 (헤더 버튼 노출 기준)
                                 badge.addEventListener('click', (evt)=>{
                                     evt.stopPropagation();
                                     const already = selectedBadge && selectedBadge.dateIso===iso && String(selectedBadge.memberId)===String(member.id);
@@ -837,19 +909,52 @@
                             });
                 }
 
-                cell.innerHTML = `
-                    <div class="date-head">
-                      <span class="date-text">${d.getDate()}일</span>
-                      <span class="dow-mini">${DOW_HEAD[dow]}</span>
-                    </div>
-                `;
-                cell.appendChild(segmentsWrap);
-
                 // 날짜 하단 합계(해당 날짜 전체 합계)
                 const dayTotal = (dayBadges||[]).reduce((acc, x)=> acc + (x.day.minutes||0), 0);
                 const totalEl = document.createElement('div');
                 totalEl.className = 'day-total';
                 totalEl.textContent = formatMins(dayTotal);
+
+                // 날짜 헤더 + 수정/삭제 버튼 (몇일과 요일 사이)
+                const showButtons =
+                        currentMember &&
+                        selectedBadge &&
+                        selectedBadge.dateIso === iso &&
+                        String(selectedBadge.memberId) === String(currentMember.id);
+
+                const selectedMemberId = showButtons ? selectedBadge.memberId : null;
+
+                const DOW_HEAD2 = DOW_HEAD; // 재사용
+
+                cell.innerHTML = `
+                    <div class="date-head">
+                      <div class="date-left">
+                        <span class="date-text">${d.getDate()}일</span>
+                        ${
+                        showButtons
+                                ? `
+                                  <div class="seg-btn-wrap">
+                                      <button type="button"
+                                              class="btn btn-xs btn-primary seg-edit-btn"
+                                              data-date="${iso}"
+                                              data-member="${selectedMemberId}">
+                                          근무일정 수정
+                                      </button>
+                                      <button type="button"
+                                              class="btn btn-xs btn-outline-danger seg-delete-btn"
+                                              data-date="${iso}"
+                                              data-member="${selectedMemberId}">
+                                          삭제
+                                      </button>
+                                  </div>
+                                  `
+                                : ``
+                }
+                      </div>
+                      <span class="dow-mini">${DOW_HEAD2[dow]}</span>
+                    </div>
+                `;
+                cell.appendChild(segmentsWrap);
                 cell.appendChild(totalEl);
 
                 // ✅ 빈 셀 클릭 시 ‘일정 생성하기’ 버튼 토글
@@ -887,7 +992,7 @@
                 calendarGrid.appendChild(cell);
             }
 
-            // “근무일정 수정” 버튼 이벤트(하이라이트+선택 조건 만족하는 경우에만 존재)
+            // “근무일정 수정” 버튼 이벤트 (헤더 안)
             calendarGrid.querySelectorAll('.seg-edit-btn').forEach(btn=>{
                 btn.addEventListener('click', (e)=>{
                     e.stopPropagation();
@@ -895,17 +1000,43 @@
                     const mid = btn.dataset.member;
                     const member = (currentStatusMembers||[]).find(m=> String(m.id)===String(mid));
                     const dayObj = (monthAllMembersDayMap[mid]||{})[iso] || {segments:[]};
-                    openEditModal(iso, member, dayObj.segments||[], 'edit'); // ✅ 편집 모드
+                    openEditModal(iso, member, dayObj.segments||[], 'edit');
                 });
             });
 
-            // ✅ “일정 생성하기” 버튼 이벤트(빈 셀 선택 시)
+            // “삭제” 버튼 이벤트 (헤더 안)
+            calendarGrid.querySelectorAll('.seg-delete-btn').forEach(btn=>{
+                btn.addEventListener('click', async (e)=>{
+                    e.stopPropagation();
+                    const iso = btn.dataset.date;
+                    const mid = btn.dataset.member;
+                    const member = (currentStatusMembers||[]).find(m=> String(m.id)===String(mid));
+                    const name = member?.name || '';
+
+                    const ok = confirm(`정말로 ${iso} ${name}님의 근무 일정을 모두 삭제하시겠습니까?`);
+                    if(!ok) return;
+
+                    try{
+                        await deleteDaySchedule(mid, iso);
+                        // 삭제 후 상태 초기화
+                        selectedBadge = null;
+                        selectedEmptyDateIso = null;
+                        await renderAllMembersMonth(currentMonthStart);
+                        alert('해당 일자의 일정이 삭제되었습니다.');
+                    }catch(err){
+                        console.error(err);
+                        alert('삭제 중 오류가 발생했습니다.');
+                    }
+                });
+            });
+
+            // “일정 생성하기” 버튼 이벤트(빈 셀 선택 시)
             calendarGrid.querySelectorAll('.seg-create-btn').forEach(btn=>{
                 btn.addEventListener('click', (e)=>{
                     e.stopPropagation();
                     const iso = btn.dataset.date;
                     if(!currentMember) return;
-                    openEditModal(iso, currentMember, [], 'create'); // ✅ 생성 모드
+                    openEditModal(iso, currentMember, [], 'create');
                 });
             });
 
@@ -1009,7 +1140,7 @@
             originalSlotSet  = segmentsToSlotSet(originalSegments, stepMinutes);
             slotState        = new Set([...originalSlotSet]); // 기본은 원본 그대로
 
-            // ✅ 모달 모드 세팅 (edit | create)
+            // 모달 모드 세팅 (edit | create)
             editModal.dataset.mode = (mode === 'create') ? 'create' : 'edit';
 
             buildDayGrid();
@@ -1053,11 +1184,10 @@
                 }
                 closeEditModal();
                 // 저장 후 다시 월 렌더 (선택 상태 유지)
-                // 생성 모드였으면 빈셀 선택 해제
                 if((editModal.dataset.mode||'edit') === 'create'){
                     selectedEmptyDateIso = null;
                 }
-                renderAllMembersMonth(currentMonthStart);
+                await renderAllMembersMonth(currentMonthStart);
             }catch(e){
                 console.error(e);
                 alert('저장 중 오류가 발생했습니다.');
@@ -1150,7 +1280,7 @@
 
             const currentSegments = slotSetToSegments(slotState, stepMinutes);
 
-            // 현재 목록(추가/유지 구분은 칩 색으로는 단순 표시, 상세는 오른쪽 그리드 파란색)
+            // 현재 목록
             summaryCurrent.innerHTML = currentSegments.length
                     ? currentSegments.map(s => chipHtml('#0d6efd', s.start, s.end)).join(' ')
                     : '<span class="text-muted">-</span>';
@@ -1163,6 +1293,20 @@
             summaryDiffTotal.textContent = (diff>=0?'+':'') + `${diff}분`;
             summaryDiffTotal.classList.toggle('text-primary', diff>0);
             summaryDiffTotal.classList.toggle('text-danger', diff<0);
+        }
+
+        // ===== 삭제 API 호출 유틸 =====
+        async function deleteDaySchedule(memberId, dateIso){
+            const url = API_DELETE_ENDPOINT_TEMPLATE.replace('{memberId}', encodeURIComponent(memberId))
+                    + `?date=${encodeURIComponent(dateIso)}`;
+            const resp = await fetch(url, {
+                method:'POST',
+                headers:{'Accept':'application/json'}
+            });
+            if(!resp.ok){
+                const text = await resp.text().catch(()=> '');
+                throw new Error(`삭제 실패: ${resp.status} ${text}`);
+            }
         }
 
         // ===== 유틸 =====

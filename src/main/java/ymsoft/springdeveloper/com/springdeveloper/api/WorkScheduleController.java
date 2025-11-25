@@ -15,6 +15,7 @@ import ymsoft.springdeveloper.com.springdeveloper.service.WorkScheduleService;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -130,7 +131,33 @@ public class WorkScheduleController {
     }
 
 
+    @PostMapping("/{memberId}/delete")
+    public ResponseEntity<Map<String, Object>> deleteWorkScheduleByMemberIdWithDay(
+            @PathVariable Long memberId,
+            @RequestParam String date
+    ) {
+        log.info("GET /api/schedule/work/{}/delete", memberId);
+        Map<String, Object> result = new HashMap<>();
 
+        LocalDate workDate;
+        try {
+            workDate = LocalDate.parse(date); // yyyy-MM-dd 포맷 가정
+        } catch (DateTimeParseException e) {
+            result.put("success", false);
+            result.put("message", "잘못된 날짜 형식입니다. yyyy-MM-dd 형식으로 보내주세요.");
+            result.put("date", date);
+            return ResponseEntity.badRequest().body(result);
+        }
+
+        long deletedCount = workScheduleService.deleteWorkScheduleByMemberAndDate(memberId, workDate);
+
+        result.put("success", true);
+        result.put("memberId", memberId);
+        result.put("date", workDate.toString());
+        result.put("deletedCount", deletedCount);
+
+        return ResponseEntity.ok().build();
+    }
 //    @GetMapping("/today")
 //    public ResponseEntity<?> getTodayList() {
 //        return ResponseEntity.ok(service.getTodaySchedules());

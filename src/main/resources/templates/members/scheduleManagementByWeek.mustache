@@ -208,6 +208,7 @@
                 <strong>예정된 일정이 없습니다.</strong> 일정을 생성하세요.
             </div>
 
+            <!-- 🔵 개별 주간 템플릿 / 일정 그리드 -->
             <form id="memberWeekForm" class="mt-0">
                 <div class="grid-toolbar mb-2">
                     <div class="left">
@@ -219,7 +220,7 @@
                         <button type="button" class="btn btn-sm btn-outline-secondary ms-1" id="btnGridClearAll">전체 초기화</button>
                     </div>
                     <div class="right small text-muted">
-                        시간 슬롯을 드래그해서 선택/해제할 수 있습니다. (06:00 ~ 22:00)
+                        왼쪽은 <strong>템플릿</strong>, 오른쪽은 <strong>일정</strong>입니다. (06:00 ~ 22:00, 일정만 수정 가능)
                     </div>
                 </div>
 
@@ -228,13 +229,13 @@
                         <thead>
                         <tr>
                             <th style="width:74px;">시간</th>
-                            <th data-day-offset="0">월</th>
-                            <th data-day-offset="1">화</th>
-                            <th data-day-offset="2">수</th>
-                            <th data-day-offset="3">목</th>
-                            <th data-day-offset="4">금</th>
-                            <th data-day-offset="5">토</th>
-                            <th data-day-offset="6">일</th>
+                            <th data-day-offset="0">월<br><span class="small text-muted">템플릿 / 일정</span></th>
+                            <th data-day-offset="1">화<br><span class="small text-muted">템플릿 / 일정</span></th>
+                            <th data-day-offset="2">수<br><span class="small text-muted">템플릿 / 일정</span></th>
+                            <th data-day-offset="3">목<br><span class="small text-muted">템플릿 / 일정</span></th>
+                            <th data-day-offset="4">금<br><span class="small text-muted">템플릿 / 일정</span></th>
+                            <th data-day-offset="5">토<br><span class="small text-muted">템플릿 / 일정</span></th>
+                            <th data-day-offset="6">일<br><span class="small text-muted">템플릿 / 일정</span></th>
                         </tr>
                         </thead>
                         <tbody id="memberWeekGridBody">
@@ -678,9 +679,46 @@
         z-index: 1;
     }
 
-    .slot-10m { border-bottom: 1px dashed #eef2f6; border-right: 1px dashed #eef2f6; height: 18px; cursor: pointer; background: #ffffff; border-radius: 6px; margin: 1px 0; }
-    .slot-10m:hover { background: #f8fbff; }
-    .slot-10m.selected { background: rgba(25,135,84,.18); box-shadow: inset 0 0 0 1px rgba(25,135,84,.25); }
+    /* 🔵 템플릿 / 일정 슬롯 구조 */
+    .grid-day-cell .slot-wrapper {
+        display: flex;
+        gap: 1px;
+    }
+
+    .slot-plan,
+    .slot-10m.slot-actual {
+        height: 18px;
+        margin: 1px 0;
+        border-bottom: 1px solid  #eef2f6;
+        border-right: 1px solid  #eef2f6;
+        background: #ffffff;
+    }
+
+    /* 왼쪽: 템플릿 (읽기 전용) */
+    .slot-plan {
+        flex: 1;
+        border-radius: 6px 0 0 6px;
+        pointer-events: none;
+        background: #f8f9fa;
+        opacity: .9;
+    }
+    .slot-plan.filled {
+        background: rgba(102, 187, 106, 0.55);
+        box-shadow: inset 0 0 0 1px rgba(46, 160, 67, 0.6);
+    }
+
+    /* 오른쪽: 일정(수정 가능) */
+    .slot-10m.slot-actual {
+        flex: 1;
+        cursor: pointer;
+        border-radius: 0 6px 6px 0;
+        transition: background .15s ease, box-shadow .15s ease, border-color .15s ease;
+    }
+    .slot-10m.slot-actual:hover { background: #f8fbff; }
+    .slot-10m.slot-actual.selected {
+        background: rgba(25,135,84,.18);
+        box-shadow: inset 0 0 0 1px rgba(25,135,84,.25);
+    }
 
     .row-hour-start td, .row-hour-start th { border-top: 2px solid #e5e7eb !important; }
     .timecell { font-variant-numeric: tabular-nums; }
@@ -718,6 +756,8 @@
     (function(){
         const API_BASE   = '/api/schedule/work';
         const API_UPDATE = '/api/schedule/work/update';
+        const API_BASE_PLAN = '/api/schedule/template'; // ⚠ 실제 템플릿 API base URL로 변경하세요
+        const API_MEMBER_TEMPLATE_SCHEDULE = '/api/member'
         const HOUR_START = 6;
         const HOUR_END   = 22;
 
@@ -779,7 +819,13 @@
         let currentStatusMembers = [];
         let currentWeekStart = toMonday(new Date());
         let selectedMember = null;
-        let selectedWeekDaysMap = {};
+
+        // 🔵 하단 개별 그리드용 주간 데이터
+        let baseWeekDaysMap = {};      // 템플릿(왼쪽)
+        let selectedWeekDaysMap = {};  // 일정(오른쪽)
+
+        // (상단 타임테이블에서 쓰실 수 있게 plan map도 유지)
+        let lastPlanMap = {};
 
         let slotMinutes = 60;
         let gridStepMinutes = 60;
@@ -813,7 +859,7 @@
         attachHandlers();
 
         (async () => {
-            await handleStatusChange(true);
+            await handleStatusChange();
             updateSaveButtonState();
             updateCurrentTimeHighlight();
             setInterval(updateCurrentTimeHighlight, 15000);
@@ -876,7 +922,8 @@
                         btn.classList.add('active');
 
                         buildMemberWeekGrid();
-                        hydrateGridFromDayMap(selectedWeekDaysMap);
+                        hydrateTemplateGridFromMap(baseWeekDaysMap);
+                        hydrateScheduleGridFromMap(selectedWeekDaysMap);
                         updateSaveButtonState();
                     });
                 });
@@ -885,7 +932,7 @@
             if (btnGridClearAll) {
                 btnGridClearAll.addEventListener('click', () => {
                     if (!memberWeekGridBody) return;
-                    memberWeekGridBody.querySelectorAll('.slot-10m.selected').forEach(el => el.classList.remove('selected'));
+                    memberWeekGridBody.querySelectorAll('.slot-10m.slot-actual.selected').forEach(el => el.classList.remove('selected'));
                 });
             }
 
@@ -932,6 +979,12 @@
                 });
             }
             window.addEventListener('mouseup', ()=>{ modalDragging=false; });
+
+            attachGlobalGridMouseup();
+        }
+
+        function attachGlobalGridMouseup(){
+            window.addEventListener('mouseup', () => { if (gridDragging){ gridDragging = false; } });
         }
 
         function openPrintPage() {
@@ -1290,7 +1343,7 @@
             const head = document.querySelector(`#weekStaffTable thead th[data-dow="${dayIdx}"] .day-edit-wrap`);
             if (!head) return;
 
-            // === 기존: 근무일정 수정 버튼 ===
+            // 근무일정 수정 버튼
             const btn = document.createElement('button');
             btn.type = 'button';
             btn.className = 'btn btn-outline-light btn-sm day-edit-btn';
@@ -1313,7 +1366,7 @@
             });
             head.appendChild(btn);
 
-            // === ✅ 추가: 해당 일자 일정 삭제 버튼 ===
+            // 해당 일자 일정 삭제 버튼
             const delBtn = document.createElement('button');
             delBtn.type = 'button';
             delBtn.className = 'btn btn-outline-light btn-sm day-edit-btn ms-1';
@@ -1330,19 +1383,13 @@
                 if (!ok) return;
 
                 try {
-                    const body = {
-                        memberId: selectedMember.id,
-                        date: iso,
-                        segments: []          // ← 이 날짜의 근무 구간을 모두 비우기
-                    };
-
-                    const resp = await fetch(API_UPDATE, {
+                    const url = `/api/schedule/work/${encodeURIComponent(selectedMember.id)}/delete?date=${encodeURIComponent(iso)}`;
+                    const resp = await fetch(url, {
                         method: 'POST',
                         headers: {
                             'Content-Type':'application/json',
                             'Accept':'application/json'
                         },
-                        body: JSON.stringify(body)
                     });
 
                     if (!resp.ok) {
@@ -1353,7 +1400,6 @@
 
                     alert('해당 날짜의 근무 일정이 삭제되었습니다.');
 
-                    // 화면 갱신 (주간 타임테이블 + 개별 주간 그리드)
                     await fetchAndRenderWeekTable(currentStatusMembers, currentWeekStart);
                     await loadSelectedMemberWeek();
                     clearAllDayEditButtons();
@@ -1405,29 +1451,61 @@
             const weekStart = currentWeekStart;
             const weekEnd   = addDays(weekStart, 6);
             const startIso  = toIso(weekStart);
+            const endIso    = toIso(weekEnd);
 
             memberWeekCard.classList.remove('d-none');
             memberWeekNameBadge.textContent = selectedMember.name || '-';
-            memberWeekTitle.textContent = `개별 주간 일정 (${startIso} ~ ${toIso(weekEnd)})`;
+            memberWeekTitle.textContent = `개별 주간 일정 (${startIso} ~ ${endIso})`;
+
+            // 주간 ISO 날짜 배열 (normalizeWeeklyTemplate 에 전달)
+            const currentWeekDates = Array.from({length:7}, (_,i)=> toIso(addDays(weekStart, i)));
+
+            baseWeekDaysMap = {};
+            selectedWeekDaysMap = {};
+            lastPlanMap = {};
 
             try {
-                const url = `${API_BASE}/${encodeURIComponent(selectedMember.id)}/${startIso}/${toIso(weekEnd)}`;
-                const resp = await fetch(url, { headers:{'Accept':'application/json'} });
-                if (!resp.ok) {
-                    console.warn('[memberWeek] fetch fail:', selectedMember.id, resp.status);
+                // 🔵 1) 템플릿(왼쪽) 가져오기
+                try {
+                    const urlPlan = `${API_MEMBER_TEMPLATE_SCHEDULE}/${encodeURIComponent(selectedMember.id)}/schedule`;
+                    const respPlan = await fetch(urlPlan, { headers:{'Accept':'application/json'} });
+                    if (respPlan.ok) {
+                        const data = await respPlan.json();
+                        // ⚠ normalizeWeeklyTemplate 는 기존에 구현해 두신 함수 사용
+                        lastPlanMap = normalizeWeeklyTemplate(data, currentWeekDates);
+
+                        baseWeekDaysMap = lastPlanMap || {};
+                    }
+                } catch (e) {
+                    console.error('plan fetch error', e);
+                    baseWeekDaysMap = {};
+                }
+
+                // 🔵 2) 실제 일정(오른쪽) 가져오기
+                try {
+                    const url = `${API_BASE}/${encodeURIComponent(selectedMember.id)}/${startIso}/${endIso}`;
+                    const resp = await fetch(url, { headers:{'Accept':'application/json'} });
+                    if (!resp.ok) {
+                        console.warn('[memberWeek] fetch fail:', selectedMember.id, resp.status);
+                        selectedWeekDaysMap = {};
+                    } else {
+                        const data = await resp.json().catch(()=>null);
+                        selectedWeekDaysMap = normalizeDays(data) || {};
+                    }
+                } catch (e) {
+                    console.error('[memberWeek] work fetch error:', e);
                     selectedWeekDaysMap = {};
-                } else {
-                    const data = await resp.json().catch(()=>null);
-                    selectedWeekDaysMap = normalizeDays(data) || {};
                 }
             } catch (e) {
                 console.error('[memberWeek] unexpected error:', e);
+                baseWeekDaysMap = {};
                 selectedWeekDaysMap = {};
             }
 
             updateNoPlanAlert(selectedWeekDaysMap);
             buildMemberWeekGrid();
-            hydrateGridFromDayMap(selectedWeekDaysMap);
+            hydrateTemplateGridFromMap(baseWeekDaysMap);
+            hydrateScheduleGridFromMap(selectedWeekDaysMap);
             updateSaveButtonState();
         }
 
@@ -1455,11 +1533,24 @@
 
                 for (let dayOffset=0; dayOffset<7; dayOffset++){
                     const td = document.createElement('td');
-                    const div = document.createElement('div');
-                    div.className = 'slot-10m';
-                    div.dataset.dayOffset = String(dayOffset);
-                    div.dataset.idx = String(idx);
-                    td.appendChild(div);
+                    td.className = 'grid-day-cell';
+
+                    const wrap = document.createElement('div');
+                    wrap.className = 'slot-wrapper';
+
+                    const divPlan = document.createElement('div');
+                    divPlan.className = 'slot-plan';
+                    divPlan.dataset.dayOffset = String(dayOffset);
+                    divPlan.dataset.idx = String(idx);
+
+                    const divActual = document.createElement('div');
+                    divActual.className = 'slot-10m slot-actual';
+                    divActual.dataset.dayOffset = String(dayOffset);
+                    divActual.dataset.idx = String(idx);
+
+                    wrap.appendChild(divPlan);
+                    wrap.appendChild(divActual);
+                    td.appendChild(wrap);
                     tr.appendChild(td);
                 }
 
@@ -1474,7 +1565,7 @@
 
         function attachMemberGridDragHandlers(){
             if (!memberWeekGridBody) return;
-            memberWeekGridBody.querySelectorAll('.slot-10m').forEach(div => {
+            memberWeekGridBody.querySelectorAll('.slot-10m.slot-actual').forEach(div => {
                 div.addEventListener('mousedown', (e) => {
                     e.preventDefault();
                     gridDragging = true;
@@ -1486,20 +1577,63 @@
                     toggleGridSlot(div, gridDragAdding);
                 });
             });
-            window.addEventListener('mouseup', () => { if (gridDragging){ gridDragging = false; } });
         }
-        function toggleGridSlot(el, on) { if (on) el.classList.add('selected'); else el.classList.remove('selected'); }
+        function toggleGridSlot(el, on) {
+            if (on) el.classList.add('selected');
+            else el.classList.remove('selected');
+        }
 
         function updateNoPlanAlert(dayMap){
             const hasAny = hasAnySegments(dayMap);
             if (noPlanAlert) noPlanAlert.classList.toggle('d-none', hasAny);
         }
 
-        function hydrateGridFromDayMap(dayMap){
+        // 🔵 왼쪽 템플릿 그리드 채우기
+        function hydrateTemplateGridFromMap(templateMap){
             if (!memberWeekGridBody) return;
 
             const totalRows = (END_MIN - START_MIN) / gridStepMinutes;
-            memberWeekGridBody.querySelectorAll('.slot-10m.selected').forEach(el => el.classList.remove('selected'));
+
+            memberWeekGridBody
+                    .querySelectorAll('.slot-plan.filled')
+                    .forEach(el => el.classList.remove('filled'));
+
+            const weekStart = currentWeekStart;
+
+            for (let offset=0; offset<7; offset++){
+                const date = addDays(weekStart, offset);
+                const iso  = toIso(date);
+                const segments = (templateMap[iso]?.segments) || [];
+                if (!segments.length) continue;
+
+                segments.forEach(seg => {
+                    const segStartMin = hmToMin(seg.start);
+                    const segEndMin   = hmToMin(seg.end);
+                    const a = Math.max(START_MIN, segStartMin);
+                    const b = Math.min(END_MIN,   segEndMin);
+                    if (a >= b) return;
+
+                    const sIdx = Math.floor((a - START_MIN)/gridStepMinutes);
+                    const eIdx = Math.ceil((b - START_MIN)/gridStepMinutes) - 1;
+
+                    for (let idx = Math.max(0,sIdx); idx <= Math.min(totalRows-1, eIdx); idx++){
+                        const slot = memberWeekGridBody.querySelector(
+                                `.slot-plan[data-day-offset="${offset}"][data-idx="${idx}"]`
+                        );
+                        if (slot) slot.classList.add('filled');
+                    }
+                });
+            }
+        }
+
+        // 🔵 오른쪽 일정 그리드 채우기
+        function hydrateScheduleGridFromMap(dayMap){
+            if (!memberWeekGridBody) return;
+
+            const totalRows = (END_MIN - START_MIN) / gridStepMinutes;
+            memberWeekGridBody
+                    .querySelectorAll('.slot-10m.slot-actual.selected')
+                    .forEach(el => el.classList.remove('selected'));
 
             const weekStart = currentWeekStart;
 
@@ -1520,7 +1654,9 @@
                     const eIdx = Math.ceil((b - START_MIN)/gridStepMinutes) - 1;
 
                     for (let idx = Math.max(0,sIdx); idx <= Math.min(totalRows-1, eIdx); idx++){
-                        const slot = memberWeekGridBody.querySelector(`.slot-10m[data-day-offset="${offset}"][data-idx="${idx}"]`);
+                        const slot = memberWeekGridBody.querySelector(
+                                `.slot-10m.slot-actual[data-day-offset="${offset}"][data-idx="${idx}"]`
+                        );
                         if (slot) slot.classList.add('selected');
                     }
                 });
@@ -1549,7 +1685,9 @@
                 const iso = toIso(addDays(weekStart, dayOffset));
                 const indexes = [];
                 for (let idx=0; idx<totalRows; idx++){
-                    const slot = memberWeekGridBody.querySelector(`.slot-10m[data-day-offset="${dayOffset}"][data-idx="${idx}"]`);
+                    const slot = memberWeekGridBody.querySelector(
+                            `.slot-10m.slot-actual[data-day-offset="${dayOffset}"][data-idx="${idx}"]`
+                    );
                     if (slot && slot.classList.contains('selected')) indexes.push(idx);
                 }
                 const merged = mergeConsecutive(indexes);
@@ -1835,8 +1973,57 @@
             return map;
         }
 
+        function normalizeWeeklyTemplate(apiRows, weekDates){
+            const map = {};
+            const arr = Array.isArray(apiRows) ? apiRows : [];
+
+            const dates = Array.isArray(weekDates) ? weekDates : [];
+            const dayOrder = ['MON','TUE','WED','THU','FRI','SAT','SUN'];
+
+            const byDayCode = {};
+
+            arr.forEach(row => {
+                const dayCode = String(row.day || '').toUpperCase();
+                if(!dayCode) return;
+
+                if(!byDayCode[dayCode]) {
+                    byDayCode[dayCode] = [];
+                }
+
+                const startHm = (row.start || '').slice(0,5);
+                const endHm   = (row.end   || '').slice(0,5);
+
+                byDayCode[dayCode].push({
+                    start: startHm,
+                    end: endHm
+                });
+            });
+
+            dates.forEach((iso, idx) => {
+                const dayCode = dayOrder[idx];
+                const segs    = byDayCode[dayCode] || [];
+
+                const minutes = segs.reduce((acc, s) => {
+                    return acc + diffMinutes(s.start, s.end);
+                }, 0);
+
+                map[iso] = {
+                    segments: segs,
+                    minutes: minutes
+                };
+            });
+
+            return map;
+        }
+
         function hasAnySegments(dayMap){
             return Object.values(dayMap || {}).some(v => Array.isArray(v.segments) && v.segments.length > 0);
+        }
+
+        function diffMinutes(startHm, endHm){
+            const s = hmToMin(startHm);
+            const e = hmToMin(endHm);
+            return Math.max(0, e - s);
         }
 
         function hmToMin(hm){
