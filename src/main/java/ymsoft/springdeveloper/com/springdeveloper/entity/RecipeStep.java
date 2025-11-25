@@ -30,6 +30,9 @@ public class RecipeStep {
     @Column(nullable = false)
     private Integer stepOrder;
 
+    @Column(nullable = false)
+    private Integer stepTime = 0;
+
     // 실제 레시피 내용
     @Column(nullable = false, columnDefinition = "TEXT")
     private String content;

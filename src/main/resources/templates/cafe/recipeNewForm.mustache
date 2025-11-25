@@ -126,6 +126,27 @@
         border: 1px solid #ced4da;
         background-color: #f8f9fa;
     }
+
+    /* 🔢 Step 옆 초 입력 UI */
+    .step-time-group {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        margin-left: 0.75rem;
+    }
+
+    .step-time-input {
+        width: 70px;
+        padding: 0.1rem 0.35rem;
+        font-size: 0.8rem;
+        text-align: right;
+    }
+
+    .step-time-label {
+        font-size: 0.8rem;
+        color: #6c757d;
+        white-space: nowrap;
+    }
 </style>
 
 <div class="container py-4">
@@ -366,8 +387,18 @@
             wrapper.innerHTML = `
                 <div class="card-body py-2">
                     <div class="d-flex justify-content-between align-items-center mb-2">
-                        <div class="fw-semibold">
-                            Step <span class="step-number">${index + 1}</span>
+                        <div class="fw-semibold d-flex align-items-center">
+                            Step <span class="step-number ms-1">${index + 1}</span>
+
+                            <!-- 🔢 이 단계의 시간 입력 (초) -->
+                            <div class="step-time-group">
+                                <input type="number"
+                                       class="form-control form-control-sm step-time-input"
+                                       name="stepTimes"
+                                       min="1"
+                                       value="10">
+                                <span class="step-time-label">초</span>
+                            </div>
                         </div>
                         <button type="button"
                                 class="btn btn-sm btn-outline-danger btn-remove-step">
@@ -480,7 +511,6 @@
 
         /* =========================
            템플릿 데이터(JS 배열) 생성
-           컨트롤러에서 넘긴 templateRecipes(RecipeCreateRequestDto 리스트)를 기반으로 JS 배열 구성
            ========================= */
         const rawTemplateData = [
             {{#templateRecipes}}
@@ -523,7 +553,6 @@
             selectedTemplateData = null;
 
             if (!templates || templates.length === 0) {
-                // 아무 템플릿도 없으면 안내 문구만
                 if (templateEmptyTextEl) {
                     templateEmptyTextEl.classList.remove('d-none');
                 }
@@ -568,7 +597,7 @@
             });
         }
 
-        // 페이지 로딩 시 바로 템플릿 카드 렌더링
+        // 페이지 로딩 시 템플릿 카드 렌더링
         renderTemplateCards(rawTemplateData);
 
         // 적용 버튼 클릭 시 선택된 템플릿 데이터를 폼에 매핑
@@ -607,7 +636,7 @@
             // 카테고리
             selectCategoryByValue(tpl.category);
 
-            // 스텝 입력값 설정
+            // 스텝 입력값 설정 (시간은 일단 UI 기본 10초 유지)
             resetSteps();
             if (tpl.steps && tpl.steps.length > 0) {
                 tpl.steps.forEach(stepText => {

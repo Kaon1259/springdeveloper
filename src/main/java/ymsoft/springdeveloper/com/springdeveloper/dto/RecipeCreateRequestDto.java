@@ -34,6 +34,7 @@ public class RecipeCreateRequestDto {
 
     /** Step 텍스트 리스트 */
     private List<String> steps;
+    private List<Integer> stepTimes;
 
     /** DTO → Entity 변환 */
     public Recipe toEntity() {
@@ -59,6 +60,7 @@ public class RecipeCreateRequestDto {
                 RecipeStep step = RecipeStep.builder()
                         .recipe(recipe)
                         .stepOrder(i + 1)
+                        .stepTime(stepTimes.get(i))
                         .content(content.trim())
                         .build();
 
@@ -88,6 +90,12 @@ public class RecipeCreateRequestDto {
                                         .sorted(Comparator.comparing(RecipeStep::getStepOrder))
                                         .map(RecipeStep::getContent)
                                         .collect(Collectors.toList())
+                )
+                .stepTimes(
+                        recipe.getSteps().stream()
+                                .sorted(Comparator.comparing(RecipeStep::getStepOrder))
+                                .map(RecipeStep::getStepTime)
+                                .collect(Collectors.toList())
                 )
                 .build();
     }

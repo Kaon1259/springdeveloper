@@ -66,27 +66,6 @@
         background-color: #ffffff;
     }
 
-    /* 🔢 Step 옆 초 입력 UI */
-    .step-time-group {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.25rem;
-        margin-left: 0.75rem;
-    }
-
-    .step-time-input {
-        width: 70px;
-        padding: 0.1rem 0.35rem;
-        font-size: 0.8rem;
-        text-align: right;
-    }
-
-    .step-time-label {
-        font-size: 0.8rem;
-        color: #6c757d;
-        white-space: nowrap;
-    }
-
     /* ==============================
        레시피 미리보기 모달 스타일
        (목록 페이지 팝업 느낌으로)
@@ -348,17 +327,8 @@
                             <div class="card mb-2">
                                 <div class="card-body py-2">
                                     <div class="d-flex justify-content-between align-items-center mb-2">
-                                        <div class="fw-semibold d-flex align-items-center">
-                                            Step <span class="step-number ms-1">0</span>
-                                            <!-- 🔢 이 단계의 시간 입력 (초) -->
-                                            <div class="step-time-group">
-                                                <input type="number"
-                                                       class="form-control form-control-sm step-time-input"
-                                                       name="stepTimes"
-                                                       min="1"
-                                                       value="10">
-                                                <span class="step-time-label">초</span>
-                                            </div>
+                                        <div class="fw-semibold">
+                                            Step <span class="step-number">0</span>
                                         </div>
                                         <button type="button"
                                                 class="btn btn-sm btn-outline-danger btn-remove-step">
@@ -436,16 +406,8 @@
             wrapper.innerHTML = `
                 <div class="card-body py-2">
                     <div class="d-flex justify-content-between align-items-center mb-2">
-                        <div class="fw-semibold d-flex align-items-center">
-                            Step <span class="step-number ms-1">${index + 1}</span>
-                            <div class="step-time-group">
-                                <input type="number"
-                                       class="form-control form-control-sm step-time-input"
-                                       name="stepTimes"
-                                       min="1"
-                                       value="10">
-                                <span class="step-time-label">초</span>
-                            </div>
+                        <div class="fw-semibold">
+                            Step <span class="step-number">${index + 1}</span>
                         </div>
                         <button type="button"
                                 class="btn btn-sm btn-outline-danger btn-remove-step">

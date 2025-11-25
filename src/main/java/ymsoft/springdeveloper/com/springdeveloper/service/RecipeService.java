@@ -97,6 +97,7 @@ public class RecipeService {
         recipeRepository.flush();  // orphanRemoval=true → DB 실제 삭제 반영
 
         int order = 1;
+        int stepTimeOrder = 0;
         for (String content : dto.getSteps()) {
             if (content == null || content.isBlank()) continue;
 
@@ -104,6 +105,7 @@ public class RecipeService {
                     .recipe(recipe)
                     .stepOrder(order++)
                     .content(content.trim())
+                    .stepTime(dto.getStepTimes().get(stepTimeOrder++))
                     .build();
 
             recipe.addStep(step);
@@ -221,5 +223,21 @@ public class RecipeService {
     public List<RecipeCreateRequestDto> getTemplateRecipes() {
         List<Recipe> recipes = recipeRepository.findAllByTemplateTrueOrderByCategoryAscMenuNameAsc();
         return RecipeCreateRequestDto.toDto(recipes);
+    }
+
+    @Transactional
+    public void updateVisible(Long recipeId, boolean visible) {
+        int updated = recipeRepository.updateVisible(recipeId, visible);
+        if (updated == 0) {
+            throw new IllegalArgumentException("레시피를 찾을 수 없습니다. id=" + recipeId);
+        }
+    }
+
+    @Transactional
+    public void updateTemplate(Long recipeId, boolean template) {
+        int updated = recipeRepository.updateTemplate(recipeId, template);
+        if (updated == 0) {
+            throw new IllegalArgumentException("레시피를 찾을 수 없습니다. id=" + recipeId);
+        }
     }
 }

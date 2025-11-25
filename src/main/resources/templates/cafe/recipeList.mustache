@@ -71,10 +71,10 @@
         top: 50%;
         transform: translateY(-50%);
         display: none;
-        font-size: 1.3rem;         /* 조금 더 크게 */
+        font-size: 1.3rem;
         cursor: pointer;
         line-height: 1;
-        color: #ffffff;            /* 잘 보이게 흰색 */
+        color: #ffffff;
         background-color: rgba(0, 0, 0, 0.45);
         padding: 0.05rem 0.4rem;
         border-radius: 999px;
@@ -95,17 +95,30 @@
         border: 2px solid transparent;
         background-color: transparent;
         box-sizing: border-box;
-        font-size: 0;   /* 안쪽 별 문자 제거 */
+        font-size: 0; /* 텍스트 대신 이모지는 ::before로 처리 */
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
     }
 
-    /* visible == true : 주황색 원(테두리와 동일 색으로 채움) */
+    /* ✅ 원 안에 별(★) 이모지 표시 */
+    .star-icon::before {
+        content: "★";
+        font-size: 0.85rem;
+        line-height: 1;
+        color: #ffffff;
+        display: block;
+        text-align: center;
+    }
+
+    /* visible == true : 주황색 원(테두리와 동일 색으로 채움) + 흰 별 */
     .star-visible {
         background-color: #fd7e14;
         border-color: #fd7e14;
         animation: starBorderBlinkOrange 1.2s ease-in-out infinite;
     }
 
-    /* template == true : 녹색 원(테두리와 동일 색으로 채움) */
+    /* template == true : 녹색 원(테두리와 동일 색으로 채움) + 흰 별 */
     .star-template {
         background-color: #198754;
         border-color: #198754;
@@ -122,6 +135,36 @@
         0%   { box-shadow: 0 0 0 0 rgba(25,135,84,0.7); }
         50%  { box-shadow: 0 0 0 6px rgba(25,135,84,0); }
         100% { box-shadow: 0 0 0 0 rgba(25,135,84,0); }
+    }
+
+    /* 🔸 OFF 상태(visible=false, template=false) 기본은 숨김, 선택되면 보이게 */
+    .star-visible-off,
+    .star-template-off {
+        display: none; /* 기본 숨김 */
+        background-color: #ffffff;
+    }
+
+    .star-visible-off {
+        border-color: #fd7e14;
+    }
+    .star-template-off {
+        border-color: #198754;
+    }
+
+    .star-visible-off::before {
+        content: "★";
+        color: #fd7e14;
+    }
+
+    .star-template-off::before {
+        content: "★";
+        color: #198754;
+    }
+
+    /* 레시피가 선택되었을 때만 OFF 별 출력 */
+    .recipe-pill.selected .star-visible-off,
+    .recipe-pill.selected .star-template-off {
+        display: inline-flex;
     }
 
     .recipe-pill[data-temp="HOT"] {
@@ -274,11 +317,21 @@
                                     <span class="recipe-pill {{#visible}}visible-blink{{/visible}}"
                                           data-temp="{{temperature}}">
                                         {{#visible}}
-                                            <span class="star-icon star-visible"></span>
+                                            <span class="star-icon star-visible" title="대시보드에서 숨기기"></span>
                                         {{/visible}}
+                                        {{^visible}}
+                                            <!-- visible == false 일 때, 선택 시에만 흰 배경 + 주황 별 ON 버튼 -->
+                                            <span class="star-icon star-visible-off" title="대시보드에 표시하기"></span>
+                                        {{/visible}}
+
                                         {{#template}}
-                                            <span class="star-icon star-template"></span>
+                                            <span class="star-icon star-template" title="템플릿 해제"></span>
                                         {{/template}}
+                                        {{^template}}
+                                            <!-- template == false 일 때, 선택 시에만 흰 배경 + 초록 별 ON 버튼 -->
+                                            <span class="star-icon star-template-off" title="템플릿으로 설정"></span>
+                                        {{/template}}
+
                                         <span class="menu-name-text">{{menuName}}</span>
                                         <span class="pill-edit-icon" title="레시피 수정하기">✎</span>
                                     </span>
@@ -358,6 +411,53 @@
 
         let selectedRecipeId = null;
 
+        // ✅ visible 변경 호출
+        async function updateRecipeVisible(recipeId, visible) {
+            try {
+                const res = await fetch("/api/cafe/recipe/" + recipeId + "/visible/" + visible, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                        // 필요하면 CSRF 토큰 헤더 추가
+                    },
+                    body: JSON.stringify({ visible: visible })
+                });
+
+                if (!res.ok) {
+                    alert("visible 상태 변경에 실패했습니다. (" + res.status + ")");
+                    return;
+                }
+
+                location.reload();
+            } catch (e) {
+                console.error(e);
+                alert("visible 상태 변경 중 오류가 발생했습니다.");
+            }
+        }
+
+        // ✅ template 변경 호출
+        async function updateRecipeTemplate(recipeId, template) {
+            try {
+                const res = await fetch("/api/cafe/recipe/" + recipeId + "/template/" + template, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ template: template })
+                });
+
+                if (!res.ok) {
+                    alert("template 상태 변경에 실패했습니다. (" + res.status + ")");
+                    return;
+                }
+
+                location.reload();
+            } catch (e) {
+                console.error(e);
+                alert("template 상태 변경 중 오류가 발생했습니다.");
+            }
+        }
+
         function clearSelection() {
             tableBody
                     .querySelectorAll(".recipe-pill")
@@ -394,6 +494,11 @@
 
             const inlineEditIcon = wrapper.querySelector(".pill-edit-icon");
 
+            const visibleStarOn  = wrapper.querySelector(".star-visible");
+            const visibleStarOff = wrapper.querySelector(".star-visible-off");
+            const templateStarOn  = wrapper.querySelector(".star-template");
+            const templateStarOff = wrapper.querySelector(".star-template-off");
+
             /* pill 클릭 = 선택 토글 */
             pill.addEventListener("click", e => {
                 e.stopPropagation();
@@ -411,6 +516,82 @@
                     const id = wrapper.dataset.id;
                     if (id) {
                         location.href = "/cafe/recipe/" + id + "/edit";
+                    }
+                });
+            }
+
+            /* visible == true 별 아이콘 클릭 시: confirm 후 visible=false */
+            if (visibleStarOn) {
+                visibleStarOn.addEventListener("click", e => {
+                    e.stopPropagation();
+
+                    const id = wrapper.dataset.id;
+                    const name = wrapper.dataset.name || "";
+
+                    const ok = confirm(
+                            `"${name}" 레시피를 대시보드에서 보이지 않게 하시겠습니까?\n(visible = false로 변경됩니다)`
+                    );
+                    if (!ok) return;
+
+                    if (id) {
+                        updateRecipeVisible(id, false);
+                    }
+                });
+            }
+
+            /* visible == false 이고 pill 선택 시 뜨는 OFF 별 클릭: visible=true */
+            if (visibleStarOff) {
+                visibleStarOff.addEventListener("click", e => {
+                    e.stopPropagation();
+
+                    const id = wrapper.dataset.id;
+                    const name = wrapper.dataset.name || "";
+
+                    const ok = confirm(
+                            `"${name}" 레시피를 대시보드에서 보이도록 설정하시겠습니까?\n(visible = true로 변경됩니다)`
+                    );
+                    if (!ok) return;
+
+                    if (id) {
+                        updateRecipeVisible(id, true);
+                    }
+                });
+            }
+
+            /* template == true 별 아이콘 클릭 시: confirm 후 template=false */
+            if (templateStarOn) {
+                templateStarOn.addEventListener("click", e => {
+                    e.stopPropagation();
+
+                    const id = wrapper.dataset.id;
+                    const name = wrapper.dataset.name || "";
+
+                    const ok = confirm(
+                            `"${name}" 레시피를 템플릿에서 해제하시겠습니까?\n(template = false로 변경됩니다)`
+                    );
+                    if (!ok) return;
+
+                    if (id) {
+                        updateRecipeTemplate(id, false);
+                    }
+                });
+            }
+
+            /* template == false 이고 pill 선택 시 뜨는 OFF 별 클릭: template=true */
+            if (templateStarOff) {
+                templateStarOff.addEventListener("click", e => {
+                    e.stopPropagation();
+
+                    const id = wrapper.dataset.id;
+                    const name = wrapper.dataset.name || "";
+
+                    const ok = confirm(
+                            `"${name}" 레시피를 템플릿으로 설정하시겠습니까?\n(template = true로 변경됩니다)`
+                    );
+                    if (!ok) return;
+
+                    if (id) {
+                        updateRecipeTemplate(id, true);
                     }
                 });
             }
@@ -438,7 +619,6 @@
                 setTimeout(() => {
                     const firstStep = document.querySelector("#recipe-steps-content .recipe-step");
                     if (firstStep) {
-                        // 기존 선택 제거 후 1스텝만 선택
                         document
                                 .querySelectorAll("#recipe-steps-content .recipe-step")
                                 .forEach(s => s.classList.remove("step-selected"));

@@ -11,8 +11,8 @@
         z-index: 20;
         background-color: #ffffff;
         border-bottom: 1px solid #dee2e6;
-        padding: 0.9rem 1.5rem;   /* 조금 더 넓게 */
-        min-height: 64px;         /* 행 높이 확보 (마이크 안 잘리도록) */
+        padding: 0.9rem 1.5rem;
+        min-height: 64px;
     }
 
     .menu-card {
@@ -24,9 +24,8 @@
         display: flex;
         flex-direction: column;
         border-radius: 1rem;
-
-        position: relative;   /* 접힌 코너용 */
-        overflow: hidden;     /* 코너가 카드 밖으로 나가지 않도록 */
+        position: relative;
+        overflow: hidden;
         background-color: #ffffff;
     }
 
@@ -46,25 +45,40 @@
         position: absolute;
         top: 0;
         left: 0;
-        width: 56px;    /* 접힌 코너 크기 */
+        width: 56px;
         height: 56px;
-        clip-path: polygon(0 0, 100% 0, 0 100%); /* 삼각형 */
-        background-color: transparent;          /* 기본은 투명, 아래에서 색 지정 */
+        clip-path: polygon(0 0, 100% 0, 0 100%);
+        background-color: transparent;
         z-index: 0;
     }
 
     .menu-card[data-recipe-temp="HOT"]::before {
-        background-color: #dc3545; /* 빨간색 */
+        background-color: #dc3545;
     }
 
     .menu-card[data-recipe-temp="ICE"]::before {
-        background-color: #0d6efd; /* 파란색 */
+        background-color: #0d6efd;
+    }
+
+    .menu-card .card-body {
+        position: relative;
+        z-index: 1;
+    }
+
+    /* 상단 레시피 번호(#10) */
+    .recipe-id-label {
+        font-size: 3.3rem;      /* 크게 표시 */
+        font-weight: 800;
+        color: #6c757d;
+        text-align: center;
+        margin-bottom: 0.25rem;
+        letter-spacing: 0.06em;
     }
 
     .menu-name {
-        font-size: 2rem;           /* 크게 */
+        font-size: 2rem;
         font-weight: 800;
-        text-align: center;        /* 가운데 정렬 */
+        text-align: center;
     }
 
     .menu-tag {
@@ -73,31 +87,20 @@
         padding: 0.1rem 0.5rem;
     }
 
-    .selected-menu-chip {
-        font-size: 0.95rem;
-        border-radius: 999px;
-        padding: 0.2rem 0.7rem;
-        cursor: default;
-    }
-
-    .selected-menu-chip + .selected-menu-chip {
-        margin-left: 0.25rem;
-    }
-
     .card-count-badge {
         font-size: 0.85rem;
     }
 
     /* ===== 레시피 카드 그리드 (4열) ===== */
     .menu-grid-wrapper {
-        height: calc(100vh - 210px);     /* 상단바/여백 고려값 */
+        height: calc(100vh - 210px);
         max-height: calc(100vh - 210px);
         overflow-y: auto;
     }
 
     .menu-grid {
         display: grid;
-        grid-template-columns: repeat(4, minmax(0, 1fr));   /* 4열 */
+        grid-template-columns: repeat(4, minmax(0, 1fr));
         grid-auto-rows: 1fr;
         grid-auto-flow: row;
         gap: 1rem;
@@ -112,31 +115,24 @@
         width: 100%;
     }
 
-    /* 카드 안 내용이 접힌 코너 위에 오도록 */
-    .menu-card .card-body {
-        position: relative;
-        z-index: 1;
-    }
-
-    /* ===== HOT / ICE 배지 (라운드렉트 + 접힌 코너 + 이모지) ===== */
+    /* ===== HOT / ICE 배지 (라운드 + 접힌 코너 + 이모지) ===== */
     .temp-badge {
         position: relative;
         display: inline-flex;
         align-items: center;
         justify-content: center;
         padding: 0.4rem 1rem;
-        padding-left: 1.4rem;      /* 접힌 코너 영역만큼 살짝 여유 */
+        padding-left: 1.4rem;
         border-radius: 999px;
         background-color: #ffffff;
         border: 3px solid;
-        font-size: 1.3rem;         /* 좀 더 크게 */
-        font-weight: 800;          /* 굵게 */
+        font-size: 1.3rem;
+        font-weight: 800;
         gap: 0.25rem;
         line-height: 1;
-        overflow: hidden;          /* 접힌 코너가 튀어나지 않도록 */
+        overflow: hidden;
     }
 
-    /* 배지 접힌 코너(좌측 상단) */
     .temp-badge::before {
         content: "";
         position: absolute;
@@ -144,7 +140,7 @@
         left: 0;
         width: 24px;
         height: 24px;
-        clip-path: polygon(0 0, 100% 0, 0 100%);  /* 삼각형 모양 */
+        clip-path: polygon(0 0, 100% 0, 0 100%);
     }
 
     .temp-HOT {
@@ -158,14 +154,13 @@
     }
 
     .temp-HOT::before {
-        background-color: #dc3545;      /* 접힌 코너 빨간색 */
+        background-color: #dc3545;
     }
 
     .temp-ICE::before {
-        background-color: #0d6efd;      /* 접힌 코너 파란색 */
+        background-color: #0d6efd;
     }
 
-    /* 이모지: 텍스트 오른쪽에 붙임 */
     .temp-HOT::after {
         content: "🔥";
         margin-left: 0.3rem;
@@ -178,10 +173,10 @@
         font-size: 1.4rem;
     }
 
-    /* OZ (컵 사이즈) 배지: 더 크고 굵게 */
+    /* OZ (컵 사이즈) 배지 */
     .cup-badge {
-        font-size: 1.3rem;          /* 크게 */
-        font-weight: 800;           /* 굵게 */
+        font-size: 1.3rem;
+        font-weight: 800;
         padding: 0.2rem 0.8rem;
         border-radius: 999px;
         background-color: #f8f9fa;
@@ -193,7 +188,7 @@
         position: fixed;
         inset: 0;
         z-index: 1050;
-        display: none;              /* .show 일 때 flex로 바뀜 */
+        display: none;
         align-items: center;
         justify-content: center;
     }
@@ -213,17 +208,12 @@
         z-index: 1060;
         background-color: #ffffff;
         border-radius: 0.75rem;
-
-        /* 팝업 가로 크기 더 크게 (약 1.5배) */
         max-width: 1280px;
         width: 95%;
-
-        /* 화면 상하 초과 방지 */
         max-height: 85vh;
         display: flex;
         flex-direction: column;
         overflow: hidden;
-
         box-shadow: 0 0.75rem 1.5rem rgba(0, 0, 0, 0.25);
         padding: 1.25rem 1.5rem 1.5rem;
         margin: 0 1rem;
@@ -245,30 +235,27 @@
     }
 
     .recipe-modal-title {
-        font-size: 2rem;   /* 제목 약간 더 크게 */
+        font-size: 2rem;
         font-weight: 700;
         margin: 0;
     }
 
     .recipe-modal-body {
         flex-grow: 1;
-        overflow-y: auto;      /* 팝업 자체는 고정, 내부만 스크롤 */
+        overflow-y: auto;
         padding-right: 0.5rem;
     }
 
-    /* 계단(스텝) 스타일 + 글씨 좀 더 크게, 위아래 간격 더 넓게 */
     .recipe-step {
         position: relative;
         background-color: #ffffff;
         border-radius: 0.5rem;
-        padding: 1.3rem 1.5rem;   /* 상하 패딩 더 증가 */
-        margin-bottom: 1.8rem;    /* 스텝 간 간격 넓게 */
+        padding: 1.3rem 1.5rem;
+        margin-bottom: 1.8rem;
         box-shadow: 0 0.35rem 0.8rem rgba(0, 0, 0, 0.08);
         border-left: 6px solid #0d6efd;
-
-        font-size: 2.2rem;        /* 팝업 글씨 조금 더 크게 */
+        font-size: 2.2rem;
         line-height: 1.6;
-
         cursor: pointer;
         transition: background-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
     }
@@ -319,12 +306,12 @@
         border-radius: 999px;
         border: 2px solid rgba(15,23,42,0.4);
         background-color: #ffffff;
-        width: 50px;     /* 조금 더 크게 */
+        width: 50px;
         height: 50px;
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        font-size: 2rem; /* 아이콘 크게 */
+        font-size: 2rem;
         cursor: pointer;
         margin-left: 0.75rem;
         box-shadow: 0 3px 10px rgba(15,23,42,0.25);
@@ -337,12 +324,29 @@
         box-shadow: 0 5px 14px rgba(15,23,42,0.35);
     }
 
+    /* 마이크 깜빡임 애니메이션 */
+    @keyframes micBlink {
+        0% {
+            box-shadow: 0 3px 10px rgba(15,23,42,0.25);
+            opacity: 1;
+        }
+        50% {
+            box-shadow: 0 0 0 4px rgba(13,110,253,0);
+            opacity: 0.45;
+        }
+        100% {
+            box-shadow: 0 3px 10px rgba(15,23,42,0.25);
+            opacity: 1;
+        }
+    }
+
     .top-mic-btn.listening {
         background-color: #0d6efd;
         color: #ffffff;
         border-color: #0a58ca;
         box-shadow: 0 0 0 4px rgba(13,110,253,0.45);
         transform: translateY(0);
+        animation: micBlink 1s ease-in-out infinite;
     }
 
     /* 레시피 없음 팝업 */
@@ -365,12 +369,57 @@
     .no-recipe-popup.show {
         display: block;
     }
+
+    /* 자동재생 슬라이더 위치 조정 */
+    .auto-play-switch .form-check-input {
+        cursor: pointer;
+    }
+
+    /* 모달 내 20초 원형 타이머 (SVG 기반) */
+    .auto-timer {
+        width: 40px;
+        height: 40px;
+        position: relative;
+        display: none;             /* JS에서 .show로 변경 */
+        align-items: center;
+        justify-content: center;
+    }
+    .auto-timer.show {
+        display: flex;
+    }
+
+    .auto-timer-svg {
+        transform: rotate(-90deg); /* 12시 방향에서 시작하도록 회전 */
+    }
+
+    .auto-timer-bg-circle {
+        stroke: #d1e7dd;          /* 연한 녹색 배경 */
+        stroke-width: 3;
+        fill: none;
+    }
+
+    .auto-timer-progress-circle {
+        stroke: #198754;          /* 진한 녹색 진행 */
+        stroke-width: 3;
+        fill: none;
+        stroke-linecap: round;
+        transition: stroke-dashoffset 0.25s linear;
+    }
+
+    .auto-timer-value {
+        position: absolute;
+        font-weight: 700;
+        color: #198754;
+        font-size: 0.9rem;
+        line-height: 1;
+    }
 </style>
 
 <div class="container-fluid py-3">
 
     <!-- 상단 선택 상태 바 -->
     <div class="top-status-bar d-flex flex-wrap align-items-center justify-content-between mb-3">
+        <!-- 좌측: 안내 + 마이크 -->
         <div class="d-flex flex-column flex-sm-row flex-wrap align-items-sm-center gap-2">
             <div class="fw-bold d-flex align-items-center">
                 <span>주요 레시피를 선택하세요</span>
@@ -380,24 +429,25 @@
                 <button type="button"
                         id="btn-voice-recipe"
                         class="top-mic-btn"
-                        title="음성인식 꺼짐 · 누르고 '레시피 이름 / 다음 / 그만 / 음성인식 그만'을 말해보세요.">
+                        title="음성인식 꺼짐 · 누르고 '헬리야 / 레시피 이름 / 번호 / 다음 / 그만 / 음성인식 그만'을 말해보세요.">
                     🎙
                 </button>
             </div>
-            <div class="d-flex align-items-center gap-2 mt-2 mt-sm-0">
-                <span class="badge bg-primary card-count-badge">
-                    선택한 레시피
-                    <span id="selected-count" class="fw-bold ms-1">0</span> / 1
-                </span>
-            </div>
         </div>
-    </div>
 
-    <!-- 선택한 메뉴(레시피) 리스트(칩) -->
-    <div class="mb-3">
-        <div class="small text-muted mb-1">현재 선택한 레시피</div>
-        <div id="selected-menu-chips" class="d-flex flex-wrap gap-1">
-            <!-- JS로 chip 추가 -->
+        <!-- 우측: 선택 카운트 + 자동재생 슬라이더 -->
+        <div class="d-flex align-items-center gap-3 mt-2 mt-sm-0">
+            <span class="badge bg-primary card-count-badge">
+                선택한 레시피
+                <span id="selected-count" class="fw-bold ms-1">0</span> / 1
+            </span>
+
+            <div class="form-check form-switch mb-0 auto-play-switch">
+                <input class="form-check-input" type="checkbox" id="auto-play-toggle">
+                <label class="form-check-label small" for="auto-play-toggle">
+                    자동재생
+                </label>
+            </div>
         </div>
     </div>
 
@@ -412,6 +462,11 @@
                          data-recipe-temp="{{temperature}}">
 
                         <div class="card-body d-flex flex-column justify-content-center align-items-center">
+                            <!-- 레시피 번호(#10) -->
+                            <div class="recipe-id-label">
+                                #{{id}}
+                            </div>
+
                             <!-- 가운데 크게 메뉴 이름 -->
                             <div class="menu-name mb-2">
                                 {{menuName}}
@@ -472,6 +527,23 @@
         <div class="recipe-modal-header">
             <h5 class="recipe-modal-title" id="recipe-modal-title">레시피</h5>
             <div class="recipe-modal-header-right">
+                <!-- ⏱ 20초 원형 타이머 (SVG) -->
+                <div class="auto-timer" id="auto-timer">
+                    <svg class="auto-timer-svg" width="40" height="40" viewBox="0 0 40 40">
+                        <!-- 배경 원 -->
+                        <circle
+                                class="auto-timer-bg-circle"
+                                cx="20" cy="20" r="18"
+                        ></circle>
+                        <!-- 진행 원 -->
+                        <circle
+                                id="auto-timer-progress"
+                                class="auto-timer-progress-circle"
+                                cx="20" cy="20" r="18"
+                        ></circle>
+                    </svg>
+                    <span class="auto-timer-value" id="auto-timer-value">20</span>
+                </div>
                 <!-- 🔊 TTS 토글 버튼 (기본 OFF) -->
                 <button type="button"
                         class="tts-toggle-btn off"
@@ -495,12 +567,12 @@
     레시피가 없습니다.
 </div>
 
-<!-- JS: 단일 선택 + 팝업 레시피 + TTS + 상단 공용 음성 인식(레시피 이름/다음/그만/음성인식 그만) -->
 <script>
     (function () {
+        const AUTO_TOTAL_SECONDS = 20;
+
         const cards = document.querySelectorAll('.menu-card');
         const selectedCountSpan = document.getElementById('selected-count');
-        const chipsContainer = document.getElementById('selected-menu-chips');
 
         const recipeModal = document.getElementById('recipe-modal');
         const recipeModalBackdrop = document.getElementById('recipe-modal-backdrop');
@@ -511,30 +583,61 @@
 
         const btnVoiceRecipe = document.getElementById('btn-voice-recipe');
 
+        const autoPlayToggle = document.getElementById('auto-play-toggle');
+        const autoTimer = document.getElementById('auto-timer');
+        const autoTimerValue = document.getElementById('auto-timer-value');
+        const autoTimerProgress = document.getElementById('auto-timer-progress');
+
         const noRecipePopup = document.getElementById('no-recipe-popup');
         let noRecipePopupTimer = null;
 
         let currentSelectedMenu = null; // {id, name}
         let currentSelectedCard = null;
 
-        // TTS ON/OFF 상태 (기본 OFF)
+        // TTS ON/OFF 상태 (기본 OFF) - 수동 읽기용 + 아이콘 상태
         let ttsEnabled = false;
+
+        // 자동재생 상태
+        let autoPlayEnabled = false;
+        let autoPlayTimerId = null;
+        let autoTimerIntervalId = null;
+        let autoTimerSecondsLeft = AUTO_TOTAL_SECONDS;
+
+        // 원형 진행바 길이 (circumference)
+        const TIMER_RADIUS = 18;
+        const TIMER_CIRCUMFERENCE = 2 * Math.PI * TIMER_RADIUS;
+
+        if (autoTimerProgress) {
+            autoTimerProgress.style.strokeDasharray = TIMER_CIRCUMFERENCE;
+            autoTimerProgress.style.strokeDashoffset = 0;
+        }
 
         // 음성 인식 상태
         let recognition = null;
         let recognizing = false;
-        let voiceSessionActive = false; // "음성인식그만" 또는 버튼 OFF 하기 전까지 계속 듣기
+        let voiceSessionActive = false;
 
         // ====== 유틸: 한글 텍스트 정규화 ======
         function normalizeKoreanText(text) {
             if (!text) return '';
             return text
                     .toLowerCase()
-                    .replace(/\s+/g, '')      // 공백 제거
-                    .replace(/[.!?,~\-\_]/g, '');  // 간단한 구두점 제거
+                    .replace(/\s+/g, '')
+                    .replace(/[.!?,~\-\_]/g, '');
         }
 
-        // ====== TTS(음성 합성) 함수 (레시피 스텝 읽기용) ======
+        // ====== 숫자 추출 (예: "10번 레시피", "10번 보여줘") ======
+        function extractNumberFromText(text) {
+            if (!text) return null;
+            const match = text.match(/(\d{1,4})\s*(번|번레시피|번레시피좀|번보여줘|번보여|번으로|번좀)?/);
+            if (match && match[1]) {
+                const num = parseInt(match[1], 10);
+                if (!isNaN(num)) return num;
+            }
+            return null;
+        }
+
+        // ====== TTS(음성 합성) ======
         function speakText(text) {
             if (!('speechSynthesis' in window)) {
                 alert('이 브라우저에서는 음성 합성이 지원되지 않습니다.');
@@ -542,13 +645,11 @@
             }
             if (!text || !text.trim()) return;
 
-            // 이전 발화 중지
             window.speechSynthesis.cancel();
 
             const utter = new SpeechSynthesisUtterance(text);
             utter.lang = 'ko-KR';
 
-            // 한국어 보이스가 있으면 선택
             const voices = window.speechSynthesis.getVoices();
             const koVoice = voices.find(v => v.lang && v.lang.toLowerCase().startsWith('ko'));
             if (koVoice) {
@@ -568,21 +669,10 @@
             selectedCountSpan.textContent = currentSelectedMenu ? '1' : '0';
         }
 
-        function renderSelectedChip() {
-            chipsContainer.innerHTML = '';
-            if (!currentSelectedMenu) return;
-
-            const span = document.createElement('span');
-            span.className = 'badge bg-primary-subtle text-primary-emphasis selected-menu-chip';
-            span.textContent = currentSelectedMenu.name;
-            chipsContainer.appendChild(span);
-        }
-
         function clearAllSelections() {
             cards.forEach(c => c.classList.remove('selected'));
             currentSelectedMenu = null;
             currentSelectedCard = null;
-            renderSelectedChip();
             updateSelectedCount();
         }
 
@@ -600,8 +690,8 @@
             if (!btnVoiceRecipe) return;
             btnVoiceRecipe.classList.toggle('listening', !!isOn);
             btnVoiceRecipe.title = isOn
-                    ? "음성인식 켜짐 · '레시피 이름 / 다음 / 그만 / 음성인식 그만'을 말해보세요."
-                    : "음성인식 꺼짐 · 누르고 '레시피 이름 / 다음 / 그만 / 음성인식 그만'을 말해보세요.";
+                    ? "음성인식 켜짐 · '헬리야 / 레시피 이름 / 번호 / 다음 / 그만 / 음성인식 그만'을 말해보세요."
+                    : "음성인식 꺼짐 · 누르고 '헬리야 / 레시피 이름 / 번호 / 다음 / 그만 / 음성인식 그만'을 말해보세요.";
         }
 
         function isRecipeModalOpen() {
@@ -612,17 +702,19 @@
             return recipeModalBody.querySelector('.recipe-step.step-selected');
         }
 
-        function speakCurrentSelectedStepIfNeeded() {
-            if (!ttsEnabled) return;
+        // force=true 인 경우 자동재생에서 TTS 상태와 상관없이 읽기
+        function speakCurrentSelectedStep(force) {
             const selectedStep = getSelectedStepDiv();
             if (!selectedStep) return;
             const textNode = selectedStep.querySelector('.step-text');
             if (!textNode) return;
             const text = textNode.textContent.trim();
-            if (text) speakText(text);
+            if (!text) return;
+
+            if (!force && !ttsEnabled) return;
+            speakText(text);
         }
 
-        // "다음" 명령 시: 다음 스텝 선택 + 음성 읽기 (TTS 토글 상관 없이 강제 재생)
         function moveToNextStepAndSpeak() {
             const steps = recipeModalBody.querySelectorAll('.recipe-step');
             if (!steps.length) return;
@@ -638,7 +730,6 @@
             if (currentIdx === -1) {
                 nextIdx = 0;
             } else if (nextIdx >= steps.length) {
-                // 마지막이면 그냥 마지막을 다시 읽게
                 nextIdx = steps.length - 1;
             }
 
@@ -646,11 +737,125 @@
             const target = steps[nextIdx];
             target.classList.add('step-selected');
 
-            const textNode = target.querySelector('.step-text');
-            if (textNode) {
-                const text = textNode.textContent.trim();
-                if (text) speakText(text); // "다음" 명령은 항상 읽어줌
+            speakCurrentSelectedStep(true); // "다음" 명령은 강제 읽기
+        }
+
+        // ===== 원형 타이머 업데이트 =====
+        function setTimerProgressBySeconds(secondsLeft) {
+            if (!autoTimerProgress) return;
+            const ratio = Math.max(0, Math.min(1, secondsLeft / AUTO_TOTAL_SECONDS));
+            const offset = TIMER_CIRCUMFERENCE * (1 - ratio); // 시간이 줄어들수록 offset 증가 → 외곽선 줄어듦
+            autoTimerProgress.style.strokeDashoffset = offset;
+        }
+
+        // ===== 자동재생용 20초 타이머 =====
+        function showAutoTimer(seconds) {
+            if (!autoTimer || !autoTimerValue) return;
+            autoTimerSecondsLeft = seconds;
+            autoTimerValue.textContent = seconds;
+            autoTimer.classList.add('show');
+
+            setTimerProgressBySeconds(seconds);
+
+            if (autoTimerIntervalId) {
+                clearInterval(autoTimerIntervalId);
+                autoTimerIntervalId = null;
             }
+
+            autoTimerIntervalId = setInterval(() => {
+                autoTimerSecondsLeft--;
+                if (autoTimerSecondsLeft <= 0) {
+                    autoTimerSecondsLeft = 0;
+                    autoTimerValue.textContent = '0';
+                    setTimerProgressBySeconds(0);
+                    clearInterval(autoTimerIntervalId);
+                    autoTimerIntervalId = null;
+                } else {
+                    autoTimerValue.textContent = autoTimerSecondsLeft;
+                    setTimerProgressBySeconds(autoTimerSecondsLeft);
+                }
+            }, 1000);
+        }
+
+        function hideAutoTimer() {
+            if (!autoTimer || !autoTimerValue) return;
+            autoTimer.classList.remove('show');
+            autoTimerValue.textContent = AUTO_TOTAL_SECONDS.toString();
+            setTimerProgressBySeconds(AUTO_TOTAL_SECONDS);
+            if (autoTimerIntervalId) {
+                clearInterval(autoTimerIntervalId);
+                autoTimerIntervalId = null;
+            }
+        }
+
+        function stopAutoPlay() {
+            if (autoPlayTimerId) {
+                clearTimeout(autoPlayTimerId);
+                autoPlayTimerId = null;
+            }
+            hideAutoTimer();
+        }
+
+        function scheduleNextAutoStep(currentIndex) {
+            const steps = recipeModalBody.querySelectorAll('.recipe-step');
+            if (!steps.length) {
+                stopAutoPlay();
+                return;
+            }
+
+            // 20초 카운트 시작
+            showAutoTimer(AUTO_TOTAL_SECONDS);
+
+            if (autoPlayTimerId) {
+                clearTimeout(autoPlayTimerId);
+                autoPlayTimerId = null;
+            }
+
+            autoPlayTimerId = setTimeout(() => {
+                if (!autoPlayEnabled || !isRecipeModalOpen()) {
+                    stopAutoPlay();
+                    return;
+                }
+
+                const freshSteps = recipeModalBody.querySelectorAll('.recipe-step');
+                if (!freshSteps.length) {
+                    stopAutoPlay();
+                    return;
+                }
+
+                const nextIdx = currentIndex + 1;
+                if (nextIdx >= freshSteps.length) {
+                    // 마지막 스텝까지 안내 완료
+                    stopAutoPlay();
+                    return;
+                }
+
+                freshSteps.forEach(s => s.classList.remove('step-selected'));
+                const target = freshSteps[nextIdx];
+                target.classList.add('step-selected');
+
+                // 다음 스텝 음성 안내 (강제)
+                speakCurrentSelectedStep(true);
+
+                // 다시 다음 스텝 예약
+                scheduleNextAutoStep(nextIdx);
+            }, AUTO_TOTAL_SECONDS * 1000);
+        }
+
+        function startAutoPlayFromFirstStep() {
+            if (!autoPlayEnabled || !isRecipeModalOpen()) return;
+
+            const steps = recipeModalBody.querySelectorAll('.recipe-step');
+            if (!steps.length) return;
+
+            steps.forEach(s => s.classList.remove('step-selected'));
+            steps[0].classList.add('step-selected');
+
+            // 첫 스텝 즉시 안내
+            speakCurrentSelectedStep(true);
+
+            // 이후 20초 간격으로 다음 스텝
+            scheduleNextAutoStep(0);
         }
 
         function buildStepsFromCard(recipeId) {
@@ -673,8 +878,7 @@
                         const div = document.createElement('div');
                         div.className = 'recipe-step';
 
-                        // 계단 형태: 단계가 내려갈수록 오른쪽으로 이동
-                        const offset = index * 24; // px
+                        const offset = index * 24;
                         div.style.marginLeft = offset + 'px';
 
                         const idxSpan = document.createElement('span');
@@ -693,50 +897,50 @@
                 }
             }
 
-            // 스텝 DOM 생성 후: 첫 번째 스텝 자동 선택 + 클릭 핸들러 부착
             const stepDivs = recipeModalBody.querySelectorAll('.recipe-step');
             if (!stepDivs.length) return;
 
-            // 첫 번째 스텝 자동 선택
+            // 첫 번째 스텝만 선택 (여기서는 TTS 재생 안 함)
             stepDivs[0].classList.add('step-selected');
 
-            // TTS ON 상태라면 첫 스텝 바로 읽기
-            speakCurrentSelectedStepIfNeeded();
-
-            // 클릭 시 선택 토글 (하나만 선택) + TTS
+            // 클릭 시 선택 & TTS (수동)
             stepDivs.forEach(step => {
                 step.addEventListener('click', () => {
                     stepDivs.forEach(s => s.classList.remove('step-selected'));
                     step.classList.add('step-selected');
-
-                    // TTS가 ON이면 선택된 스텝 읽기
-                    speakCurrentSelectedStepIfNeeded();
+                    speakCurrentSelectedStep(false); // 수동일 때는 ttsEnabled에 따라
                 });
             });
         }
 
-        // autoTts = true 이면 모달 열리면서 자동 음성 재생
-        function openRecipeModal(menu, options) {
-            const autoTts = options && options.autoTts;
+        function openRecipeModal(menu) {
+            recipeModalTitle.textContent = '#' + menu.id + ' ' + menu.name + ' 레시피';
 
-            recipeModalTitle.textContent = menu.name + ' 레시피';
-
-            // autoTts 설정에 따라 TTS 상태 결정
-            ttsEnabled = !!autoTts;
-            updateTtsToggleVisual();
             stopSpeak();
+            stopAutoPlay();   // 이전 자동재생/타이머 정리
 
-            buildStepsFromCard(menu.id);   // 내부에서 ttsEnabled 상태를 보고 자동 재생
+            // 🔊 자동재생이 켜져 있으면 스피커 아이콘도 ON 상태로
+            if (autoPlayEnabled) {
+                ttsEnabled = true;
+            }
+            updateTtsToggleVisual();
+
+            buildStepsFromCard(menu.id);
 
             recipeModal.classList.add('show');
+
+            // 자동재생 슬라이더가 켜져 있으면 자동으로 안내 시작
+            if (autoPlayEnabled) {
+                startAutoPlayFromFirstStep();
+            }
         }
 
         function closeRecipeModal() {
             recipeModal.classList.remove('show');
-            stopSpeak(); // 모달을 닫을 때 음성도 중지
+            stopSpeak();
+            stopAutoPlay();
         }
 
-        // 레시피 없음 팝업 표시
         function showNoRecipePopup() {
             if (!noRecipePopup) return;
             if (noRecipePopupTimer) {
@@ -750,41 +954,34 @@
             }, 2000);
         }
 
-        // ========== 카드 선택 로직(공통 함수) ==========
-        // options.fromVoice === true 이면 자동 TTS ON
         function handleCardSelect(card, options) {
             const id = card.dataset.recipeId;
             const name = card.dataset.recipeName;
-
             const fromVoice = options && options.fromVoice;
 
-            // 클릭으로 같은 카드 다시 선택하면 토글
             if (currentSelectedCard === card && !fromVoice) {
                 clearAllSelections();
                 closeRecipeModal();
                 return;
             }
 
-            // 이전 선택 해제
             clearAllSelections();
 
-            // 새 선택
             card.classList.add('selected');
             currentSelectedMenu = {id, name};
             currentSelectedCard = card;
 
-            renderSelectedChip();
             updateSelectedCount();
-            openRecipeModal(currentSelectedMenu, {autoTts: !!fromVoice});
+            openRecipeModal(currentSelectedMenu);
         }
 
-        // ========== 음성 인식(SpeechRecognition) 관련 ==========
+        // ====== 음성 인식 초기화 ======
         function initRecognition() {
             if (recognition) return recognition;
 
             const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
             if (!SpeechRecognition) {
-                alert('이 브라우저에서는 음성 인식이 지원되지 않습니다.\n(Chrome, Edge의 최신 버전에서 https 환경을 권장합니다)');
+                alert('이 브라우저에서는 음성 인식이 지원되지 않습니다.\n(Chrome / Edge 최신 버전 권장)');
                 return null;
             }
 
@@ -798,77 +995,93 @@
                 console.log('음성 인식 결과:', rawTranscript);
 
                 let normTranscript = normalizeKoreanText(rawTranscript);
-                if (!normTranscript) return;
 
-                // === "음성인식 그만" → 음성 인식 완전 종료 + 음성 출력 정지 ===
-                if (normTranscript.includes('음성인식그만')) {
+                // ---- 1) "헬리야" 단독 호출: 안내만 ----
+                if (normTranscript === '헬리야') {
+                    speakText('레시피 번호를 불러주세요. 예를 들어, 십번, 십번 레시피 라고 말해보세요.');
+                    return;
+                }
+
+                // 기본 값: 전체 문장을 처리 대상으로 사용
+                let processedRaw = rawTranscript;
+                let processedNorm = normTranscript;
+
+                // ---- 2) "헬리야 ~~~" 형태면 앞의 호출어 제거 후 처리 ----
+                if (normTranscript.startsWith('헬리야')) {
+                    processedRaw = rawTranscript.replace(/^\s*헬리야[\s,]*/, '');
+                    processedNorm = normalizeKoreanText(processedRaw);
+                }
+
+                if (!processedNorm) return;
+
+                // === "음성인식 그만" → 완전 종료 + 음성 출력 정지 ===
+                if (processedNorm.includes('음성인식그만')) {
                     stopVoiceSession();
                     stopSpeak();
                     return;
                 }
 
-                // === "그만" → 레시피 팝업 열려 있으면 닫기만 (음성인식은 계속 유지) ===
-                if (normTranscript.includes('그만')) {
+                // === "그만" → 레시피 팝업 닫기만 (인식은 유지) ===
+                if (processedNorm.includes('그만')) {
                     if (isRecipeModalOpen()) {
-                        closeRecipeModal(); // 내부에서 stopSpeak()도 호출
+                        closeRecipeModal();
                     }
                     return;
                 }
 
-                // === "다음" → 다음 스텝 선택 + 읽기 (세션 유지) ===
-                if (normTranscript.includes('다음')) {
+                // === "다음" → 다음 스텝 ===
+                if (processedNorm.includes('다음')) {
                     if (isRecipeModalOpen()) {
                         moveToNextStepAndSpeak();
                     }
                     return;
                 }
 
-                // === 레시피 이름 매칭 로직 ===
+                // === (1) 숫자 기반 레시피 선택: "헬리야 10번", "10번 레시피" 등 ===
+                const num = extractNumberFromText(processedRaw);
+                if (num !== null) {
+                    const cardById = document.querySelector('.menu-card[data-recipe-id="' + num + '"]');
+                    if (cardById) {
+                        handleCardSelect(cardById, {fromVoice: true});
+                        return;
+                    }
+                }
+
+                // === (2) 이름 기반 레시피 선택 ===
                 let bestCard = null;
                 let bestScore = 0;
 
                 function tryMatch(withNormTranscript) {
-                    let localBestCard = null;
-                    let localBestScore = 0;
-
                     cards.forEach(card => {
                         const name = card.dataset.recipeName || '';
                         const normName = normalizeKoreanText(name);
                         if (!normName) return;
 
-                        // 레시피명이 비슷하면 (포함 관계면) 매칭
                         if (withNormTranscript.includes(normName) || normName.includes(withNormTranscript)) {
                             const score = normName.length;
-                            if (score > localBestScore) {
-                                localBestScore = score;
-                                localBestCard = card;
+                            if (score > bestScore) {
+                                bestScore = score;
+                                bestCard = card;
                             }
                         }
                     });
-
-                    if (localBestCard && localBestScore > bestScore) {
-                        bestCard = localBestCard;
-                        bestScore = localBestScore;
-                    }
                 }
 
-                // 1차: 기본 정규화 텍스트로 탐색
-                tryMatch(normTranscript);
+                // 1차: processedNorm 기준으로 탐색
+                tryMatch(processedNorm);
 
-                // 2차: 공백 제거된 원문을 다시 정규화해서 한 번 더 탐색
+                // 2차: 공백 제거된 원문을 다시 정규화해서 탐색
                 if (!bestCard) {
-                    const joined = rawTranscript.replace(/\s+/g, '');
+                    const joined = processedRaw.replace(/\s+/g, '');
                     const joinedNorm = normalizeKoreanText(joined);
-                    if (joinedNorm && joinedNorm !== normTranscript) {
+                    if (joinedNorm && joinedNorm !== processedNorm) {
                         tryMatch(joinedNorm);
                     }
                 }
 
                 if (bestCard) {
-                    // 음성으로 찾은 카드 선택 + 모달 오픈 + 첫 스텝 자동 음성
                     handleCardSelect(bestCard, {fromVoice: true});
                 } else {
-                    // 음성 안내 대신 팝업 표기 (2초 후 자동 닫힘)
                     showNoRecipePopup();
                 }
             };
@@ -883,7 +1096,6 @@
 
             recognition.onend = function () {
                 recognizing = false;
-                // 세션이 살아있으면 자동 재시작
                 if (voiceSessionActive && recognition) {
                     try {
                         recognizing = true;
@@ -943,18 +1155,36 @@
             }
         }
 
-        // 카드 클릭 → 선택 처리
+        // 카드 클릭 → 선택
         cards.forEach(card => {
             card.addEventListener('click', () => {
                 handleCardSelect(card, {fromVoice: false});
             });
         });
 
-        // 상단 공용 마이크 버튼 클릭 → 음성 인식 ON/OFF
+        // 상단 마이크 버튼 클릭 → 음성 인식 ON/OFF
         if (btnVoiceRecipe) {
             btnVoiceRecipe.addEventListener('click', (e) => {
                 e.stopPropagation();
                 toggleVoiceRecognition();
+            });
+        }
+
+        // 자동재생 토글
+        if (autoPlayToggle) {
+            autoPlayEnabled = autoPlayToggle.checked;
+            autoPlayToggle.addEventListener('change', () => {
+                autoPlayEnabled = autoPlayToggle.checked;
+                if (!autoPlayEnabled) {
+                    stopAutoPlay();
+                } else {
+                    // 모달이 이미 열려 있다면 즉시 자동재생 시작 + 스피커 ON
+                    if (isRecipeModalOpen()) {
+                        ttsEnabled = true;
+                        updateTtsToggleVisual();
+                        startAutoPlayFromFirstStep();
+                    }
+                }
             });
         }
 
@@ -963,27 +1193,27 @@
             closeRecipeModal();
         });
 
-        // 배경 클릭하면 닫기
+        // 배경 클릭 → 닫기
         recipeModalBackdrop.addEventListener('click', () => {
             closeRecipeModal();
         });
 
-        // ESC 키로 닫기
+        // ESC → 닫기
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') {
                 closeRecipeModal();
             }
         });
 
-        // 🔊 TTS 토글 버튼 클릭 → ON/OFF 스위치 (자동 읽기 전용)
+        // 🔊 TTS 토글 버튼 클릭 (수동 읽기 전용)
         if (btnTtsToggle) {
             btnTtsToggle.addEventListener('click', () => {
                 ttsEnabled = !ttsEnabled;
                 updateTtsToggleVisual();
 
-                // ON으로 바뀐 직후, 이미 선택된 스텝이 있으면 바로 읽기
                 if (ttsEnabled) {
-                    speakCurrentSelectedStepIfNeeded();
+                    // 현재 선택된 스텝이 있으면 바로 읽음
+                    speakCurrentSelectedStep(false);
                 } else {
                     stopSpeak();
                 }
@@ -994,6 +1224,7 @@
         updateSelectedCount();
         updateTtsToggleVisual();
         updateMicVisual(false);
+        setTimerProgressBySeconds(AUTO_TOTAL_SECONDS);
     })();
 </script>
 
