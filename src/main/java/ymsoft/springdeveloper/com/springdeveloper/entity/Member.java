@@ -50,6 +50,9 @@ public class Member {
     @Column(nullable = false)
     private Integer hourlyWage; // 원 단위 정수
 
+    @Column(nullable = false)
+    private Integer hourlyWage2; // 원 단위 정수
+
     @Column
     private LocalDate healthCertExpiry;
 

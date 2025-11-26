@@ -238,7 +238,7 @@ CREATE INDEX idx_recipe_step_recipe_id
     ON recipe_step (recipe_id);
 
 
-#2025-11-26
+#2025-11-26 - applied
 ALTER TABLE member
     ADD COLUMN ssn VARCHAR(50) NULL;
 
@@ -247,3 +247,15 @@ UPDATE member
 SET ssn = 'TEMP-SSN'
 WHERE ssn IS NULL;
 
+
+
+#2025-11-26 21 - not yet
+ALTER TABLE member
+ADD COLUMN hourly_Wage2 INT NULL DEFAULT 0;
+
+UPDATE member
+SET hourly_Wage2 = 0
+WHERE hourly_Wage2 IS NULL;
+
+ALTER TABLE member
+MODIFY COLUMN hourly_Wage2 INT NOT NULL;

@@ -49,6 +49,10 @@ public class MemberDto {
     @Min(0)
     private Integer hourlyWage;
 
+    @NotNull
+    @Min(0)
+    private Integer hourlyWage2;
+
     private Boolean hasHealthCertificate;   // null 가능 → Boolean.TRUE.equals(...)로 처리
     private LocalDate healthCertExpiry;     // 선택
 
@@ -134,6 +138,7 @@ public class MemberDto {
                 .email(m.getEmail())
                 .ssn(m.getSsn())
                 .hourlyWage(m.getHourlyWage())
+                .hourlyWage2(m.getHourlyWage2())
                 .hasHealthCertificate(m.getHasHealthCertificate())
                 .healthCertExpiry(m.getHealthCertExpiry())
                 .bankName(m.getBankName())
@@ -166,6 +171,7 @@ public class MemberDto {
                 .email(dto.getEmail())
                 .ssn(dto.getSsn())
                 .hourlyWage(dto.getHourlyWage())
+                .hourlyWage2(dto.getHourlyWage2())
                 .hasHealthCertificate(Boolean.TRUE.equals(dto.getHasHealthCertificate()))
                 .healthCertExpiry(dto.getHealthCertExpiry())
                 .bankName(dto.getBankName())

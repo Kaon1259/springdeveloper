@@ -141,7 +141,7 @@
                         <div id="summaryMonthWorkTimeActual">0시간</div>
                     </div>
                     <div class="d-flex justify-content-between">
-                        <div class="small text-muted">월 근무수당 (실근무 × 시급)</div>
+                        <div class="small text-muted">월 근무수당 (주별 합계)</div>
                         <div id="summaryMonthWorkPayActual">-</div>
                     </div>
                     <div class="d-flex justify-content-between">
@@ -193,9 +193,9 @@
                 </div>
 
                 <div class="small text-muted mt-3">
-                    * 1주 실근무시간이 <b>15시간 이상</b>인 경우에만 해당 주의 주휴수당이 발생합니다.<br>
-                    * 주휴수당 시간 = <code>주 실근무시간 ÷ 5</code> 로 계산됩니다. (예: 30시간 → 6시간 분 주휴수당)<br>
-                    * 월 주휴수당 합계는 해당 월에 포함된 각 주(월~일)의 주휴수당을 모두 합산한 값입니다.
+                    * 실근무시간 기준으로 주별 합계(월~일)를 계산합니다.<br>
+                    * 주휴수당 미적용 시에는 각 주의 근무시간이 15시간 이상이면 기본 시급(hourlyWage), 15시간 미만이면 보조 시급(hourlyWage2)으로 계산합니다.<br>
+                    * 주휴수당 적용 시에는 각 주의 근무시간이 15시간 이상일 때만 주휴수당을 계산하며, 이때 근무수당과 주휴수당 모두 보조 시급(hourlyWage2)로 계산합니다.
                 </div>
             </div>
         </div>
@@ -249,7 +249,7 @@
                         <div id="summaryMonthWorkTimePlan">0시간</div>
                     </div>
                     <div class="d-flex justify-content-between">
-                        <div class="small text-muted">월 예상 근무수당 (계획 × 시급)</div>
+                        <div class="small text-muted">월 예상 근무수당 (주별 합계)</div>
                         <div id="summaryMonthWorkPayPlan">-</div>
                     </div>
                     <div class="d-flex justify-content-between">
@@ -285,8 +285,9 @@
                 </div>
 
                 <div class="small text-muted mt-3">
-                    * 1주 <b>계획시간</b>이 15시간 이상이면 해당 주의 <b>예상 주휴수당</b>을 계산합니다.<br>
-                    * 계산 방식은 실근무와 동일합니다.
+                    * 계획일정시간 기준으로 주별 합계(월~일)를 계산합니다.<br>
+                    * 주휴수당 미적용 시에는 각 주의 계획시간이 15시간 이상이면 기본 시급(hourlyWage), 15시간 미만이면 보조 시급(hourlyWage2)으로 계산합니다.<br>
+                    * 주휴수당 적용 시에는 각 주의 계획시간이 15시간 이상일 때만 주휴수당을 계산하며, 이때 근무수당과 주휴수당 모두 보조 시급(hourlyWage2)로 계산합니다.
                 </div>
             </div>
         </div>
@@ -781,6 +782,7 @@
 
             const includeJuhyu = !!member?.includeWeeklyHolidayAllowance;
 
+            // 실근무/계획 각각 자기 데이터로 계산
             renderMonthPayTable('actual', currentMember, ms, me, dayMapActual, includeJuhyu);
             renderMonthPayTable('plan',   currentMember, ms, me, dayMapPlan,   includeJuhyu);
 
@@ -811,6 +813,12 @@
             }
         }
 
+        /**
+         * type: 'actual' | 'plan'
+         * includeJuhyu:
+         *   - false: 주 15시간 이상 → hourlyWage, 15시간 미만 → hourlyWage2, 주휴 없음
+         *   - true : 항상 hourlyWage2 기준, 15시간 이상인 주만 주휴수당 발생
+         */
         function renderMonthPayTable(type, member, ms, me, dayMap, includeJuhyu) {
             const isActual = (type === 'actual');
 
@@ -823,11 +831,34 @@
 
             tbodyEl.innerHTML = '';
 
-            const wage = (typeof member?.hourlyWage === 'number') ? member.hourlyWage : null;
-            wageEl.textContent = (wage != null) ? krw(wage) : '-';
+            const wageMainRaw = (typeof member?.hourlyWage === 'number') ? member.hourlyWage : null;
+            const wageSubRaw  = (typeof member?.hourlyWage2 === 'number') ? member.hourlyWage2 : null;
+
+            const wageMain = wageMainRaw != null ? wageMainRaw : wageSubRaw; // 기본 시급
+            const wageSub  = wageSubRaw  != null ? wageSubRaw  : wageMainRaw; // 보조 시급(없으면 기본)
+
+            // 시급 표시
+            if (wageMain == null && wageSub == null) {
+                wageEl.textContent = '-';
+            } else {
+                if (!includeJuhyu) {
+                    // 주휴 미적용: 15시간 기준으로 두 시급 사용
+                    if (wageMainRaw != null && wageSubRaw != null && wageMainRaw !== wageSubRaw) {
+                        wageEl.textContent = `${krw(wageMainRaw)} (>=15시간) / ${krw(wageSubRaw)} (<15시간)`;
+                    } else {
+                        wageEl.textContent = krw(wageMain);
+                    }
+                } else {
+                    // 주휴 적용: 항상 hourlyWage2 기준(없으면 hourlyWage)
+                    const base = wageSub != null ? wageSub : wageMain;
+                    wageEl.textContent = krw(base) + ' (주휴 기준 시급)';
+                }
+            }
 
             let monthMinutes      = 0;
             let monthJuhyuMinutes = 0;
+            let monthWorkPay      = 0;
+            let monthJuhyuPay     = 0;
 
             const weeks   = [];
             let wStart    = toMonday(ms);
@@ -838,6 +869,7 @@
             }
 
             let weekIndex = 0;
+            const thresholdMinutes = 15 * 60;
 
             weeks.forEach(weekStart => {
                 const weekEnd = addDays(weekStart, 6);
@@ -908,15 +940,52 @@
                     dayCells.push(cellHtml);
                 }
 
-                const juhyuMinutes = includeJuhyu ? calcWeeklyJuhyuMinutes(weekMinutes) : 0;
-                monthJuhyuMinutes += juhyuMinutes;
-
+                // === 주별 주휴시간/주휴수당/근무수당 계산 ===
+                let weekJuhyuMinutes = 0;
                 let weekWorkPay  = null;
-                let weekJuhyuPay = null;
-                if (wage != null) {
-                    weekWorkPay  = Math.round((weekMinutes/60)   * wage);
-                    weekJuhyuPay = includeJuhyu ? Math.round((juhyuMinutes/60)  * wage) : 0;
+                let weekJuhyuPay = 0;
+
+                const hasAnyWage = (wageMain != null || wageSub != null);
+
+                // 주휴 적용 시: 15시간 이상인 주만 주휴 발생, 항상 wageSub(또는 wageMain) 기준
+                if (includeJuhyu && weekMinutes >= thresholdMinutes) {
+                    weekJuhyuMinutes = calcWeeklyJuhyuMinutes(weekMinutes);
                 }
+
+                if (hasAnyWage && weekMinutes > 0) {
+                    let hourlyForWeek;
+
+                    if (!includeJuhyu) {
+                        // 주휴 미적용: 15시간 기준으로 시급 선택
+                        if (weekMinutes >= thresholdMinutes) {
+                            // 15시간 이상 → hourlyWage 우선, 없으면 hourlyWage2
+                            hourlyForWeek = (wageMainRaw != null ? wageMainRaw : wageSubRaw);
+                        } else {
+                            // 15시간 미만 → hourlyWage2 우선, 없으면 hourlyWage
+                            hourlyForWeek = (wageSubRaw != null ? wageSubRaw : wageMainRaw);
+                        }
+                    } else {
+                        // 주휴 적용: 항상 hourlyWage2 기준(없으면 hourlyWage)
+                        hourlyForWeek = (wageSubRaw != null ? wageSubRaw : wageMainRaw);
+                    }
+
+                    if (hourlyForWeek != null) {
+                        weekWorkPay = Math.round((weekMinutes / 60) * hourlyForWeek);
+                        if (includeJuhyu && weekJuhyuMinutes > 0) {
+                            weekJuhyuPay = Math.round((weekJuhyuMinutes / 60) * hourlyForWeek);
+                        }
+                    } else {
+                        weekWorkPay  = 0;
+                        weekJuhyuPay = 0;
+                    }
+                } else {
+                    weekWorkPay  = 0;
+                    weekJuhyuPay = 0;
+                }
+
+                monthJuhyuMinutes += weekJuhyuMinutes;
+                monthWorkPay      += (weekWorkPay  || 0);
+                monthJuhyuPay     += (weekJuhyuPay || 0);
 
                 const weekWorkLabel  = formatMins(weekMinutes);
                 const weekLabelRange =
@@ -924,8 +993,8 @@
 
                 let weekJuhyuCellHtml = '-';
                 if (includeJuhyu) {
-                    if (juhyuMinutes > 0 && weekJuhyuPay != null) {
-                        const juhyuTimeLabel  = formatMins(juhyuMinutes);
+                    if (weekJuhyuMinutes > 0 && weekJuhyuPay > 0) {
+                        const juhyuTimeLabel  = formatMins(weekJuhyuMinutes);
                         const weekTimeLabel   = formatMins(weekMinutes);
                         const juhyuMoneyLabel = krw(weekJuhyuPay);
                         weekJuhyuCellHtml =
@@ -961,25 +1030,27 @@
 
             timeEl.textContent = formatMins(monthMinutes);
 
-            let monthWorkPay  = null;
-            let monthJuhyuPay = null;
-            let monthTotal    = null;
-            if (wage != null) {
-                monthWorkPay  = Math.round((monthMinutes/60)      * wage);
-                monthJuhyuPay = includeJuhyu ? Math.round((monthJuhyuMinutes/60) * wage) : 0;
-                monthTotal    = monthWorkPay + (includeJuhyu ? monthJuhyuPay : 0);
+            let monthTotal = null;
+            if (wageMain != null || wageSub != null) {
+                monthTotal = monthWorkPay + (includeJuhyu ? monthJuhyuPay : 0);
             }
 
-            workPayEl.textContent = (monthWorkPay  != null) ? krw(monthWorkPay)  : '-';
-            juhyuEl.textContent   = (wage != null && includeJuhyu) ? krw(monthJuhyuPay) : (includeJuhyu ? '-' : '미적용');
-            totalEl.textContent   = (monthTotal    != null) ? krw(monthTotal)    : '-';
+            workPayEl.textContent = (monthWorkPay > 0) ? krw(monthWorkPay) : '-';
+
+            if (!includeJuhyu) {
+                juhyuEl.textContent = '미적용';
+            } else {
+                juhyuEl.textContent = (monthJuhyuPay > 0) ? krw(monthJuhyuPay) : '-';
+            }
+
+            totalEl.textContent   = (monthTotal != null && monthTotal > 0) ? krw(monthTotal) : '-';
 
             const applyTax  = isTaxApplied(member);
             const taxRate   = 0.033;
             let taxAmount   = null;
             let totalAfterTax = null;
 
-            if (applyTax && monthTotal != null) {
+            if (applyTax && monthTotal != null && monthTotal > 0) {
                 taxAmount    = Math.round(monthTotal * taxRate);
                 totalAfterTax = monthTotal - taxAmount;
             }
@@ -996,12 +1067,13 @@
                             (applyTax && totalAfterTax != null) ? krw(totalAfterTax) : '-';
                 }
 
-                lastPayrollPayload = (member && wage != null && monthWorkPay != null && monthTotal != null)
+                lastPayrollPayload = (member && (wageMain != null || wageSub != null) && monthTotal != null)
                         ? {
                             memberId:          member.id,
                             payYear:           ms.getFullYear(),
                             payMonth:          ms.getMonth() + 1,
-                            hourlyWage:        wage,
+                            hourlyWage:        wageMainRaw,
+                            hourlyWage2:       wageSubRaw,
                             monthWorkMinutes:  monthMinutes,
                             monthJuhyuMinutes: includeJuhyu ? monthJuhyuMinutes : 0,
                             monthWorkPay:      monthWorkPay,

@@ -187,7 +187,10 @@
             clearAlert();
 
             const { fromDate, toDate } = getMonthRangeFromInput();
-            const items = buildItemsFromWeeklyTemplate(member, fromDate, toDate);
+            const now = new Date(); // ✅ 생성 시점의 현재 시간
+
+            // ✅ 현재 시간 이후의 구간만 생성하도록 변경
+            const items = buildItemsFromWeeklyTemplate(member, fromDate, toDate, now);
             generatedItems = items;
 
             renderPreviewCalendar(fromDate, toDate, items);
@@ -294,8 +297,8 @@
             return { fromDate, toDate };
         }
 
-        // ===== 한 달치 아이템 생성 (주간 템플릿 기반) =====
-        function buildItemsFromWeeklyTemplate(member, fromDate, toDate){
+        // ===== 한 달치 아이템 생성 (주간 템플릿 기반, 현재 시간 이후만) =====
+        function buildItemsFromWeeklyTemplate(member, fromDate, toDate, now){
             const weekly = getSchedules(member); // [{day:'MON', start:'10:00', end:'14:00'}, ...]
             if (!Array.isArray(weekly) || weekly.length === 0) return [];
 
@@ -318,6 +321,21 @@
                     const start = hmStr(s.start);
                     const end   = hmStr(s.end);
                     if (!isValidRange(start, end)) return;
+
+                    // ✅ 이 구간의 "시작 시각"이 생성 시점(now) 이후인지 체크
+                    const { h: sh, m: sm } = parseHm(start);
+                    const segmentStart = new Date(
+                            d.getFullYear(),
+                            d.getMonth(),
+                            d.getDate(),
+                            sh,
+                            sm,
+                            0,
+                            0
+                    );
+
+                    // 시작 시간이 현재 시각보다 같거나 이전이면 스킵
+                    if (segmentStart <= now) return;
 
                     const key = `${iso}|${start}|${end}`;
                     if (dedupe.has(key)) return;
@@ -513,6 +531,5 @@
 
     })();
 </script>
-
 
 {{>layouts/footer}}

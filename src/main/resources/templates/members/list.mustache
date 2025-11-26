@@ -839,6 +839,7 @@
                         const includeWeeklyStr = yesNoLabel(m.includeWeeklyHolidayAllowance);
                         const createdStr = createdAtStr(m);
                         const hourlyStr  = (typeof m.hourlyWage==='number') ? krw(m.hourlyWage) : '-';
+                        const hourlyStr2  = (typeof m.hourlyWage2==='number') ? krw(m.hourlyWage2) : '-';
 
                         card.innerHTML = `
                         <div class="member-card-header">
@@ -875,7 +876,7 @@
                                 <span class="label">시작일</span>
                                 <span class="value">${escapeHtml(m.startDate ?? '-')}</span>
                                 <span class="label">시급</span>
-                                <span class="value">${escapeHtml(hourlyStr)}</span>
+                                <span class="value">${escapeHtml(hourlyStr)}/${escapeHtml(hourlyStr2)}</span>
                             </div>
                             <div class="member-row">
                                 <span class="label">급여지급일</span>

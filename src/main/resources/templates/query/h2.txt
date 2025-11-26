@@ -190,3 +190,13 @@ ALTER TABLE member
 UPDATE member
 SET ssn = 'TEMP-SSN'
 WHERE ssn IS NULL;
+
+
+ALTER TABLE member
+ADD COLUMN hourly_Wage2 INT  NULL;
+
+UPDATE member
+SET hourly_Wage2 = 0;
+
+ALTER TABLE member
+ALTER COLUMN hourly_Wage2 INT NOT NULL

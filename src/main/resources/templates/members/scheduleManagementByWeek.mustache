@@ -61,10 +61,16 @@
         <div class="card-header fw-bold d-flex justify-content-between align-items-center weekly-card-header">
             <div class="d-flex flex-column">
                 <span>주간 타임테이블 (월~일)</span>
-                <div class="mt-1 btn-group btn-group-sm" role="group" aria-label="단위 선택">
-                    <button type="button" id="btnSlot10" class="btn btn-sm btn-outline-light">10분</button>
-                    <button type="button" id="btnSlot30" class="btn btn-sm btn-outline-light">30분</button>
-                    <button type="button" id="btnSlot60" class="btn btn-sm btn-outline-light active">1시간</button>
+                <!-- 단위 선택 + 그래프보기 버튼 한 줄로 배치 -->
+                <div class="mt-1 d-flex align-items-center gap-2">
+                    <div class="btn-group btn-group-sm" role="group" aria-label="단위 선택">
+                        <button type="button" id="btnSlot10" class="btn btn-sm btn-outline-light">10분</button>
+                        <button type="button" id="btnSlot30" class="btn btn-sm btn-outline-light">30분</button>
+                        <button type="button" id="btnSlot60" class="btn btn-sm btn-outline-light active">1시간</button>
+                    </div>
+                    <button type="button" id="btnOpenGraphPage" class="btn btn-sm btn-outline-light">
+                        그래프보기
+                    </button>
                 </div>
                 <span class="small text-light mt-1 opacity-75">
                     한 칸 = 선택된 단위, 각 요일 사이의 열은 해당 시간대 인원수, 마지막 열은 전체 인원수
@@ -581,6 +587,17 @@
     }
 
     .staff-tags { display:flex; flex-wrap:wrap; gap:4px; justify-content:center; }
+
+    /* ✅ 같은 요일·같은 시간대(한 셀)에 있는 아르바이트들을 녹색 외곽선으로 한 번 더 묶어 표시 */
+    .staff-cell.has-staff-group .time-band-inner {
+        border: 2px solid #198754;
+        border-radius: 12px;
+        background: rgba(220, 252, 231, 0.75);
+    }
+    .staff-cell.has-staff-group.today-col .time-band-inner {
+        background: rgba(220, 252, 231, 0.95);
+    }
+
     .staff-tag {
         display:inline-flex; align-items:center; gap:4px;
         border-radius:999px; padding:2px 6px; font-size:.75rem;
@@ -756,8 +773,7 @@
     (function(){
         const API_BASE   = '/api/schedule/work';
         const API_UPDATE = '/api/schedule/work/update';
-        const API_BASE_PLAN = '/api/schedule/template'; // ⚠ 실제 템플릿 API base URL로 변경하세요
-        const API_MEMBER_TEMPLATE_SCHEDULE = '/api/member'
+        const API_MEMBER_TEMPLATE_SCHEDULE = '/api/member';
         const HOUR_START = 6;
         const HOUR_END   = 22;
 
@@ -777,6 +793,7 @@
         const btnSlot10 = document.getElementById('btnSlot10');
         const btnSlot30 = document.getElementById('btnSlot30');
         const btnSlot60 = document.getElementById('btnSlot60');
+        const btnOpenGraphPage = document.getElementById('btnOpenGraphPage');
 
         const btnPrevWeek = document.getElementById('btnPrevWeek');
         const btnThisWeek = document.getElementById('btnThisWeek');
@@ -824,9 +841,6 @@
         let baseWeekDaysMap = {};      // 템플릿(왼쪽)
         let selectedWeekDaysMap = {};  // 일정(오른쪽)
 
-        // (상단 타임테이블에서 쓰실 수 있게 plan map도 유지)
-        let lastPlanMap = {};
-
         let slotMinutes = 60;
         let gridStepMinutes = 60;
         const GRID_DAY_LABELS = ['월','화','수','목','금','토','일'];
@@ -839,7 +853,6 @@
         let originalSegments = [];
         let originalSlotSet  = new Set();
         let slotState        = new Set();
-        let modalMode        = 'edit';
 
         try { allMembers = JSON.parse(document.getElementById('membersData').textContent || '[]'); } catch(e){ allMembers = []; }
 
@@ -871,6 +884,12 @@
             if (btnSlot10) btnSlot10.addEventListener('click', async ()=> { setSlotMinutes(10); await fetchAndRenderWeekTable(currentStatusMembers, currentWeekStart); });
             if (btnSlot30) btnSlot30.addEventListener('click', async ()=> { setSlotMinutes(30); await fetchAndRenderWeekTable(currentStatusMembers, currentWeekStart); });
             if (btnSlot60) btnSlot60.addEventListener('click', async ()=> { setSlotMinutes(60); await fetchAndRenderWeekTable(currentStatusMembers, currentWeekStart); });
+
+            if (btnOpenGraphPage) {
+                btnOpenGraphPage.addEventListener('click', () => {
+                    openGraphPage();
+                });
+            }
 
             if (btnPrevWeek) btnPrevWeek.addEventListener('click', async (e)=>{ e.preventDefault(); currentWeekStart = addDays(currentWeekStart, -7); await handleStatusChange(); });
             if (btnThisWeek) btnThisWeek.addEventListener('click', async (e)=>{ e.preventDefault(); currentWeekStart = toMonday(new Date()); await handleStatusChange(); });
@@ -1011,6 +1030,25 @@
                     `&slot=${encodeURIComponent(slot)}`;
 
             window.open(url, '_blank');
+        }
+
+        // 🔵 그래프 보기 팝업
+        function openGraphPage() {
+            const status = statusSelect.value;
+            const weekStartIso = toIso(currentWeekStart);
+            const slot = slotMinutes;
+
+            const url =
+                    `/schedules/work/weekly/graph` +
+                    `?status=${encodeURIComponent(status)}` +
+                    `&weekStart=${encodeURIComponent(weekStartIso)}` +
+                    `&slot=${encodeURIComponent(slot)}`;
+
+            window.open(
+                    url,
+                    'weekStaffGraphWindow',
+                    'width=1200,height=800,scrollbars=yes,resizable=yes'
+            );
         }
 
         function setSlotMinutes(mins){
@@ -1270,6 +1308,7 @@
                         });
 
                         cell.dataset.hasSelected = hasSelected ? '1' : '0';
+                        cell.classList.add('has-staff-group');  // 녹색 외곽선 그룹 표시
                         inner.appendChild(tagsDiv);
                     }
 
@@ -1462,7 +1501,6 @@
 
             baseWeekDaysMap = {};
             selectedWeekDaysMap = {};
-            lastPlanMap = {};
 
             try {
                 // 🔵 1) 템플릿(왼쪽) 가져오기
@@ -1471,10 +1509,7 @@
                     const respPlan = await fetch(urlPlan, { headers:{'Accept':'application/json'} });
                     if (respPlan.ok) {
                         const data = await respPlan.json();
-                        // ⚠ normalizeWeeklyTemplate 는 기존에 구현해 두신 함수 사용
-                        lastPlanMap = normalizeWeeklyTemplate(data, currentWeekDates);
-
-                        baseWeekDaysMap = lastPlanMap || {};
+                        baseWeekDaysMap = normalizeWeeklyTemplate(data, currentWeekDates) || {};
                     }
                 } catch (e) {
                     console.error('plan fetch error', e);
@@ -1762,13 +1797,12 @@
 
         let modalDragging = false, modalDragAdding = true;
 
-        function openEditModal(dateIso, member, segments, mode='edit'){
+        function openEditModal(dateIso, member, segments, mode){
             if(!member) return;
-            modalMode = mode === 'create' ? 'create' : 'edit';
             editTitleDate.textContent = dateIso;
             editTitleMember.textContent = member.name ?? '-';
 
-            btnSaveEdit.textContent = (modalMode === 'create') ? '일정생성하기' : '저장';
+            btnSaveEdit.textContent = (mode === 'create') ? '일정생성하기' : '저장';
 
             stepMinutes = 30;
             totalRows = (END_MIN - START_MIN) / stepMinutes;
