@@ -240,7 +240,7 @@
                         </div>
                     </div>
 
-                    <!-- 4줄: 보건증 정보 -->
+                    <!-- 4줄: 보건증 정보 + 주민등록번호 -->
                     <div class="info-grid mb-4">
                         <div class="info-item">
                             <div class="label">보건증 보유 여부</div>
@@ -265,9 +265,18 @@
                                        id="healthCertExpiry"
                                        value="{{member.healthCertExpiryStr}}">
                             </div>
-
                         </div>
-                        <div class="info-item"></div>
+
+                        <!-- ✅ 여기: 보건증 유효기간 옆에 주민등록번호 입력 추가 -->
+                        <div class="info-item">
+                            <div class="label">주민등록번호</div>
+                            <input type="text"
+                                   class="form-control form-control-sm"
+                                   name="ssn"
+                                   value="{{member.ssn}}"
+                                   placeholder="000000-0000000">
+                        </div>
+
                         <div>
                             <button type="button"
                                     id="btnOpenPayEstimate"

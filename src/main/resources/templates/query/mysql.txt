@@ -238,4 +238,12 @@ CREATE INDEX idx_recipe_step_recipe_id
     ON recipe_step (recipe_id);
 
 
+#2025-11-26
+ALTER TABLE member
+    ADD COLUMN ssn VARCHAR(50) NULL;
+
+-- 2) 기존 데이터에 임시 값 채우기 (실제로는 의미 있는 값으로 업데이트하는 게 좋음)
+UPDATE member
+SET ssn = 'TEMP-SSN'
+WHERE ssn IS NULL;
 

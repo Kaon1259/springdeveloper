@@ -43,6 +43,8 @@ public class MemberDto {
 
     private String email;
 
+    private String ssn;
+
     @NotNull
     @Min(0)
     private Integer hourlyWage;
@@ -130,6 +132,7 @@ public class MemberDto {
                 .startDate(m.getStartDate())
                 .phone(m.getPhone())
                 .email(m.getEmail())
+                .ssn(m.getSsn())
                 .hourlyWage(m.getHourlyWage())
                 .hasHealthCertificate(m.getHasHealthCertificate())
                 .healthCertExpiry(m.getHealthCertExpiry())
@@ -161,6 +164,7 @@ public class MemberDto {
                 .startDate(dto.getStartDate())
                 .phone(dto.getPhone())
                 .email(dto.getEmail())
+                .ssn(dto.getSsn())
                 .hourlyWage(dto.getHourlyWage())
                 .hasHealthCertificate(Boolean.TRUE.equals(dto.getHasHealthCertificate()))
                 .healthCertExpiry(dto.getHealthCertExpiry())

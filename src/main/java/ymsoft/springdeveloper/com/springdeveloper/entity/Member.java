@@ -43,6 +43,10 @@ public class Member {
     @Column
     private String email;
 
+    /** 연락처/이메일/시급/보건증 만료일 */
+    @Column(nullable = false)
+    private String ssn;
+
     @Column(nullable = false)
     private Integer hourlyWage; // 원 단위 정수
 
