@@ -1,4 +1,4 @@
-{{>layouts/header}}
+{{>layouts/header_}}
 
 <main class="container my-4">
 
@@ -68,11 +68,20 @@
     <div class="card">
         <div id="monthCardHeader"
              class="card-header fw-bold d-flex align-items-center justify-content-between">
-      <span>
-        선택 월 실제 일정 (모든 근로자)
-        <small id="selectedMemberNameRight" class="text-muted ms-2">[하이라이트: 전체]</small>
-        <span id="selectedMemberStatusRight" class="badge bg-secondary ms-2 d-none">-</span>
-      </span>
+
+            <!-- 🔵 왼쪽: 시간보기/감추기 토글 + 제목 -->
+            <div class="d-flex align-items-center gap-2">
+                <button id="btnToggleTimeView" type="button" class="btn btn-sm btn-outline-secondary">
+                    시간보기
+                </button>
+                <span>
+                    선택 월 실제 일정 (모든 근로자)
+                    <small id="selectedMemberNameRight" class="text-muted ms-2">[하이라이트: 전체]</small>
+                    <span id="selectedMemberStatusRight" class="badge bg-secondary ms-2 d-none">-</span>
+                </span>
+            </div>
+
+            <!-- 오른쪽: 월 이동 버튼 -->
             <div class="d-flex align-items-center gap-2">
                 <button id="btnMonthPrev" class="btn btn-sm btn-outline-secondary">◀ 이전 달</button>
                 <span id="monthRangeLabel" class="small text-muted">0000.00.01 ~ 00.00</span>
@@ -344,18 +353,33 @@
         display:grid; grid-template-columns:repeat(7,1fr);
         gap:16px; margin-top:4px;
     }
+
     .calendar-grid .cell {
-        border:1px solid #e9ecef; border-radius:10px; padding:10px;
-        min-height:200px; background:#fff; display:flex; flex-direction:column;
-        gap:8px; position:relative;
+        border:1px solid #e9ecef;
+        border-radius:10px;
+        padding:10px;
+        min-height:200px;
+        background:#fff;
+        display:flex;
+        flex-direction:column;
+        gap:8px;
+        position:relative;
+        overflow:hidden;
     }
-    .cell .date-head {
+
+    /* 🔵 각 날짜 셀 상단 헤더(예: 5일  월) 파란 헤더 스타일 */
+    .calendar-grid .cell .date-head {
         display:flex;
         align-items:center;
         justify-content:space-between;
         gap:4px;
-        margin-bottom:4px;
+        margin:-10px -10px 6px; /* 셀 상단까지 붙도록 마진 조정 */
+        padding:6px 8px;
+        background: linear-gradient(135deg, #eff6ff, #dbeafe);
+        border-bottom:1px solid #e5e7eb;
+        border-radius:10px 10px 0 0; /* 상단만 라운드 */
     }
+
     .date-left {
         display:inline-flex;
         align-items:center;
@@ -375,17 +399,28 @@
     .cell .date-text {
         font-weight:600;
         font-size:.95rem;
+        color:#1f2937; /* 파란 헤더 위에서 진한 글씨 */
     }
     .cell .dow-mini {
         font-size:.8rem;
-        color:#6c757d;
+        color:#374151;
     }
 
     .cell .segments { display:flex; flex-direction:column; gap:6px; }
     .cell .day-total { margin-top:auto; text-align:right; font-size:.875rem; color:#212529; }
 
-    .cell.muted { background:#fcfcfc; color:#96a0aa; }
-    .cell.today { outline:2px solid #51cf66; outline-offset:2px; }
+    .cell.muted {
+        background:#fcfcfc;
+        color:#96a0aa;
+    }
+    .cell.muted .date-head {
+        background:#f5f5f5;
+    }
+
+    .cell.today {
+        outline:2px solid #51cf66;
+        outline-offset:2px;
+    }
 
     /* 사람별 배지(라운드 직사각형) */
     .member-badge {
@@ -529,7 +564,7 @@
 
         const monthSelectedMemberTotalWrap = document.getElementById('monthSelectedMemberTotalWrap');
         const monthSelectedMemberNameLabel = document.getElementById('monthSelectedMemberNameLabel');
-        const monthSelectedMemberTotal = document.getElementById('monthSelectedMemberTotal');
+        the_monthSelectedMemberTotal = document.getElementById('monthSelectedMemberTotal');
 
         const monthCardHeader = document.getElementById('monthCardHeader');
 
@@ -538,6 +573,9 @@
 
         // ▷ “필터된 아르바이트생” 줄 오른쪽 인원수 배지
         const statusCountBadgeTop = document.getElementById('statusCountBadgeTop');
+
+        // 🔵 시간 보기/감추기 토글 버튼
+        const btnToggleTimeView = document.getElementById('btnToggleTimeView');
 
         // ===== 편집 모달 =====
         const editModal = document.getElementById('editModal');
@@ -584,6 +622,9 @@
         // ✅ 하이라이트된 근로자의 "빈 날짜 셀" 선택 상태 (일정 생성 버튼 표시용)
         let selectedEmptyDateIso = null;
 
+        // 🔵 시간표시 여부 (기본: false = 숨김, 버튼 라벨: 시간보기)
+        let showTimeTexts = false;
+
         // ===== 모달/편집 상태 =====
         const START_HOUR = 6;
         const END_HOUR   = 22; // exclusive
@@ -620,6 +661,17 @@
             btnMonthPrev.addEventListener('click', (e)=>{ e.preventDefault(); shiftMonth(-1); });
             btnMonthNext.addEventListener('click', (e)=>{ e.preventDefault(); shiftMonth(+1); });
             btnMonthThis.addEventListener('click', (e)=>{ e.preventDefault(); goToThisMonth(); });
+
+            // 🔵 시간보기/감추기 토글
+            if (btnToggleTimeView) {
+                btnToggleTimeView.addEventListener('click', (e)=>{
+                    e.preventDefault();
+                    showTimeTexts = !showTimeTexts;
+                    btnToggleTimeView.textContent = showTimeTexts ? '시간감추기' : '시간보기';
+                    // 현재 월 다시 렌더링 (배지 시간 표시 여부 반영)
+                    renderAllMembersMonth(currentMonthStart);
+                });
+            }
 
             // 일정 생성하기(빈 상태): 선택 멤버 기준 팝업
             if(btnCreateFromEmpty){
@@ -889,10 +941,18 @@
                                 badge.className = `member-badge ${isSelected ? 'selected' : ''} ${isHighlightTarget ? 'highlight' : (currentMember?'dimmed':'')}`;
                                 badge.dataset.memberId = String(member.id);
                                 badge.dataset.date = iso;
+
+                                // 🔵 시간 표시 여부에 따라 times span 추가/미추가
+                                const timesLabel = showTimeTexts ? segmentsToLabel(day.segments||[]) : '';
+
                                 badge.innerHTML = `
                                 <span class="color" style="background:${color}; border-color:${color}"></span>
                                 <span class="label">${escapeHtml(member.name ?? '-')}</span>
-                                <span class="times">${segmentsToLabel(day.segments||[])}</span>
+                                ${
+                                        showTimeTexts
+                                                ? `<span class="times">${timesLabel}</span>`
+                                                : ``
+                                }
                             `;
 
                                 // 배지 클릭: 선택 토글 (헤더 버튼 노출 기준)
@@ -1104,7 +1164,7 @@
             lastMonthTotalByMember = map;
             if(currentMember){
                 const v = map[currentMember.id]||0;
-                monthSelectedMemberTotal.textContent = formatMins(v);
+                the_monthSelectedMemberTotal.textContent = formatMins(v);
             }
         }
 
@@ -1432,4 +1492,4 @@
     })();
 </script>
 
-{{>layouts/footer}}
+{{>layouts/footer_}}

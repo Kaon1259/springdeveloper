@@ -1,4 +1,4 @@
-{{>layouts/header}}
+{{>layouts/header_}}
 
 <main class="container my-4">
     <!-- ============ 상단: 아르바이트 상태별 보기 (월간 화면과 동일 UI) ============ -->
@@ -57,7 +57,7 @@
     </div>
 
     <!-- 하단: 주간 타임테이블 -->
-    <div class="card weekly-card">
+    <div class="card weekly-card" id="weeklyCard">
         <div class="card-header fw-bold d-flex justify-content-between align-items-center weekly-card-header">
             <div class="d-flex flex-column">
                 <span>주간 타임테이블 (월~일)</span>
@@ -77,7 +77,7 @@
                 </span>
             </div>
 
-            <!-- 우측: 지난주 / [날짜범위] / 금주 / 다음주 + PDF 출력 버튼 -->
+            <!-- 우측: 지난주 / [날짜범위] / 금주 / 다음주 + PDF / 접기 버튼 -->
             <div class="d-flex align-items-center gap-2">
                 <button id="btnPrevWeek" class="btn btn-sm btn-outline-light">◀ 지난주</button>
                 <span id="weekRangeLabelRight" class="small text-light px-1"></span>
@@ -91,9 +91,14 @@
                 <button id="btnOpenPrintMemberPage" class="btn btn-sm btn-outline-light fw-semibold">
                     PDF(개별)
                 </button>
+
+                <!-- 🔵 주간 타임테이블 접기/펼치기 버튼 -->
+                <button type="button" id="btnToggleWeeklyCard" class="btn btn-sm btn-outline-light">
+                    타임테이블 접기
+                </button>
             </div>
         </div>
-        <div class="card-body weekly-card-body">
+        <div class="card-body weekly-card-body" id="weeklyCardBody">
             <div id="noMemberState" class="text-muted small d-none">
                 해당 상태의 아르바이트생이 없습니다.
             </div>
@@ -801,6 +806,9 @@
         const btnOpenPrintPage        = document.getElementById('btnOpenPrintPage');
         const btnOpenPrintMemberPage  = document.getElementById('btnOpenPrintMemberPage');
 
+        const weeklyCardBody      = document.getElementById('weeklyCardBody');
+        const btnToggleWeeklyCard = document.getElementById('btnToggleWeeklyCard');
+
         const memberWeekCard      = document.getElementById('memberWeekCard');
         const memberWeekTitle     = document.getElementById('memberWeekTitle');
         const memberWeekNameBadge = document.getElementById('memberWeekNameBadge');
@@ -904,6 +912,13 @@
             if (btnOpenPrintMemberPage) {
                 btnOpenPrintMemberPage.addEventListener('click', () => {
                     openPrintMemberPage();
+                });
+            }
+
+            if (btnToggleWeeklyCard && weeklyCardBody) {
+                btnToggleWeeklyCard.addEventListener('click', () => {
+                    const collapsed = weeklyCardBody.classList.toggle('d-none');
+                    btnToggleWeeklyCard.textContent = collapsed ? '타임테이블 펼치기' : '타임테이블 접기';
                 });
             }
 
@@ -1080,6 +1095,11 @@
                 timetableWrapper.classList.add('d-none');
                 hideMemberWeekCard();
                 clearAllDayEditButtons();
+                // 상태에 아무도 없으면 타임테이블은 접지 말고 그냥 그대로
+                if (weeklyCardBody) {
+                    weeklyCardBody.classList.remove('d-none');
+                    if (btnToggleWeeklyCard) btnToggleWeeklyCard.textContent = '타임테이블 접기';
+                }
                 return;
             }
 
@@ -1120,6 +1140,7 @@
                 pill.addEventListener('click', async (evt) => {
                     evt.preventDefault();
                     evt.stopPropagation();
+                    // 토글 선택
                     if (selectedMember && String(selectedMember.id) === String(m.id)) {
                         selectedMember = null;
                     } else {
@@ -1130,6 +1151,9 @@
                     await loadSelectedMemberWeek();
                     clearAllDayEditButtons();
                     updateCurrentTimeHighlight();
+
+                    // 🔵 선택/해제에 따라 레이아웃 토글
+                    updateLayoutForSelection();
                 });
                 memberList.appendChild(pill);
             });
@@ -1150,6 +1174,26 @@
                 document.body.classList.add('alba-has-selected');
             } else {
                 document.body.classList.remove('alba-has-selected');
+            }
+        }
+
+        // 🔵 선택 여부에 따른 상단/하단 카드 레이아웃 토글
+        function updateLayoutForSelection() {
+            if (selectedMember) {
+                // 개별 주간 카드 보이기 + 펼치기
+                memberWeekCard.classList.remove('d-none');
+                if (memberWeekBody) memberWeekBody.classList.remove('d-none');
+                if (btnToggleMemberWeek) btnToggleMemberWeek.textContent = '접기';
+
+                // 주간 타임테이블 접기
+                if (weeklyCardBody) weeklyCardBody.classList.add('d-none');
+                if (btnToggleWeeklyCard) btnToggleWeeklyCard.textContent = '타임테이블 펼치기';
+            } else {
+                // 개별 카드 숨기기
+                hideMemberWeekCard();
+                // 주간 타임테이블 펼치기
+                if (weeklyCardBody) weeklyCardBody.classList.remove('d-none');
+                if (btnToggleWeeklyCard) btnToggleWeeklyCard.textContent = '타임테이블 접기';
             }
         }
 
@@ -1532,6 +1576,8 @@
                     selectedWeekDaysMap = {};
                 }
             } catch (e) {
+
+
                 console.error('[memberWeek] unexpected error:', e);
                 baseWeekDaysMap = {};
                 selectedWeekDaysMap = {};
@@ -1544,7 +1590,11 @@
             updateSaveButtonState();
         }
 
-        function hideMemberWeekCard(){ memberWeekCard.classList.add('d-none'); }
+        function hideMemberWeekCard(){
+            memberWeekCard.classList.add('d-none');
+            if (memberWeekBody) memberWeekBody.classList.add('d-none');
+            if (btnToggleMemberWeek) btnToggleMemberWeek.textContent = '펼치기';
+        }
 
         function buildMemberWeekGrid(){
             if (!memberWeekGridBody) return;
@@ -2126,4 +2176,4 @@
     })();
 </script>
 
-{{>layouts/footer}}
+{{>layouts/footer_}}

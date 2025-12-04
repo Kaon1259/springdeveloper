@@ -1,4 +1,4 @@
-{{>layouts/header}}
+{{>layouts/header_}}
 
 <main class="container my-4">
     <!-- ==== 상단: 아르바이트 상태별 보기 (파란 라운드 패널) ==== -->
@@ -40,12 +40,16 @@
         </div>
     </div>
 
-    <!-- 하단: 주간 캘린더 (월~일, 가로 7컬럼) -->
+    <!-- 하단: 주간 캘린더 (월~일, 가로 7컬럼 + 합계 1컬럼) -->
     <div class="card">
         <div class="card-header fw-bold d-flex justify-content-between align-items-center">
-            <span>주간 캘린더 (월~일)</span>
             <div class="d-flex align-items-center gap-2">
-                <!-- ✅ 추가: PDF 버튼 (지난주 버튼 왼쪽) -->
+                <span>주간 캘린더 (월~일)</span>
+                <!-- ✅ 접기/펼치기 토글 버튼 -->
+                <button id="btnToggleWeekCalendar" class="btn btn-sm btn-outline-secondary">펼치기</button>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <!-- ✅ PDF 버튼 (지난주 버튼 왼쪽) -->
                 <button id="btnOpenPrintPage" class="btn btn-sm btn-outline-secondary">PDF</button>
                 <button id="btnPrevWeek" class="btn btn-sm btn-outline-secondary">◀ 지난주</button>
                 <span id="weekRangeLabelRight" class="small text-muted px-1"></span>
@@ -58,25 +62,23 @@
                 해당 상태의 아르바이트생이 없습니다.
             </div>
 
-            <div id="weekCalendarWrapper">
-                <!-- 요일별 컬럼 (실제/계획) -->
+            <div id="weekCalendarWrapper" class="d-none">
+                <!-- 요일별 컬럼 (실제/계획) + 주간 합계 컬럼 -->
                 <div class="week-calendar-grid" id="weekCalendarGrid">
-                    <!-- JS 렌더: 7일 컬럼 -->
+                    <!-- JS 렌더: 7일 컬럼 + 합계 1컬럼 -->
                 </div>
 
-                <!-- 마지막 행: 실제 근무 합계 -->
+                <!-- 마지막 행: 실제 근무 합계 (요일별 + 주간 합계) -->
                 <div class="week-actual-summary mt-3">
                     <div class="small text-muted mb-1">요일별 실제 근무시간 합계</div>
                     <div class="week-actual-row" id="weekActualRow">
-                        <!-- JS 렌더: 7일 합계 -->
+                        <!-- JS 렌더: 7일 합계 + 주간 합계 -->
                     </div>
                 </div>
             </div>
 
             <div class="small text-muted mt-2">
                 * 각 날짜 칸 상단에는 <strong>계획 일정</strong>, 하단에는 <strong>실제 근무 구간</strong> 칩이 표시됩니다.<br>
-                * 실제 근무 시간이 있는 날짜의 ‘조정’ 버튼을 누르면, 하단 개별 주간 일정에서 해당 일자 컬럼이 파란색 라운드렉트 외곽선으로 표시되고,<br>
-                &nbsp;&nbsp;그 안에서 실제 근무와 다른 슬롯은 선택 시 연한 파란색으로 표시됩니다.
             </div>
         </div>
     </div>
@@ -109,7 +111,7 @@
                         <button type="button"
                                 class="btn btn-sm btn-outline-secondary ms-1"
                                 id="btnGridClearAll">전체 초기화</button>
-                        <!-- ✅ 추가: 계획 그리드 기준으로 실제 근무 그리드 채우기 -->
+                        <!-- ✅ 계획 그리드 기준으로 실제 근무 그리드 채우기 -->
                         <button type="button"
                                 class="btn btn-sm btn-outline-success ms-1"
                                 id="btnFillFromPlan"
@@ -288,7 +290,8 @@
     /* ===== 주간 캘린더 ===== */
     .week-calendar-grid {
         display: grid;
-        grid-template-columns: repeat(7, 1fr);
+        /* 7일 + 주간 합계 1컬럼 */
+        grid-template-columns: repeat(7, 1fr) minmax(150px, 0.9fr);
         gap: 8px;
     }
     .week-cell {
@@ -349,7 +352,8 @@
 
     .week-actual-row {
         display:grid;
-        grid-template-columns: repeat(7, 1fr);
+        /* 7일 + 주간 합계 1컬럼 */
+        grid-template-columns: repeat(7, 1fr) minmax(150px, 0.9fr);
         gap: 8px;
     }
     .week-actual-cell {
@@ -360,6 +364,25 @@
         text-align: right;
         font-size: .85rem;
         color:#495057;
+    }
+
+    /* 주간 합계 셀 스타일 */
+    .week-summary-cell {
+        background:#f8fafc;
+    }
+    .week-summary-cell .date-head span.left-date span:first-child {
+        font-weight:700;
+    }
+    .week-summary-cell .week-cell-rect-bottom {
+        border-color: rgba(13,110,253,0.4);
+        background: rgba(13,110,253,0.03);
+    }
+    .week-summary-cell .week-cell-rect-top {
+        border-style: dashed;
+    }
+    .week-actual-total-cell {
+        background:#e7f1ff;
+        font-weight:600;
     }
 
     /* ===== 개별 주간 그리드 ===== */
@@ -513,6 +536,7 @@
         const btnThisWeek         = document.getElementById('btnThisWeek');
         const btnNextWeek         = document.getElementById('btnNextWeek');
         const btnOpenPrintPage    = document.getElementById('btnOpenPrintPage'); // ✅ PDF 버튼
+        const btnToggleWeekCalendar = document.getElementById('btnToggleWeekCalendar'); // ✅ 접기/펼치기 버튼
 
         // 개별 주간 그리드 DOM
         const memberWeekCard      = document.getElementById('memberWeekCard');
@@ -543,6 +567,9 @@
         let highlightedDayIso = null;
 
         const GRID_DAY_LABELS = ['월','화','수','목','금','토','일'];
+
+        // ✅ 주간 캘린더 접힘 상태 (기본: 접힘)
+        let isWeekCalendarCollapsed = true;
 
         try {
             allMembers = JSON.parse(document.getElementById('membersData').textContent || '[]');
@@ -585,6 +612,14 @@
             if (btnOpenPrintPage) {
                 btnOpenPrintPage.addEventListener('click', () => {
                     openPrintPage();
+                });
+            }
+
+            // ✅ 주간 캘린더 접기/펼치기 토글
+            if (btnToggleWeekCalendar) {
+                btnToggleWeekCalendar.addEventListener('click', () => {
+                    isWeekCalendarCollapsed = !isWeekCalendarCollapsed;
+                    updateWeekCalendarVisibility();
                 });
             }
 
@@ -638,25 +673,31 @@
             }
         }
 
-        /* ✅ PDF 전체 출력용 페이지 오픈 */
-        function openPrintPage() {
-            // 1) 멤버 선택 여부 확인
-            if (!selectedMember) {
-                alert('출력할 아르바이트생을 먼저 선택해 주세요.');
+        /* ✅ 주간 캘린더 접기/펼치기 상태에 따라 wrapper 토글 */
+        function updateWeekCalendarVisibility() {
+            if (!weekCalendarWrapper) return;
+
+            // 멤버가 없으면 항상 숨김
+            if (!currentStatusMembers || currentStatusMembers.length === 0) {
+                weekCalendarWrapper.classList.add('d-none');
+                if (btnToggleWeekCalendar) {
+                    btnToggleWeekCalendar.disabled = true;
+                    btnToggleWeekCalendar.textContent = '펼치기';
+                }
                 return;
             }
 
-            // 2) 현재 보고 있는 주의 시작/끝 날짜
-            const startIso = toIso(currentWeekStart);            // 월요일
-            const endIso   = toIso(addDays(currentWeekStart, 6)); // 일요일
+            if (btnToggleWeekCalendar) {
+                btnToggleWeekCalendar.disabled = false;
+            }
 
-            const url =
-                    `/schedules/weeklyworktime/print` +
-                    `?memberId=${encodeURIComponent(selectedMember.id)}` +
-                    `&startDate=${encodeURIComponent(startIso)}` +
-                    `&endDate=${encodeURIComponent(endIso)}`;
-
-            window.open(url, '_blank');
+            if (isWeekCalendarCollapsed) {
+                weekCalendarWrapper.classList.add('d-none');
+                if (btnToggleWeekCalendar) btnToggleWeekCalendar.textContent = '펼치기';
+            } else {
+                weekCalendarWrapper.classList.remove('d-none');
+                if (btnToggleWeekCalendar) btnToggleWeekCalendar.textContent = '접기';
+            }
         }
 
         /* 저장 / 근무시간채우기 버튼 활성/비활성 (10분만 활성) */
@@ -688,21 +729,23 @@
 
             if (currentStatusMembers.length === 0) {
                 noMemberState.classList.remove('d-none');
-                weekCalendarWrapper.classList.add('d-none');
                 weekCalendarGrid.innerHTML = '';
-                weekActualRow.innerHTML = '';
+                weekActualRow.innerHTML    = '';
                 hideMemberWeekCard();
+                updateWeekCalendarVisibility();
                 return;
             }
 
             noMemberState.classList.add('d-none');
-            weekCalendarWrapper.classList.remove('d-none');
 
             if (!selectedMember) selectedMember = currentStatusMembers[0];
             updatePillActive();
 
             loadWeekForSelectedMember();
             loadSelectedMemberWeek();
+
+            // 캘린더 접힘 상태 반영
+            updateWeekCalendarVisibility();
         }
 
         /* ===== 상단 멤버 리스트 ===== */
@@ -806,6 +849,9 @@
             const todayIso  = toIso(new Date());
             let dailyMinutes = [];
 
+            let weeklyPlanMinutes = 0;
+            let weeklyActualMinutes = 0;
+
             for (let offset = 0; offset < 7; offset++) {
                 const date     = addDays(weekStart, offset);
                 const iso      = toIso(date);
@@ -821,6 +867,14 @@
                 const minutes    = typeof actualDay.minutes === 'number' ? actualDay.minutes : 0;
                 dailyMinutes.push(minutes);
 
+                // 계획 합계(분) 계산
+                const planMinutes = planSegs.reduce((acc, s) => {
+                    return acc + (hmToMin(s.end) - hmToMin(s.start));
+                }, 0);
+
+                weeklyPlanMinutes += planMinutes;
+                weeklyActualMinutes += minutes;
+
                 const hasWork = minutes > 0;
 
                 const cell = document.createElement('div');
@@ -829,9 +883,18 @@
                 cell.dataset.hasWork = hasWork ? '1' : '0';
                 if (iso === todayIso) cell.classList.add('today');
 
+                /* ✅ 계획 일정 시간은 "분까지만" 표시 (HH:MM:SS → HH:MM) */
                 const plansHtml  = planSegs.length
-                        ? planSegs.map(s => chipHtml(colorForMember(selectedMember), s.start, s.end)).join(' ')
+                        ? planSegs.map(s =>
+                                chipHtml(
+                                        colorForMember(selectedMember),
+                                        formatTimeToMinutesLabel(s.start),
+                                        formatTimeToMinutesLabel(s.end)
+                                )
+                        ).join(' ')
                         : '<span class="text-muted small"></span>';
+
+                /* 실제 근무는 기존 그대로 사용 */
                 const actualHtml = actualSegs.length
                         ? actualSegs.map(s => chipHtml(colorForMember(selectedMember), s.start, s.end)).join(' ')
                         : '<span class="text-muted small"></span>';
@@ -860,6 +923,29 @@
                 weekCalendarGrid.appendChild(cell);
             }
 
+            /* ✅ 상단: 주간 합계 컬럼 추가 (계획/실제) */
+            const summaryCell = document.createElement('div');
+            summaryCell.className = 'week-cell week-summary-cell';
+            summaryCell.innerHTML = `
+                <div class="date-head">
+                    <span class="left-date">
+                        <span>주간 합계</span>
+                    </span>
+                </div>
+                <div class="week-cell-rect week-cell-rect-bottom">
+                    <div class="segments">
+                        <span class="text-muted small">계획: <strong>${formatMins(weeklyPlanMinutes)}</strong></span>
+                    </div>
+                </div>
+                <div class="week-cell-rect week-cell-rect-top">
+                    <div class="segments">
+                        <span class="text-muted small">실제: <strong>${formatMins(weeklyActualMinutes)}</strong></span>
+                    </div>
+                </div>
+            `;
+            weekCalendarGrid.appendChild(summaryCell);
+
+            /* 하단: 요일별 실제 근무시간 + 주간 실제 합계 */
             for (let offset = 0; offset < 7; offset++) {
                 const mins = dailyMinutes[offset] || 0;
                 const cell = document.createElement('div');
@@ -867,6 +953,11 @@
                 cell.textContent = formatMins(mins);
                 weekActualRow.appendChild(cell);
             }
+
+            const totalCell = document.createElement('div');
+            totalCell.className = 'week-actual-cell week-actual-total-cell';
+            totalCell.textContent = `주간 합계 ${formatMins(weeklyActualMinutes)}`;
+            weekActualRow.appendChild(totalCell);
 
             attachWeekCellHandlers();
         }
@@ -1315,6 +1406,27 @@
             }
         }
 
+        /* ✅ PDF 전체 출력용 페이지 오픈 */
+        function openPrintPage() {
+            // 1) 멤버 선택 여부 확인
+            if (!selectedMember) {
+                alert('출력할 아르바이트생을 먼저 선택해 주세요.');
+                return;
+            }
+
+            // 2) 현재 보고 있는 주의 시작/끝 날짜
+            const startIso = toIso(currentWeekStart);            // 월요일
+            const endIso   = toIso(addDays(currentWeekStart, 6)); // 일요일
+
+            const url =
+                    `/schedules/weeklyworktime/print` +
+                    `?memberId=${encodeURIComponent(selectedMember.id)}` +
+                    `&startDate=${encodeURIComponent(startIso)}` +
+                    `&endDate=${encodeURIComponent(endIso)}`;
+
+            window.open(url, '_blank');
+        }
+
         /* ===== Utils ===== */
         function toMonday(date){
             const d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
@@ -1357,6 +1469,18 @@
             const v=Math.max(0, mins|0);
             const h=Math.floor(v/60), m=v%60;
             return m===0?`${h}시간`:`${h}시간 ${m}분`;
+        }
+
+        /* ✅ "HH:MM:SS" 또는 "HH:MM" → "HH:MM" 로 통일 (계획 일정 표시용) */
+        function formatTimeToMinutesLabel(raw){
+            if (!raw) return '';
+            const parts = String(raw).split(':');
+            if (parts.length >= 2) {
+                const h = pad2(parseInt(parts[0],10) || 0);
+                const m = pad2(parseInt(parts[1],10) || 0);
+                return `${h}:${m}`;
+            }
+            return raw;
         }
 
         function chipHtml(color, start, end){
@@ -1406,4 +1530,4 @@
     })();
 </script>
 
-{{>layouts/footer}}
+{{>layouts/footer_}}

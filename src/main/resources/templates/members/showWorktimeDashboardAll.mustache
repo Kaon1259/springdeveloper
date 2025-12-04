@@ -1,54 +1,26 @@
-{{>layouts/header}}
+{{>layouts/header_}}
 
 <main class="container my-4">
-    <!-- ==== 상단: 아르바이트 상태별 보기 (파란 라운드 패널) ==== -->
-    <div class="status-panel-blue mb-3">
-        <div class="status-panel-header">
-            <div class="status-panel-title">아르바이트 상태별 보기</div>
-            <div class="status-panel-period">
-                <span id="weekRangeLabel"></span>
-            </div>
-        </div>
-
-        <div class="status-panel-body">
-            <div class="row g-3">
-                <!-- 상태 셀렉트 -->
-                <div class="col-12 col-md-4">
-                    <label class="form-label small text-muted" for="statusSelect">상태</label>
-                    <select id="statusSelect" class="form-select status-panel-select">
-                        <option value="WORKING" selected>근무중</option>
-                        <option value="WAITING">시작전</option>
-                        <option value="RESTING">휴식중</option>
-                        <option value="PAUSED">일시중지</option>
-                        <option value="RESIGNED">퇴사</option>
-                    </select>
-                    <div class="form-text">상태를 바꾸면 아래 리스트와 타임테이블이 함께 바뀝니다.</div>
-                </div>
-
-                <!-- 필터된 아르바이트 리스트 -->
-                <div class="col-12 col-md-8">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <span class="small text-muted">필터된 아르바이트생</span>
-                        <span id="memberCountBadge" class="badge bg-light text-dark">0명</span>
-                    </div>
-                    <div id="memberList" class="vlist"></div>
-                    <div class="small text-muted mt-2">
-                        * 각 사람 옆의 색상은 해당 근로자의 고유 색입니다. (아래 주간 캘린더에도 동일 색 사용)
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- 하단: 주간 캘린더 (월~일, 가로 7컬럼) + 좌측에 아르바이트생 이름 -->
+    <!-- 하단: 주간 캘린더 (월~일, 가로 7컬럼) + 좌측에 아르바이트생 이름 + 마지막 주간합계 컬럼 -->
     <div class="card">
-        <div class="card-header fw-bold d-flex justify-content-between align-items-center">
-            <span>주간 캘린더 (월~일)</span>
+        <div class="card-header week-card-header-blue fw-bold d-flex justify-content-between align-items-center">
             <div class="d-flex align-items-center gap-2">
-                <button id="btnPrevWeek" class="btn btn-sm btn-outline-secondary">◀ 지난주</button>
-                <span id="weekRangeLabelRight" class="small text-muted px-1"></span>
-                <button id="btnThisWeek" class="btn btn-sm btn-outline-secondary">금주</button>
-                <button id="btnNextWeek" class="btn btn-sm btn-outline-secondary">다음주 ▶</button>
+                <span>주간 캘린더 (월~일)</span>
+
+                <!-- 🔹 상태 선택 드롭다운 -->
+                <select id="statusSelect" class="form-select status-header-select">
+                    <option value="WORKING" selected>근무중</option>
+                    <option value="WAITING">시작전</option>
+                    <option value="RESTING">휴식중</option>
+                    <option value="PAUSED">일시중지</option>
+                    <option value="RESIGNED">퇴사</option>
+                </select>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <button id="btnPrevWeek" class="btn btn-sm btn-outline-light">◀ 지난주</button>
+                <span id="weekRangeLabelRight" class="small text-light px-1"></span>
+                <button id="btnThisWeek" class="btn btn-sm btn-outline-light">금주</button>
+                <button id="btnNextWeek" class="btn btn-sm btn-outline-light">다음주 ▶</button>
             </div>
         </div>
         <div class="card-body">
@@ -68,14 +40,15 @@
                 * 좌측에는 상태 필터에 해당하는 모든 아르바이트생 이름이 표시되며,<br>
                 &nbsp;&nbsp;각 행은 해당 아르바이트생의 주간 근무계획 / 실제 근무시간입니다.<br>
                 * 각 라운드렉트 칸 하단에는 해당 일자의 실제 근무시간 합계가 표시되고,<br>
-                &nbsp;&nbsp;테이블 마지막 행에는 요일별 전체 합계가, 이름 하단에는 주간 근무시간 합계가 표시됩니다.
+                &nbsp;&nbsp;테이블 마지막 행에는 요일별 전체 실제 합계가, 마지막 컬럼에는<br>
+                &nbsp;&nbsp;각 아르바이트생/전체의 <strong>주간 계획 및 실제 근무시간 합계</strong>가 표시됩니다.
             </div>
         </div>
     </div>
 </main>
 
 <style>
-    /* ==== 아르바이트 상태별 보기: 파란 라운드 패널 ==== */
+    /* ==== 아르바이트 상태 패널 공통 (현재 화면에는 미사용일 수 있음) ==== */
     .status-panel-blue {
         background: linear-gradient(135deg, #1d4ed8, #2563eb);
         border-radius: 18px;
@@ -104,17 +77,6 @@
     .status-panel-blue .form-text,
     .status-panel-blue .small.text-muted {
         color: #dbeafe !important;
-    }
-    .status-panel-blue .status-panel-select {
-        background: rgba(15,23,42,0.22);
-        border-color: rgba(191,219,254,0.85);
-        color:#e5eeff;
-    }
-    .status-panel-blue .status-panel-select:focus {
-        background: rgba(15,23,42,0.30);
-        border-color:#bfdbfe;
-        box-shadow:0 0 0 0.15rem rgba(191,219,254,0.45);
-        color:#f9fbff;
     }
     .status-panel-blue .badge.bg-light {
         background:#e5eeff !important;
@@ -188,18 +150,56 @@
     .pill .name { font-weight:600; }
     .pill .meta { color:#6c757d; font-size:.8rem; }
 
+    /* ===== 주간 캘린더 카드 헤더 파란색 ===== */
+    .week-card-header-blue {
+        background: #1d4ed8;
+        color:#f9fbff;
+    }
+    .week-card-header-blue .form-select.status-header-select {
+        height: 32px;
+        padding: 2px 32px 2px 8px;
+        font-size: .85rem;
+        border-radius: 999px;
+        border: 1px solid rgba(191,219,254,0.85);
+        background: rgba(15,23,42,0.22);
+        color: #e5eeff;
+    }
+    .week-card-header-blue .form-select.status-header-select:focus {
+        background: rgba(15,23,42,0.30);
+        border-color:#bfdbfe;
+        box-shadow:0 0 0 0.12rem rgba(191,219,254,0.6);
+        color:#f9fbff;
+    }
+
+    .week-card-header-blue .btn-outline-light {
+        border-color: rgba(226,232,240,0.8);
+        color:#e2e8f0;
+    }
+    .week-card-header-blue .btn-outline-light:hover {
+        background:#e2e8f0;
+        color:#1e293b;
+    }
+
     /* ===== 주간 캘린더 ===== */
 
     .week-calendar-grid {
         overflow-x: auto;
+        padding: 4px;
     }
 
     .week-calendar-table {
         width: 100%;
         border-collapse: separate;
         border-spacing: 0;
-        min-width: 700px;
+        min-width: 900px;
         font-size: .9rem;
+
+        /* 🔹 내부 테이블을 라운드렉트로 */
+        border-radius: 14px;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 8px 20px rgba(15,23,42,0.06);
+        background: #ffffff;
+        overflow: hidden;
     }
     .week-calendar-table thead th {
         background: #f8fafc;
@@ -209,10 +209,31 @@
         font-weight: 600;
         vertical-align: middle;
     }
+    /* 🔹 모서리 둥글게 (첫/마지막 셀) */
+    .week-calendar-table thead th:first-child {
+        border-top-left-radius: 14px;
+    }
+    .week-calendar-table thead th:last-child {
+        border-top-right-radius: 14px;
+    }
+    .week-calendar-table tbody tr:last-child td:first-child {
+        border-bottom-left-radius: 14px;
+    }
+    .week-calendar-table tbody tr:last-child td:last-child {
+        border-bottom-right-radius: 14px;
+    }
+
+    /* 🔹 아르바이트생 컬럼: 연한 하늘색 톤 */
     .week-calendar-table thead th.member-header-cell {
         min-width: 140px;
         width: 160px;
         text-align: left;
+        background:#dbeafe;   /* 연한 하늘색 */
+        color:#0f172a;
+    }
+    .week-calendar-table thead th.week-total-header {
+        min-width: 140px;
+        width: 160px;
     }
     .week-calendar-table thead th.today-col {
         outline: 2px solid #51cf66;
@@ -227,11 +248,22 @@
     .week-calendar-table tbody td.member-cell {
         white-space: nowrap;
         font-weight: 600;
+        background:#dbeafe;   /* 연한 하늘색 */
+        color:#0f172a;
+    }
+    .week-calendar-table tbody td.member-total-cell {
         background:#f8fafc;
+        text-align:right;
     }
     .week-calendar-table tbody tr.summary-row td {
         background:#f1f3f5;
         font-weight:600;
+        text-align:right;
+    }
+    .week-calendar-table tbody tr.summary-row td.member-cell {
+        background:#dbeafe;   /* 연한 하늘색 */
+        color:#0f172a;
+        text-align:left;
     }
 
     .member-dot {
@@ -240,13 +272,15 @@
         height:10px;
         border-radius:50%;
         margin-right:4px;
+        border:1px solid rgba(15,23,42,0.2);
+        background:#fff;
     }
     .member-name-wrap {
         display:block;
     }
-    .member-week-total {
-        margin-top: 2px;
-        font-size: .75rem;
+
+    .member-week-total-strong {
+        font-size:.8rem;
         color:#495057;
     }
 
@@ -366,20 +400,22 @@
             renderWeekRangeLabel(currentWeekStart);
 
             if (currentStatusMembers.length === 0) {
-                noMemberState.classList.remove('d-none');
-                weekCalendarWrapper.classList.add('d-none');
-                weekCalendarGrid.innerHTML = '';
+                if (noMemberState) noMemberState.classList.remove('d-none');
+                if (weekCalendarWrapper) weekCalendarWrapper.classList.add('d-none');
+                if (weekCalendarGrid) weekCalendarGrid.innerHTML = '';
                 return;
             }
 
-            noMemberState.classList.add('d-none');
-            weekCalendarWrapper.classList.remove('d-none');
+            if (noMemberState) noMemberState.classList.add('d-none');
+            if (weekCalendarWrapper) weekCalendarWrapper.classList.remove('d-none');
 
             loadWeekForCurrentStatusMembers();
         }
 
-        /* ===== 상단 필터된 멤버 리스트 ===== */
+        /* ===== 상단 필터된 멤버 리스트 (지금은 d-none 영역이지만 데이터는 유지) ===== */
         function renderMemberList(members) {
+            if (!memberList || !memberCountBadge) return;
+
             memberList.innerHTML = '';
             memberCountBadge.textContent = `${members.length}명`;
 
@@ -396,10 +432,10 @@
                         const pill = document.createElement('div');
                         pill.className = 'pill';
                         pill.innerHTML = `
-                    <span class="dot" style="background:${color}"></span>
-                    <span class="name">${escapeHtml(m.name ?? '-')}</span>
-                    <span class="meta">${escapeHtml(m.phone ?? '')}</span>
-                `;
+                        <span class="dot" style="background:${color}"></span>
+                        <span class="name">${escapeHtml(m.name ?? '-')}</span>
+                        <span class="meta">${escapeHtml(m.phone ?? '')}</span>
+                    `;
                         memberList.appendChild(pill);
                     });
         }
@@ -493,14 +529,23 @@
                 headTr.appendChild(th);
             });
 
+            // 🔹 마지막 컬럼: 주간 합계
+            const thWeek = document.createElement('th');
+            thWeek.className = 'week-total-header';
+            thWeek.textContent = '주간 합계';
+            headTr.appendChild(thWeek);
+
             thead.appendChild(headTr);
             table.appendChild(thead);
 
             // 바디: 멤버별 행
             const tbody = document.createElement('tbody');
 
-            // 요일별 전체 합계 계산용
-            const dayTotals = new Array(7).fill(0);
+            // 요일별 전체 실제 합계
+            const dayActualTotals = new Array(7).fill(0);
+            // 전체(모든 멤버) 주간 계획/실제 합계
+            let allMembersWeeklyPlanTotal   = 0;
+            let allMembersWeeklyActualTotal = 0;
 
             currentStatusMembers.forEach((member) => {
                 const tr = document.createElement('tr');
@@ -510,14 +555,15 @@
                 nameTd.className = 'member-cell';
                 const color = colorForMember(member);
                 nameTd.innerHTML = `
-                <span class="member-name-wrap">
-                    <span class="member-dot" style="background:${color}"></span>
-                    <span>${escapeHtml(member.name || '-')}</span>
-                </span>
-            `;
+                    <span class="member-name-wrap">
+                        <span class="member-dot" style="background:${color}"></span>
+                        <span>${escapeHtml(member.name || '-')}</span>
+                    </span>
+                `;
                 tr.appendChild(nameTd);
 
-                let memberTotalMins = 0; // 🔹 아르바이트 한 주 합계
+                let memberPlanTotalMins   = 0; // 🔹 아르바이트 한 주 계획 합계
+                let memberActualTotalMins = 0; // 🔹 아르바이트 한 주 실제 합계
 
                 // 7일 칸
                 weekDates.forEach((date, idx) => {
@@ -532,8 +578,14 @@
                     const actualSegs = Array.isArray(actualDay.segments) ? actualDay.segments : [];
                     const minutes    = typeof actualDay.minutes === 'number' ? actualDay.minutes : 0;
 
-                    dayTotals[idx] += minutes;
-                    memberTotalMins += minutes;
+                    // 🔹 계획 시간(분) 계산
+                    const planMinutes = planSegs.reduce((acc, s) => {
+                        return acc + (hmToMin(s.end) - hmToMin(s.start));
+                    }, 0);
+
+                    dayActualTotals[idx]   += minutes;
+                    memberActualTotalMins  += minutes;
+                    memberPlanTotalMins    += planMinutes;
 
                     const plansHtml = planSegs.length
                             ? planSegs.map(s => chipHtml(color, s.start, s.end)).join(' ')
@@ -549,27 +601,40 @@
 
                     const td = document.createElement('td');
                     td.innerHTML = `
-                    <div class="week-cell">
-                        <div class="week-cell-rect week-cell-rect-bottom">
-                            <div class="segments">${plansHtml}</div>
+                        <div class="week-cell">
+                            <div class="week-cell-rect week-cell-rect-bottom">
+                                <div class="segments">${plansHtml}</div>
+                            </div>
+                            <div class="week-cell-rect week-cell-rect-top">
+                                <div class="segments">${actualHtml}</div>
+                                ${dayTotalHtml}
+                            </div>
                         </div>
-                        <div class="week-cell-rect week-cell-rect-top">
-                            <div class="segments">${actualHtml}</div>
-                            ${dayTotalHtml}
-                        </div>
-                    </div>
-                `;
+                    `;
                     tr.appendChild(td);
                 });
 
-                // 🔹 이름 셀 하단에 주간 합계 출력
-                const weekLabel = memberTotalMins > 0 ? formatMins(memberTotalMins) : '-';
-                nameTd.innerHTML += `<div class="member-week-total">주간 합계: ${weekLabel}</div>`;
+                allMembersWeeklyPlanTotal   += memberPlanTotalMins;
+                allMembersWeeklyActualTotal += memberActualTotalMins;
+
+                // 🔹 마지막 컬럼: 해당 아르바이트생의 주간 계획/실제 합계
+                const weekPlanLabel   = memberPlanTotalMins   > 0 ? formatMins(memberPlanTotalMins)   : '-';
+                const weekActualLabel = memberActualTotalMins > 0 ? formatMins(memberActualTotalMins) : '-';
+
+                const totalTd = document.createElement('td');
+                totalTd.className = 'member-total-cell';
+                totalTd.innerHTML = `
+                    <div class="member-week-total-strong">
+                        <div class="small text-muted">계획: <strong>${weekPlanLabel}</strong></div>
+                        <div class="small text-muted">실제: <strong>${weekActualLabel}</strong></div>
+                    </div>
+                `;
+                tr.appendChild(totalTd);
 
                 tbody.appendChild(tr);
             });
 
-            // ===== 마지막 요약 행: 요일별 전체 합계 =====
+            // ===== 마지막 요약 행: 요일별 전체 실제 합계 + 주간 전체 합계(계획/실제) =====
             const summaryTr = document.createElement('tr');
             summaryTr.className = 'summary-row';
 
@@ -578,11 +643,21 @@
             sumNameTd.textContent = '합계';
             summaryTr.appendChild(sumNameTd);
 
-            dayTotals.forEach((mins) => {
+            dayActualTotals.forEach((mins) => {
                 const td = document.createElement('td');
                 td.textContent = mins > 0 ? formatMins(mins) : '-';
                 summaryTr.appendChild(td);
             });
+
+            // 🔹 마지막 요약 컬럼: 전체(모든 멤버) 주간 계획/실제 합계
+            const totalSummaryTd = document.createElement('td');
+            const totalPlanLabel   = allMembersWeeklyPlanTotal   > 0 ? formatMins(allMembersWeeklyPlanTotal)   : '-';
+            const totalActualLabel = allMembersWeeklyActualTotal > 0 ? formatMins(allMembersWeeklyActualTotal) : '-';
+            totalSummaryTd.innerHTML = `
+                계획: <strong>${totalPlanLabel}</strong><br>
+                실제: <strong>${totalActualLabel}</strong>
+            `;
+            summaryTr.appendChild(totalSummaryTd);
 
             tbody.appendChild(summaryTr);
 
@@ -645,9 +720,9 @@
             const startLabel = formatHmLabel(start);
             const endLabel   = formatHmLabel(end);
             return `<span class="chip">
-                    <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${color};"></span>
-                    <span>${startLabel} ~ ${endLabel}</span>
-                </span>`;
+                        <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${color};"></span>
+                        <span>${startLabel} ~ ${endLabel}</span>
+                    </span>`;
         }
 
         function colorForMember(m){
@@ -690,4 +765,4 @@
     })();
 </script>
 
-{{>layouts/footer}}
+{{>layouts/footer_}}

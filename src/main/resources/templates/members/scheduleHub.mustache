@@ -1,0 +1,121 @@
+{{>layouts/header}}
+
+<div class="container-fluid schedule-hub-container">
+    <!-- 탭 헤더 -->
+    <ul class="nav nav-tabs schedule-hub-tabs" id="scheduleHubTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <a
+                    class="nav-link"
+                    id="weekly-tab-btn"
+                    data-bs-toggle="tab"
+                    data-toggle="tab"
+                    href="#weekly-tab"
+                    role="tab"
+                    aria-controls="weekly-tab"
+                    aria-selected="true">
+                주간 일정
+            </a>
+        </li>
+        <li class="nav-item" role="presentation">
+            <a
+                    class="nav-link active"
+                    id="monthly-tab-btn"
+                    data-bs-toggle="tab"
+                    data-toggle="tab"
+                    href="#monthly-tab"
+                    role="tab"
+                    aria-controls="monthly-tab"
+                    aria-selected="false">
+                월간 일정
+            </a>
+        </li>
+    </ul>
+
+    <!-- 탭 콘텐츠 -->
+    <div class="tab-content schedule-hub-content" id="scheduleHubTabContent">
+
+        <!-- 월간: /members/schedulemanagement -->
+        <div
+                class="tab-pane fade show active schedule-hub-pane"
+                id="monthly-tab"
+                role="tabpanel"
+                aria-labelledby="monthly-tab-btn">
+
+            <iframe
+                    id="monthly-frame"
+                    class="schedule-hub-iframe"
+                    src="/members/schedulemanagement"
+                    title="월간 일정 관리"
+                    style="width:100%; border:none; min-height:calc(100vh - 180px);">
+            </iframe>
+        </div>
+
+        <!-- 주간: /members/schedulemanagementbyweek -->
+        <div
+                class="tab-pane fade schedule-hub-pane"
+                id="weekly-tab"
+                role="tabpanel"
+                aria-labelledby="weekly-tab-btn">
+
+            <!-- 처음엔 비워두고 탭 클릭 시 로드 (lazy-load) -->
+            <iframe
+                    id="weekly-frame"
+                    class="schedule-hub-iframe"
+                    data-src="/members/schedulemanagementbyweek"
+                    title="주간 일정 관리"
+                    style="width:100%; border:none; min-height:calc(100vh - 180px);">
+            </iframe>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const tabLinks = document.querySelectorAll('#scheduleHubTabs .nav-link');
+        const tabPanes = document.querySelectorAll('#scheduleHubTabContent .tab-pane');
+        const weeklyFrame = document.getElementById('weekly-frame');
+
+        tabLinks.forEach(function (link) {
+            link.addEventListener('click', function (e) {
+                e.preventDefault();
+
+                const targetSelector = link.getAttribute('href');
+                const targetPane = document.querySelector(targetSelector);
+
+                // 1) Bootstrap 5 (JS) 가 있으면 그걸 사용
+                if (window.bootstrap && bootstrap.Tab) {
+                    const tab = new bootstrap.Tab(link);
+                    tab.show();
+                }
+                // 2) Bootstrap 4 (jQuery) 가 있으면 그걸 사용
+                else if (window.$ && typeof $(link).tab === 'function') {
+                    $(link).tab('show');
+                }
+                // 3) 둘 다 없으면 순수 JS로 강제 토글
+                else {
+                    tabLinks.forEach(function (l) {
+                        l.classList.remove('active');
+                    });
+                    tabPanes.forEach(function (p) {
+                        p.classList.remove('show', 'active');
+                    });
+                    link.classList.add('active');
+                    if (targetPane) {
+                        targetPane.classList.add('show', 'active');
+                    }
+                }
+
+                // 주간 탭 lazy-load
+                if (link.id === 'weekly-tab-btn' && weeklyFrame && !weeklyFrame.src) {
+                    const dataSrc = weeklyFrame.getAttribute('data-src');
+                    if (dataSrc) {
+                        weeklyFrame.src = dataSrc;
+                    }
+                }
+            });
+        });
+    });
+</script>
+
+{{>layouts/footer}}

@@ -1,0 +1,157 @@
+{{>layouts/header}}
+
+<div class="container-fluid schedule-hub-container">
+    <!-- 탭 헤더 -->
+    <ul class="nav nav-tabs schedule-hub-tabs" id="workTimeHubTabs" role="tablist">
+        <!-- 1) 주간 근무시간 대시보드 (개별) -->
+        <li class="nav-item" role="presentation">
+            <a
+                    class="nav-link active"
+                    id="worktime-tab-btn"
+                    data-bs-toggle="tab"
+                    data-toggle="tab"
+                    href="#worktime-tab"
+                    role="tab"
+                    aria-controls="worktime-tab"
+                    aria-selected="true">
+                주간(개별)
+            </a>
+        </li>
+
+        <!-- 2) 주간 근무시간 대시보드 (전체) -->
+        <li class="nav-item" role="presentation">
+            <a
+                    class="nav-link"
+                    id="worktime-all-tab-btn"
+                    data-bs-toggle="tab"
+                    data-toggle="tab"
+                    href="#worktime-all-tab"
+                    role="tab"
+                    aria-controls="worktime-all-tab"
+                    aria-selected="false">
+                주간(통합)
+            </a>
+        </li>
+
+        <!-- 3) 월간 근무시간 대시보드 -->
+        <li class="nav-item" role="presentation">
+            <a
+                    class="nav-link"
+                    id="workmonth-tab-btn"
+                    data-bs-toggle="tab"
+                    data-toggle="tab"
+                    href="#workmonth-tab"
+                    role="tab"
+                    aria-controls="workmonth-tab"
+                    aria-selected="false">
+                월간(개별)
+            </a>
+        </li>
+    </ul>
+
+    <!-- 탭 콘텐츠 -->
+    <div class="tab-content schedule-hub-content" id="workTimeHubTabContent">
+
+        <!-- 1) 주간 근무시간: /members/showworktimedashboard -->
+        <div
+                class="tab-pane fade show active schedule-hub-pane"
+                id="worktime-tab"
+                role="tabpanel"
+                aria-labelledby="worktime-tab-btn">
+            <iframe
+                    id="worktime-frame"
+                    class="schedule-hub-iframe"
+                    src="/members/showworktimedashboard"
+                    title="주간 근무시간"
+                    style="width:100%; border:none; min-height:calc(100vh - 180px);">
+            </iframe>
+        </div>
+
+        <!-- 2) 주간 근무시간(전체): /members/showworktimedashboardall -->
+        <div
+                class="tab-pane fade schedule-hub-pane"
+                id="worktime-all-tab"
+                role="tabpanel"
+                aria-labelledby="worktime-all-tab-btn">
+            <!-- lazy-load: 처음엔 data-src 만 설정 -->
+            <iframe
+                    id="worktime-all-frame"
+                    class="schedule-hub-iframe"
+                    data-src="/members/showworktimedashboardall"
+                    title="주간 근무시간(전체)"
+                    style="width:100%; border:none; min-height:calc(100vh - 180px);">
+            </iframe>
+        </div>
+
+        <!-- 3) 월간 근무시간: /members/showworkmonthdashboard -->
+        <div
+                class="tab-pane fade schedule-hub-pane"
+                id="workmonth-tab"
+                role="tabpanel"
+                aria-labelledby="workmonth-tab-btn">
+            <!-- lazy-load: 처음엔 data-src 만 설정 -->
+            <iframe
+                    id="workmonth-frame"
+                    class="schedule-hub-iframe"
+                    data-src="/members/showworkmonthdashboard"
+                    title="월간 근무시간"
+                    style="width:100%; border:none; min-height:calc(100vh - 180px);">
+            </iframe>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const tabLinks = document.querySelectorAll('#workTimeHubTabs .nav-link');
+        const tabPanes = document.querySelectorAll('#workTimeHubTabContent .tab-pane');
+
+        tabLinks.forEach(function (link) {
+            link.addEventListener('click', function (e) {
+                e.preventDefault();
+
+                const targetSelector = link.getAttribute('href');
+                const targetPane = document.querySelector(targetSelector);
+
+                // 1) Bootstrap 5 (JS) 가 있으면 그걸 사용
+                if (window.bootstrap && bootstrap.Tab) {
+                    const tab = new bootstrap.Tab(link);
+                    tab.show();
+                }
+                // 2) Bootstrap 4 (jQuery) 가 있으면 그걸 사용
+                else if (window.$ && typeof $(link).tab === 'function') {
+                    $(link).tab('show');
+                }
+                // 3) 둘 다 없으면 순수 JS로 강제 토글
+                else {
+                    tabLinks.forEach(function (l) {
+                        l.classList.remove('active');
+                    });
+                    tabPanes.forEach(function (p) {
+                        p.classList.remove('show', 'active');
+                    });
+                    link.classList.add('active');
+                    if (targetPane) {
+                        targetPane.classList.add('show', 'active');
+                    }
+                }
+
+                // ✅ 공통 lazy-load 처리:
+                //   활성화된 탭 pane 안에 data-src 가 있는 iframe 이면
+                //   최초 클릭 시에만 src 세팅
+                if (targetPane) {
+                    const iframe = targetPane.querySelector('iframe[data-src]');
+                    if (iframe && !iframe.src) {
+                        const dataSrc = iframe.getAttribute('data-src');
+                        if (dataSrc) {
+                            iframe.src = dataSrc;
+                        }
+                    }
+                }
+            });
+        });
+    });
+</script>
+
+{{>layouts/footer}}

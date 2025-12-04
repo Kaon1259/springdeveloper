@@ -137,6 +137,13 @@ public class MemberController {
         return name.substring(0, 3);             // "FRI"
     }
 
+
+    //일정
+    @GetMapping("/members/showworktimehub")
+    public String showWorkTimeHub() throws Exception {
+        return "members/showWorkTimeHub";
+    }
+
     @GetMapping("/members/showworktimedashboard")
     public String showWorkTimeDashboard(
             @RequestParam(required = false)
@@ -349,6 +356,12 @@ public class MemberController {
         model.addAttribute("pageTitle", "월/주 실 근무시간 대시보드");
 
         return "members/showWorkMonthDashboardPopup"; // 머스태시 템플릿
+    }
+
+    //일정
+    @GetMapping("/members/schedulehub")
+    public String scheduleHub(Model model) throws Exception {
+        return "members/scheduleHub";
     }
 
     //금주 근무 현황
