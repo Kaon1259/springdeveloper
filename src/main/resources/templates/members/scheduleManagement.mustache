@@ -820,7 +820,7 @@
             applyCalendarHighlight();
             updateSelectedMemberMonthTotal();
             applyEmptyStateAccordingToSelection();
-            // 다시 렌더링하여 버튼 노출 조건 반영
+            // 다시 렌더링하여 버튼 노출 조건 반영 + 선택된 근로자만 보이도록
             renderAllMembersMonth(currentMonthStart);
         }
 
@@ -914,7 +914,7 @@
                 cell.dataset.date = iso;
                 if(iso===todayIso) cell.classList.add('today');
 
-                // 해당 날짜에 근무 있는 멤버 수집
+                // 해당 날짜에 근무 있는 멤버 수집 (데이터 계산은 전체 기준)
                 const dayBadges = [];
                 (currentStatusMembers||[]).forEach(m=>{
                     const day = (monthAllMembersDayMap[m.id]||{})[iso];
@@ -925,12 +925,17 @@
                     }
                 });
 
+                // 🔧 화면에 표시할 멤버: 선택된 근로자가 있을 경우 해당 근로자만, 없으면 전체
+                const dayBadgesForRender = currentMember
+                        ? dayBadges.filter(({member}) => String(member.id) === String(currentMember.id))
+                        : dayBadges;
+
                 const segmentsWrap = document.createElement('div');
                 segmentsWrap.className = 'segments';
-                if(dayBadges.length===0){
+                if(dayBadgesForRender.length===0){
                     segmentsWrap.innerHTML = `<span class="text-muted small">—</span>`;
                 }else{
-                    dayBadges
+                    dayBadgesForRender
                             .sort((a,b)=> (a.member.name||'').localeCompare(b.member.name||'', 'ko'))
                             .forEach(({member, day})=>{
                                 const color = colorForMember(member);
@@ -969,8 +974,8 @@
                             });
                 }
 
-                // 날짜 하단 합계(해당 날짜 전체 합계)
-                const dayTotal = (dayBadges||[]).reduce((acc, x)=> acc + (x.day.minutes||0), 0);
+                // 날짜 하단 합계(해당 날짜 '표시된' 멤버 합계)
+                const dayTotal = (dayBadgesForRender||[]).reduce((acc, x)=> acc + (x.day.minutes||0), 0);
                 const totalEl = document.createElement('div');
                 totalEl.className = 'day-total';
                 totalEl.textContent = formatMins(dayTotal);

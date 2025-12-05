@@ -18,7 +18,7 @@
             </a>
         </li>
 
-        <!-- 3) 월간 근무시간 대시보드 -->
+        <!-- 3) 월간 근무시간 대시보드 (개별) -->
         <li class="nav-item" role="presentation">
             <a
                     class="nav-link"
@@ -48,7 +48,20 @@
             </a>
         </li>
 
-
+        <!-- 🔹 4) 월간 근무시간 대시보드 (전체) - 새로 추가 -->
+        <li class="nav-item" role="presentation">
+            <a
+                    class="nav-link"
+                    id="workmonth-all-tab-btn"
+                    data-bs-toggle="tab"
+                    data-toggle="tab"
+                    href="#workmonth-all-tab"
+                    role="tab"
+                    aria-controls="workmonth-all-tab"
+                    aria-selected="false">
+                월간(통합)
+            </a>
+        </li>
     </ul>
 
     <!-- 탭 콘텐츠 -->
@@ -68,7 +81,8 @@
                     style="width:100%; border:none; min-height:calc(100vh - 180px);">
             </iframe>
         </div>
-        <!-- 3) 월간 근무시간: /members/showworkmonthdashboard -->
+
+        <!-- 3) 월간 근무시간(개별): /members/showworkmonthdashboard -->
         <div
                 class="tab-pane fade schedule-hub-pane"
                 id="workmonth-tab"
@@ -96,6 +110,22 @@
                     class="schedule-hub-iframe"
                     data-src="/members/showworktimedashboardall"
                     title="주간 근무시간(전체)"
+                    style="width:100%; border:none; min-height:calc(100vh - 180px);">
+            </iframe>
+        </div>
+
+        <!-- 🔹 4) 월간 근무시간(전체): /members/showworkMonthdashboardall -->
+        <div
+                class="tab-pane fade schedule-hub-pane"
+                id="workmonth-all-tab"
+                role="tabpanel"
+                aria-labelledby="workmonth-all-tab-btn">
+            <!-- lazy-load: 처음엔 data-src 만 설정 -->
+            <iframe
+                    id="workmonth-all-frame"
+                    class="schedule-hub-iframe"
+                    data-src="/members/showworkMonthdashboardall"
+                    title="월간 근무시간(전체)"
                     style="width:100%; border:none; min-height:calc(100vh - 180px);">
             </iframe>
         </div>

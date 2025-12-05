@@ -50,6 +50,12 @@
             <span class="d-flex align-items-center">
                 <span id="calendarTitle">월간 캘린더</span>
                 <span id="headerStatusBadge" class="badge bg-secondary ms-2 d-none">-</span>
+                <!-- ✅ 계획일 보기/감추기 토글 버튼 추가 (기본: 안보이기 상태) -->
+                <button type="button"
+                        id="btnTogglePlan"
+                        class="btn btn-sm btn-outline-secondary ms-2">
+                    계획일 보기
+                </button>
             </span>
             <div class="small text-muted">
                 <span id="monthRangeLabel">{{monthRangeLabel}}</span>
@@ -523,6 +529,8 @@
         const btnDayModalCancel   = document.getElementById('btnDayModalCancel');
         const btnDayModalSave     = document.getElementById('btnDayModalSave');
 
+        const btnTogglePlan       = document.getElementById('btnTogglePlan'); // ✅ 계획 토글 버튼
+
         const API_PLAN   = '/api/schedule/work';
         const API_BASE   = '/api/schedule';
         const API_UPDATE = '/api/schedule/update';
@@ -534,6 +542,15 @@
         let selectedMemberId    = null;
         let selectedDateIso     = null;
         let dayGridStepMinutes  = 30;
+
+        // ✅ 계획일 표시 여부 (기본: false → 안보이기)
+        let showPlan = false;
+
+        // ✅ 최근 렌더링된 월 정보 저장 (토글 시 다시 렌더)
+        let lastMonthMember   = null;
+        let lastMonthStartIso = null;
+        let lastMonthEndIso   = null;
+        let lastMonthMap      = null;
 
         let currentDayGridDate    = null;
         let currentDayGridMember  = null;
@@ -598,6 +615,28 @@
                 closeDayModal();
             }
         });
+
+        // ✅ 계획 토글 버튼 클릭 핸들러
+        if (btnTogglePlan) {
+            btnTogglePlan.addEventListener('click', () => {
+                showPlan = !showPlan;
+                updatePlanToggleButton();
+                // 마지막 월 데이터로 재렌더
+                if (lastMonthMember && lastMonthStartIso && lastMonthEndIso && lastMonthMap) {
+                    renderMonthCalendar(lastMonthMember, lastMonthStartIso, lastMonthEndIso, lastMonthMap);
+                }
+            });
+            updatePlanToggleButton(); // 초기 텍스트 세팅
+        }
+
+        function updatePlanToggleButton() {
+            if (!btnTogglePlan) return;
+            if (showPlan) {
+                btnTogglePlan.textContent = '계획일정 감추기';
+            } else {
+                btnTogglePlan.textContent = '계획일정 보기';
+            }
+        }
 
         handleStatusChange();
 
@@ -741,6 +780,13 @@
             }
 
             const mergedMap = mergePlanAndActual(planMap, actualMap);
+
+            // ✅ 토글용 상태 저장
+            lastMonthMember   = member;
+            lastMonthStartIso = monthStartIso;
+            lastMonthEndIso   = monthEndIso;
+            lastMonthMap      = mergedMap;
+
             renderMonthCalendar(member, monthStartIso, monthEndIso, mergedMap);
         }
 
@@ -773,6 +819,7 @@
             const start = parseIsoDate(startIso);
             const end   = parseIsoDate(endIso);
             const todayIso = toIso(new Date());
+
             const firstDow = start.getDay();
             for (let i = 0; i < firstDow; i++) {
                 const blank = document.createElement('div');
@@ -798,7 +845,9 @@
                 cell.dataset.hasWork = (a.minutes || 0) > 0 ? '1' : '0';
                 if (iso === todayIso) cell.classList.add('today');
 
-                const planChips   = a.planSegments.length
+                const hasPlan = a.planSegments && a.planSegments.length > 0;
+
+                const planChipsHtml = hasPlan
                         ? a.planSegments.map(s => chipHtml('#198754', s.start, s.end)).join(' ')
                         : '<span class="text-muted small">-</span>';
 
@@ -816,6 +865,8 @@
                         ? `<button type="button" class="btn btn-xs btn-outline-secondary btn-day-adjust" data-date="${iso}">근무시간조정</button>`
                         : '';
 
+                const planRectClass = `cell-rect cell-rect-top${showPlan ? '' : ' d-none'}`; // ✅ 토글에 따라 감추기/보이기
+
                 cell.innerHTML = `
                     <div class="date-head">
                         <span class="left-date">
@@ -825,8 +876,8 @@
                         ${adjustBtnHtml}
                     </div>
 
-                    <div class="cell-rect cell-rect-top">
-                        <div class="segments">${planChips}</div>
+                    <div class="${planRectClass}">
+                        <div class="segments">${planChipsHtml}</div>
                     </div>
 
                     <div class="cell-rect cell-rect-middle">
@@ -895,6 +946,12 @@
             Array.from(memberList.querySelectorAll('.pill')).forEach(pill=>{
                 pill.classList.remove('active');
             });
+
+            // ✅ 마지막 월 상태 초기화
+            lastMonthMember = null;
+            lastMonthStartIso = null;
+            lastMonthEndIso = null;
+            lastMonthMap = null;
         }
 
         function openDayModal(member, iso, dayObj) {

@@ -960,6 +960,9 @@
             weekActualRow.appendChild(totalCell);
 
             attachWeekCellHandlers();
+
+            // ✅ 개별 주간 그리드 헤더에 "요일 (MM.DD) / 계획/근무" 표시 갱신
+            updateDayHeaderPlanActualLabels();
         }
 
         function attachWeekCellHandlers(){
@@ -986,6 +989,49 @@
                     memberWeekCard.scrollIntoView({ behavior:'smooth', block:'start' });
                 });
             });
+        }
+
+        /* ✅ 요일별 계획/근무 시간 합계를 개별 그리드 헤더에 표시 + 날짜(MM.DD) 출력 */
+        function updateDayHeaderPlanActualLabels() {
+            const weekStart = currentWeekStart;
+            for (let offset = 0; offset < 7; offset++) {
+                const date = addDays(weekStart, offset);
+                const iso  = toIso(date);
+
+                const planDay   = currentWeekPlanMap[iso]   || { segments: [], minutes: 0 };
+                const actualDay = currentWeekActualMap[iso] || { segments: [], minutes: 0 };
+
+                const planSegs = Array.isArray(planDay.segments) ? planDay.segments : [];
+                let planMinutes = 0;
+                if (typeof planDay.minutes === 'number') {
+                    planMinutes = planDay.minutes;
+                } else {
+                    planMinutes = planSegs.reduce((acc, s) => acc + (hmToMin(s.end) - hmToMin(s.start)), 0);
+                }
+
+                let actualMinutes = 0;
+                if (typeof actualDay.minutes === 'number') {
+                    actualMinutes = actualDay.minutes;
+                } else if (Array.isArray(actualDay.segments)) {
+                    actualMinutes = actualDay.segments.reduce((acc, s) => acc + (hmToMin(s.end) - hmToMin(s.start)), 0);
+                }
+
+                const th = document.querySelector(`.week-grid thead th[data-day-offset="${offset}"]`);
+                if (!th) continue;
+
+                const dayLabel = GRID_DAY_LABELS[offset] || '';
+                const planLabelStr   = formatMins(planMinutes);
+                const actualLabelStr = formatMins(actualMinutes);
+
+                const mm = pad2(date.getMonth() + 1);
+                const dd = pad2(date.getDate());
+                const dateLabel = `${mm}.${dd}`;
+
+                th.innerHTML = `
+                    ${dayLabel} <span class="small text-muted">(${dateLabel})</span><br>
+                    <span class="small text-muted">계획(${planLabelStr}) / 근무(${actualLabelStr})</span>
+                `;
+            }
         }
 
         /* ===== 조정 버튼: 하단 그리드 특정 일자 컬럼 강조 + diff 표시 ===== */
@@ -1101,6 +1147,9 @@
             if (highlightedDayIso) focusDayColumnInGrid(highlightedDayIso);
 
             updateSaveButtonByStep();
+
+            // 주간 데이터 기반 헤더 문구 보정 (시점 보정)
+            updateDayHeaderPlanActualLabels();
         }
 
         function hideMemberWeekCard(){
