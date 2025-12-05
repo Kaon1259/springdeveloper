@@ -2,8 +2,7 @@
 
 <main class="container my-4">
 
-    <!-- ============ 상단: 상태 선택(왼쪽) + 알바생 이름 칩(오른쪽, 같은 라인) ============ -->
-    <!-- 🔵 파란 라운드 패널로 변경 -->
+    <!-- ============ 상단: 상태 선택 + 알바생 리스트 (1번 코드와 동일 스타일) ============ -->
     <div class="status-panel-blue mb-3">
         <div class="status-panel-header">
             <div class="status-panel-title">아르바이트 상태별 보기</div>
@@ -11,11 +10,11 @@
         </div>
 
         <div class="status-panel-body">
-            <div class="row g-3 align-items-center">
+            <div class="row g-3">
                 <!-- 왼쪽: 상태 선택 -->
                 <div class="col-12 col-md-4">
                     <label for="statusSelect" class="form-label small text-muted">상태</label>
-                    <select id="statusSelect" class="form-select form-select-sm status-panel-select">
+                    <select id="statusSelect" class="form-select status-panel-select">
                         <option value="WORKING" selected>근무중</option>
                         <option value="WAITING">시작전</option>
                         <option value="RESTING">휴식중</option>
@@ -27,22 +26,17 @@
                     </div>
                 </div>
 
-                <!-- 오른쪽: 같은 라인에서 이름 칩을 가로로 나열 -->
+                <!-- 오른쪽: 필터된 아르바이트생 리스트 (1번과 동일 레이아웃) -->
                 <div class="col-12 col-md-8">
-                    <div class="d-flex align-items-center flex-wrap gap-2">
-                        <span class="small text-muted me-1">알바생</span>
-
-                        <!-- 이름 칩들이 가로로 나열되는 영역 -->
-                        <div id="memberList"
-                             class="d-flex flex-wrap gap-2 flex-grow-1 member-pill-container">
-                            <!-- JS 렌더 -->
-                        </div>
-
-                        <!-- 맨 오른쪽 인원수 배지 -->
-                        <span id="memberCountBadge" class="badge bg-light text-dark ms-auto">0명</span>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="small text-muted">필터된 아르바이트생</span>
+                        <span id="memberCountBadge" class="badge bg-light text-dark">0명</span>
                     </div>
-                    <div class="small text-muted mt-1">
-                        · 이름을 클릭하면 아래 월간 캘린더가 해당 알바생 기준으로 바뀝니다.
+                    <div id="memberList" class="vlist">
+                        <!-- JS 렌더 -->
+                    </div>
+                    <div class="small text-muted mt-2">
+                        * 각 사람 옆의 색상은 해당 근로자의 고유 색입니다. (달력에도 동일 색 사용)
                     </div>
                 </div>
             </div>
@@ -78,18 +72,6 @@
                     <div class="small text-muted">월 합계(실근무)</div>
                     <div class="fw-semibold" id="monthActualTotalCell">0시간</div>
                 </div>
-                <!--
-                <div class="d-flex justify-content-between">
-                    <div class="small text-muted">시급</div>
-                    <div id="hourlyWageCell">-</div>
-                </div>
-                -->
-                <!--
-                <div class="d-flex justify-content-between">
-                    <div class="small text-muted">월 예상 급여</div>
-                    <div class="text-primary fw-semibold" id="monthPayCell">-</div>
-                </div>
-                -->
             </div>
 
             <div class="small text-muted mt-2">
@@ -150,7 +132,7 @@
 </main>
 
 <style>
-    /* ==== 아르바이트 상태별 보기: 파란 라운드 패널 ==== */
+    /* ==== 아르바이트 상태별 보기: 파란 라운드 패널 (1번 코드와 동일) ==== */
     .status-panel-blue {
         background: linear-gradient(135deg, #1d4ed8, #2563eb);
         border-radius: 18px;
@@ -203,109 +185,91 @@
         color:#0f172a !important;
     }
 
-    /* 패널 안 member-pill 스타일 튜닝 */
-    .status-panel-blue .member-pill-container {
-        min-height: 32px;
+    /* 패널 안 pill 스타일 (1번 코드와 동일) */
+    .status-panel-blue .vlist {
+        display:flex;
+        flex-wrap:wrap;
+        gap:8px;
     }
-    .status-panel-blue .member-pill {
-        display:inline-flex;
+    .status-panel-blue .pill {
+        display:flex;
         align-items:center;
-        gap:4px;
-        padding:4px 10px;
+        gap:8px;
+        padding:8px 10px;
         border-radius:999px;
         border:1px solid rgba(191,219,254,0.55);
         background: rgba(15,23,42,0.20);
-        font-size:.8rem;
         cursor:pointer;
-        white-space:nowrap;
-        transition: background .15s, box-shadow .15s, border-color .15s, transform .08s;
+        font-size:.9rem;
         color:#e5eeff;
+        transition: background .15s, box-shadow .15s, border-color .15s, transform .08s;
     }
-    .status-panel-blue .member-pill-dot {
-        width:10px;
-        height:10px;
+    .status-panel-blue .pill .dot {
+        width:12px;
+        height:12px;
         border-radius:50%;
-        border:1px solid rgba(15,23,42,.6);
-        flex:0 0 10px;
+        border:1px solid rgba(15,23,42,.5);
+        flex:0 0 12px;
     }
-    .status-panel-blue .member-pill-name {
-        font-weight:600;
-    }
-    .status-panel-blue .member-pill-meta {
-        font-size:.7rem;
+    .status-panel-blue .pill .name { font-weight:600; }
+    .status-panel-blue .pill .meta {
         color:#cbd5f5;
+        font-size:.8rem;
     }
-    .status-panel-blue .member-pill:hover {
+    .status-panel-blue .pill:hover {
         background: rgba(15,23,42,0.30);
         border-color: rgba(191,219,254,0.9);
         transform: translateY(-1px);
         box-shadow: 0 4px 14px rgba(15,23,42,0.35);
     }
-    .status-panel-blue .member-pill.active {
+    .status-panel-blue .pill.active {
         border-color: rgba(191,219,254,1);
         box-shadow: 0 0 0 2px rgba(191,219,254,.95) inset;
         background: rgba(15,23,42,0.42);
     }
 
+    /* 공통 칩 모양 (1번 코드와 동일) */
     .chip {
-        display:inline-flex; align-items:center; gap:6px;
-        border:1px solid #e9ecef; border-radius:14px; padding:4px 8px; background:#fff;
-    }
-    .chip .dot {
-        width:10px; height:10px; border-radius:50%;
-        border:1px solid rgba(0,0,0,.08);
-    }
-
-    .dot {
-        width:10px;
-        height:10px;
-        border-radius:50%;
-        border:1px solid rgba(0,0,0,.08);
-        flex:0 0 auto;
-    }
-
-    /* ===== 상단: 오른쪽 이름 칩 영역 (기본) ===== */
-    .member-pill-container {
-        min-height: 32px;
-    }
-
-    .member-pill {
         display:inline-flex;
         align-items:center;
-        gap:4px;
-        padding:2px 8px;
+        gap:6px;
+        border:1px solid #e9ecef;
+        border-radius:14px;
+        padding:4px 8px;
+        background:#fff;
+        font-size: .8rem;
+    }
+
+    /* 상단 리스트 (기본) */
+    .vlist {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    .pill {
+        display:flex;
+        align-items:center;
+        gap:8px;
+        padding:8px 10px;
         border-radius:999px;
         border:1px solid #e9ecef;
         background:#fff;
-        font-size:.8rem;
         cursor:pointer;
-        white-space:nowrap;
+        font-size:.9rem;
         transition: background .15s, box-shadow .15s, border-color .15s;
     }
-    .member-pill:hover {
-        background:#f8f9fa;
-    }
-
-    .member-pill-dot {
-        width:10px;
-        height:10px;
+    .pill .dot {
+        width:12px;
+        height:12px;
         border-radius:50%;
         border:1px solid rgba(0,0,0,.08);
-        flex:0 0 10px;
+        flex:0 0 12px;
     }
-
-    .member-pill-name {
-        font-weight:600;
-    }
-
-    .member-pill-meta {
-        font-size:.7rem;
-        color:#6c757d;
-    }
-
-    .member-pill.active {
-        border-color: rgba(13,110,253,.6);
-        box-shadow: 0 0 0 2px rgba(13,110,253,.15);
+    .pill .name { font-weight:600; }
+    .pill .meta { color:#6c757d; font-size:.8rem; }
+    .pill.active {
+        border-color: rgba(13,110,253,.45);
+        box-shadow: 0 0 0 3px rgba(13,110,253,.15) inset;
         background:#f0f6ff;
     }
 
@@ -329,7 +293,6 @@
         color: #6c757d;
         padding: 6px 0;
         border-bottom: 1px dashed #e9ecef;
-
         position: sticky;
         top: var(--calendar-dow-offset, 0);
         z-index: 20;
@@ -358,27 +321,20 @@
     }
     .cell .date-head .dow-mini { color:#6c757d; font-weight: 500; font-size: .85rem; }
 
-    /* 날짜 셀 내부 3개 라운드렉트 */
     .cell-rect {
         border-radius: 8px;
         padding: 4px 6px;
         min-height: 32px;
         margin-top: 3px;
     }
-
-    /* 1. 맨 위: 스케줄(계획) – 연한 초록 톤 */
     .cell-rect-top {
         border: 1px solid rgba(25,135,84,0.5);
         background: rgba(25,135,84,0.04);
     }
-
-    /* 2. 두 번째: 실제 근무시간 – 중립 톤 */
     .cell-rect-middle {
         border: 1px solid #e9ecef;
         background: #f8f9fa;
     }
-
-    /* 3. 마지막: 근무시간 합계 – 살짝 강조된 배경 */
     .cell-rect-bottom {
         border: 1px solid #e9ecef;
         background: #fcfcfc;
@@ -509,17 +465,14 @@
     .day-slot:hover {
         background: #f8fbff;
     }
-
     .day-slot.plan-slot {
         background: rgba(25,135,84,0.05);
         border-color: rgba(25,135,84,0.30);
     }
-
     .day-slot.selected {
         background: rgba(25,135,84,0.18);
         box-shadow: inset 0 0 0 1px rgba(25,135,84,0.25);
     }
-
     .day-slot.selected.selected-diff {
         background: rgba(13,110,253,0.16);
         box-shadow: inset 0 0 0 1px rgba(13,110,253,0.45);
@@ -559,8 +512,6 @@
         const monthRangeLabelEl   = document.getElementById('monthRangeLabel');
         const calendarGrid        = document.getElementById('calendarGrid');
         const monthActualTotalCell= document.getElementById('monthActualTotalCell');
-        //const monthPayCell        = document.getElementById('monthPayCell');
-        //const hourlyWageCell      = document.getElementById('hourlyWageCell');
         const monthHeaderEl       = document.querySelector('.month-header');
 
         const dayAdjustModal      = document.getElementById('dayAdjustModal');
@@ -666,7 +617,7 @@
         }
 
         async function onMemberListClick(e) {
-            const pill = e.target.closest('.member-pill');
+            const pill = e.target.closest('.pill');
             if (!pill) return;
 
             const id      = pill.getAttribute('data-member-id');
@@ -704,16 +655,16 @@
                         const memberCode  = escapeHtml(m.code ?? m.memberCode ?? '');
                         const color       = colorForMember(m);
 
-                        const pill = document.createElement('span');
-                        pill.className = 'member-pill';
+                        const pill = document.createElement('div');
+                        pill.className = 'pill';
                         pill.dataset.memberId = String(m.id);
 
                         pill.innerHTML = `
-                        <span class="member-pill-dot" style="background:${color}"></span>
-                        <span class="member-pill-name">${memberName}</span>
+                        <span class="dot" style="background:${color}"></span>
+                        <span class="name">${memberName}</span>
                         ${
                                 memberPhone || memberCode
-                                        ? `<span class="member-pill-meta">
+                                        ? `<span class="meta">
                                      ${memberPhone ? memberPhone : ''}
                                      ${memberPhone && memberCode ? ' · ' : ''}
                                      ${memberCode ? memberCode : ''}
@@ -754,7 +705,7 @@
         }
 
         function updateMemberListActive() {
-            Array.from(memberList.querySelectorAll('.member-pill')).forEach(pill=>{
+            Array.from(memberList.querySelectorAll('.pill')).forEach(pill=>{
                 pill.classList.toggle('active', pill.dataset.memberId === String(selectedMemberId));
             });
         }
@@ -941,7 +892,7 @@
             headerStatusBadge.textContent = '-';
             headerStatusBadge.className = 'badge bg-secondary ms-2 d-none';
 
-            Array.from(memberList.querySelectorAll('.member-pill')).forEach(pill=>{
+            Array.from(memberList.querySelectorAll('.pill')).forEach(pill=>{
                 pill.classList.remove('active');
             });
         }
@@ -1259,13 +1210,20 @@
             out.push([s,p]);
             return out;
         }
+
+        /* 1번 코드와 동일한 칩 출력 */
         function chipHtml(color, start, end){
-            return `<span class="chip"><span class="dot" style="background:${color}"></span><span class="small">${start} ~ ${end}</span></span>`;
+            return `<span class="chip">
+                        <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${color};"></span>
+                        <span>${start} ~ ${end}</span>
+                    </span>`;
         }
+
         function statusClass(s){
             const map = {WORKING:'bg-success',WAITING:'bg-secondary',RESTING:'bg-info',PAUSED:'bg-warning',RESIGNED:'bg-danger'};
             return map[s] || 'bg-secondary';
         }
+
         function colorForMember(m){
             const key = (m?.id!=null?String(m.id):(m?.name||'x'));
             const h = seededHash(key)%360, s=65, l=55;
@@ -1276,13 +1234,23 @@
             for(let i=0;i<str.length;i++){ h^=str.charCodeAt(i); h=(h*16777619)>>>0; }
             return h>>>0;
         }
+        /* 1번 코드와 동일한 HSL → HEX 변환 */
         function hslToHex(h,s,l){
             s/=100; l/=100;
-            const k=n=>(n+h/30)%12, a=s*Math.min(l,1-l);
-            const f=n=>l-a*Math.max(-1,Math.min(k(n)-3,Math.min(9-k(n),1)));
-            const toHex=x=>Math.round(255*x).toString(16).padStart(2,'0');
-            return `#${toHex(f(0))}{${toHex(f(8))}${toHex(f(4))}`.replace('{','');
+            const c=(1-Math.abs(2*l-1))*s;
+            const x=c*(1-Math.abs((h/60)%2-1));
+            const m=l-c/2;
+            let r=0,g=0,b=0;
+            if(0<=h&&h<60){ r=c; g=x; b=0; }
+            else if(60<=h&&h<120){ r=x; g=c; b=0; }
+            else if(120<=h&&h<180){ r=0; g=c; b=x; }
+            else if(180<=h&&h<240){ r=0; g=x; b=c; }
+            else if(240<=h&&h<300){ r=x; g=0; b=c; }
+            else { r=c; g=0; b=x; }
+            const toHex = v => Math.round((v+m)*255).toString(16).padStart(2,'0');
+            return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
         }
+
         function escapeHtml(s){
             if(s==null) return '';
             return String(s)

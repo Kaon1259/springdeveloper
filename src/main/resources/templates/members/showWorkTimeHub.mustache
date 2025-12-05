@@ -18,6 +18,21 @@
             </a>
         </li>
 
+        <!-- 3) 월간 근무시간 대시보드 -->
+        <li class="nav-item" role="presentation">
+            <a
+                    class="nav-link"
+                    id="workmonth-tab-btn"
+                    data-bs-toggle="tab"
+                    data-toggle="tab"
+                    href="#workmonth-tab"
+                    role="tab"
+                    aria-controls="workmonth-tab"
+                    aria-selected="false">
+                월간(개별)
+            </a>
+        </li>
+
         <!-- 2) 주간 근무시간 대시보드 (전체) -->
         <li class="nav-item" role="presentation">
             <a
@@ -33,20 +48,7 @@
             </a>
         </li>
 
-        <!-- 3) 월간 근무시간 대시보드 -->
-        <li class="nav-item" role="presentation">
-            <a
-                    class="nav-link"
-                    id="workmonth-tab-btn"
-                    data-bs-toggle="tab"
-                    data-toggle="tab"
-                    href="#workmonth-tab"
-                    role="tab"
-                    aria-controls="workmonth-tab"
-                    aria-selected="false">
-                월간(개별)
-            </a>
-        </li>
+
     </ul>
 
     <!-- 탭 콘텐츠 -->
@@ -66,23 +68,6 @@
                     style="width:100%; border:none; min-height:calc(100vh - 180px);">
             </iframe>
         </div>
-
-        <!-- 2) 주간 근무시간(전체): /members/showworktimedashboardall -->
-        <div
-                class="tab-pane fade schedule-hub-pane"
-                id="worktime-all-tab"
-                role="tabpanel"
-                aria-labelledby="worktime-all-tab-btn">
-            <!-- lazy-load: 처음엔 data-src 만 설정 -->
-            <iframe
-                    id="worktime-all-frame"
-                    class="schedule-hub-iframe"
-                    data-src="/members/showworktimedashboardall"
-                    title="주간 근무시간(전체)"
-                    style="width:100%; border:none; min-height:calc(100vh - 180px);">
-            </iframe>
-        </div>
-
         <!-- 3) 월간 근무시간: /members/showworkmonthdashboard -->
         <div
                 class="tab-pane fade schedule-hub-pane"
@@ -99,6 +84,21 @@
             </iframe>
         </div>
 
+        <!-- 2) 주간 근무시간(전체): /members/showworktimedashboardall -->
+        <div
+                class="tab-pane fade schedule-hub-pane"
+                id="worktime-all-tab"
+                role="tabpanel"
+                aria-labelledby="worktime-all-tab-btn">
+            <!-- lazy-load: 처음엔 data-src 만 설정 -->
+            <iframe
+                    id="worktime-all-frame"
+                    class="schedule-hub-iframe"
+                    data-src="/members/showworktimedashboardall"
+                    title="주간 근무시간(전체)"
+                    style="width:100%; border:none; min-height:calc(100vh - 180px);">
+            </iframe>
+        </div>
     </div>
 </div>
 
