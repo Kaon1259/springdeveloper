@@ -1,0 +1,189 @@
+{{>layouts/header}}
+
+<div class="container-fluid schedule-hub-container">
+    <!-- 🔹 급여 관리 허브 탭 헤더 -->
+    <ul class="nav nav-tabs schedule-hub-tabs" id="paymentHubTabs" role="tablist">
+        <!-- 1) 급여관리 (/payment) -->
+        <li class="nav-item" role="presentation">
+            <a
+                    class="nav-link active"
+                    id="payment-main-tab-btn"
+                    data-bs-toggle="tab"
+                    data-toggle="tab"
+                    href="#payment-main-tab"
+                    role="tab"
+                    aria-controls="payment-main-tab"
+                    aria-selected="true">
+                근무시간별급여관리
+            </a>
+        </li>
+
+        <!-- 2) 급여관리현황 (/payment/paymanagerdashboard) -->
+        <li class="nav-item" role="presentation">
+            <a
+                    class="nav-link"
+                    id="payment-manager-tab-btn"
+                    data-bs-toggle="tab"
+                    data-toggle="tab"
+                    href="#payment-manager-tab"
+                    role="tab"
+                    aria-controls="payment-manager-tab"
+                    aria-selected="false">
+                현황
+            </a>
+        </li>
+
+        <!-- 3) 개별지급현황 (/payment/payid) -->
+        <li class="nav-item" role="presentation">
+            <a
+                    class="nav-link"
+                    id="payment-id-tab-btn"
+                    data-bs-toggle="tab"
+                    data-toggle="tab"
+                    href="#payment-id-tab"
+                    role="tab"
+                    aria-controls="payment-id-tab"
+                    aria-selected="false">
+                지급관리
+            </a>
+        </li>
+
+        <!-- 4) 전체지급현황 (/payment/payiddashboard) -->
+        <li class="nav-item" role="presentation">
+            <a
+                    class="nav-link"
+                    id="payment-id-all-tab-btn"
+                    data-bs-toggle="tab"
+                    data-toggle="tab"
+                    href="#payment-id-all-tab"
+                    role="tab"
+                    aria-controls="payment-id-all-tab"
+                    aria-selected="false">
+                지급현황
+            </a>
+        </li>
+    </ul>
+
+    <!-- 🔹 탭 컨텐츠 -->
+    <div class="tab-content schedule-hub-content" id="paymentHubTabContent">
+
+        <!-- 1) 급여관리: @GetMapping("/payment") -->
+        <!-- ⚠️ 이 허브 페이지의 매핑은 /payment/hub 처럼 따로 두고,
+             이 iframe 은 실제 급여관리 화면(/payment)에 연결하는 식으로 사용하시면 됩니다. -->
+        <div
+                class="tab-pane fade show active schedule-hub-pane"
+                id="payment-main-tab"
+                role="tabpanel"
+                aria-labelledby="payment-main-tab-btn">
+            <iframe
+                    id="payment-main-frame"
+                    class="schedule-hub-iframe"
+                    src="/payment"
+                    title="급여관리"
+                    style="width:100%; border:none; min-height:calc(100vh - 180px);">
+            </iframe>
+        </div>
+
+        <!-- 2) 급여관리현황: @GetMapping("/payment/paymanagerdashboard") -->
+        <div
+                class="tab-pane fade schedule-hub-pane"
+                id="payment-manager-tab"
+                role="tabpanel"
+                aria-labelledby="payment-manager-tab-btn">
+            <!-- lazy-load: 처음엔 data-src 만 설정 -->
+            <iframe
+                    id="payment-manager-frame"
+                    class="schedule-hub-iframe"
+                    data-src="/payment/paymanagerdashboard"
+                    title="급여관리현황"
+                    style="width:100%; border:none; min-height:calc(100vh - 180px);">
+            </iframe>
+        </div>
+
+        <!-- 3) 개별지급현황: @GetMapping("/payment/payid") -->
+        <div
+                class="tab-pane fade schedule-hub-pane"
+                id="payment-id-tab"
+                role="tabpanel"
+                aria-labelledby="payment-id-tab-btn">
+            <!-- lazy-load -->
+            <iframe
+                    id="payment-id-frame"
+                    class="schedule-hub-iframe"
+                    data-src="/payment/payid"
+                    title="개별지급현황"
+                    style="width:100%; border:none; min-height:calc(100vh - 180px);">
+            </iframe>
+        </div>
+
+        <!-- 4) 전체지급현황: @GetMapping("/payment/payiddashboard") -->
+        <div
+                class="tab-pane fade schedule-hub-pane"
+                id="payment-id-all-tab"
+                role="tabpanel"
+                aria-labelledby="payment-id-all-tab-btn">
+            <!-- lazy-load -->
+            <iframe
+                    id="payment-id-all-frame"
+                    class="schedule-hub-iframe"
+                    data-src="/payment/payiddashboard"
+                    title="전체지급현황"
+                    style="width:100%; border:none; min-height:calc(100vh - 180px);">
+            </iframe>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const tabLinks = document.querySelectorAll('#paymentHubTabs .nav-link');
+        const tabPanes = document.querySelectorAll('#paymentHubTabContent .tab-pane');
+
+        tabLinks.forEach(function (link) {
+            link.addEventListener('click', function (e) {
+                e.preventDefault();
+
+                const targetSelector = link.getAttribute('href');
+                const targetPane = document.querySelector(targetSelector);
+
+                // 1) Bootstrap 5 (JS) 가 있으면 그걸 사용
+                if (window.bootstrap && bootstrap.Tab) {
+                    const tab = new bootstrap.Tab(link);
+                    tab.show();
+                }
+                // 2) Bootstrap 4 (jQuery) 가 있으면 그걸 사용
+                else if (window.$ && typeof $(link).tab === 'function') {
+                    $(link).tab('show');
+                }
+                // 3) 둘 다 없으면 순수 JS로 강제 토글
+                else {
+                    tabLinks.forEach(function (l) {
+                        l.classList.remove('active');
+                    });
+                    tabPanes.forEach(function (p) {
+                        p.classList.remove('show', 'active');
+                    });
+                    link.classList.add('active');
+                    if (targetPane) {
+                        targetPane.classList.add('show', 'active');
+                    }
+                }
+
+                // ✅ 공통 lazy-load 처리:
+                //   활성화된 탭 pane 안에 data-src 가 있는 iframe 이면
+                //   최초 클릭 시에만 src 세팅
+                if (targetPane) {
+                    const iframe = targetPane.querySelector('iframe[data-src]');
+                    if (iframe && !iframe.src) {
+                        const dataSrc = iframe.getAttribute('data-src');
+                        if (dataSrc) {
+                            iframe.src = dataSrc;
+                        }
+                    }
+                }
+            });
+        });
+    });
+</script>
+
+{{>layouts/footer}}

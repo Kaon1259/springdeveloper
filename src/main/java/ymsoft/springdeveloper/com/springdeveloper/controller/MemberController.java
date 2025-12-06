@@ -691,4 +691,11 @@ public class MemberController {
             return "redirect:/members/" + memberId + "/edit";
         }
     }
+
+
+    //급여관리
+    @GetMapping("/members/paymenthub")
+    public String paymentHub(Model model) throws Exception {
+        return "members/paymentHub";
+    }
 }

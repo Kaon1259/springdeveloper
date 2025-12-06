@@ -1,75 +1,61 @@
-{{>layouts/header}}
+{{>layouts/header_}}
 
 <main class="container my-4">
 
-    <!-- ============ 상단: 아르바이트 상태별 보기 (칩 리스트) ============ -->
-    <!-- ✅ 파란 배경 + 상단 라운드 적용: state-card-blue 클래스 -->
-    <div class="card mb-3 state-card-blue">
-        <div class="card-header d-flex justify-content-between align-items-center">
-            <span class="fw-bold">아르바이트 상태별 보기</span>
-            <a href="/members/new" class="btn btn-sm btn-light">추가등록</a>
+    <!-- ✅ 전체를 감싸는 라운드 박스(외부 테이블 느낌) -->
+    <div class="pay-shell">
+
+        <!-- ✅ 외부 상단 헤더 : 파란색 배경 -->
+        <div class="pay-shell-header">
+            <div class="d-flex align-items-center gap-2">
+                <span class="fw-bold text-white fs-5">주차별 급여 테이블 (실근무 기준)</span>
+            </div>
         </div>
-        <div class="card-body">
-            <div class="row g-3">
-                <!-- 상태 선택 -->
-                <div class="col-12 col-md-4">
-                    <label for="statusSelect" class="form-label small text-muted">상태</label>
-                    <select id="statusSelect" class="form-select">
+
+        <!-- ✅ 외부 내용 영역 -->
+        <div class="pay-shell-body">
+
+            <!-- 상단: 상태별 보기 + 상태 선택 + PDF + 월 네비 -->
+            <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+                <!-- 왼쪽: 상태별 보기 + 드롭다운 + PDF -->
+                <div class="d-flex flex-wrap align-items-center gap-2">
+                    <span class="small text-muted">상태별 보기</span>
+
+                    <select id="statusSelect" class="form-select form-select-sm" style="width:auto;min-width:140px;">
                         <option value="WORKING" selected>근무중</option>
                         <option value="WAITING">시작전</option>
                         <option value="RESTING">휴식중</option>
                         <option value="PAUSED">일시중지</option>
                         <option value="RESIGNED">퇴사</option>
                     </select>
-                    <div class="form-text">
-                        상태를 바꾸면 아래 아르바이트 리스트와 급여 테이블이 함께 갱신됩니다.
-                    </div>
+
+                    <a id="pdfBtn"
+                       class="btn btn-sm btn-outline-primary ms-1"
+                       target="_blank">
+                        PDF
+                    </a>
                 </div>
 
-                <!-- 아르바이트 리스트 (칩 UI) -->
-                <div class="col-12 col-md-8">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <div class="small text-muted">아르바이트 목록</div>
-                        <span id="memberCountBadge" class="badge bg-light text-dark">0명</span>
-                    </div>
-                    <div id="memberPills" class="vlist"><!-- JS 렌더 --></div>
-                    <div class="small text-muted mt-2">
-                        * 각 사람 옆의 색상은 근로자의 고유 색입니다.
-                    </div>
+                <!-- 오른쪽: 월 이동 내비게이션 -->
+                <div class="d-flex align-items-center small text-muted gap-2 flex-wrap">
+                    <span id="monthRangeLabel">0000.00.01 ~ 00.00</span>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" id="btnMonthPrev">◀ 이전 달</button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" id="btnMonthThis">이번 달</button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" id="btnMonthNext">다음 달 ▶</button>
                 </div>
             </div>
-        </div>
-    </div>
 
-    <!-- ============ 상단: 제목 + 월 내비 (공용, sticky) ============ -->
-    <div class="d-flex flex-wrap justify-content-between align-items-center mb-2 gap-2 sticky-top"
-         style="top:70px;background:#fff;padding:.25rem 0;z-index:5;">
-        <!-- 🔹 제목 + PDF 버튼 묶음 -->
-        <div class="d-flex align-items-center gap-2">
-            <div class="h5 mb-0 fw-bold">주차별 급여 테이블 (실근무 기준)</div>
-            <!-- 🔹 PDF 버튼 (새 창으로 출력용 페이지 호출) -->
-            <a id="pdfBtn"
-               class="btn btn-sm btn-outline-primary"
-               target="_blank">
-                PDF
-            </a>
-        </div>
+            <!-- 안내 문구 -->
+            <div class="small text-muted mb-3">
+                선택한 <b>상태</b>의 아르바이트만 대상으로, 해당 월의 <b>주차별 실근무 기준 급여</b>를 집계합니다.<br>
+                각 주차의 마지막 행은 파란색 하단 보더로 구분됩니다.
+            </div>
 
-        <div class="d-flex align-items-center small text-muted gap-2">
-            <span id="monthRangeLabel">0000.00.01 ~ 00.00</span>
-            <button type="button" class="btn btn-sm btn-outline-secondary" id="btnMonthPrev">◀ 이전 달</button>
-            <button type="button" class="btn btn-sm btn-outline-secondary" id="btnMonthThis">이번 달</button>
-            <button type="button" class="btn btn-sm btn-outline-secondary" id="btnMonthNext">다음 달 ▶</button>
-        </div>
-    </div>
-
-    <!-- ============ 하단: 재구성 테이블 ============ -->
-    <div class="card">
-        <div class="card-body">
+            <!-- 📊 내부: 주차별 급여 상세 테이블 -->
             <div class="table-responsive">
                 <table class="table table-bordered align-middle text-center" id="weeklyPayTable">
-                    <!-- ✅ 헤더를 파란색 + 상단 모서리 라운드: weekly-table-header 클래스 사용 -->
-                    <thead class="weekly-table-header">
+                    <!-- ✅ 내부 헤더: 파란색 + 상단 모서리 라운드 -->
+                    <thead class="inner-table-header">
                     <tr>
                         <th style="width:120px;">주차</th>
                         <th style="width:160px;">근무자명</th>
@@ -81,7 +67,6 @@
                         <th style="width:140px;" class="text-end">주휴수당</th>
                         <th style="width:140px;" class="text-end">세금(3.3%)</th>
                         <th style="width:140px;" class="text-end">실수령액</th>
-                        <!-- ✅ 실수령액 옆 지급일 컬럼 추가 -->
                         <th style="width:120px;">지급일</th>
                     </tr>
                     </thead>
@@ -101,77 +86,71 @@
                     </tfoot>
                 </table>
             </div>
-            <div class="small text-muted">
+
+            <!-- 하단 설명 -->
+            <div class="small text-muted mt-2">
                 * 주휴수당은 멤버 설정이 “적용”이고 해당 주 실근무가 15시간 이상일 때만 계산됩니다.<br>
                 * 근무시간 표기는 “H시간 M분”. 금액은 KRW 통화 형식으로 출력합니다.<br>
                 * 세금(3.3%)은 근무수당+주휴수당에 일괄 적용되며, 실수령액 = (근무수당+주휴수당) - 세금 입니다.
             </div>
-        </div>
-    </div>
+        </div><!-- .pay-shell-body -->
+    </div><!-- .pay-shell -->
+
 </main>
 
+<!-- 💄 스타일 -->
 <style>
-    /* ✅ 상단 아르바이트 상태 카드: 파란 배경 + 상단 모서리 라운드 */
-    .state-card-blue{
-        border-radius:1rem;
-        overflow:hidden;
-        background:#0d6efd;
-        color:#fff;
-        border:none;
-    }
-    .state-card-blue .card-header{
-        background:rgba(255,255,255,0.08);
-        border-bottom:1px solid rgba(255,255,255,0.25);
-    }
-    .state-card-blue .card-body{
-        background:transparent;
-    }
-    .state-card-blue .form-label,
-    .state-card-blue .form-text,
-    .state-card-blue .text-muted{
-        color:rgba(255,255,255,0.85) !important;
-    }
-    .state-card-blue .form-select{
-        background-color:#ffffff;
-        border-color:rgba(0,0,0,0.1);
-    }
-    .state-card-blue .btn-light{
-        color:#0d6efd;
-        border-color:transparent;
-    }
-
-    /* ===== 상단 칩 리스트 ===== */
-    .vlist{display:flex;flex-wrap:wrap;gap:8px}
-    .pill{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:999px;border:1px solid #e9ecef;background:#fff;cursor:pointer;font-size:.9rem;transition:background .15s, box-shadow .15s, border-color .15s}
-    .pill:hover{background:#fafafa;border-color:#dee2e6}
-    .pill.active{border-color:rgba(13,110,253,.45);box-shadow:0 0 0 3px rgba(13,110,253,.15) inset;background:#f0f6ff}
-    .pill .dot{width:12px;height:12px;border-radius:50%;border:1px solid rgba(0,0,0,.08);flex:0 0 12px}
-
     .text-money{color:#0d6efd;font-weight:600}
     .text-time{color:#198754;font-weight:600}
     .small-muted{color:#6c757d;font-size:.85rem}
     .week-label{white-space:nowrap}
 
-    /* ✅ 주차/근무자명 등 테이블 헤더 파란색 + 상단 모서리 라운드 */
-    .weekly-table-header th{
+    /* ✅ 전체 외부 라운드 박스 (예시 코드와 동일 패턴) */
+    .pay-shell{
+        border-radius:1rem;
+        border:1px solid #dee2e6;
+        overflow:hidden;
+        background:#ffffff;
+        box-shadow:0 4px 12px rgba(0,0,0,0.03);
+    }
+
+    /* ✅ 외부 상단 헤더 (파란색) */
+    .pay-shell-header{
+        background:#0d6efd;
+        color:#ffffff;
+        padding:0.75rem 1rem;
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        gap:1rem;
+    }
+
+    /* 외부 내용 영역 */
+    .pay-shell-body{
+        padding:1.25rem 1.5rem 1.5rem;
+    }
+
+    /* ✅ 내부 주차별 급여 테이블 헤더: 파란색 + 상단 모서리 라운드 */
+    .inner-table-header th{
         background:#0d6efd !important;
-        color:#fff !important;
+        color:#ffffff !important;
         border-color:#0b5ed7 !important;
         vertical-align:middle;
     }
-    /* 맨 왼쪽/오른쪽 상단 모서리 라운드 */
-    .weekly-table-header th:first-child{
+    .inner-table-header th:first-child{
         border-top-left-radius:0.75rem;
     }
-    .weekly-table-header th:last-child{
+    .inner-table-header th:last-child{
         border-top-right-radius:0.75rem;
     }
-    /* 테이블 자체도 상단 모서리 보이도록 */
+
+    /* 내부 테이블 자체 모서리 라운드 */
     #weeklyPayTable{
         border-collapse:separate;
         border-spacing:0;
         border-radius:0.75rem;
         overflow:hidden;
+        background:#ffffff;
     }
 
     /* ✅ 주차별 가로 구분선: 주 마지막 행 하단 보더 두껍게 */
@@ -199,8 +178,6 @@
 
         /* ===== DOM ===== */
         const statusSelect     = document.getElementById('statusSelect');
-        const memberPills      = document.getElementById('memberPills');
-        const memberCountBadge = document.getElementById('memberCountBadge');
 
         const btnMonthPrev     = document.getElementById('btnMonthPrev');
         const btnMonthThis     = document.getElementById('btnMonthThis');
@@ -225,6 +202,7 @@
         if (Array.isArray(allMembers) && allMembers.length>0) {
             statusSelect.value = allMembers[0].status || 'WORKING';
         }
+
         statusSelect.addEventListener('change', refreshMembers);
         btnMonthPrev.addEventListener('click', ()=> {
             currentMonthStart = new Date(
@@ -248,39 +226,17 @@
         });
 
         // 🔹 PDF 버튼 – 현재 상태값을 쿼리로 붙여서 호출
-        document.getElementById('pdfBtn').addEventListener('click', function(e){
+        document.getElementById('pdfBtn').addEventListener('click', function(){
             const status = document.getElementById('statusSelect').value;
             this.href = `/payment/paymanagerdashboard/print?status=${encodeURIComponent(status)}`;
         });
 
         refreshMembers();
 
-        /* ===== 멤버 필터/칩 렌더 ===== */
+        /* ===== 멤버 필터 ===== */
         function refreshMembers(){
             const status = statusSelect.value;
             filteredMembers = (allMembers||[]).filter(m => m.status === status);
-            memberCountBadge.textContent = `${filteredMembers.length}명`;
-
-            memberPills.innerHTML = '';
-            if (!filteredMembers.length){
-                memberPills.innerHTML = `<span class="small-muted">해당 상태의 근무자가 없습니다.</span>`;
-            } else {
-                filteredMembers
-                        .slice()
-                        .sort((a,b)=>(a.name||'').localeCompare(b.name||'','ko'))
-                        .forEach(m=>{
-                            const color = colorForMember(m);
-                            const btn = document.createElement('button');
-                            btn.type = 'button';
-                            btn.className = 'pill active';
-                            btn.innerHTML = `
-          <span class="dot" style="background:${color}"></span>
-          <span class="name">${escapeHtml(m.name ?? '-')}</span>
-          <span class="small-muted">${escapeHtml(m.phone ?? '')}</span>
-        `;
-                            memberPills.appendChild(btn);
-                        });
-            }
             loadWeeklyTable();
         }
 
@@ -427,7 +383,6 @@
           <td class="text-end">${krw(r.juhyuPay)}</td>
           <td class="text-end">${r.applyTax ? krw(r.taxAmount) : '-'}</td>
           <td class="text-end"><span class="fw-bold text-primary">${krw(r.netTotal)}</span></td>
-          <!-- ✅ 지급일(payday) 출력 -->
           <td class="text-center small">(매월)${formatPayday(r.member.payday)}</td>
         `;
 
@@ -499,26 +454,6 @@
                 maximumFractionDigits:0
             }).format(v|0);
         }
-        function colorForMember(m){
-            const key=(m?.id!=null?String(m.id):(m?.name||'x'));
-            const h=seededHash(key)%360, s=65, l=55;
-            return hslToHex(h,s,l);
-        }
-        function seededHash(str){
-            let h=2166136261>>>0;
-            for(let i=0;i<str.length;i++){
-                h^=str.charCodeAt(i);
-                h=(h*16777619)>>>0;
-            }
-            return h>>>0;
-        }
-        function hslToHex(h,s,l){
-            s/=100; l/=100;
-            const k=n=>(n+h/30)%12, a=s*Math.min(l,1-l);
-            const f=n=> l - a*Math.max(-1, Math.min(k(n)-3, Math.min(9-k(n),1)));
-            const toHex=x=>Math.round(255*x).toString(16).padStart(2,'0');
-            return `#${toHex(f(0))}${toHex(f(8))}${toHex(f(4))}`;
-        }
         function escapeHtml(s){
             if(s==null) return '';
             return String(s)
@@ -557,4 +492,4 @@
     })();
 </script>
 
-{{>layouts/footer}}
+{{>layouts/footer_}}
