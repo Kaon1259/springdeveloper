@@ -8,13 +8,13 @@
     <div class="pay-shell">
 
         <!-- ============================ -->
-        <!-- 🔵 파란색 상단 헤더 -->
+        <!-- 🔵 파란색 상단 헤더 (월간 + 주/일 뷰 토글) -->
         <!-- ============================ -->
         <div class="pay-shell-header d-flex justify-content-between align-items-center">
 
-            <!-- 왼쪽: 타이틀 + 상태선택 + 계획토글 -->
+            <!-- 왼쪽: 타이틀 + 상태선택 + 계획토글 + 뷰모드 토글 -->
             <div class="d-flex align-items-center gap-3 flex-wrap">
-                <span class="fw-bold fs-5 text-white">주간 근무 캘린더 (월~일)</span>
+                <span class="fw-bold fs-5 text-white">월간 근무 캘린더</span>
 
                 <!-- 🔹 상태 선택 드롭다운 -->
                 <select id="statusSelect" class="form-select status-header-select">
@@ -29,14 +29,26 @@
                 <button id="btnTogglePlan" class="btn btn-sm btn-light fw-bold px-3">
                     계획일정 보기
                 </button>
+
+                <!-- 🔹 주단위 / 일단위 보기 토글 -->
+                <div class="btn-group ms-1">
+                    <button id="btnViewWeek" type="button"
+                            class="btn btn-sm btn-outline-light active">
+                        주단위 보기
+                    </button>
+                    <button id="btnViewDay" type="button"
+                            class="btn btn-sm btn-outline-light">
+                        일단위 보기
+                    </button>
+                </div>
             </div>
 
-            <!-- 오른쪽: 주간 네비게이션 -->
+            <!-- 오른쪽: 월 네비게이션 -->
             <div class="d-flex align-items-center gap-2 flex-wrap justify-content-end">
-                <button id="btnPrevWeek" class="btn btn-sm btn-outline-light">◀ 지난주</button>
+                <button id="btnPrevWeek" class="btn btn-sm btn-outline-light">◀ 지난달</button>
                 <span id="weekRangeLabelRight" class="small text-light px-1"></span>
-                <button id="btnThisWeek" class="btn btn-sm btn-outline-light">이번주</button>
-                <button id="btnNextWeek" class="btn btn-sm btn-outline-light">다음주 ▶</button>
+                <button id="btnThisWeek" class="btn btn-sm btn-outline-light">이번달</button>
+                <button id="btnNextWeek" class="btn btn-sm btn-outline-light">다음달 ▶</button>
             </div>
         </div><!-- //.pay-shell-header -->
 
@@ -45,7 +57,7 @@
         <!-- ============================ -->
         <div class="pay-shell-body">
 
-            <!-- 상단: 상태별 인원 수 + 주간 라벨 -->
+            <!-- 상단: 상태별 인원 수 + 월간 라벨 -->
             <div class="d-flex flex-wrap justify-content-between align-items-center mb-2 gap-2">
                 <div class="d-flex align-items-center gap-2">
                     <span class="small text-muted">현재 상태 인원</span>
@@ -64,7 +76,7 @@
                 해당 상태의 아르바이트생이 없습니다.
             </div>
 
-            <!-- 내부 주간 캘린더 -->
+            <!-- 내부 캘린더 -->
             <div id="weekCalendarWrapper">
                 <div class="week-calendar-grid" id="weekCalendarGrid">
                     <!-- JS에서 table 생성 -->
@@ -73,12 +85,14 @@
 
             <!-- 안내 문구 -->
             <div class="small text-muted mt-3">
-                * 각 칸의 상단에는 <strong>계획 일정</strong>, 하단에는 <strong>실제 근무 구간</strong> 칩이 표시됩니다.<br>
+                * 각 칸의 상단에는 <strong>계획 일정</strong>, 하단에는 <strong>실제 근무 구간</strong> 칩이 표시됩니다(일단위 보기).<br>
+                * <strong>주단위 보기</strong>에서는 12.01~12.07, 12.08~12.14, 12.15~12.21, 12.22~12.28, 12.29~말일처럼<br>
+                &nbsp;&nbsp;해당 월을 7일 단위로 나누어 <strong>기간별 합계 시간(계획/실제)</strong>을 보여줍니다.<br>
                 * 좌측에는 상태 필터에 해당하는 모든 아르바이트생 이름이 표시되며,<br>
-                &nbsp;&nbsp;각 행은 해당 아르바이트생의 주간 근무계획 / 실제 근무시간입니다.<br>
-                * 각 라운드렉트 칸 하단에는 해당 일자의 실제 근무시간 합계가 표시되고,<br>
-                &nbsp;&nbsp;테이블 마지막 행에는 요일별 전체 실제 합계가, 마지막 컬럼에는<br>
-                &nbsp;&nbsp;각 아르바이트생/전체의 <strong>주간 계획 및 실제 근무시간 합계</strong>가 표시됩니다.<br>
+                &nbsp;&nbsp;각 행은 해당 아르바이트생의 <strong>월간 근무계획 / 실제 근무시간</strong>입니다.<br>
+                * 각 라운드렉트 칸 하단에는 해당 일자의 실제 근무시간 합계가 표시되고(일단위),<br>
+                &nbsp;&nbsp;테이블 마지막 행에는 현재 화면에 보이는 각 열(주/일) 별 전체 실제 합계가, 마지막 컬럼에는<br>
+                &nbsp;&nbsp;각 아르바이트생/전체의 <strong>월간 계획 및 실제 근무시간 합계</strong>가 표시됩니다.<br>
                 * <strong>계획 일정은 기본적으로 숨겨져 있으며</strong>, 상단의
                 <strong>“계획일정보기 / 계획일정 감추기”</strong> 버튼으로 토글할 수 있습니다.
             </div>
@@ -124,7 +138,8 @@
         border-color:rgba(226,232,240,0.8);
         color:#e2e8f0;
     }
-    .pay-shell-header .btn-outline-light:hover{
+    .pay-shell-header .btn-outline-light:hover,
+    .pay-shell-header .btn-outline-light.active{
         background:#e2e8f0;
         color:#1e293b;
     }
@@ -235,7 +250,7 @@
     .pill .name { font-weight:600; }
     .pill .meta { color:#6c757d; font-size:.8rem; }
 
-    /* ===== 주간 캘린더 ===== */
+    /* ===== 캘린더 테이블 (이름은 week 유지) ===== */
     .week-calendar-grid {
         overflow-x: auto;
         padding: 4px;
@@ -390,7 +405,7 @@
     (function () {
         const API_WORK   = '/api/schedule';        // 실제: GET /{memberId}/{start}/{end}
         const API_PLAN   = '/api/schedule/work';   // 계획: GET /{memberId}/{start}/{end}
-        const DOW_LABELS = ['월','화','수','목','금','토','일'];
+        const DOW_LABELS = ['일','월','화','수','목','금','토'];
 
         // DOM
         const statusSelect        = document.getElementById('statusSelect');
@@ -407,13 +422,17 @@
         const btnThisWeek         = document.getElementById('btnThisWeek');
         const btnNextWeek         = document.getElementById('btnNextWeek');
 
-        // 🔹 계획 일정 보기/감추기 토글 버튼
         const btnTogglePlan       = document.getElementById('btnTogglePlan');
+
+        const btnViewWeek         = document.getElementById('btnViewWeek');
+        const btnViewDay          = document.getElementById('btnViewDay');
 
         // 상태
         let allMembers = [];
         let currentStatusMembers = [];
-        let currentWeekStart = toMonday(new Date());
+
+        // 🔹 현재 월의 1일 (기본: 오늘 기준)
+        let currentMonthStart = toMonthFirst(new Date());
 
         // memberId -> { dateIso -> { segments, minutes } }
         let weekPlanByMember   = {};
@@ -421,6 +440,9 @@
 
         // 🔹 계획 일정 표시 여부 (초기: false = 숨김)
         let showPlans = false;
+
+        // 🔹 현재 뷰 모드: 'WEEK' | 'DAY' (초기: 주단위 보기)
+        let viewMode = 'WEEK';
 
         // membersJson 파싱
         try {
@@ -437,17 +459,17 @@
 
             if (btnPrevWeek) btnPrevWeek.addEventListener('click', (e)=>{
                 e.preventDefault();
-                currentWeekStart = addDays(currentWeekStart, -7);
+                currentMonthStart = addMonths(currentMonthStart, -1);
                 handleStatusChange();
             });
             if (btnThisWeek) btnThisWeek.addEventListener('click', (e)=>{
                 e.preventDefault();
-                currentWeekStart = toMonday(new Date());
+                currentMonthStart = toMonthFirst(new Date());
                 handleStatusChange();
             });
             if (btnNextWeek) btnNextWeek.addEventListener('click', (e)=>{
                 e.preventDefault();
-                currentWeekStart = addDays(currentWeekStart, +7);
+                currentMonthStart = addMonths(currentMonthStart, +1);
                 handleStatusChange();
             });
 
@@ -457,8 +479,29 @@
                     e.preventDefault();
                     showPlans = !showPlans;
                     btnTogglePlan.textContent = showPlans ? '계획일정 감추기' : '계획일정 보기';
-                    // API 다시 안 부르고, 현재 로딩된 데이터로 테이블만 다시 렌더
-                    renderWeekCalendar();
+                    renderCalendar();
+                });
+            }
+
+            // 🔹 주단위 / 일단위 보기 토글
+            if (btnViewWeek) {
+                btnViewWeek.addEventListener('click', function(e){
+                    e.preventDefault();
+                    if (viewMode === 'WEEK') return;
+                    viewMode = 'WEEK';
+                    btnViewWeek.classList.add('active');
+                    btnViewDay.classList.remove('active');
+                    renderCalendar();
+                });
+            }
+            if (btnViewDay) {
+                btnViewDay.addEventListener('click', function(e){
+                    e.preventDefault();
+                    if (viewMode === 'DAY') return;
+                    viewMode = 'DAY';
+                    btnViewDay.classList.add('active');
+                    btnViewWeek.classList.remove('active');
+                    renderCalendar();
                 });
             }
         }
@@ -468,8 +511,8 @@
             const status = statusSelect.value;
             currentStatusMembers = (allMembers || []).filter(m => m.status === status);
 
+            renderMonthRangeLabel(currentMonthStart);
             renderMemberList(currentStatusMembers);
-            renderWeekRangeLabel(currentWeekStart);
 
             if (currentStatusMembers.length === 0) {
                 if (noMemberState) noMemberState.classList.remove('d-none');
@@ -481,7 +524,7 @@
             if (noMemberState) noMemberState.classList.add('d-none');
             if (weekCalendarWrapper) weekCalendarWrapper.classList.remove('d-none');
 
-            loadWeekForCurrentStatusMembers();
+            loadMonthForCurrentStatusMembers();
         }
 
         /* ===== 상단 필터된 멤버 리스트 ===== */
@@ -512,28 +555,27 @@
                     });
         }
 
-        /* ===== 주간 범위 라벨 ===== */
-        function renderWeekRangeLabel(weekStart) {
-            const weekEnd = addDays(weekStart, 6);
-            const sY = weekStart.getFullYear();
-            const sM = pad2(weekStart.getMonth()+1);
-            const sD = pad2(weekStart.getDate());
-            const eM = pad2(weekEnd.getMonth()+1);
-            const eD = pad2(weekEnd.getDate());
-            const label = `${sY}.${sM}.${sD} ~ ${eM}.${eD}`;
+        /* ===== 월간 범위 라벨 (YYYY.MM.01 ~ MM.DD) ===== */
+        function renderMonthRangeLabel(monthStart) {
+            const monthEnd = lastDayOfMonth(monthStart);
+            const sY = monthStart.getFullYear();
+            const sM = pad2(monthStart.getMonth()+1);
+            const eM = pad2(monthEnd.getMonth()+1);
+            const eD = pad2(monthEnd.getDate());
+            const label = `${sY}.${sM}.01 ~ ${eM}.${eD}`;
             if (weekRangeLabel) weekRangeLabel.textContent = label;
             if (weekRangeLabelRight) weekRangeLabelRight.textContent = label;
         }
 
-        /* ===== 필터된 모든 멤버에 대한 주간 계획/실제 데이터 로딩 ===== */
-        async function loadWeekForCurrentStatusMembers() {
+        /* ===== 필터된 모든 멤버에 대한 월간 계획/실제 데이터 로딩 ===== */
+        async function loadMonthForCurrentStatusMembers() {
             weekPlanByMember   = {};
             weekActualByMember = {};
 
-            const weekStart = currentWeekStart;
-            const weekEnd   = addDays(weekStart, 6);
-            const startIso  = toIso(weekStart);
-            const endIso    = toIso(weekEnd);
+            const monthStart = currentMonthStart;
+            const monthEnd   = lastDayOfMonth(monthStart);
+            const startIso   = toIso(monthStart);
+            const endIso     = toIso(monthEnd);
 
             const members = currentStatusMembers.slice();
 
@@ -556,31 +598,49 @@
                         weekActualByMember[memberId] = normalizeDays(workData, true);
                     }
                 } catch (e) {
-                    console.error('주간 데이터 로딩 실패 (memberId=', memberId, ')', e);
+                    console.error('월간 데이터 로딩 실패 (memberId=', memberId, ')', e);
                 }
             }));
 
-            renderWeekCalendar();
+            renderCalendar();
         }
 
-        /* ===== 멤버 × 요일 주간 캘린더 렌더 ===== */
-        function renderWeekCalendar() {
+        /* ===== 멤버 × (주 or 일) 캘린더 렌더 ===== */
+        function renderCalendar() {
             if (!weekCalendarGrid) return;
 
             weekCalendarGrid.innerHTML = '';
 
-            const weekStart = currentWeekStart;
-            const todayIso  = toIso(new Date());
+            const monthStart   = currentMonthStart;
+            const year         = monthStart.getFullYear();
+            const monthIdx     = monthStart.getMonth();
+            const monthEnd     = lastDayOfMonth(monthStart);
+            const daysInMonth  = monthEnd.getDate();
+            const todayIso     = toIso(new Date());
 
-            const weekDates = [];
-            for (let i=0;i<7;i++) {
-                weekDates.push(addDays(weekStart, i));
+            // 월 전체 날짜 배열
+            const monthDates = [];
+            for (let d = 1; d <= daysInMonth; d++) {
+                monthDates.push(new Date(year, monthIdx, d));
+            }
+
+            // 화면에 보일 컬럼 정의
+            // type: 'DAY'  => 단일 날짜
+            // type: 'WEEK' => 7일 단위 묶음 (1~7, 8~14, 15~21, 22~28, 29~말일)
+            let visibleCols = [];
+            if (viewMode === 'DAY') {
+                visibleCols = monthDates.map(date => ({
+                    type: 'DAY',
+                    date
+                }));
+            } else {
+                visibleCols = buildWeekChunks(monthDates);
             }
 
             const table = document.createElement('table');
             table.className = 'week-calendar-table';
 
-            // 헤더
+            // ── 헤더 ───────────────────────────────────
             const thead = document.createElement('thead');
             const headTr = document.createElement('tr');
 
@@ -589,35 +649,53 @@
             thName.textContent = '아르바이트생';
             headTr.appendChild(thName);
 
-            weekDates.forEach((date, idx) => {
+            visibleCols.forEach(col => {
                 const th = document.createElement('th');
-                const iso = toIso(date);
-                const labelDate = `${pad2(date.getMonth()+1)}/${pad2(date.getDate())}`;
-                const dow = DOW_LABELS[idx] || '';
-                th.innerHTML = `${labelDate}<br><span class="dow-mini">${dow}</span>`;
-                if (iso === todayIso) {
-                    th.classList.add('today-col');
+
+                if (col.type === 'DAY') {
+                    const date = col.date;
+                    const iso  = toIso(date);
+                    const labelDate = `${pad2(date.getMonth()+1)}/${pad2(date.getDate())}`;
+                    const dow = DOW_LABELS[date.getDay()] || '';
+                    th.innerHTML = `${labelDate}<br><span class="dow-mini">${dow}</span>`;
+                    if (iso === todayIso) {
+                        th.classList.add('today-col');
+                    }
+                } else {
+                    // WEEK 컬럼: 예) 12.01~12.07
+                    const s = col.dates[0];
+                    const e = col.dates[col.dates.length - 1];
+                    const label = `${pad2(s.getMonth()+1)}.${pad2(s.getDate())}~${pad2(e.getMonth()+1)}.${pad2(e.getDate())}`;
+                    th.innerHTML = label;
+
+                    // 오늘이 이 주 안에 포함되어 있으면 today-col 처리
+                    const hasToday = col.dates.some(d => toIso(d) === todayIso);
+                    if (hasToday) {
+                        th.classList.add('today-col');
+                    }
                 }
+
                 headTr.appendChild(th);
             });
 
-            // 🔹 마지막 컬럼: 주간 합계
+            // 🔹 마지막 컬럼: 월간 합계
             const thWeek = document.createElement('th');
             thWeek.className = 'week-total-header';
-            thWeek.textContent = '주간 합계';
+            thWeek.textContent = '월간 합계';
             headTr.appendChild(thWeek);
 
             thead.appendChild(headTr);
             table.appendChild(thead);
 
-            // 바디: 멤버별 행
+            // ── 바디: 멤버별 행 ──────────────────────────
             const tbody = document.createElement('tbody');
 
-            // 요일별 전체 실제 합계
-            const dayActualTotals = new Array(7).fill(0);
-            // 전체(모든 멤버) 주간 계획/실제 합계
-            let allMembersWeeklyPlanTotal   = 0;
-            let allMembersWeeklyActualTotal = 0;
+            // 화면에 보이는 각 컬럼(DAY or WEEK)에 대한 전체 실제 합계
+            const colActualTotals = new Array(visibleCols.length).fill(0);
+
+            // 전체(모든 멤버) 월간 계획/실제 합계
+            let allMembersMonthlyPlanTotal   = 0;
+            let allMembersMonthlyActualTotal = 0;
 
             currentStatusMembers.forEach((member) => {
                 const tr = document.createElement('tr');
@@ -634,73 +712,130 @@
                 `;
                 tr.appendChild(nameTd);
 
-                let memberPlanTotalMins   = 0; // 아르바이트 한 주 계획 합계
-                let memberActualTotalMins = 0; // 아르바이트 한 주 실제 합계
+                const planMap   = weekPlanByMember[member.id]   || {};
+                const actualMap = weekActualByMember[member.id] || {};
 
-                // 7일 칸
-                weekDates.forEach((date, idx) => {
+                // ─ 월 전체 합계 (마지막 컬럼용) ─
+                let memberMonthPlanTotalMins   = 0;
+                let memberMonthActualTotalMins = 0;
+
+                monthDates.forEach((date) => {
                     const iso = toIso(date);
-                    const planMap   = weekPlanByMember[member.id]   || {};
-                    const actualMap = weekActualByMember[member.id] || {};
-
                     const planDay   = planMap[iso]   || { segments: [] };
                     const actualDay = actualMap[iso] || { segments: [], minutes: 0 };
 
                     const planSegs   = Array.isArray(planDay.segments)   ? planDay.segments   : [];
-                    const actualSegs = Array.isArray(actualDay.segments) ? actualDay.segments : [];
                     const minutes    = typeof actualDay.minutes === 'number' ? actualDay.minutes : 0;
 
-                    // 🔹 계획 시간(분) 계산
                     const planMinutes = planSegs.reduce((acc, s) => {
                         return acc + (hmToMin(s.end) - hmToMin(s.start));
                     }, 0);
 
-                    dayActualTotals[idx]   += minutes;
-                    memberActualTotalMins  += minutes;
-                    memberPlanTotalMins    += planMinutes;
+                    memberMonthPlanTotalMins   += planMinutes;
+                    memberMonthActualTotalMins += minutes;
+                });
 
-                    // 🔹 계획 일정 HTML (showPlans 가 true 일 때만 내용 표시)
-                    const plansHtml = (showPlans && planSegs.length)
-                            ? planSegs.map(s => chipHtml(color, s.start, s.end)).join(' ')
-                            : (showPlans ? '<span class="text-muted small"></span>' : '');
+                allMembersMonthlyPlanTotal   += memberMonthPlanTotalMins;
+                allMembersMonthlyActualTotal += memberMonthActualTotalMins;
 
-                    const actualHtml = actualSegs.length
-                            ? actualSegs.map(s => chipHtml(color, s.start, s.end)).join(' ')
-                            : '<span class="text-muted small"></span>';
+                // ─ 화면에 보이는 컬럼들(DAY or WEEK)에 대한 셀 렌더링 ─
+                visibleCols.forEach((col, colIdx) => {
+                    let cellHtml = '';
+                    let colActualMins = 0;
 
-                    const dayTotalHtml = minutes > 0
-                            ? `<div class="day-total">${formatMins(minutes)}</div>`
-                            : `<div class="day-total text-muted">-</div>`;
+                    if (col.type === 'DAY') {
+                        const date = col.date;
+                        const iso  = toIso(date);
+
+                        const planDay   = planMap[iso]   || { segments: [] };
+                        const actualDay = actualMap[iso] || { segments: [], minutes: 0 };
+
+                        const planSegs   = Array.isArray(planDay.segments)   ? planDay.segments   : [];
+                        const actualSegs = Array.isArray(actualDay.segments) ? actualDay.segments : [];
+                        const minutes    = typeof actualDay.minutes === 'number' ? actualDay.minutes : 0;
+
+                        colActualMins += minutes;
+
+                        const planMinutes = planSegs.reduce((acc, s) => {
+                            return acc + (hmToMin(s.end) - hmToMin(s.start));
+                        }, 0);
+
+                        // 일단위에서는 칩으로 상세 표시
+                        const plansHtml = (showPlans && planSegs.length)
+                                ? planSegs.map(s => chipHtml(color, s.start, s.end)).join(' ')
+                                : (showPlans ? '<span class="text-muted small"></span>' : '');
+
+                        const actualHtml = actualSegs.length
+                                ? actualSegs.map(s => chipHtml(color, s.start, s.end)).join(' ')
+                                : '<span class="text-muted small"></span>';
+
+                        const dayTotalHtml = minutes > 0
+                                ? `<div class="day-total">${formatMins(minutes)}</div>`
+                                : `<div class="day-total text-muted">-</div>`;
+
+                        cellHtml = `
+                            <div class="week-cell">
+                                <div class="week-cell-rect week-cell-rect-bottom" style="${showPlans ? '' : 'display:none;'}">
+                                    <div class="segments">${plansHtml}</div>
+                                </div>
+                                <div class="week-cell-rect week-cell-rect-top">
+                                    <div class="segments">${actualHtml}</div>
+                                    ${dayTotalHtml}
+                                </div>
+                            </div>
+                        `;
+                    } else {
+                        // WEEK 컬럼: 7일(또는 마지막 주는 말일까지) 범위의 합계
+                        let weekPlanMins   = 0;
+                        let weekActualMins = 0;
+
+                        col.dates.forEach(date => {
+                            const iso = toIso(date);
+                            const planDay   = planMap[iso]   || { segments: [] };
+                            const actualDay = actualMap[iso] || { segments: [], minutes: 0 };
+
+                            const planSegs   = Array.isArray(planDay.segments)   ? planDay.segments   : [];
+                            const minutes    = typeof actualDay.minutes === 'number' ? actualDay.minutes : 0;
+
+                            const planMinutes = planSegs.reduce((acc, s) => {
+                                return acc + (hmToMin(s.end) - hmToMin(s.start));
+                            }, 0);
+
+                            weekPlanMins   += planMinutes;
+                            weekActualMins += minutes;
+                        });
+
+                        colActualMins += weekActualMins;
+
+                        const weekPlanLabel   = weekPlanMins   > 0 ? formatMins(weekPlanMins)   : '-';
+                        const weekActualLabel = weekActualMins > 0 ? formatMins(weekActualMins) : '-';
+
+                        // 주단위에서는 요약만 표시 (칩 X)
+                        cellHtml = `
+                            <div class="member-week-total-strong">
+                                ${showPlans ? `<div class="small text-muted">계획: <strong>${weekPlanLabel}</strong></div>` : ''}
+                                <div class="small text-muted">실제: <strong>${weekActualLabel}</strong></div>
+                            </div>
+                        `;
+                    }
+
+                    colActualTotals[colIdx] += colActualMins;
 
                     const td = document.createElement('td');
-                    td.innerHTML = `
-                        <div class="week-cell">
-                            <!-- 🔹 계획 블록: showPlans 가 false이면 display:none -->
-                            <div class="week-cell-rect week-cell-rect-bottom" style="${showPlans ? '' : 'display:none;'}">
-                                <div class="segments">${plansHtml}</div>
-                            </div>
-                            <div class="week-cell-rect week-cell-rect-top">
-                                <div class="segments">${actualHtml}</div>
-                                ${dayTotalHtml}
-                            </div>
-                        </div>
-                    `;
+                    td.innerHTML = cellHtml;
                     tr.appendChild(td);
                 });
 
-                allMembersWeeklyPlanTotal   += memberPlanTotalMins;
-                allMembersWeeklyActualTotal += memberActualTotalMins;
-
-                // 🔹 마지막 컬럼: 해당 아르바이트생의 주간 계획/실제 합계
-                const weekPlanLabel   = memberPlanTotalMins   > 0 ? formatMins(memberPlanTotalMins)   : '-';
-                const weekActualLabel = memberActualTotalMins > 0 ? formatMins(memberActualTotalMins) : '-';
+                // 🔹 마지막 컬럼: 해당 아르바이트생의 월간 계획/실제 합계
+                const monthPlanLabel   = memberMonthPlanTotalMins   > 0 ? formatMins(memberMonthPlanTotalMins)   : '-';
+                const monthActualLabel = memberMonthActualTotalMins > 0 ? formatMins(memberMonthActualTotalMins) : '-';
 
                 const totalTd = document.createElement('td');
                 totalTd.className = 'member-total-cell';
                 totalTd.innerHTML = `
                     <div class="member-week-total-strong">
-                        <div class="small text-muted">계획: <strong>${weekPlanLabel}</strong></div>
-                        <div class="small text-muted">실제: <strong>${weekActualLabel}</strong></div>
+                        <div class="small text-muted">계획: <strong>${monthPlanLabel}</strong></div>
+                        <div class="small text-muted">실제: <strong>${monthActualLabel}</strong></div>
                     </div>
                 `;
                 tr.appendChild(totalTd);
@@ -708,7 +843,7 @@
                 tbody.appendChild(tr);
             });
 
-            // ===== 마지막 요약 행: 요일별 전체 실제 합계 + 주간 전체 합계(계획/실제) =====
+            // ── 마지막 요약 행: 컬럼별 전체 실제 합계 + 전체 월간 합계 ─
             const summaryTr = document.createElement('tr');
             summaryTr.className = 'summary-row';
 
@@ -717,16 +852,15 @@
             sumNameTd.textContent = '합계';
             summaryTr.appendChild(sumNameTd);
 
-            dayActualTotals.forEach((mins) => {
+            colActualTotals.forEach((mins) => {
                 const td = document.createElement('td');
                 td.textContent = mins > 0 ? formatMins(mins) : '-';
                 summaryTr.appendChild(td);
             });
 
-            // 🔹 마지막 요약 컬럼: 전체(모든 멤버) 주간 계획/실제 합계
             const totalSummaryTd = document.createElement('td');
-            const totalPlanLabel   = allMembersWeeklyPlanTotal   > 0 ? formatMins(allMembersWeeklyPlanTotal)   : '-';
-            const totalActualLabel = allMembersWeeklyActualTotal > 0 ? formatMins(allMembersWeeklyActualTotal) : '-';
+            const totalPlanLabel   = allMembersMonthlyPlanTotal   > 0 ? formatMins(allMembersMonthlyPlanTotal)   : '-';
+            const totalActualLabel = allMembersMonthlyActualTotal > 0 ? formatMins(allMembersMonthlyActualTotal) : '-';
             totalSummaryTd.innerHTML = `
                 계획: <strong>${totalPlanLabel}</strong><br>
                 실제: <strong>${totalActualLabel}</strong>
@@ -739,15 +873,52 @@
             weekCalendarGrid.appendChild(table);
         }
 
+        /* ===== 월을 7일 단위로 자르는 헬퍼 (1~7, 8~14, 15~21, 22~28, 29~말일) ===== */
+        function buildWeekChunks(monthDates) {
+            const chunks = [];
+            let idx = 0;
+            const n = monthDates.length;
+
+            while (idx < n) {
+                const startIdx = idx;
+                const endIdx   = Math.min(startIdx + 6, n - 1); // 7일 단위
+                const dates    = monthDates.slice(startIdx, endIdx + 1);
+                chunks.push({
+                    type: 'WEEK',
+                    dates
+                });
+                idx = endIdx + 1;
+            }
+            return chunks;
+        }
+
         /* ===== Utils ===== */
+        function toMonthFirst(date){
+            return new Date(date.getFullYear(), date.getMonth(), 1);
+        }
+        function lastDayOfMonth(date){
+            return new Date(date.getFullYear(), date.getMonth() + 1, 0);
+        }
+        function addMonths(d, n){
+            const x = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+            x.setMonth(x.getMonth() + n);
+            if (x.getDate() !== d.getDate()) {
+                x.setDate(0);
+            }
+            return toMonthFirst(x);
+        }
         function toMonday(date){
             const d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-            const day = d.getDay();
-            const diff = (day === 0 ? -6 : 1 - day);
+            const day = d.getDay(); // 0(일)~6(토)
+            const diff = (day === 0 ? -6 : 1 - day); // 월요일 기준
             d.setDate(d.getDate() + diff);
             return d;
         }
-        function addDays(d, n){ const x = new Date(d); x.setDate(x.getDate()+n); return x; }
+        function addDays(d, n){
+            const x = new Date(d);
+            x.setDate(x.getDate() + n);
+            return x;
+        }
         function pad2(n){ return String(n).padStart(2,'0'); }
         function toIso(d){ return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`; }
 
