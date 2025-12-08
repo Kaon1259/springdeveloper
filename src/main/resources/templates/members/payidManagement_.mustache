@@ -87,7 +87,7 @@
                 <!-- 안내 -->
                 <div class="small text-muted mb-2">
                     위에서 근무자를 선택하면, <b>지급완료된 월급 내역</b>과 <b>연도별 합산 내역</b>을 볼 수 있습니다.<br>
-                    하단에는 지금까지 지급한 <b>실근무시간 / 주휴수당시간 / 근무수당 / 주휴수당 / 총 지급액(세전) / 실지급액(세후)</b>이 합산됩니다.
+                    하단에는 지금까지 지급한 <b>실근무시간 / 주휴수당시간 / 근무수당 / 주휴수당 / 총 지급액</b>이 합산됩니다.
                 </div>
 
                 <!-- 📊 월별 / 연도별 지급내역 테이블 -->
@@ -107,9 +107,7 @@
                                 <th style="width:120px;">주휴수당 시간</th>
                                 <th style="width:140px;" class="text-end">근무수당</th>
                                 <th style="width:140px;" class="text-end">주휴수당</th>
-                                <th style="width:110px;">세금부가</th>
-                                <th style="width:130px;" class="text-end">세금(3.3%)</th>
-                                <th style="width:160px;" class="text-end">실지급액(세후)</th>
+                                <th style="width:160px;" class="text-end">총 지급액</th>
                             </tr>
                             </thead>
                             <tbody id="payHistoryBodyMonth">
@@ -129,8 +127,7 @@
                                 <th style="width:150px;">주휴수당 시간 합계</th>
                                 <th style="width:150px;" class="text-end">근무수당 합계</th>
                                 <th style="width:150px;" class="text-end">주휴수당 합계</th>
-                                <th style="width:140px;" class="text-end">세금 합계</th>
-                                <th style="width:180px;" class="text-end">실지급액 합계</th>
+                                <th style="width:180px;" class="text-end">총 지급액 합계</th>
                             </tr>
                             </thead>
                             <tbody id="payHistoryBodyYear">
@@ -159,18 +156,10 @@
                         <div class="small text-muted">총 주휴수당</div>
                         <div class="fw-semibold" id="summaryTotalJuhyuPay">-</div>
                     </div>
-                    <div class="d-flex justify-content-between">
-                        <div class="small text-muted">총 지급액(세전, 근무+주휴)</div>
-                        <div class="fw-semibold" id="summaryTotalPay">-</div>
-                    </div>
-                    <div class="d-flex justify-content-between">
-                        <div class="small text-muted">총 세금(3.3%)</div>
-                        <div class="fw-semibold" id="summaryTotalTax">-</div>
-                    </div>
                     <hr class="my-2">
                     <div class="d-flex justify-content-between align-items-center">
-                        <div class="small fw-bold">총 실지급액(세후)</div>
-                        <div class="fw-bold text-primary" id="summaryTotalNet">-</div>
+                        <div class="small fw-bold">총 지급액 (근무수당 + 주휴수당)</div>
+                        <div class="fw-bold text-primary" id="summaryTotalPay">-</div>
                     </div>
                 </div>
 
@@ -278,9 +267,7 @@
     #summaryTotalJuhyuTime,
     #summaryTotalWorkPay,
     #summaryTotalJuhyuPay,
-    #summaryTotalPay,
-    #summaryTotalTax,
-    #summaryTotalNet {
+    #summaryTotalPay {
         text-align:right;
     }
 
@@ -360,8 +347,6 @@
         const summaryTotalWorkPay  = document.getElementById('summaryTotalWorkPay');
         const summaryTotalJuhyuPay = document.getElementById('summaryTotalJuhyuPay');
         const summaryTotalPay      = document.getElementById('summaryTotalPay');
-        const summaryTotalTax      = document.getElementById('summaryTotalTax');
-        const summaryTotalNet      = document.getElementById('summaryTotalNet');
 
         // PDF 버튼
         const paidPdfBtn           = document.getElementById('paidPdfBtn');
@@ -529,8 +514,6 @@
             summaryTotalWorkPay.textContent   = '-';
             summaryTotalJuhyuPay.textContent  = '-';
             summaryTotalPay.textContent       = '-';
-            summaryTotalTax.textContent       = '-';
-            summaryTotalNet.textContent       = '-';
 
             renderMemberHeader(null);
         }
@@ -544,7 +527,7 @@
 
             payHistoryBodyMonth.innerHTML = `
                 <tr>
-                    <td colspan="11" class="text-center text-muted">불러오는 중...</td>
+                    <td colspan="9" class="text-center text-muted">불러오는 중...</td>
                 </tr>
             `;
             payHistoryBodyYear.innerHTML = '';
@@ -585,14 +568,14 @@
             if (!Array.isArray(list) || list.length === 0) {
                 const emptyMonth = `
                     <tr>
-                        <td colspan="11" class="text-center text-muted">
+                        <td colspan="9" class="text-center text-muted">
                             지급완료된 급여 내역이 없습니다.
                         </td>
                     </tr>
                 `;
                 const emptyYear = `
                     <tr>
-                        <td colspan="7" class="text-center text-muted">
+                        <td colspan="6" class="text-center text-muted">
                             연도별로 집계할 급여 내역이 없습니다.
                         </td>
                     </tr>
@@ -609,8 +592,6 @@
                 summaryTotalWorkPay.textContent   = '-';
                 summaryTotalJuhyuPay.textContent  = '-';
                 summaryTotalPay.textContent       = '-';
-                summaryTotalTax.textContent       = '-';
-                summaryTotalNet.textContent       = '-';
 
                 return;
             }
@@ -627,9 +608,7 @@
             let totalJuhyuMinutes = 0;
             let totalWorkPay = 0;
             let totalJuhyuPay = 0;
-            let totalPay = 0;   // 세전 총액
-            let totalTax = 0;   // 세금 합계
-            let totalNet = 0;   // 세후 실지급액 합계
+            let totalPay = 0;
 
             const yearMap = {};
 
@@ -646,24 +625,13 @@
                 const juhyuMinutes = item.monthJuhyuMinutes || 0;
                 const workPay      = item.monthWorkPay      || 0;
                 const juhyuPay     = item.monthJuhyuPay     || 0;
-                const grossTotal   = item.monthTotalPay     || (workPay + juhyuPay); // 세전 총액
+                const total        = item.monthTotalPay     || (workPay + juhyuPay);
 
                 totalWorkMinutes  += workMinutes;
                 totalJuhyuMinutes += juhyuMinutes;
                 totalWorkPay      += workPay;
                 totalJuhyuPay     += juhyuPay;
-                totalPay          += grossTotal;
-
-                const taxApplied = isTaxAppliedForItem(item, member);
-                let taxAmount = 0;
-                let netPay    = grossTotal;
-                if (taxApplied && grossTotal > 0) {
-                    taxAmount = Math.round(grossTotal * 0.033);
-                    netPay    = grossTotal - taxAmount;
-                }
-
-                totalTax += taxAmount;
-                totalNet += netPay;
+                totalPay          += total;
 
                 if (item.payYear != null) {
                     const y = item.payYear;
@@ -673,18 +641,14 @@
                             juhyuMinutes: 0,
                             workPay: 0,
                             juhyuPay: 0,
-                            totalPay: 0,
-                            tax: 0,
-                            net: 0
+                            totalPay: 0
                         };
                     }
                     yearMap[y].workMinutes  += workMinutes;
                     yearMap[y].juhyuMinutes += juhyuMinutes;
                     yearMap[y].workPay      += workPay;
                     yearMap[y].juhyuPay     += juhyuPay;
-                    yearMap[y].totalPay     += grossTotal;
-                    yearMap[y].tax          += taxAmount;
-                    yearMap[y].net          += netPay;
+                    yearMap[y].totalPay     += total;
                 }
 
                 const hourly = (typeof item.hourlyWage === 'number')
@@ -695,10 +659,6 @@
                 const statusBadgeMap = { DRAFT:'bg-secondary', CONFIRMED:'bg-info', PAID:'bg-success' };
                 const statusLabel = statusLabelMap[status] || status;
                 const statusClass = statusBadgeMap[status] || 'bg-secondary';
-
-                const taxLabel = taxApplied
-                        ? '<span class="text-danger fw-bold">부과</span>'
-                        : '<span class="text-muted">미부과</span>';
 
                 return `
                     <tr>
@@ -712,9 +672,7 @@
                         <td>${formatMins(juhyuMinutes)}</td>
                         <td class="text-end">${workPay ? krw(workPay) : '-'}</td>
                         <td class="text-end">${juhyuPay ? krw(juhyuPay) : '-'}</td>
-                        <td>${taxLabel}</td>
-                        <td class="text-end">${taxApplied && taxAmount ? krw(taxAmount) : (taxApplied ? krw(0) : '-')}</td>
-                        <td class="text-end fw-semibold">${netPay ? krw(netPay) : '-'}</td>
+                        <td class="text-end fw-semibold">${total ? krw(total) : '-'}</td>
                     </tr>
                 `;
             });
@@ -726,7 +684,7 @@
             if (years.length === 0) {
                 payHistoryBodyYear.innerHTML = `
                     <tr>
-                        <td colspan="7" class="text-center text-muted">
+                        <td colspan="6" class="text-center text-muted">
                             연도별로 집계할 급여 내역이 없습니다.
                         </td>
                     </tr>
@@ -742,8 +700,7 @@
                             <td>${formatMins(aggr.juhyuMinutes)}</td>
                             <td class="text-end">${aggr.workPay ? krw(aggr.workPay) : '-'}</td>
                             <td class="text-end">${aggr.juhyuPay ? krw(aggr.juhyuPay) : '-'}</td>
-                            <td class="text-end">${aggr.tax ? krw(aggr.tax) : '-'}</td>
-                            <td class="text-end fw-semibold">${aggr.net ? krw(aggr.net) : '-'}</td>
+                            <td class="text-end fw-semibold">${aggr.totalPay ? krw(aggr.totalPay) : '-'}</td>
                         </tr>
                     `;
                 });
@@ -762,8 +719,6 @@
             summaryTotalWorkPay.textContent   = totalWorkPay  ? krw(totalWorkPay)  : '-';
             summaryTotalJuhyuPay.textContent  = totalJuhyuPay ? krw(totalJuhyuPay) : '-';
             summaryTotalPay.textContent       = totalPay      ? krw(totalPay)      : '-';
-            summaryTotalTax.textContent       = totalTax      ? krw(totalTax)      : '-';
-            summaryTotalNet.textContent       = totalNet      ? krw(totalNet)      : '-';
         }
 
         // ===== 토스트 헬퍼 =====
@@ -871,30 +826,6 @@
 
             return `${y}-${M}-${D} ${hh}:${mm}`;
         }
-
-        // === 세금 부과 여부 플래그 처리 ===
-        function flagToBool(v){
-            if (v === true) return true;
-            if (v === false || v == null) return false;
-            if (typeof v === 'number') return v === 1;
-            if (typeof v === 'string'){
-                const s = v.trim().toUpperCase();
-                return s === 'Y' || s === 'TRUE' || s === 'T' || s === '1';
-            }
-            return false;
-        }
-
-        function isTaxApplied(source){
-            return flagToBool(source?.applyTax);
-        }
-
-        function isTaxAppliedForItem(item, member){
-            if (item && item.applyTax != null){
-                return flagToBool(item.applyTax);
-            }
-            return isTaxApplied(member);
-        }
-
     })();
 </script>
 

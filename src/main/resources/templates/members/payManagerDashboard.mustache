@@ -91,16 +91,24 @@
             <div class="small text-muted mb-4">
                 * 주휴수당은 멤버 설정이 “적용”이고 해당 주 실근무가 15시간 이상일 때만 계산됩니다.<br>
                 * 근무시간 표기는 “H시간 M분”. 금액은 KRW 통화 형식으로 출력합니다.<br>
-                * 세금(3.3%)은 근무수당+주휴수당에 일괄 적용되며, 실수령액 = (근무수당+주휴수당) - 세금 입니다.
+                * 세금(3.3%)는 근무수당+주휴수당에 일괄 적용되며, 실수령액 = (근무수당+주휴수당) - 세금 입니다.
             </div>
 
             <!-- ============================== -->
             <!-- 🔵 추가: 계획일정 기준 주차별 급여 테이블 -->
             <!-- ============================== -->
 
-            <div class="d-flex align-items-center gap-2 mb-2">
+            <div class="d-flex align-items-center gap-2 mb-2 flex-wrap">
                 <span class="fw-bold">주차별 급여 테이블 (계획일정 기준)</span>
                 <span class="small text-muted">실근무가 아닌, 계획 일정만으로 환산한 주차별 급여입니다.</span>
+                <!-- ✅ 요약보기 버튼 -->
+                <button type="button"
+                        id="btnPlanSummary"
+                        class="btn btn-sm btn-outline-primary"
+                        data-bs-toggle="modal"
+                        data-bs-target="#planSummaryModal">
+                    요약보기
+                </button>
             </div>
 
             <!-- 📊 내부: 주차별 급여 상세 테이블 (계획 기준) -->
@@ -148,6 +156,60 @@
 
 </main>
 
+<!-- 🔵 계획 요약 모달 (Look & Feel 일치) -->
+<div class="modal fade" id="planSummaryModal" tabindex="-1" aria-labelledby="planSummaryModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="planSummaryModalLabel">계획일정 기준 월 합산 요약</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="닫기"></button>
+            </div>
+            <div class="modal-body">
+                <div class="small text-muted mb-2">
+                    현재 선택된 <b>상태</b>와 <b>월</b>을 기준으로, 각 인원의 모든 주차(계획) 급여를 합산한 요약입니다.
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-bordered align-middle text-center" id="planSummaryTable">
+                        <!-- ✅ 동일한 파란 헤더 / 라운드 코너 -->
+                        <thead class="inner-table-header">
+                        <tr>
+                            <th style="width:160px;">근무자명</th>
+                            <th class="text-end" style="width:150px;">계획근무시간 합계</th>
+                            <th class="text-end" style="width:120px;">시급</th>
+                            <th style="width:110px;">주휴수당부가</th>
+                            <th style="width:110px;">세금부가</th>
+                            <th class="text-end" style="width:150px;">근무수당 합계</th>
+                            <th class="text-end" style="width:150px;">주휴수당 합계</th>
+                            <th class="text-end" style="width:150px;">세금 합계</th>
+                            <th class="text-end" style="width:150px;">실수령액 합계</th>
+                        </tr>
+                        </thead>
+                        <tbody id="planSummaryTbody">
+                        <!-- JS 렌더 -->
+                        </tbody>
+                        <tfoot>
+                        <tr class="table-secondary fw-bold">
+                            <td class="text-end">선택 상태/월 전체 합계</td>
+                            <td class="text-end" id="planSummaryTotalWorkTime">-</td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td class="text-end" id="planSummaryTotalWorkPay">-</td>
+                            <td class="text-end" id="planSummaryTotalJuhyuPay">-</td>
+                            <td class="text-end" id="planSummaryTotalTax">-</td>
+                            <td class="text-end" id="planSummaryTotalNet">-</td>
+                        </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">닫기</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- 💄 스타일 -->
 <style>
     .text-money{color:#0d6efd;font-weight:600}
@@ -155,7 +217,7 @@
     .small-muted{color:#6c757d;font-size:.85rem}
     .week-label{white-space:nowrap}
 
-    /* ✅ 전체 외부 라운드 박스 (예시 코드와 동일 패턴) */
+    /* ✅ 전체 외부 라운드 박스 */
     .pay-shell{
         border-radius:1rem;
         border:1px solid #dee2e6;
@@ -180,7 +242,7 @@
         padding:1.25rem 1.5rem 1.5rem;
     }
 
-    /* ✅ 내부 주차별 급여 테이블 헤더: 파란색 + 상단 모서리 라운드 */
+    /* ✅ 내부 주차별 급여/요약 테이블 헤더: 파란색 + 상단 모서리 라운드 */
     .inner-table-header th{
         background:#0d6efd !important;
         color:#ffffff !important;
@@ -194,9 +256,10 @@
         border-top-right-radius:0.75rem;
     }
 
-    /* 내부 테이블 자체 모서리 라운드 */
+    /* 내부 테이블 자체 모서리 라운드 (실근무/계획/요약 공통) */
     #weeklyPayTable,
-    #weeklyPlanTable{
+    #weeklyPlanTable,
+    #planSummaryTable{
         border-collapse:separate;
         border-spacing:0;
         border-radius:0.75rem;
@@ -246,11 +309,20 @@
         const monthNetSumEl        = document.getElementById('monthNetSum');
 
         // 계획 기준 테이블
-        const weeklyPlanBody       = document.getElementById('weeklyPlanBody');
-        const monthPlanWorkPaySumEl  = document.getElementById('monthPlanWorkPaySum');
-        const monthPlanJuhyuPaySumEl = document.getElementById('monthPlanJuhyuPaySum');
-        const monthPlanTaxSumEl      = document.getElementById('monthPlanTaxSum');
-        const monthPlanNetSumEl      = document.getElementById('monthPlanNetSum');
+        const weeklyPlanBody          = document.getElementById('weeklyPlanBody');
+        const monthPlanWorkPaySumEl   = document.getElementById('monthPlanWorkPaySum');
+        const monthPlanJuhyuPaySumEl  = document.getElementById('monthPlanJuhyuPaySum');
+        const monthPlanTaxSumEl       = document.getElementById('monthPlanTaxSum');
+        const monthPlanNetSumEl       = document.getElementById('monthPlanNetSum');
+
+        // 계획 요약 모달 관련 DOM
+        const btnPlanSummary                = document.getElementById('btnPlanSummary');
+        const planSummaryTbody              = document.getElementById('planSummaryTbody');
+        const planSummaryTotalWorkTimeEl    = document.getElementById('planSummaryTotalWorkTime');
+        const planSummaryTotalWorkPayEl     = document.getElementById('planSummaryTotalWorkPay');
+        const planSummaryTotalJuhyuPayEl    = document.getElementById('planSummaryTotalJuhyuPay');
+        const planSummaryTotalTaxEl         = document.getElementById('planSummaryTotalTax');
+        const planSummaryTotalNetEl         = document.getElementById('planSummaryTotalNet');
 
         /* ===== 상태 ===== */
         let allMembers = [];
@@ -259,6 +331,9 @@
 
         let filteredMembers   = [];
         let currentMonthStart = firstDayOfMonth(new Date());
+
+        // 계획 요약용 누적 맵: { memberId: { member, minutesSum, workPaySum, juhyuPaySum, taxSum, netSum } }
+        let planSummaryMap = {};
 
         /* ===== 초기화 ===== */
         if (Array.isArray(allMembers) && allMembers.length>0) {
@@ -292,6 +367,11 @@
             const status = document.getElementById('statusSelect').value;
             this.href = `/payment/paymanagerdashboard/print?status=${encodeURIComponent(status)}`;
         });
+
+        // 🔹 요약보기 버튼 클릭 시, 요약 테이블 렌더
+        if (btnPlanSummary) {
+            btnPlanSummary.addEventListener('click', renderPlanSummaryTable);
+        }
 
         refreshMembers();
 
@@ -365,7 +445,7 @@
                 const weekEnd = addDays(weekStart, 6);
 
                 // 해당 주 각 멤버의 주간 합계 계산
-                const rows = []; // [{member, weekMinutes, wage, juhyuApplied, workPay, juhyuPay, applyTax, taxAmount, grossTotal, netTotal}]
+                const rows = [];
                 filteredMembers.forEach(m=>{
                     const wage = Number(m.hourlyWage)||0;
                     const includeJuhyu = !!m.includeWeeklyHolidayAllowance;
@@ -480,6 +560,9 @@
             weeklyPlanBody.innerHTML = '';
             setFooterSumsPlan(0,0,0,0);
 
+            // 요약 맵 초기화
+            planSummaryMap = {};
+
             if (!filteredMembers.length){
                 const tr = document.createElement('tr');
                 tr.classList.add('week-end-border');
@@ -507,7 +590,7 @@
                 }
             }));
 
-            // 월을 포함하는 모든 주(월~일) 시작일 목록(Mon) – 실근무와 동일 로직
+            // 월을 포함하는 모든 주(월~일) 시작일 목록(Mon)
             const weeks   = [];
             let wStart    = toMonday(ms);
             const monthEnd = new Date(me);
@@ -570,6 +653,25 @@
                         grossTotal,
                         netTotal
                     });
+
+                    // 🔵 계획 요약 맵에 누적 (모든 주차 합산)
+                    let acc = planSummaryMap[m.id];
+                    if (!acc){
+                        acc = {
+                            member: m,
+                            minutesSum: 0,
+                            workPaySum: 0,
+                            juhyuPaySum: 0,
+                            taxSum: 0,
+                            netSum: 0
+                        };
+                        planSummaryMap[m.id] = acc;
+                    }
+                    acc.minutesSum += weekMinutes;
+                    acc.workPaySum += workPay;
+                    acc.juhyuPaySum += juhyuPay;
+                    acc.taxSum     += taxAmount;
+                    acc.netSum     += netTotal;
                 });
 
                 if (rows.length === 0) {
@@ -641,6 +743,65 @@
             monthPlanNetSumEl.textContent      = krw(net|0);
         }
 
+        /* ===== 계획 요약 모달 렌더 ===== */
+        function renderPlanSummaryTable(){
+            planSummaryTbody.innerHTML = '';
+
+            const entries = Object.values(planSummaryMap || {}).filter(e => (e.minutesSum||0) > 0);
+
+            if (!entries.length){
+                const tr = document.createElement('tr');
+                tr.innerHTML = `<td colspan="9" class="text-muted">표시할 요약 데이터가 없습니다.</td>`;
+                planSummaryTbody.appendChild(tr);
+                setPlanSummaryFooter(0,0,0,0,0);
+                return;
+            }
+
+            // 이름 순 정렬
+            entries.sort((a,b)=>(a.member.name||'').localeCompare(b.member.name||'','ko'));
+
+            let totalMinutes = 0;
+            let totalWorkPay = 0;
+            let totalJuhyuPay = 0;
+            let totalTax = 0;
+            let totalNet = 0;
+
+            entries.forEach(e=>{
+                const m = e.member || {};
+                totalMinutes += e.minutesSum||0;
+                totalWorkPay += e.workPaySum||0;
+                totalJuhyuPay += e.juhyuPaySum||0;
+                totalTax     += e.taxSum||0;
+                totalNet     += e.netSum||0;
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+          <td class="text-start">${escapeHtml(m.name || '-')}</td>
+          <td class="text-end"><span class="text-time">${formatMins(e.minutesSum||0)}</span></td>
+          <td class="text-end">${m.hourlyWage ? krw(m.hourlyWage) : '-'}</td>
+          <td>${m.includeWeeklyHolidayAllowance ? '<span class="text-success fw-bold">적용</span>' : '<span class="text-muted">미적용</span>'}</td>
+          <td>${isTaxApplied(m) ? '<span class="text-danger fw-bold">부과</span>' : '<span class="text-muted">미부과</span>'}</td>
+          <td class="text-end">${krw(e.workPaySum||0)}</td>
+          <td class="text-end">${krw(e.juhyuPaySum||0)}</td>
+          <td class="text-end">${isTaxApplied(m) ? krw(e.taxSum||0) : '-'}</td>
+          <td class="text-end"><span class="fw-bold text-primary">${krw(e.netSum||0)}</span></td>
+        `;
+                planSummaryTbody.appendChild(tr);
+            });
+
+            setPlanSummaryFooter(totalMinutes, totalWorkPay, totalJuhyuPay, totalTax, totalNet);
+        }
+
+        function setPlanSummaryFooter(totalMinutes, totalWorkPay, totalJuhyuPay, totalTax, totalNet){
+            if (!planSummaryTotalWorkTimeEl) return; // 안전장치
+
+            planSummaryTotalWorkTimeEl.textContent = totalMinutes > 0 ? formatMins(totalMinutes) : '-';
+            planSummaryTotalWorkPayEl.textContent  = krw(totalWorkPay|0);
+            planSummaryTotalJuhyuPayEl.textContent = krw(totalJuhyuPay|0);
+            planSummaryTotalTaxEl.textContent      = totalTax ? krw(totalTax|0) : '-';
+            planSummaryTotalNetEl.textContent      = krw(totalNet|0);
+        }
+
         /* ===== 유틸 ===== */
         function firstDayOfMonth(d){ return new Date(d.getFullYear(), d.getMonth(), 1); }
         function lastDayOfMonth(d){ return new Date(d.getFullYear(), d.getMonth()+1, 0); }
@@ -707,7 +868,7 @@
             return false;
         }
 
-        // ✅ payday 포맷팅 (MemberDto.payday 사용)
+        // ✅ payday 포맷팅
         function formatPayday(v){
             if (!v) return '미지정';
             const s = String(v).trim().toUpperCase();
