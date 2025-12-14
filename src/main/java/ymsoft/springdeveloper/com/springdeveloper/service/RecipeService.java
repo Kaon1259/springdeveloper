@@ -132,6 +132,7 @@ public class RecipeService {
                 .visible(recipe.isVisible())
                 .template(recipe.isTemplate())
                 .temperature(recipe.getTemperature() != null ? recipe.getTemperature().name() : null)
+                .cupSize(recipe.getCupSize() != null ? recipe.getCupSize().name() : null)
                 .steps(stepDtos)
                 .build();
     }
@@ -142,44 +143,16 @@ public class RecipeService {
             return "기타";
         }
 
-        RecipeCategory category;
+        //RecipeCategory category;
         try {
-            category = RecipeCategory.valueOf(categoryEnumName);
+            //category = RecipeCategory.valueOf(categoryEnumName);
+            return RecipeCategory
+                    .valueOf(categoryEnumName)
+                    .getDisplayName();
+
         } catch (IllegalArgumentException e) {
             // Enum에 없는 값이면 그냥 원본 출력 or "기타"
             return categoryEnumName;
-        }
-
-        // 실제 Enum에 맞게 라벨링 (예시는 이전에 쓰셨던 카테고리 기반)
-        switch (category) {
-            case HOT_COFFEE:
-                return "Hot 커피";
-            case ICE_COFFEE:
-                return "Ice 커피";
-            case HOT_LATTE:
-                return "Hot 라떼";
-            case ICE_LATTE:
-                return "Ice 라떼";
-            case ICE_NON_COFFEE:
-                return "Ice 논커피";
-            case HOT_NON_COFFEE:
-                return "Hot 논커피";
-            case HOT_COLD_BREW:
-                return "HOT 콜드브루";
-            case HOT_LATTE_COLD_BREW:
-                return "HOT 콜드브루라떼";
-            case ICE_COLD_BREW:
-                return "ICE 콜드브루";
-            case ICE_LATTE_COLD_BREW:
-                return "ICE 콜드브루라떼";
-            case SMOOTHIE_ADE:
-                return "스무디 · 에이드";
-            case JUICE:
-                return "주스";
-            case FRAPPE:
-                return "프라페";
-            default:
-                return category.name();
         }
     }
 

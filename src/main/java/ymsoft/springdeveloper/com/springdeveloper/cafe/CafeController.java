@@ -50,6 +50,23 @@ public class CafeController {
         return "cafe/recipeList";
     }
 
+    @GetMapping("/recipes/onlyread")
+    public String onlyReadList(Model model) {
+        List<RecipeGroupDto> recipeGroups = recipeService.getGroupedRecipes();
+
+        log.info("recipeGroups: {}", recipeGroups);
+
+        long totalCount = recipeGroups.stream()
+                .mapToLong(g -> g.getRecipes().size())
+                .sum();
+
+        log.info("totalCount: {}", totalCount);
+        model.addAttribute("recipeGroups", recipeGroups);
+        model.addAttribute("totalCount", totalCount);
+
+        return "cafe/recipeListForOnlyRead";
+    }
+
 
     @GetMapping("/recipe/new")
     public String showCreateForm(Model model) {

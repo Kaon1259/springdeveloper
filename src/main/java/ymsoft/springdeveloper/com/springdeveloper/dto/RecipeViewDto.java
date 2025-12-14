@@ -25,5 +25,7 @@ public class RecipeViewDto {
     // HOT / ICE
     private String temperature;
 
+    private String cupSize;
+
     private List<RecipeStepViewDto> steps;
 }

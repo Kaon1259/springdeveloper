@@ -1,0 +1,333 @@
+{{>layouts/header}}
+
+<style>
+    body { background-color:#f8f9fa; }
+
+    .table-wrapper{
+        border-radius:1rem; overflow:hidden;
+        border:1px solid #dee2e6; background:#fff;
+    }
+
+    .table-rounded thead th{
+        border-bottom-width:1px;
+        background:#198754; color:#fff;
+        border-color:#198754; font-weight:600;
+    }
+    .table-rounded thead th:first-child{ border-top-left-radius:1rem; }
+    .table-rounded thead th:last-child{ border-top-right-radius:1rem; }
+
+    .category-cell{ background:#e7f5ff; }
+
+    /* ✅ 카테고리 배지: 기본 흰색 */
+    .category-badge{
+        font-size:0.95rem;
+        padding:0.42rem 1.0rem;
+        border-radius:999px;
+        background:#fff;
+        color:#000;
+        display:inline-block;
+        border:2px solid #000;
+        font-weight:800;
+        letter-spacing:-0.2px;
+    }
+    /* ICE: 파란색 */
+    .category-badge.cat-ice{
+        border-color:#0d6efd;
+        color:#0d6efd;
+    }
+    /* HOT: 빨간색 */
+    .category-badge.cat-hot{
+        border-color:#dc3545;
+        color:#dc3545;
+    }
+    /* 흑당: 검은색 */
+    .category-badge.cat-hukdang{
+        border-color:#111;
+        color:#111;
+    }
+    /* 에이드: 파란색 */
+    .category-badge.cat-ade{
+        border-color:#0d6efd;
+        color:#0d6efd;
+    }
+
+    /* ✅ 레시피 pill */
+    .recipe-pill{
+        display:inline-flex;
+        align-items:center;
+        gap:0.55rem;
+        padding:0.48rem 1rem 0.48rem 0.7rem;
+        border-radius:999px;
+        font-weight:700;
+        cursor:pointer;
+        white-space:nowrap;
+        border:2px solid #dee2e6;
+        background:#fff;
+        transition:all 0.15s ease;
+        font-size:0.98rem;
+        user-select:none;
+    }
+    .recipe-pill[data-temp="HOT"]{ border-color:#dc3545; }
+    .recipe-pill[data-temp="ICE"]{ border-color:#0d6efd; }
+    .recipe-pill:hover{
+        transform:translateY(-1px);
+        box-shadow:0 0.25rem 0.6rem rgba(0,0,0,0.1);
+    }
+
+    /* ✅ 컵사이즈 원형 배지: 기본(녹색), ICE(파랑), HOT(빨강) */
+    .cup-badge{
+        width:2.0rem;
+        height:2.0rem;
+        min-width:2.0rem;
+        border-radius:999px;
+        display:inline-flex;
+        align-items:center;
+        justify-content:center;
+        font-weight:900;
+        font-size:0.85rem;
+        line-height:1;
+        border:2px solid #198754;   /* 기본: 녹색 */
+        color:#198754;
+        background:#fff;
+    }
+    .cup-badge.cup-ice{ border-color:#0d6efd; color:#0d6efd; }
+    .cup-badge.cup-hot{ border-color:#dc3545; color:#dc3545; }
+
+    .menu-name-text{ font-weight:800; letter-spacing:-0.2px; }
+
+    /* 팝업 스타일 */
+    #recipeDetailModal .modal-dialog{ max-width:1200px; width:95%; }
+    #recipeDetailModal .modal-content{
+        border-radius:0.75rem;
+        box-shadow:0 0.75rem 1.5rem rgba(0,0,0,0.25);
+        max-height:90vh;
+    }
+    #recipeDetailModal .modal-title{ font-size:2.4rem; font-weight:700; }
+    #recipeDetailModal .modal-body{
+        font-size:2.4rem;
+        max-height:80vh;
+        overflow-y:auto;
+    }
+    #recipeDetailMeta{ font-size:2rem !important; }
+    #recipe-steps-content{ padding-right:0.5rem; }
+
+    .recipe-step{
+        position:relative;
+        background:#fff;
+        border-radius:0.5rem;
+        padding:1.1rem 1.4rem;
+        margin-bottom:1rem;
+        box-shadow:0 0.35rem 0.8rem rgba(0,0,0,0.08);
+        border-left:6px solid #0d6efd;
+        font-size:2.7rem;
+        line-height:1.45;
+        cursor:pointer;
+        transition:background-color .15s ease, color .15s ease, box-shadow .15s ease;
+    }
+    .step-index{ font-weight:900; margin-right:0.9rem; }
+    .step-text{ display:inline-block; vertical-align:middle; }
+
+    #recipe-steps-content .recipe-step:nth-child(2){ margin-left:18px; }
+    #recipe-steps-content .recipe-step:nth-child(3){ margin-left:36px; }
+    #recipe-steps-content .recipe-step:nth-child(4){ margin-left:54px; }
+    #recipe-steps-content .recipe-step:nth-child(5){ margin-left:72px; }
+    #recipe-steps-content .recipe-step:nth-child(6){ margin-left:90px; }
+    #recipe-steps-content .recipe-step:nth-child(7){ margin-left:108px; }
+
+    .recipe-step.step-selected{
+        background:#0d6efd;
+        color:#fff;
+        box-shadow:0 0.35rem 0.9rem rgba(13,110,253,0.45);
+    }
+    .recipe-step.empty-step{
+        border-left-color:#adb5bd;
+        color:#6c757d;
+    }
+</style>
+
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h3 class="fw-bold mb-0">☕ 레시피 목록</h3>
+            <div class="text-muted small mt-1">레시피를 클릭하면 상세 레시피가 팝업으로 열립니다.</div>
+        </div>
+        <div class="d-flex gap-2">
+            <button class="btn btn-success btn-sm" onclick="location.href='/cafe/recipe/new'">레시피 만들기</button>
+        </div>
+    </div>
+
+    <div class="table-wrapper shadow-sm">
+        <table class="table table-rounded mb-0 align-middle">
+            <thead>
+            <tr>
+                <th style="width: 25%;">카테고리</th>
+                <th>레시피</th>
+            </tr>
+            </thead>
+
+            <tbody id="recipe-table-body">
+            {{#recipeGroups}}
+                <tr>
+                    <td class="category-cell">
+                        <span class="category-badge category-badge-js">{{categoryLabel}}</span>
+                    </td>
+                    <td>
+                        <div class="d-flex flex-wrap gap-2">
+                            {{#recipes}}
+                                <div class="recipe-pill-wrapper"
+                                     data-id="{{id}}"
+                                     data-name="{{menuName}}"
+                                     data-temp="{{temperature}}">
+
+                                    <span class="recipe-pill" data-temp="{{temperature}}">
+                                        <span class="cup-badge cup-badge-js">{{cupSize}}</span>
+                                        <span class="menu-name-text">{{menuName}}</span>
+                                    </span>
+
+                                    <div class="d-none recipe-steps" id="recipe-steps-{{id}}">
+                                        <div class="recipe-steps-wrapper">
+                                            {{#steps}}
+                                                <div class="recipe-step" data-step="{{stepOrder}}">
+                                                    <span class="step-index">Step {{stepOrder}}.</span>
+                                                    <span class="step-text">{{content}}</span>
+                                                </div>
+                                            {{/steps}}
+                                            {{^steps}}
+                                                <div class="recipe-step empty-step">
+                                                    <span class="step-index">Step 1.</span>
+                                                    <span class="step-text text-muted">등록된 스텝이 없습니다.</span>
+                                                </div>
+                                            {{/steps}}
+                                        </div>
+                                    </div>
+                                </div>
+                            {{/recipes}}
+                        </div>
+                    </td>
+                </tr>
+            {{/recipeGroups}}
+
+            {{^recipeGroups}}
+                <tr>
+                    <td colspan="2" class="text-center py-4 text-muted">
+                        등록된 레시피가 없습니다.
+                    </td>
+                </tr>
+            {{/recipeGroups}}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="modal fade" id="recipeDetailModal" tabindex="-1">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content rounded-3">
+            <div class="modal-header">
+                <h4 class="modal-title fw-bold" id="recipeDetailModalLabel">레시피 상세</h4>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body">
+                <div id="recipeDetailMeta" class="mb-3 text-muted"></div>
+                <div id="recipe-steps-content"></div>
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn btn-secondary btn-lg" data-bs-dismiss="modal">닫기</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    (function () {
+        const tableBody = document.getElementById("recipe-table-body");
+        if (!tableBody) return;
+
+        const pillWrappers = tableBody.querySelectorAll(".recipe-pill-wrapper");
+
+        // ✅ 카테고리 배지 색상
+        function applyCategoryBadgeColors() {
+            const badges = document.querySelectorAll(".category-badge-js");
+            badges.forEach(badge => {
+                const txt = (badge.textContent || "").trim();
+                badge.classList.remove("cat-ice","cat-hot","cat-hukdang","cat-ade");
+
+                if (txt.includes("흑당")) return badge.classList.add("cat-hukdang");
+                if (txt.includes("에이드")) return badge.classList.add("cat-ade");
+                if (txt.includes("Ice") || txt.includes("ICE") || txt.includes("아이스")) return badge.classList.add("cat-ice");
+                if (txt.includes("Hot") || txt.includes("HOT") || txt.includes("핫")) return badge.classList.add("cat-hot");
+            });
+        }
+
+        // ✅ 컵사이즈 원형 배지 색상 + 텍스트 축약(OZ20 -> 20)
+        function applyCupBadgeColors() {
+            pillWrappers.forEach(wrapper => {
+                const temp = (wrapper.dataset.temp || "").toUpperCase();
+                const badge = wrapper.querySelector(".cup-badge-js");
+                if (!badge) return;
+
+                badge.classList.remove("cup-ice","cup-hot");
+                if (temp === "ICE") badge.classList.add("cup-ice");
+                else if (temp === "HOT") badge.classList.add("cup-hot");
+
+                const raw = (badge.textContent || "").trim();
+                const m = raw.match(/(\d{2})/);
+                if (m) badge.textContent = m[1];
+            });
+        }
+
+        function attachStepClickHandlers() {
+            const container = document.getElementById("recipe-steps-content");
+            if (!container) return;
+
+            const steps = container.querySelectorAll(".recipe-step");
+            steps.forEach(step => {
+                step.addEventListener("click", () => {
+                    steps.forEach(s => s.classList.remove("step-selected"));
+                    step.classList.add("step-selected");
+                });
+            });
+        }
+
+        function openRecipeModal(wrapper) {
+            const id = wrapper.dataset.id;
+            const name = wrapper.dataset.name || "레시피 상세";
+            const stepsHtml = document.getElementById("recipe-steps-" + id)?.innerHTML;
+
+            document.getElementById("recipeDetailModalLabel").innerText = name;
+            document.getElementById("recipe-steps-content").innerHTML =
+                    stepsHtml ? stepsHtml : "<p>스텝 없음</p>";
+
+            const modalEl = document.getElementById("recipeDetailModal");
+            const modal = new bootstrap.Modal(modalEl);
+            modal.show();
+
+            attachStepClickHandlers();
+
+            setTimeout(() => {
+                const firstStep = document.querySelector("#recipe-steps-content .recipe-step");
+                if (firstStep) {
+                    document.querySelectorAll("#recipe-steps-content .recipe-step")
+                            .forEach(s => s.classList.remove("step-selected"));
+                    firstStep.classList.add("step-selected");
+                }
+            }, 50);
+        }
+
+        pillWrappers.forEach(wrapper => {
+            const pill = wrapper.querySelector(".recipe-pill");
+            if (!pill) return;
+
+            pill.addEventListener("click", e => {
+                e.stopPropagation();
+                openRecipeModal(wrapper);
+            });
+        });
+
+        applyCategoryBadgeColors();
+        applyCupBadgeColors();
+    })();
+</script>
+
+{{>layouts/footer}}
