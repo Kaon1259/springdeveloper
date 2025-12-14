@@ -45,6 +45,9 @@ public class Recipe {
     @Column(nullable = false)
     private boolean template = false;   // 기본 비노출
 
+    @Column(nullable = false)
+    private boolean useBlender = false;   // 기본 비노출
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 10)
     private Temperature temperature;      // HOT / ICE

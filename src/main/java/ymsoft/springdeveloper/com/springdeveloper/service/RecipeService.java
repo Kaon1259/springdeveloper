@@ -89,6 +89,7 @@ public class RecipeService {
         recipe.setVisible(dto.isVisible());
         recipe.setTemplate(dto.isTemplate());
         recipe.setTemperature(dto.getTemperature());
+        recipe.setUseBlender(dto.isUseBlender());
         recipe.setCupSize(dto.getCupSize());
         recipe.setCategory(dto.getCategory());
 
@@ -131,6 +132,7 @@ public class RecipeService {
                 .category(recipe.getCategory() != null ? recipe.getCategory().name() : null)
                 .visible(recipe.isVisible())
                 .template(recipe.isTemplate())
+                .useBlender(recipe.isUseBlender())
                 .temperature(recipe.getTemperature() != null ? recipe.getTemperature().name() : null)
                 .cupSize(recipe.getCupSize() != null ? recipe.getCupSize().name() : null)
                 .steps(stepDtos)

@@ -1,10 +1,7 @@
 {{>layouts/header}}
 <style>
-    body {
-        background-color: #f8f9fa;
-    }
+    body { background-color: #f8f9fa; }
 
-    /* 상단 선택 정보 바 */
     .top-status-bar {
         position: sticky;
         top: 0;
@@ -31,15 +28,14 @@
 
     .menu-card:hover {
         transform: translateY(-2px);
-        box-shadow: 0 0.4rem 1rem rgba(0, 0, 0, 0.08);
+        box-shadow: 0 0.4rem 1rem rgba(0,0,0,0.08);
     }
 
     .menu-card.selected {
         border-color: #0d6efd;
-        box-shadow: 0 0.4rem 1rem rgba(13, 110, 253, 0.25);
+        box-shadow: 0 0.4rem 1rem rgba(13,110,253,0.25);
     }
 
-    /* === 큰 카드의 접힌 모서리 (좌측 상단) === */
     .menu-card::before {
         content: "";
         position: absolute;
@@ -48,32 +44,10 @@
         width: 56px;
         height: 56px;
         clip-path: polygon(0 0, 100% 0, 0 100%);
-        background-color: transparent;
-        z-index: 0;
     }
 
-    .menu-card[data-recipe-temp="HOT"]::before {
-        background-color: #dc3545;
-    }
-
-    .menu-card[data-recipe-temp="ICE"]::before {
-        background-color: #0d6efd;
-    }
-
-    .menu-card .card-body {
-        position: relative;
-        z-index: 1;
-    }
-
-    /* 상단 레시피 번호(#10) */
-    .recipe-id-label {
-        font-size: 3.3rem;
-        font-weight: 800;
-        color: #6c757d;
-        text-align: center;
-        margin-bottom: 0.25rem;
-        letter-spacing: 0.06em;
-    }
+    .menu-card[data-recipe-temp="HOT"]::before { background-color: #dc3545; }
+    .menu-card[data-recipe-temp="ICE"]::before { background-color: #0d6efd; }
 
     .menu-name {
         font-size: 2rem;
@@ -81,99 +55,37 @@
         text-align: center;
     }
 
-    .menu-tag {
-        font-size: 0.9rem;
-        border-radius: 999px;
-        padding: 0.1rem 0.5rem;
-    }
-
-    .card-count-badge {
-        font-size: 0.85rem;
-    }
-
-    /* ===== 레시피 카드 그리드 (4열) ===== */
     .menu-grid-wrapper {
         height: calc(100vh - 210px);
-        max-height: calc(100vh - 210px);
         overflow-y: auto;
     }
 
     .menu-grid {
         display: grid;
         grid-template-columns: repeat(4, minmax(0, 1fr));
-        grid-auto-rows: 1fr;
-        grid-auto-flow: row;
         gap: 1rem;
-        height: 100%;
     }
 
-    .menu-grid-item {
-        display: flex;
-    }
-
-    .menu-grid-item .menu-card {
-        width: 100%;
-    }
-
-    /* ===== HOT / ICE 배지 ===== */
     .temp-badge {
-        position: relative;
         display: inline-flex;
         align-items: center;
-        justify-content: center;
-        padding: 0.4rem 1rem;
-        padding-left: 1.4rem;
+        padding: 0.4rem 1rem 0.4rem 1.4rem;
         border-radius: 999px;
-        background-color: #ffffff;
+        background-color: #fff;
         border: 3px solid;
         font-size: 1.3rem;
         font-weight: 800;
-        gap: 0.25rem;
+        position: relative;
         line-height: 1;
-        overflow: hidden;
+        white-space: nowrap;
     }
 
-    .temp-badge::before {
-        content: "";
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 24px;
-        height: 24px;
-        clip-path: polygon(0 0, 100% 0, 0 100%);
-    }
+    .temp-HOT { border-color: #dc3545; color: #dc3545; }
+    .temp-ICE { border-color: #0d6efd; color: #0d6efd; }
 
-    .temp-HOT {
-        border-color: #dc3545;
-        color: #dc3545;
-    }
+    .temp-HOT::after { content: "🔥"; margin-left: .4rem; }
+    .temp-ICE::after { content: "❄"; margin-left: .4rem; }
 
-    .temp-ICE {
-        border-color: #0d6efd;
-        color: #0d6efd;
-    }
-
-    .temp-HOT::before {
-        background-color: #dc3545;
-    }
-
-    .temp-ICE::before {
-        background-color: #0d6efd;
-    }
-
-    .temp-HOT::after {
-        content: "🔥";
-        margin-left: 0.3rem;
-        font-size: 1.4rem;
-    }
-
-    .temp-ICE::after {
-        content: "❄";
-        margin-left: 0.3rem;
-        font-size: 1.4rem;
-    }
-
-    /* OZ (컵 사이즈) 배지 */
     .cup-badge {
         font-size: 1.3rem;
         font-weight: 800;
@@ -181,1133 +93,317 @@
         border-radius: 999px;
         background-color: #f8f9fa;
         border: 2px solid #adb5bd;
-    }
-
-    /* ===== 레시피 팝업(모달) ===== */
-    .recipe-modal {
-        position: fixed;
-        inset: 0;
-        z-index: 1050;
-        display: none;
-        align-items: center;
-        justify-content: center;
-    }
-
-    .recipe-modal.show {
-        display: flex;
-    }
-
-    .recipe-modal-backdrop {
-        position: absolute;
-        inset: 0;
-        background-color: rgba(0, 0, 0, 0.45);
-    }
-
-    .recipe-modal-dialog {
-        position: relative;
-        z-index: 1060;
-        background-color: #ffffff;
-        border-radius: 0.75rem;
-        max-width: 1280px;
-        width: 95%;
-        max-height: 85vh;
-        display: flex;
-        flex-direction: column;
-        overflow: hidden;
-        box-shadow: 0 0.75rem 1.5rem rgba(0, 0, 0, 0.25);
-        padding: 1.25rem 1.5rem 1.5rem;
-        margin: 0 1rem;
-    }
-
-    .recipe-modal-header {
-        flex-shrink: 0;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 0.75rem;
-        margin-bottom: 1rem;
-    }
-
-    .recipe-modal-header-right {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-    }
-
-    .recipe-modal-title {
-        font-size: 2rem;
-        font-weight: 700;
-        margin: 0;
-    }
-
-    .recipe-modal-body {
-        flex-grow: 1;
-        overflow-y: auto;
-        padding-right: 0.5rem;
-    }
-
-    /* ===== 스텝 행 + 타이머 ===== */
-    .recipe-step {
-        position: relative;
-        background-color: #ffffff;
-        border-radius: 0.5rem;
-        padding: 1.3rem 1.5rem;
-        margin-bottom: 1.8rem;
-        box-shadow: 0 0.35rem 0.8rem rgba(0, 0, 0, 0.08);
-        border-left: 6px solid #0d6efd;
-        font-size: 2.2rem;
-        line-height: 1.6;
-        cursor: pointer;
-        transition: background-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-    }
-
-    .step-main {
-        display: flex;
-        align-items: center;
-        flex: 1;
-        min-width: 0;
-    }
-
-    .step-index {
-        font-weight: 900;
-        margin-right: 0.7rem;
-        flex-shrink: 0;
-    }
-
-    .step-text {
-        display: inline-block;
-        vertical-align: middle;
-        word-break: break-word;
-    }
-
-    .recipe-step.step-selected {
-        background-color: #0d6efd;
-        color: #ffffff;
-        box-shadow: 0 0.35rem 0.9rem rgba(13, 110, 253, 0.45);
-    }
-
-    .recipe-step.step-selected .step-timer-value {
-        color: #0f5132;
-    }
-
-    .btn-close {
-        border: none;
-        background: transparent;
-        font-size: 1.7rem;
-        line-height: 1;
-    }
-
-    /* 🔊 TTS 토글 버튼 */
-    .tts-toggle-btn {
-        border: none;
-        background: transparent;
-        font-size: 1.9rem;
-        line-height: 1;
-        cursor: pointer;
-        padding: 0 0.1rem;
-        transition: transform 0.08s ease, opacity 0.1s ease;
-    }
-    .tts-toggle-btn.off {
-        opacity: 0.35;
-    }
-    .tts-toggle-btn.on {
-        opacity: 1;
-        transform: scale(1.05);
-    }
-
-    /* 🎙 상단 공용 음성 인식 버튼 */
-    .top-mic-btn {
-        border-radius: 999px;
-        border: 2px solid rgba(15,23,42,0.4);
-        background-color: #ffffff;
-        width: 50px;
-        height: 50px;
         display: inline-flex;
         align-items: center;
-        justify-content: center;
-        font-size: 2rem;
-        cursor: pointer;
-        margin-left: 0.75rem;
-        box-shadow: 0 3px 10px rgba(15,23,42,0.25);
-        transition: background-color 0.12s ease, transform 0.08s ease,
-        box-shadow 0.12s ease, border-color 0.12s ease;
-    }
-
-    .top-mic-btn:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 5px 14px rgba(15,23,42,0.35);
-    }
-
-    /* 마이크 깜빡임 애니메이션 */
-    @keyframes micBlink {
-        0% {
-            box-shadow: 0 3px 10px rgba(15,23,42,0.25);
-            opacity: 1;
-        }
-        50% {
-            box-shadow: 0 0 0 4px rgba(13,110,253,0);
-            opacity: 0.45;
-        }
-        100% {
-            box-shadow: 0 3px 10px rgba(15,23,42,0.25);
-            opacity: 1;
-        }
-    }
-
-    .top-mic-btn.listening {
-        background-color: #0d6efd;
-        color: #ffffff;
-        border-color: #0a58ca;
-        box-shadow: 0 0 0 4px rgba(13,110,253,0.45);
-        transform: translateY(0);
-        animation: micBlink 1s ease-in-out infinite;
-    }
-
-    /* 레시피 없음 팝업 */
-    .no-recipe-popup {
-        position: fixed;
-        z-index: 2000;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        background: #ffffff;
-        border-radius: 0.75rem;
-        padding: 0.75rem 1.5rem;
-        box-shadow: 0 0.75rem 1.5rem rgba(0,0,0,0.25);
-        border: 1px solid #dee2e6;
-        font-size: 1rem;
-        font-weight: 600;
-        color: #343a40;
-        display: none;
-    }
-    .no-recipe-popup.show {
-        display: block;
-    }
-
-    .auto-play-switch .form-check-input {
-        cursor: pointer;
-    }
-
-    /* 각 스텝 우측 끝 원형 타이머 */
-    .step-timer {
-        width: 48px;
-        height: 48px;
-        position: relative;
-        flex-shrink: 0;
-        margin-left: 0.75rem;
-    }
-
-    .step-timer-svg {
-        width: 48px;
-        height: 48px;
-        display: block;
-        transform: rotate(-90deg); /* 위(12시)에서 시작 */
-    }
-
-    .step-timer-bg-circle {
-        stroke: #e9ecef;
-        stroke-width: 6;     /* 테두리 굵게 */
-        fill: none;
-    }
-
-    .step-timer-progress-circle {
-        stroke: #198754;
-        stroke-width: 6;     /* 테두리 굵게 */
-        fill: none;
-        stroke-linecap: round;
-        transition: stroke-dashoffset 0.4s ease-in-out;  /* 조금 더 부드럽게 */
-    }
-
-    .step-timer-value {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        font-weight: 700;
-        color: #198754;
-        font-size: 1rem;
+        gap: 0.5rem;
         line-height: 1;
-        text-align: center;
+        white-space: nowrap;
+    }
+
+    /* ✅ 카드 내 블렌더 이미지 */
+    .blender-img-inline{
+        height: 1.6rem;
+        width: auto;
+        object-fit: contain;
+        display: inline-block;
+        vertical-align: middle;
+        flex: 0 0 auto;
         pointer-events: none;
     }
 
+    /* =========================
+       ✅ 팝업(모달) 스타일
+       ========================= */
+    #recipePopupModal .modal-dialog{
+        max-width: 1200px;
+        width: 95%;
+    }
+    #recipePopupModal .modal-content{
+        border-radius: 0.9rem;
+        max-height: 90vh;
+        box-shadow: 0 0.75rem 1.5rem rgba(0,0,0,0.25);
+    }
+    #recipePopupModal .modal-body{
+        max-height: 75vh;
+        overflow-y: auto;
+        font-size: 2.2rem;
+    }
+
+    .popup-title-wrap{
+        display:flex;
+        align-items:center;
+        gap: 0.75rem;
+        flex-wrap:wrap;
+    }
+    .popup-title{
+        font-size: 2.4rem;
+        font-weight: 900;
+        letter-spacing: -0.2px;
+    }
+
+    /* ✅ 팝업에서 블렌더 이미지는 더 크게 */
+    .blender-img-modal{
+        height: 4.6rem;   /* 여기 키우면 팝업에서 더 커집니다 */
+        width: auto;
+        object-fit: contain;
+        display:inline-block;
+        vertical-align: middle;
+    }
+    .blender-note{
+        color:#dc3545;
+        font-weight: 900;
+        font-size: 1.6rem;
+        letter-spacing: -0.2px;
+        white-space: nowrap;
+    }
+
+    .popup-meta{
+        font-size: 1.6rem;
+        color: #6c757d;
+        margin-bottom: 1rem;
+    }
+
+    .popup-step{
+        background: #fff;
+        border-radius: 0.7rem;
+        padding: 1.1rem 1.2rem;
+        margin-bottom: 0.9rem;
+        border-left: 8px solid #0d6efd;
+        box-shadow: 0 0.35rem 0.9rem rgba(0,0,0,0.08);
+        line-height: 1.35;
+        cursor: pointer;
+    }
+    .popup-step.selected{
+        background:#0d6efd;
+        color:#fff;
+        box-shadow: 0 0.35rem 0.9rem rgba(13,110,253,0.35);
+    }
+    .popup-step .idx{
+        font-weight: 900;
+        margin-right: 0.75rem;
+    }
+    .popup-step .time{
+        font-size: 1.5rem;
+        color: rgba(255,255,255,0.85);
+        margin-left: 0.7rem;
+    }
+    .popup-step:not(.selected) .time{
+        color:#6c757d;
+    }
 </style>
 
 <div class="container-fluid py-3">
-
-    <!-- 상단 선택 상태 바 -->
-    <div class="top-status-bar d-flex flex-wrap align-items-center justify-content-between mb-3">
-        <!-- 좌측: 안내 + 마이크 -->
-        <div class="d-flex flex-column flex-sm-row flex-wrap align-items-sm-center gap-2">
-            <div class="fw-bold d-flex align-items-center">
-                <span>주요 레시피를 선택하세요</span>
-                <span class="text-muted ms-1">(한 번에 하나만 선택)</span>
-
-                <!-- 🎙 상단 공용 마이크 버튼 -->
-                <button type="button"
-                        id="btn-voice-recipe"
-                        class="top-mic-btn"
-                        title="음성인식 꺼짐 · 누르고 '헬리야 / 레시피 이름 / 번호 / 다음 / 그만 / 음성인식 그만'을 말해보세요.">
-                    🎙
-                </button>
-            </div>
+    <div class="top-status-bar d-flex justify-content-between align-items-center mb-3">
+        <div class="fw-bold">
+            주요 레시피를 선택하세요
+            <span class="text-muted ms-1">(한 번에 하나만 선택)</span>
         </div>
-
-        <!-- 우측: 선택 카운트 + 자동재생 슬라이더 -->
-        <div class="d-flex align-items-center gap-3 mt-2 mt-sm-0">
-            <span class="badge bg-primary card-count-badge">
-                선택한 레시피
-                <span id="selected-count" class="fw-bold ms-1">0</span> / 1
-            </span>
-
-            <div class="form-check form-switch mb-0 auto-play-switch">
-                <input class="form-check-input" type="checkbox" id="auto-play-toggle">
-                <label class="form-check-label small" for="auto-play-toggle">
-                    자동재생
-                </label>
-            </div>
-        </div>
+        <span class="badge bg-primary">
+            선택한 레시피 <span id="selected-count">0</span> / 1
+        </span>
     </div>
 
-    <!-- 레시피 카드 그리드 (4열) -->
-    <div class="menu-grid-wrapper mb-4">
-        <div class="menu-grid">
+    <div class="menu-grid-wrapper">
+        <div class="menu-grid" id="menu-grid">
             {{#recipeRows}}
                 <div class="menu-grid-item">
-                    <div class="card menu-card"
+                    <div class="menu-card"
                          data-recipe-id="{{id}}"
                          data-recipe-name="{{menuName}}"
-                         data-recipe-temp="{{temperature}}">
+                         data-recipe-temp="{{temperature}}"
+                         data-recipe-cup="{{cupSize}}"
+                         data-recipe-category="{{category}}"
+                         data-use-blender="{{useBlender}}">
 
-                        <div class="card-body d-flex flex-column justify-content-center align-items-center">
-                            <!-- 레시피 번호(#10) -->
-                            <div class="recipe-id-label">
-                                #{{id}}
-                            </div>
+                        <div class="card-body d-flex flex-column align-items-center justify-content-center">
+                            <div class="menu-name mb-3">{{menuName}}</div>
 
-                            <!-- 가운데 크게 메뉴 이름 -->
-                            <div class="menu-name mb-2">
-                                {{menuName}}
-                            </div>
-
-                            <!-- 아래에 카테고리 / 태그들 -->
                             <div class="d-flex flex-column align-items-center gap-2">
-                                {{#category}}
-                                    <span class="badge text-bg-light">
-                                        {{category}}
+                                <span class="badge text-bg-light">{{category}}</span>
+
+                                <div class="d-flex gap-2 align-items-center">
+                                    <span class="temp-badge temp-{{temperature}}">{{temperature}}</span>
+
+                                    <span class="cup-badge">
+                                        {{cupSize}}
+                                        {{#useBlender}}
+                                            <img class="blender-img-inline"
+                                                 src="/img/blender.jpg"
+                                                 alt="블렌더 사용"
+                                                 title="블렌더 사용">
+                                        {{/useBlender}}
                                     </span>
-                                {{/category}}
-
-                                <div class="d-flex justify-content-center align-items-center gap-2">
-                                    {{#temperature}}
-                                        <span class="temp-badge temp-{{temperature}}">
-                                            {{temperature}}
-                                        </span>
-                                    {{/temperature}}
-
-                                    {{#cupSize}}
-                                        <span class="cup-badge">
-                                            {{cupSize}}
-                                        </span>
-                                    {{/cupSize}}
                                 </div>
                             </div>
 
-                            <!-- 숨겨진 레시피 스텝 (모달용) -->
+                            <!-- ✅ hidden steps/times (팝업에서 사용) -->
                             <div class="d-none recipe-steps" id="recipe-steps-{{id}}">
                                 {{#steps}}
                                     <div class="recipe-step-text">{{.}}</div>
                                 {{/steps}}
-
                                 {{#stepTimes}}
                                     <div class="recipe-step-time">{{.}}</div>
                                 {{/stepTimes}}
-
-                                {{^steps}}
-                                    <div class="recipe-step-text text-muted">등록된 스텝이 없습니다.</div>
-                                {{/steps}}
                             </div>
+
                         </div>
                     </div>
                 </div>
             {{/recipeRows}}
 
             {{^recipeRows}}
-                <div class="menu-grid-item">
-                    <div class="alert alert-warning mb-0 w-100">
-                        표시할 레시피가 없습니다. <code>visible == true</code> 인 레시피를 등록해 주세요.
-                    </div>
+                <div class="alert alert-warning w-100">
+                    표시할 레시피가 없습니다.
                 </div>
             {{/recipeRows}}
         </div>
     </div>
 </div>
 
-<!-- 레시피 팝업(모달) -->
-<div id="recipe-modal" class="recipe-modal">
-    <div class="recipe-modal-backdrop" id="recipe-modal-backdrop"></div>
-    <div class="recipe-modal-dialog">
-        <div class="recipe-modal-header">
-            <h5 class="recipe-modal-title" id="recipe-modal-title">레시피</h5>
-            <div class="recipe-modal-header-right">
-                <!-- 🔊 TTS 토글 버튼 (기본 OFF) -->
-                <button type="button"
-                        class="tts-toggle-btn off"
-                        id="btn-tts-toggle"
-                        title="자동 음성 안내 켜기">
-                    🔈
-                </button>
-                <button type="button" class="btn-close" id="btn-close-recipe" aria-label="Close">&times;</button>
+<!-- ✅ 팝업(모달) 추가: 기존 코드엔 이게 없어서 안 떴습니다 -->
+<div class="modal fade" id="recipePopupModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="popup-title-wrap" id="popup-title-wrap">
+                    <div class="popup-title" id="popup-title">레시피</div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="닫기"></button>
             </div>
-        </div>
-        <div class="recipe-modal-body" id="recipe-modal-body">
-            <p class="text-muted small mb-0">
-                선택한 레시피의 스텝이 여기 계단형으로 표시됩니다.
-            </p>
+
+            <div class="modal-body">
+                <div class="popup-meta" id="popup-meta"></div>
+                <div id="popup-steps"></div>
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn btn-secondary btn-lg" data-bs-dismiss="modal">닫기</button>
+            </div>
         </div>
     </div>
 </div>
 
-<!-- 레시피 없음 팝업 -->
-<div id="no-recipe-popup" class="no-recipe-popup">
-    레시피가 없습니다.
-</div>
-
 <script>
     (function () {
+        const grid = document.getElementById('menu-grid');
+        if (!grid) return;
 
-        const cards = document.querySelectorAll('.menu-card');
-        const selectedCountSpan = document.getElementById('selected-count');
+        const selectedCountEl = document.getElementById('selected-count');
 
-        const recipeModal = document.getElementById('recipe-modal');
-        const recipeModalBackdrop = document.getElementById('recipe-modal-backdrop');
-        const recipeModalTitle = document.getElementById('recipe-modal-title');
-        const recipeModalBody = document.getElementById('recipe-modal-body');
-        const btnCloseRecipe = document.getElementById('btn-close-recipe');
-        const btnTtsToggle = document.getElementById('btn-tts-toggle');
+        const modalEl = document.getElementById('recipePopupModal');
+        const popupTitleWrap = document.getElementById('popup-title-wrap');
+        const popupTitle = document.getElementById('popup-title');
+        const popupMeta = document.getElementById('popup-meta');
+        const popupSteps = document.getElementById('popup-steps');
 
-        const btnVoiceRecipe = document.getElementById('btn-voice-recipe');
-        const autoPlayToggle = document.getElementById('auto-play-toggle');
-
-        const noRecipePopup = document.getElementById('no-recipe-popup');
-        let noRecipePopupTimer = null;
-
-        let currentSelectedMenu = null; // {id, name}
-        let currentSelectedCard = null;
-
-        // TTS ON/OFF 상태 (기본 OFF)
-        let ttsEnabled = false;
-
-        // 자동재생 상태 (체크 시: step1부터 TTS → 타이머 → 다음 스텝 자동)
-        let autoPlayEnabled = false;
-
-        // 현재 선택된 스텝 인덱스
-        let currentStepIndex = 0;
-
-        // 각 스텝 타이머용 (한 번에 하나만 동작)
-        let stepTimerIntervalId = null;
-        let stepTimerRemaining = 0;
-
-        // 타이머 원형 진행바 공통 상수
-        const TIMER_RADIUS = 18;
-        const TIMER_CIRCUMFERENCE = 2 * Math.PI * TIMER_RADIUS;
-
-        // 음성 인식 상태
-        let recognition = null;
-        let recognizing = false;
-        let voiceSessionActive = false;
-
-        // ====== 유틸: 한글 텍스트 정규화 ======
-        function normalizeKoreanText(text) {
-            if (!text) return '';
-            return text
-                    .toLowerCase()
-                    .replace(/\s+/g, '')
-                    .replace(/[.!?,~\-\_]/g, '');
+        function parseTruth(v) {
+            const s = String(v || '').trim().toLowerCase();
+            return (s === 'true' || s === '1' || s === 'y' || s === 'yes' || s === 'on');
         }
 
-        // ====== 숫자 추출 (예: "10번 레시피", "10번 보여줘") ======
-        function extractNumberFromText(text) {
-            if (!text) return null;
-            const match = text.match(/(\d{1,4})\s*(번|번레시피|번레시피좀|번보여줘|번보여|번으로|번좀)?/);
-            if (match && match[1]) {
-                const num = parseInt(match[1], 10);
-                if (!isNaN(num)) return num;
-            }
-            return null;
+        function clearSelected() {
+            grid.querySelectorAll('.menu-card.selected').forEach(el => el.classList.remove('selected'));
         }
 
-        // ====== TTS(음성 합성) ======
-        function speakText(text, onEnd) {
-            if (!('speechSynthesis' in window)) {
-                alert('이 브라우저에서는 음성 합성이 지원되지 않습니다.');
-                return;
-            }
-            if (!text || !text.trim()) return;
+        function setSelectedCount(n) {
+            if (selectedCountEl) selectedCountEl.textContent = String(n);
+        }
 
-            window.speechSynthesis.cancel();
+        function buildPopup(card) {
+            const id = card.dataset.recipeId;
+            const name = card.dataset.recipeName || '레시피';
+            const temp = (card.dataset.recipeTemp || '').toUpperCase();
+            const cup = card.dataset.recipeCup || '';
+            const category = card.dataset.recipeCategory || '';
+            const useBlender = parseTruth(card.dataset.useBlender);
 
-            const utter = new SpeechSynthesisUtterance(text);
-            utter.lang = 'ko-KR';
+            // 제목
+            popupTitle.textContent = name;
 
-            const voices = window.speechSynthesis.getVoices();
-            const koVoice = voices.find(v => v.lang && v.lang.toLowerCase().startsWith('ko'));
-            if (koVoice) {
-                utter.voice = koVoice;
+            // 제목 옆 블렌더 이미지(팝업에서 크게)
+            popupTitleWrap.querySelectorAll('img.blender-img-modal, span.blender-note').forEach(el => el.remove());
+            if (useBlender) {
+                const img = document.createElement('img');
+                img.className = 'blender-img-modal';
+                img.src = '/img/blender.jpg';
+                img.alt = '블렌더 사용';
+                img.title = '블렌더 사용';
+
+                const note = document.createElement('span');
+                note.className = 'blender-note';
+                note.textContent = '(블렌더사용)';
+
+                popupTitleWrap.appendChild(img);
+                popupTitleWrap.appendChild(note);
             }
 
-            if (typeof onEnd === 'function') {
-                utter.onend = function () {
-                    onEnd();
-                };
-            }
+            // 메타 정보
+            const tempLabel = temp === 'HOT' ? 'HOT 🔥' : (temp === 'ICE' ? 'ICE ❄' : temp);
+            popupMeta.textContent = `카테고리: ${category} · 온도: ${tempLabel} · 컵: ${cup}`;
 
-            window.speechSynthesis.speak(utter);
-        }
+            // 스텝/시간 읽기
+            const hidden = document.getElementById('recipe-steps-' + id);
+            const stepTexts = hidden ? Array.from(hidden.querySelectorAll('.recipe-step-text')).map(x => (x.textContent || '').trim()) : [];
+            const stepTimes = hidden ? Array.from(hidden.querySelectorAll('.recipe-step-time')).map(x => (x.textContent || '').trim()) : [];
 
-        function stopSpeak() {
-            if ('speechSynthesis' in window) {
-                window.speechSynthesis.cancel();
-            }
-        }
-
-        function updateSelectedCount() {
-            selectedCountSpan.textContent = currentSelectedMenu ? '1' : '0';
-        }
-
-        function clearAllSelections() {
-            cards.forEach(c => c.classList.remove('selected'));
-            currentSelectedMenu = null;
-            currentSelectedCard = null;
-            updateSelectedCount();
-        }
-
-        function updateTtsToggleVisual() {
-            if (!btnTtsToggle) return;
-            btnTtsToggle.classList.toggle('on', ttsEnabled);
-            btnTtsToggle.classList.toggle('off', !ttsEnabled);
-            btnTtsToggle.textContent = ttsEnabled ? '🔊' : '🔈';
-            btnTtsToggle.title = ttsEnabled
-                    ? '자동 음성 안내 끄기'
-                    : '자동 음성 안내 켜기';
-        }
-
-        function updateMicVisual(isOn) {
-            if (!btnVoiceRecipe) return;
-            btnVoiceRecipe.classList.toggle('listening', !!isOn);
-            btnVoiceRecipe.title = isOn
-                    ? "음성인식 켜짐 · '헬리야 / 레시피 이름 / 번호 / 다음 / 그만 / 음성인식 그만'을 말해보세요."
-                    : "음성인식 꺼짐 · 누르고 '헬리야 / 레시피 이름 / 번호 / 다음 / 그만 / 음성인식 그만'을 말해보세요.";
-        }
-
-        function isRecipeModalOpen() {
-            return recipeModal.classList.contains('show');
-        }
-
-        function getStepDivs() {
-            return recipeModalBody.querySelectorAll('.recipe-step');
-        }
-
-        function getSelectedStepDiv() {
-            return recipeModalBody.querySelector('.recipe-step.step-selected');
-        }
-
-        // ====== 스텝 타이머 시각 초기화 ======
-        function initStepTimerVisual(stepDiv) {
-            const time = parseInt(stepDiv.dataset.stepTime || '0', 10);
-            const circle = stepDiv.querySelector('.step-timer-progress-circle');
-            const valueEl = stepDiv.querySelector('.step-timer-value');
-
-            if (!circle || !valueEl) return;
-
-            circle.style.strokeDasharray = TIMER_CIRCUMFERENCE;
-            // 0 offset = 꽉 찬 원 (대기 상태)
-            circle.style.strokeDashoffset = 0;
-
-            valueEl.textContent = (time && time > 0) ? String(time) : '-';
-        }
-
-        // 현재 동작 중인 타이머 중단 + 현재 선택 스텝의 타이머 표시 리셋
-        function stopStepCountdown(resetVisual) {
-            if (stepTimerIntervalId) {
-                clearInterval(stepTimerIntervalId);
-                stepTimerIntervalId = null;
-            }
-            if (resetVisual) {
-                const s = getSelectedStepDiv();
-                if (s) {
-                    initStepTimerVisual(s);
-                }
-            }
-        }
-
-        // 특정 스텝에 대해 타이머 시작 (time 초) → 끝나면 onDone 호출
-        function startStepCountdown(stepDiv, time, onDone) {
-            if (!time || time <= 0) {
-                if (typeof onDone === 'function') {
-                    onDone();
-                }
+            // 렌더링
+            popupSteps.innerHTML = '';
+            if (stepTexts.length === 0) {
+                popupSteps.innerHTML = '<div class="text-muted">등록된 단계가 없습니다.</div>';
                 return;
             }
 
-            stopStepCountdown(false);
+            stepTexts.forEach((txt, idx) => {
+                if (!txt) return;
 
-            const circle = stepDiv.querySelector('.step-timer-progress-circle');
-            const valueEl = stepDiv.querySelector('.step-timer-value');
-            if (!circle || !valueEl) {
-                if (typeof onDone === 'function') {
-                    onDone();
-                }
-                return;
-            }
-
-            let total = time;
-            let remaining = time;
-            stepTimerRemaining = remaining;
-
-            circle.style.strokeDasharray = TIMER_CIRCUMFERENCE;
-            circle.style.strokeDashoffset = 0;
-            valueEl.textContent = String(remaining);
-
-            stepTimerIntervalId = setInterval(function () {
-                remaining--;
-                stepTimerRemaining = remaining;
-
-                if (remaining <= 0) {
-                    remaining = 0;
-                    valueEl.textContent = '0';
-                    // 100% 소진 → 전체 둘레만큼 offset
-                    circle.style.strokeDashoffset = TIMER_CIRCUMFERENCE;
-                    clearInterval(stepTimerIntervalId);
-                    stepTimerIntervalId = null;
-
-                    if (typeof onDone === 'function') {
-                        onDone();
-                    }
-                } else {
-                    valueEl.textContent = String(remaining);
-                    const ratio = 1 - (remaining / total);
-                    circle.style.strokeDashoffset = TIMER_CIRCUMFERENCE * ratio;
-                }
-            }, 1000);
-        }
-
-        // force=true: TTS 상태와 상관 없이 읽기
-        function speakCurrentSelectedStep(force, onEnd) {
-            const selectedStep = getSelectedStepDiv();
-            if (!selectedStep) return;
-
-            const textNode = selectedStep.querySelector('.step-text');
-            if (!textNode) return;
-
-            const text = textNode.textContent.trim();
-            if (!text) return;
-
-            if (!force && !ttsEnabled) return;
-
-            speakText(text, onEnd);
-        }
-
-        // index 번째 스텝 선택 + TTS + (자동재생이면) 타이머 → 다음 스텝
-        function goToStep(index, options) {
-            options = options || {};
-            const forceSpeak = !!options.forceSpeak;
-            const fromAuto = !!options.fromAuto;
-
-            const steps = getStepDivs();
-            if (!steps.length) {
-                stopStepCountdown(true);
-                return;
-            }
-
-            if (index < 0 || index >= steps.length) {
-                // 범위 벗어나면 자동재생 종료
-                stopStepCountdown(true);
-                return;
-            }
-
-            // 이전 타이머 정리
-            stopStepCountdown(false);
-
-            // 선택 상태 갱신
-            steps.forEach(s => s.classList.remove('step-selected'));
-            const target = steps[index];
-            target.classList.add('step-selected');
-            currentStepIndex = index;
-
-            // 이 스텝의 기본 타이머 표시 초기화
-            initStepTimerVisual(target);
-
-            const shouldAutoPlay = autoPlayEnabled && isRecipeModalOpen();
-
-            const afterSpeak = function () {
-                if (!shouldAutoPlay) {
-                    // 자동재생 아니면 타이머도 안 돌리고 끝
-                    return;
-                }
-
-                const time = parseInt(target.dataset.stepTime || '0', 10);
-                if (!time || time <= 0) {
-                    // 시간 정보 없으면 바로 다음 스텝
-                    goToStep(index + 1, {forceSpeak: true, fromAuto: true});
-                    return;
-                }
-
-                startStepCountdown(target, time, function () {
-                    if (!autoPlayEnabled || !isRecipeModalOpen()) {
-                        stopStepCountdown(true);
-                        return;
-                    }
-                    goToStep(index + 1, {forceSpeak: true, fromAuto: true});
-                });
-            };
-
-            speakCurrentSelectedStep(forceSpeak || fromAuto, afterSpeak);
-        }
-
-        // "다음" 명령 / 버튼에서 호출 (fromVoiceCommand = true면 타이머/음성 강제 종료)
-        function moveToNextStepAndSpeak(fromVoiceCommand) {
-            const steps = getStepDivs();
-            if (!steps.length) return;
-
-            let idx = currentStepIndex || 0;
-            if (!steps[idx] || !steps[idx].classList.contains('step-selected')) {
-                idx = 0;
-            } else {
-                idx = Math.min(idx + 1, steps.length - 1);
-            }
-
-            if (fromVoiceCommand) {
-                stopSpeak();
-                stopStepCountdown(true);
-            }
-
-            goToStep(idx, {forceSpeak: true, fromAuto: autoPlayEnabled});
-        }
-
-        function stopAutoPlay() {
-            stopStepCountdown(true);
-        }
-
-        // 🔥 DTO(steps + stepTimes) 를 모달용 구조로 렌더링
-        function buildStepsFromCard(recipeId) {
-            const container = document.getElementById('recipe-steps-' + recipeId);
-            recipeModalBody.innerHTML = '';
-
-            if (!container) {
-                recipeModalBody.innerHTML =
-                        '<p class="text-muted small mb-0">등록된 스텝이 없습니다.</p>';
-                return;
-            }
-
-            const stepTextNodes = container.querySelectorAll('.recipe-step-text');
-            const stepTimeNodes = container.querySelectorAll('.recipe-step-time');
-
-            if (stepTextNodes.length === 0) {
-                recipeModalBody.innerHTML =
-                        '<p class="text-muted small mb-0">등록된 스텝이 없습니다.</p>';
-                return;
-            }
-
-            stepTextNodes.forEach((stepNode, index) => {
-                const text = (stepNode.textContent || '').trim();
-
-                // 같은 인덱스의 stepTime 가져오기
-                let time = 0;
-                if (stepTimeNodes.length > index) {
-                    const raw = (stepTimeNodes[index].textContent || '').trim();
-                    const parsed = parseInt(raw, 10);
-                    if (!isNaN(parsed) && parsed > 0) {
-                        time = parsed;
-                    }
-                }
-
-                const div = document.createElement('div');
-                div.className = 'recipe-step';
-                // 이 스텝의 시간(초)을 dataset 에 저장
-                div.dataset.stepTime = String(time || 0);
-
-                // 계단 효과용 margin-left (전체 박스를 오른쪽으로 밀어줌)
-                const offset = index * 24;
-                div.style.marginLeft = offset + 'px';
-
-                // 왼쪽(인덱스 + 텍스트)
-                const main = document.createElement('div');
-                main.className = 'step-main';
-
-                const idxSpan = document.createElement('span');
-                idxSpan.className = 'step-index';
-                idxSpan.textContent = 'Step ' + (index + 1) + '.';
-
-                const textSpan = document.createElement('span');
-                textSpan.className = 'step-text';
-                textSpan.textContent = text || '내용 없음';
-
-                main.appendChild(idxSpan);
-                main.appendChild(textSpan);
-
-                // 오른쪽 원형 타이머
-                const timer = document.createElement('div');
-                timer.className = 'step-timer';
-
-                timer.innerHTML = `
-                    <svg class="step-timer-svg" viewBox="0 0 48 48">
-                        <circle class="step-timer-bg-circle" cx="24" cy="24" r="18"></circle>
-                        <circle class="step-timer-progress-circle" cx="24" cy="24" r="18"></circle>
-                    </svg>
-                    <span class="step-timer-value"></span>
+                const t = stepTimes[idx] || '';
+                const row = document.createElement('div');
+                row.className = 'popup-step';
+                row.innerHTML = `
+                    <span class="idx">Step ${idx + 1}.</span>
+                    <span class="txt">${txt.replace(/\n/g, '<br>')}</span>
+                    ${t ? `<span class="time">(${t}초)</span>` : ``}
                 `;
 
-                div.appendChild(main);
-                div.appendChild(timer);
-                recipeModalBody.appendChild(div);
-
-                // 타이머 시각 초기화
-                initStepTimerVisual(div);
-            });
-
-            const stepDivs = getStepDivs();
-            if (!stepDivs.length) return;
-
-            // 첫 번째 스텝 선택
-            stepDivs[0].classList.add('step-selected');
-            currentStepIndex = 0;
-
-            // 클릭 시: 해당 스텝으로 이동 + (ttsEnabled면) 읽기
-            stepDivs.forEach((step, idx) => {
-                step.addEventListener('click', () => {
-                    stopSpeak();
-                    stopStepCountdown(true);
-                    goToStep(idx, {forceSpeak: false, fromAuto: autoPlayEnabled});
+                row.addEventListener('click', () => {
+                    popupSteps.querySelectorAll('.popup-step').forEach(s => s.classList.remove('selected'));
+                    row.classList.add('selected');
                 });
+
+                popupSteps.appendChild(row);
             });
+
+            // 첫 스텝 선택
+            const first = popupSteps.querySelector('.popup-step');
+            if (first) first.classList.add('selected');
         }
 
-        function openRecipeModal(menu) {
-            recipeModalTitle.textContent = '#' + menu.id + ' ' + menu.name + ' 레시피';
+        function openModal(card) {
+            buildPopup(card);
 
-            stopSpeak();
-            stopAutoPlay();
-
-            // 자동재생 켜져 있으면 스피커도 자동 ON
-            if (autoPlayEnabled) {
-                ttsEnabled = true;
-            }
-            updateTtsToggleVisual();
-
-            buildStepsFromCard(menu.id);
-            recipeModal.classList.add('show');
-
-            // 자동재생 켜져 있으면 Step1부터 자동 진행
-            if (autoPlayEnabled) {
-                goToStep(0, {forceSpeak: true, fromAuto: true});
-            }
-        }
-
-        function closeRecipeModal() {
-            recipeModal.classList.remove('show');
-            stopSpeak();
-            stopAutoPlay();
-        }
-
-        function showNoRecipePopup() {
-            if (!noRecipePopup) return;
-            if (noRecipePopupTimer) {
-                clearTimeout(noRecipePopupTimer);
-                noRecipePopupTimer = null;
-            }
-            noRecipePopup.textContent = '레시피가 없습니다.';
-            noRecipePopup.classList.add('show');
-            noRecipePopupTimer = setTimeout(() => {
-                noRecipePopup.classList.remove('show');
-            }, 2000);
-        }
-
-        function handleCardSelect(card, options) {
-            const id = card.dataset.recipeId;
-            const name = card.dataset.recipeName;
-            const fromVoice = options && options.fromVoice;
-
-            if (currentSelectedCard === card && !fromVoice) {
-                clearAllSelections();
-                closeRecipeModal();
-                return;
-            }
-
-            clearAllSelections();
-
-            card.classList.add('selected');
-            currentSelectedMenu = {id, name};
-            currentSelectedCard = card;
-
-            updateSelectedCount();
-            openRecipeModal(currentSelectedMenu);
-        }
-
-        // ====== 음성 인식 초기화 ======
-        function initRecognition() {
-            if (recognition) return recognition;
-
-            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-            if (!SpeechRecognition) {
-                alert('이 브라우저에서는 음성 인식이 지원되지 않습니다.\n(Chrome / Edge 최신 버전 권장)');
-                return null;
-            }
-
-            recognition = new SpeechRecognition();
-            recognition.lang = 'ko-KR';
-            recognition.interimResults = false;
-            recognition.maxAlternatives = 3;
-
-            recognition.onresult = function (event) {
-                const rawTranscript = (event.results[0][0].transcript || '').trim();
-                console.log('음성 인식 결과:', rawTranscript);
-
-                let normTranscript = normalizeKoreanText(rawTranscript);
-
-                // "헬리야" 단독 호출: 안내만
-                if (normTranscript === '헬리야') {
-                    speakText('레시피 번호를 불러주세요. 예를 들어, 십번, 십번 레시피 라고 말해보세요.');
-                    return;
-                }
-
-                // 처리용 텍스트
-                let processedRaw = rawTranscript;
-                let processedNorm = normTranscript;
-
-                // "헬리야 ~~~" 형태면 호출어 제거 후 처리
-                if (normTranscript.startsWith('헬리야')) {
-                    processedRaw = rawTranscript.replace(/^\s*헬리야[\s,]*/, '');
-                    processedNorm = normalizeKoreanText(processedRaw);
-                }
-
-                if (!processedNorm) return;
-
-                // "음성인식 그만" → 인식 세션 완전 종료 + TTS 중지
-                if (processedNorm.includes('음성인식그만')) {
-                    stopVoiceSession();
-                    stopSpeak();
-                    stopStepCountdown(true);
-                    return;
-                }
-
-                // "그만" → 모달만 닫기 (인식은 유지)
-                if (processedNorm.includes('그만')) {
-                    if (isRecipeModalOpen()) {
-                        closeRecipeModal();
-                    }
-                    return;
-                }
-
-                // "다음" → 다음 스텝 (현재 TTS/타이머 중지 후)
-                if (processedNorm.includes('다음')) {
-                    if (isRecipeModalOpen()) {
-                        moveToNextStepAndSpeak(true);
-                    }
-                    return;
-                }
-
-                // 숫자 기반 레시피 선택
-                const num = extractNumberFromText(processedRaw);
-                if (num !== null) {
-                    const cardById = document.querySelector('.menu-card[data-recipe-id="' + num + '"]');
-                    if (cardById) {
-                        handleCardSelect(cardById, {fromVoice: true});
-                        return;
-                    }
-                }
-
-                // 이름 기반 레시피 선택
-                let bestCard = null;
-                let bestScore = 0;
-
-                function tryMatch(withNormTranscript) {
-                    cards.forEach(card => {
-                        const name = card.dataset.recipeName || '';
-                        const normName = normalizeKoreanText(name);
-                        if (!normName) return;
-
-                        if (withNormTranscript.includes(normName) || normName.includes(withNormTranscript)) {
-                            const score = normName.length;
-                            if (score > bestScore) {
-                                bestScore = score;
-                                bestCard = card;
-                            }
-                        }
-                    });
-                }
-
-                // 1차: processedNorm 기준
-                tryMatch(processedNorm);
-
-                // 2차: 공백 제거된 원문 기준
-                if (!bestCard) {
-                    const joined = processedRaw.replace(/\s+/g, '');
-                    const joinedNorm = normalizeKoreanText(joined);
-                    if (joinedNorm && joinedNorm !== processedNorm) {
-                        tryMatch(joinedNorm);
-                    }
-                }
-
-                if (bestCard) {
-                    handleCardSelect(bestCard, {fromVoice: true});
-                } else {
-                    showNoRecipePopup();
-                }
-            };
-
-            recognition.onerror = function (event) {
-                console.error('음성 인식 오류:', event.error);
-                recognizing = false;
-                if (!voiceSessionActive) {
-                    updateMicVisual(false);
-                }
-            };
-
-            recognition.onend = function () {
-                recognizing = false;
-                if (voiceSessionActive && recognition) {
-                    try {
-                        recognizing = true;
-                        recognition.start();
-                    } catch (e) {
-                        console.error('음성 인식 재시작 실패:', e);
-                        recognizing = false;
-                        voiceSessionActive = false;
-                        updateMicVisual(false);
-                    }
-                } else {
-                    updateMicVisual(false);
-                }
-            };
-
-            return recognition;
-        }
-
-        function startVoiceSession() {
-            const rec = initRecognition();
-            if (!rec) return;
-
-            if (voiceSessionActive && recognizing) {
-                return;
-            }
-
-            voiceSessionActive = true;
-            updateMicVisual(true);
-
-            if (!recognizing) {
-                recognizing = true;
-                try {
-                    rec.start();
-                } catch (e) {
-                    console.error('음성 인식 시작 실패:', e);
-                    recognizing = false;
-                    voiceSessionActive = false;
-                    updateMicVisual(false);
-                }
-            }
-        }
-
-        function stopVoiceSession() {
-            voiceSessionActive = false;
-            if (recognition && recognizing) {
-                try { recognition.stop(); } catch (e) {}
-            }
-            recognizing = false;
-            updateMicVisual(false);
-        }
-
-        function toggleVoiceRecognition() {
-            if (voiceSessionActive) {
-                stopVoiceSession();
+            // bootstrap bundle이 header에 이미 포함되어 있어야 합니다.
+            if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+                const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+                modal.show();
             } else {
-                startVoiceSession();
+                alert('Bootstrap Modal을 찾을 수 없습니다. (header에서 bootstrap.bundle.min.js 로드 확인)');
             }
         }
 
-        // 카드 클릭 → 선택
-        cards.forEach(card => {
-            card.addEventListener('click', () => {
-                handleCardSelect(card, {fromVoice: false});
-            });
+        // ✅ 이벤트 위임: 카드 클릭 시 팝업
+        grid.addEventListener('click', (e) => {
+            const card = e.target.closest('.menu-card');
+            if (!card) return;
+
+            clearSelected();
+            card.classList.add('selected');
+            setSelectedCount(1);
+
+            openModal(card);
         });
 
-        // 상단 마이크 버튼
-        if (btnVoiceRecipe) {
-            btnVoiceRecipe.addEventListener('click', (e) => {
-                e.stopPropagation();
-                toggleVoiceRecognition();
-            });
-        }
-
-        // 자동재생 토글
-        if (autoPlayToggle) {
-            autoPlayEnabled = autoPlayToggle.checked;
-            autoPlayToggle.addEventListener('change', () => {
-                autoPlayEnabled = autoPlayToggle.checked;
-                if (!autoPlayEnabled) {
-                    stopAutoPlay();
-                } else {
-                    // 모달이 열려 있다면 현재/첫 스텝부터 자동재생 시작 + TTS ON
-                    if (isRecipeModalOpen()) {
-                        ttsEnabled = true;
-                        updateTtsToggleVisual();
-                        const steps = getStepDivs();
-                        if (steps.length > 0) {
-                            const idx = steps[currentStepIndex]
-                                    ? currentStepIndex
-                                    : 0;
-                            goToStep(idx, {forceSpeak: true, fromAuto: true});
-                        }
-                    }
-                }
-            });
-        }
-
-        // 모달 닫기
-        if (btnCloseRecipe) {
-            btnCloseRecipe.addEventListener('click', () => {
-                closeRecipeModal();
-            });
-        }
-
-        // 배경 클릭 → 닫기
-        if (recipeModalBackdrop) {
-            recipeModalBackdrop.addEventListener('click', () => {
-                closeRecipeModal();
-            });
-        }
-
-        // ESC → 닫기
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') {
-                closeRecipeModal();
-            }
-        });
-
-        // 🔊 TTS 토글 버튼 클릭
-        if (btnTtsToggle) {
-            btnTtsToggle.addEventListener('click', () => {
-                ttsEnabled = !ttsEnabled;
-                updateTtsToggleVisual();
-
-                if (ttsEnabled) {
-                    // 현재 선택된 스텝이 있으면 바로 읽어줌 (자동재생은 아님)
-                    speakCurrentSelectedStep(false);
-                } else {
-                    stopSpeak();
-                }
-            });
-        }
-
-        // 초기 상태
-        updateSelectedCount();
-        updateTtsToggleVisual();
-        updateMicVisual(false);
-
+        // 초기 카운트
+        setSelectedCount(0);
     })();
 </script>
 

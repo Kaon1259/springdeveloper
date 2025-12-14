@@ -18,6 +18,7 @@ public class RecipeViewDto {
 
     private boolean visible;
     private boolean template;
+    private boolean useBlender;
 
     // Enum name 그대로 (HOT_COFFEE, ICE_COFFEE...)
     private String category;

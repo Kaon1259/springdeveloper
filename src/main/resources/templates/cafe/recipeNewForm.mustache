@@ -1,151 +1,194 @@
 {{>layouts/header}}
 
 <style>
-    body {
-        background-color: #f8f9fa;
-    }
+    body { background-color: #f8f9fa; }
 
-    .card-count-badge {
-        font-size: 0.85rem;
-    }
+    .card-count-badge { font-size: 0.85rem; }
 
     /* 카테고리 칩 스타일 */
-    .category-chip-group {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.5rem;
-    }
-
-    .category-chip {
-        border-radius: 999px;
-        border: 1px solid #dee2e6;
-        background-color: #ffffff;
-        padding: 0.35rem 0.9rem;
-        font-size: 0.9rem;
-        cursor: pointer;
+    .category-chip-group { display:flex; flex-wrap:wrap; gap:0.5rem; }
+    .category-chip{
+        border-radius:999px; border:1px solid #dee2e6; background:#fff;
+        padding:0.35rem 0.9rem; font-size:0.9rem; cursor:pointer;
         transition: background-color 0.1s ease, color 0.1s ease, box-shadow 0.1s ease, border-color 0.1s ease;
-        white-space: nowrap;
+        white-space:nowrap;
     }
-
-    .category-chip:hover {
-        background-color: #f1f3f5;
-    }
-
-    .category-chip.selected {
-        background-color: #0d6efd;
-        color: #ffffff;
-        border-color: #0d6efd;
-        box-shadow: 0 0.3rem 0.7rem rgba(13, 110, 253, 0.35);
+    .category-chip:hover { background:#f1f3f5; }
+    .category-chip.selected{
+        background:#0d6efd; color:#fff; border-color:#0d6efd;
+        box-shadow:0 0.3rem 0.7rem rgba(13,110,253,0.35);
     }
 
     /* HOT / ICE, 컵 사이즈용 버튼 그룹 약간 크게 */
-    .temp-group .btn,
-    .cup-group .btn {
-        min-width: 80px;
-    }
-
-    .temp-group .btn-outline-danger,
-    .temp-group .btn-outline-primary {
-        font-weight: 600;
-    }
+    .temp-group .btn, .cup-group .btn { min-width:80px; }
+    .temp-group .btn-outline-danger, .temp-group .btn-outline-primary { font-weight:600; }
 
     /* ✅ 상단 기본 입력 영역 라운드 렉트 (주황색 테두리) */
-    .form-wrapper {
-        border-radius: 1rem;
-        border: 2px solid #fd7e14;
-        padding: 1rem 1.25rem;
-        background-color: #ffffff;
-        margin-bottom: 1rem;
+    .form-wrapper{
+        border-radius:1rem;
+        border:2px solid #fd7e14;
+        padding:1rem 1.25rem;
+        background:#fff;
+        margin-bottom:1rem;
     }
 
     /* ✅ 레시피 단계 영역 라운드 렉트 (주황색 테두리) */
-    .step-wrapper {
-        border-radius: 1rem;
-        border: 2px solid #fd7e14;
-        padding: 0.75rem 0.75rem 0.25rem;
-        background-color: #ffffff;
+    .step-wrapper{
+        border-radius:1rem;
+        border:2px solid #fd7e14;
+        padding:0.75rem 0.75rem 0.25rem;
+        background:#fff;
     }
 
     /* =========================
        템플릿 모달용 스타일
        ========================= */
-    .template-list {
-        display: flex;
-        flex-direction: column;
-        gap: 0.75rem;
-    }
+    .template-list{ display:flex; flex-direction:column; gap:0.75rem; }
 
-    .template-card {
-        border-radius: 0.9rem;
-        border: 2px solid #dee2e6;
-        padding: 0.75rem 1rem;
-        background-color: #ffffff;
-        cursor: pointer;
+    .template-card{
+        border-radius:0.9rem;
+        border:2px solid #dee2e6;
+        padding:0.75rem 1rem;
+        background:#fff;
+        cursor:pointer;
         transition: box-shadow 0.15s ease, border-color 0.15s ease, background-color 0.15s ease;
     }
-
-    .template-card:hover {
-        box-shadow: 0 0.45rem 1rem rgba(0, 0, 0, 0.12);
-        border-color: #0d6efd;
+    .template-card:hover{
+        box-shadow:0 0.45rem 1rem rgba(0,0,0,0.12);
+        border-color:#0d6efd;
     }
-
-    .template-card.selected {
-        border-color: #0d6efd;
-        background-color: #e7f1ff;
-        box-shadow: 0 0.55rem 1.2rem rgba(13, 110, 253, 0.35);
+    .template-card.selected{
+        border-color:#0d6efd;
+        background:#e7f1ff;
+        box-shadow:0 0.55rem 1.2rem rgba(13,110,253,0.35);
     }
-
-    .template-card-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 0.35rem;
+    .template-card-header{
+        display:flex; justify-content:space-between; align-items:center;
+        margin-bottom:0.35rem;
     }
-
-    .template-title {
-        font-weight: 700;
-        font-size: 1rem;
-    }
-
-    .template-meta {
-        font-size: 0.8rem;
-        color: #6c757d;
-    }
-
-    .template-tags {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.25rem;
-        margin-top: 0.25rem;
-    }
-
-    .template-tag {
-        border-radius: 999px;
-        padding: 0.1rem 0.5rem;
-        font-size: 0.75rem;
-        border: 1px solid #ced4da;
-        background-color: #f8f9fa;
+    .template-title{ font-weight:700; font-size:1rem; }
+    .template-meta{ font-size:0.8rem; color:#6c757d; }
+    .template-tags{ display:flex; flex-wrap:wrap; gap:0.25rem; margin-top:0.25rem; }
+    .template-tag{
+        border-radius:999px;
+        padding:0.1rem 0.5rem;
+        font-size:0.75rem;
+        border:1px solid #ced4da;
+        background:#f8f9fa;
     }
 
     /* 🔢 Step 옆 초 입력 UI */
-    .step-time-group {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.25rem;
-        margin-left: 0.75rem;
-    }
+    .step-time-group{ display:inline-flex; align-items:center; gap:0.25rem; margin-left:0.75rem; }
+    .step-time-input{ width:70px; padding:0.1rem 0.35rem; font-size:0.8rem; text-align:right; }
+    .step-time-label{ font-size:0.8rem; color:#6c757d; white-space:nowrap; }
 
-    .step-time-input {
-        width: 70px;
-        padding: 0.1rem 0.35rem;
-        font-size: 0.8rem;
-        text-align: right;
+    /* =========================
+       ✅ useBlender 스위치 UI (신규 작성에도 동일 적용)
+       ========================= */
+    .blender-switch-row{
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        gap:1rem;
+        padding:0.65rem 0.85rem;
+        border-radius:0.85rem;
+        border:1px solid #e9ecef;
+        background:#fff7ed;
+        margin-bottom:0.75rem;
     }
+    .blender-switch-title{
+        display:flex;
+        flex-direction:column;
+        gap:0.1rem;
+        min-width:0;
+    }
+    .blender-switch-title .title{
+        font-weight:800;
+        letter-spacing:-0.2px;
+        display:flex;
+        align-items:center;
+        gap:0.4rem;
+    }
+    .blender-switch-title .desc{
+        font-size:0.85rem;
+        color:#6c757d;
+        line-height:1.25;
+    }
+    .blender-badge-inline{
+        display:inline-flex;
+        align-items:center;
+        justify-content:center;
+        width:28px;
+        height:28px;
+        border-radius:999px;
+        border:2px solid rgba(111,78,55,0.45);
+        background:#fff;
+        box-shadow:0 2px 8px rgba(0,0,0,0.08);
+        overflow:hidden;
+        position:relative;
+    }
+    .blender-badge-inline::before{
+        content:"";
+        position:absolute;
+        inset:-40%;
+        background: conic-gradient(
+                from 0deg,
+                rgba(111,78,55,0.25),
+                rgba(171,120,84,0.55),
+                rgba(111,78,55,0.25),
+                rgba(140,92,62,0.55),
+                rgba(111,78,55,0.25)
+        );
+        animation: blenderGradSpin 10s linear infinite;
+    }
+    .blender-badge-inline::after{
+        content:"";
+        position:absolute;
+        inset:3px;
+        background:#fff;
+        border-radius:999px;
+    }
+    .blender-emoji-inline{
+        position:relative;
+        z-index:1;
+        font-size:16px;
+        filter: sepia(1) saturate(6) hue-rotate(340deg) brightness(0.9) contrast(1.05);
+        animation: blenderEmojiSpin 10s linear infinite;
+        transform-origin:50% 50%;
+    }
+    @keyframes blenderGradSpin{ from{ transform:rotate(0deg);} to{ transform:rotate(360deg);} }
+    @keyframes blenderEmojiSpin{ from{ transform:rotate(0deg);} to{ transform:rotate(360deg);} }
 
-    .step-time-label {
-        font-size: 0.8rem;
-        color: #6c757d;
-        white-space: nowrap;
+    .blender-switch-row .form-check{
+        margin:0;
+        display:flex;
+        align-items:center;
+        gap:0.5rem;
+        flex-shrink:0;
+    }
+    .blender-switch-row .form-check-input{
+        cursor:pointer;
+        width:3.2em;
+        height:1.7em;
+    }
+    .blender-switch-row .form-check-label{
+        font-weight:800;
+        letter-spacing:-0.2px;
+        user-select:none;
+    }
+    .blender-status-pill{
+        font-size:0.85rem;
+        font-weight:800;
+        padding:0.18rem 0.55rem;
+        border-radius:999px;
+        border:1px solid #dee2e6;
+        background:#fff;
+        color:#6c757d;
+    }
+    .blender-status-pill.on{
+        color:#dc3545;
+        border-color: rgba(220,53,69,0.35);
+        background: rgba(220,53,69,0.06);
     }
 </style>
 
@@ -162,7 +205,6 @@
                     </div>
                 </div>
                 <div class="d-flex gap-2">
-                    <!-- 템플릿 불러오기 버튼 (모달 팝업 오픈) -->
                     <button type="button"
                             class="btn btn-sm btn-outline-primary"
                             data-bs-toggle="modal"
@@ -187,45 +229,23 @@
                         <div class="d-flex justify-content-between align-items-center mb-1">
                             <label for="menuName" class="form-label fw-semibold mb-0">메뉴 이름</label>
                             <div class="d-flex align-items-center gap-3">
-                                <!-- 노출 여부 -->
                                 <div class="form-check mb-0">
-                                    <input class="form-check-input"
-                                           type="checkbox"
-                                           id="visible"
-                                           name="visible">
-                                    <label class="form-check-label small" for="visible">
-                                        노출 여부
-                                    </label>
+                                    <input class="form-check-input" type="checkbox" id="visible" name="visible">
+                                    <label class="form-check-label small" for="visible">노출 여부</label>
                                 </div>
-                                <!-- 템플릿 등록 -->
                                 <div class="form-check mb-0">
-                                    <input class="form-check-input"
-                                           type="checkbox"
-                                           id="template"
-                                           name="template">
-                                    <label class="form-check-label small" for="template">
-                                        템플릿 등록
-                                    </label>
+                                    <input class="form-check-input" type="checkbox" id="template" name="template">
+                                    <label class="form-check-label small" for="template">템플릿 등록</label>
                                 </div>
                             </div>
                         </div>
-                        <input type="text"
-                               class="form-control"
-                               id="menuName"
-                               name="menuName"
-                               placeholder="예) 바닐라라떼"
-                               required>
+                        <input type="text" class="form-control" id="menuName" name="menuName" placeholder="예) 바닐라라떼" required>
                     </div>
 
                     <!-- 작성자 -->
                     <div class="mb-3">
                         <label for="author" class="form-label fw-semibold">작성자</label>
-                        <input type="text"
-                               class="form-control"
-                               id="author"
-                               name="author"
-                               placeholder="본인 이름 또는 닉네임"
-                               required>
+                        <input type="text" class="form-control" id="author" name="author" placeholder="본인 이름 또는 닉네임" required>
                     </div>
 
                     <!-- 간단 설명 (옵션) -->
@@ -233,10 +253,7 @@
                         <label for="description" class="form-label fw-semibold">
                             간단 설명 <span class="text-muted small">(선택)</span>
                         </label>
-                        <input type="text"
-                               class="form-control"
-                               id="description"
-                               name="description"
+                        <input type="text" class="form-control" id="description" name="description"
                                placeholder="예) 아이스 전용, 연한 단맛, 초보 바리스타용">
                     </div>
 
@@ -244,7 +261,6 @@
                     <div class="mb-3">
                         <label class="form-label fw-semibold d-block">HOT / ICE</label>
                         <div class="btn-group temp-group" role="group" aria-label="Temperature select">
-                            <!-- Enum Temperature.HOT / Temperature.ICE -->
                             <input type="radio" class="btn-check" name="temperature" id="tempHot" value="HOT" autocomplete="off" checked>
                             <label class="btn btn-outline-danger" for="tempHot">HOT</label>
 
@@ -257,7 +273,6 @@
                     <div class="mb-3">
                         <label class="form-label fw-semibold d-block">컵 사이즈</label>
                         <div class="btn-group cup-group" role="group" aria-label="Cup size select">
-                            <!-- Enum CupSize.OZ20 / OZ24 / OZ32 -->
                             <input type="radio" class="btn-check" name="cupSize" id="cup20" value="OZ20" autocomplete="off" checked>
                             <label class="btn btn-outline-secondary" for="cup20">20oz</label>
 
@@ -272,11 +287,44 @@
                         </div>
                     </div>
 
+                    <!-- ✅ useBlender 스위치 (카테고리 바로 위) -->
+                    <div class="mb-2">
+                        <label class="form-label fw-semibold d-block">블렌더 사용</label>
+
+                        <!-- ✅ Spring 체크박스 마커: 체크 안해도 false로 바인딩되게 -->
+                        <input type="hidden" name="_useBlender" value="on">
+
+                        <div class="blender-switch-row">
+                            <div class="blender-switch-title">
+                                <div class="title">
+                                    <span class="blender-badge-inline" aria-hidden="true">
+                                        <span class="blender-emoji-inline">🌀</span>
+                                    </span>
+                                    블렌더 사용 여부
+                                    <span id="blender-status-pill" class="blender-status-pill">OFF</span>
+                                </div>
+                                <div class="desc">
+                                    블렌더를 사용하는 레시피라면 ON으로 설정해 주세요. (목록/팝업에 블렌더 표시)
+                                </div>
+                            </div>
+
+                            <div class="form-check form-switch">
+                                <input class="form-check-input"
+                                       type="checkbox"
+                                       id="useBlender"
+                                       name="useBlender"
+                                       value="true">
+                                <label class="form-check-label" for="useBlender">
+                                    ON / OFF
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- 카테고리 선택 (칩 형태) -->
                     <div class="mb-1">
                         <label class="form-label fw-semibold d-block">카테고리</label>
                         <div class="category-chip-group" id="category-chip-group">
-                            <!-- RecipeCategory enum 이름과 data-value를 맞춰서 설정 -->
                             <button type="button" class="category-chip" data-value="HOT_COFFEE">Hot 커피</button>
                             <button type="button" class="category-chip" data-value="ICE_COFFEE">Ice 커피</button>
                             <button type="button" class="category-chip" data-value="HOT_LATTE">Hot 라떼</button>
@@ -298,40 +346,25 @@
                             <button type="button" class="category-chip" data-value="FOOD">푸드</button>
                             <button type="button" class="category-chip" data-value="BASE">베이스</button>
                         </div>
-                        <!-- DTO의 RecipeCategory category 에 바인딩되는 hidden 필드 -->
                         <input type="hidden" name="category" id="category-input" required>
-                        <div class="form-text text-muted small">
-                            위 카테고리 중 하나를 선택해 주세요.
-                        </div>
+                        <div class="form-text text-muted small">위 카테고리 중 하나를 선택해 주세요.</div>
                     </div>
 
-                </div> <!-- .form-wrapper 끝 -->
+                </div>
 
                 <!-- 레시피 스텝들 -->
                 <div class="mb-2 d-flex justify-content-between align-items-center">
                     <label class="form-label fw-semibold mb-0">레시피 단계</label>
-                    <button type="button"
-                            class="btn btn-sm btn-outline-primary"
-                            id="btn-add-step">
-                        + 단계 추가
-                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-primary" id="btn-add-step">+ 단계 추가</button>
                 </div>
 
-                <!-- ✅ 레시피 스텝 카드 전체를 주황 라운드 박스로 감싸기 -->
                 <div class="step-wrapper mb-3">
-                    <div id="steps-container" class="mb-1">
-                        <!-- JS로 Step 필드들이 그려집니다. (최소 1개 기본 생성) -->
-                    </div>
+                    <div id="steps-container" class="mb-1"></div>
                 </div>
 
-                <!-- 저장 버튼 -->
                 <div class="d-flex justify-content-end gap-2">
-                    <a href="/cafe/recipes" class="btn btn-outline-secondary">
-                        취소
-                    </a>
-                    <button type="submit" class="btn btn-primary">
-                        레시피 저장
-                    </button>
+                    <a href="/cafe/recipes" class="btn btn-outline-secondary">취소</a>
+                    <button type="submit" class="btn btn-primary">레시피 저장</button>
                 </div>
             </form>
 
@@ -349,9 +382,7 @@
             </div>
 
             <div class="modal-body">
-                <div class="template-list" id="template-list">
-                    <!-- JS로 템플릿 카드들이 들어갑니다 -->
-                </div>
+                <div class="template-list" id="template-list"></div>
                 <div id="template-empty-text" class="text-muted small mt-2">
                     {{^templateRecipes}}
                         템플릿으로 등록된 레시피가 없습니다. (작성 화면에서 "템플릿 등록"에 체크하여 템플릿을 만들 수 있습니다.)
@@ -360,17 +391,8 @@
             </div>
 
             <div class="modal-footer">
-                <button type="button"
-                        class="btn btn-outline-secondary"
-                        data-bs-dismiss="modal">
-                    취소
-                </button>
-                <button type="button"
-                        class="btn btn-primary"
-                        id="btn-apply-template"
-                        data-bs-dismiss="modal">
-                    적용
-                </button>
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">취소</button>
+                <button type="button" class="btn btn-primary" id="btn-apply-template" data-bs-dismiss="modal">적용</button>
             </div>
         </div>
     </div>
@@ -379,11 +401,25 @@
 <script>
     (function () {
         /* =========================
+           useBlender 상태 pill
+           ========================= */
+        const useBlenderToggle = document.getElementById('useBlender');
+        const blenderStatusPill = document.getElementById('blender-status-pill');
+
+        function refreshBlenderStatus() {
+            if (!useBlenderToggle || !blenderStatusPill) return;
+            const on = !!useBlenderToggle.checked;
+            blenderStatusPill.textContent = on ? 'ON' : 'OFF';
+            blenderStatusPill.classList.toggle('on', on);
+        }
+        refreshBlenderStatus();
+        useBlenderToggle?.addEventListener('change', refreshBlenderStatus);
+
+        /* =========================
            레시피 단계 (Step) 관리
            ========================= */
         const stepsContainer = document.getElementById('steps-container');
         const addStepBtn = document.getElementById('btn-add-step');
-
         let stepIndex = 0;
 
         function createStepElement(index, content) {
@@ -396,8 +432,6 @@
                     <div class="d-flex justify-content-between align-items-center mb-2">
                         <div class="fw-semibold d-flex align-items-center">
                             Step <span class="step-number ms-1">${index + 1}</span>
-
-                            <!-- 🔢 이 단계의 시간 입력 (초) -->
                             <div class="step-time-group">
                                 <input type="number"
                                        class="form-control form-control-sm step-time-input"
@@ -407,10 +441,7 @@
                                 <span class="step-time-label">초</span>
                             </div>
                         </div>
-                        <button type="button"
-                                class="btn btn-sm btn-outline-danger btn-remove-step">
-                            삭제
-                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-danger btn-remove-step">삭제</button>
                     </div>
                     <textarea class="form-control step-textarea"
                               name="steps"
@@ -427,9 +458,7 @@
             stepCards.forEach((card, idx) => {
                 card.dataset.stepIndex = idx;
                 const numberSpan = card.querySelector('.step-number');
-                if (numberSpan) {
-                    numberSpan.textContent = idx + 1;
-                }
+                if (numberSpan) numberSpan.textContent = idx + 1;
             });
             stepIndex = stepCards.length;
         }
@@ -459,16 +488,11 @@
             stepIndex = 0;
         }
 
-        // 초기 1개 Step 기본 생성
         addStep('');
-
-        // + 단계 추가 버튼
-        addStepBtn.addEventListener('click', function () {
-            addStep('');
-        });
+        addStepBtn.addEventListener('click', function () { addStep(''); });
 
         /* =========================
-           HOT / ICE & 컵 사이즈 기본값 (강제 변경 제거)
+           기본값 (온도/컵)
            ========================= */
         const cup20 = document.getElementById('cup20');
         const cup24 = document.getElementById('cup24');
@@ -476,11 +500,10 @@
         const tempHot = document.getElementById('tempHot');
         const tempIce = document.getElementById('tempIce');
 
-        function initDefault() {
+        (function initDefault() {
             tempHot.checked = true;
             cup20.checked = true;
-        }
-        initDefault();
+        })();
 
         /* =========================
            카테고리 칩 선택 관리
@@ -510,11 +533,8 @@
             });
         });
 
-        // 기본 카테고리 하나 자동 선택
         const firstChip = categoryChips[0];
-        if (firstChip) {
-            firstChip.click();
-        }
+        if (firstChip) firstChip.click();
 
         /* =========================
            템플릿 데이터(JS 배열) 생성
@@ -529,6 +549,7 @@
                     temperature: "{{temperature}}",
                     cupSize: "{{cupSize}}",
                     category: "{{category}}",
+                useBlender: {{#useBlender}}true{{/useBlender}}{{^useBlender}}false{{/useBlender}},
                 visible: {{#visible}}true{{/visible}}{{^visible}}false{{/visible}},
                 template: {{#template}}true{{/template}}{{^template}}false{{/template}},
                     steps: [
@@ -560,15 +581,10 @@
             selectedTemplateData = null;
 
             if (!templates || templates.length === 0) {
-                if (templateEmptyTextEl) {
-                    templateEmptyTextEl.classList.remove('d-none');
-                }
+                templateEmptyTextEl?.classList.remove('d-none');
                 return;
             }
-
-            if (templateEmptyTextEl) {
-                templateEmptyTextEl.classList.add('d-none');
-            }
+            templateEmptyTextEl?.classList.add('d-none');
 
             templates.forEach(tpl => {
                 const card = document.createElement('div');
@@ -578,24 +594,20 @@
                 card.innerHTML = `
                     <div class="template-card-header">
                         <div class="template-title">${tpl.menuName}</div>
-                        <div class="template-meta">
-                            ${tpl.author || '작성자 미입력'}
-                        </div>
+                        <div class="template-meta">${tpl.author || '작성자 미입력'}</div>
                     </div>
-                    <div class="template-meta">
-                        ${tpl.description || ''}
-                    </div>
+                    <div class="template-meta">${tpl.description || ''}</div>
                     <div class="template-tags">
                         <span class="template-tag">온도: ${tpl.temperature}</span>
                         <span class="template-tag">컵: ${tpl.cupSize}</span>
                         <span class="template-tag">카테고리: ${tpl.category}</span>
+                        ${tpl.useBlender ? '<span class="template-tag">블렌더</span>' : ''}
                         ${tpl.visible ? '<span class="template-tag">노출</span>' : ''}
                     </div>
                 `;
 
                 card.addEventListener('click', () => {
-                    templateListEl.querySelectorAll('.template-card')
-                            .forEach(c => c.classList.remove('selected'));
+                    templateListEl.querySelectorAll('.template-card').forEach(c => c.classList.remove('selected'));
                     card.classList.add('selected');
                     selectedTemplateData = tpl;
                 });
@@ -604,51 +616,38 @@
             });
         }
 
-        // 페이지 로딩 시 템플릿 카드 렌더링
         renderTemplateCards(rawTemplateData);
 
-        // 적용 버튼 클릭 시 선택된 템플릿 데이터를 폼에 매핑
         applyTemplateBtn?.addEventListener('click', () => {
-            if (!selectedTemplateData) {
-                return;
-            }
+            if (!selectedTemplateData) return;
 
             const tpl = selectedTemplateData;
 
-            // 기본 정보 채우기
             menuNameInput.value = tpl.menuName || '';
             authorInput.value = tpl.author || '';
             descriptionInput.value = tpl.description || '';
 
-            // 노출/템플릿 체크박스
             visibleCheckbox.checked = !!tpl.visible;
             templateCheckbox.checked = !!tpl.template;
 
-            // 온도
-            if (tpl.temperature === 'ICE') {
-                tempIce.checked = true;
-            } else {
-                tempHot.checked = true;
+            // ✅ useBlender도 템플릿에서 반영
+            if (useBlenderToggle) {
+                useBlenderToggle.checked = !!tpl.useBlender;
+                refreshBlenderStatus();
             }
 
-            // 컵 사이즈
-            if (tpl.cupSize === 'OZ24') {
-                cup24.checked = true;
-            } else if (tpl.cupSize === 'OZ32') {
-                cup32.checked = true;
-            } else {
-                cup20.checked = true;
-            }
+            if (tpl.temperature === 'ICE') tempIce.checked = true;
+            else tempHot.checked = true;
 
-            // 카테고리
+            if (tpl.cupSize === 'OZ24') cup24.checked = true;
+            else if (tpl.cupSize === 'OZ32') cup32.checked = true;
+            else cup20.checked = true;
+
             selectCategoryByValue(tpl.category);
 
-            // 스텝 입력값 설정 (시간은 일단 UI 기본 10초 유지)
             resetSteps();
             if (tpl.steps && tpl.steps.length > 0) {
-                tpl.steps.forEach(stepText => {
-                    addStep(stepText);
-                });
+                tpl.steps.forEach(stepText => addStep(stepText));
             } else {
                 addStep('');
             }

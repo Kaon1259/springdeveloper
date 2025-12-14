@@ -1,165 +1,146 @@
 {{>layouts/header}}
 
 <style>
-    body {
-        background-color: #f8f9fa;
-    }
+    body { background-color: #f8f9fa; }
 
-    .card-count-badge {
-        font-size: 0.85rem;
-    }
+    .card-count-badge { font-size: 0.85rem; }
 
-    /* 카테고리 칩 스타일 */
-    .category-chip-group {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.5rem;
-    }
-
-    .category-chip {
-        border-radius: 999px;
-        border: 1px solid #dee2e6;
-        background-color: #ffffff;
-        padding: 0.35rem 0.9rem;
-        font-size: 0.9rem;
-        cursor: pointer;
+    .category-chip-group{ display:flex; flex-wrap:wrap; gap:0.5rem; }
+    .category-chip{
+        border-radius:999px; border:1px solid #dee2e6; background:#fff;
+        padding:0.35rem 0.9rem; font-size:0.9rem; cursor:pointer;
         transition: background-color 0.1s ease, color 0.1s ease, box-shadow 0.1s ease, border-color 0.1s ease;
-        white-space: nowrap;
+        white-space:nowrap;
+    }
+    .category-chip:hover{ background:#f1f3f5; }
+    .category-chip.selected{
+        background:#0d6efd; color:#fff; border-color:#0d6efd;
+        box-shadow:0 0.3rem 0.7rem rgba(13,110,253,0.35);
     }
 
-    .category-chip:hover {
-        background-color: #f1f3f5;
+    .temp-group .btn, .cup-group .btn { min-width: 80px; }
+    .temp-group .btn-outline-danger, .temp-group .btn-outline-primary { font-weight: 600; }
+
+    .form-wrapper{
+        border-radius:1rem; border:2px solid #fd7e14;
+        padding:1rem 1.25rem; background:#fff; margin-bottom:1rem;
     }
 
-    .category-chip.selected {
-        background-color: #0d6efd;
-        color: #ffffff;
-        border-color: #0d6efd;
-        box-shadow: 0 0.3rem 0.7rem rgba(13, 110, 253, 0.35);
+    .step-wrapper{
+        border-radius:1rem; border:2px solid #fd7e14;
+        padding:0.75rem 0.75rem 0.25rem; background:#fff;
     }
 
-    /* HOT / ICE, 컵 사이즈용 버튼 그룹 약간 크게 */
-    .temp-group .btn,
-    .cup-group .btn {
-        min-width: 80px;
+    .step-time-group{ display:inline-flex; align-items:center; gap:0.25rem; margin-left:0.75rem; }
+    .step-time-input{ width:70px; padding:0.1rem 0.35rem; font-size:0.8rem; text-align:right; }
+    .step-time-label{ font-size:0.8rem; color:#6c757d; white-space:nowrap; }
+
+    #recipePreviewModal .modal-dialog{ max-width:1200px; width:95%; }
+    #recipePreviewModal .modal-content{
+        border-radius:0.75rem; box-shadow:0 0.75rem 1.5rem rgba(0,0,0,0.25);
+        max-height:90vh;
+    }
+    #recipePreviewModal .modal-body{ font-size:2.4rem; max-height:80vh; overflow-y:auto; }
+    #recipePreviewMeta{ font-size:2rem !important; }
+    #recipe-steps-content{ padding-right:0.5rem; }
+
+    .recipe-step{
+        position:relative; background:#fff; border-radius:0.5rem;
+        padding:1.1rem 1.4rem; margin-bottom:1rem;
+        box-shadow:0 0.35rem 0.8rem rgba(0,0,0,0.08);
+        border-left:6px solid #0d6efd;
+        font-size:2.7rem; line-height:1.45; cursor:pointer;
+        transition: background-color .15s ease, color .15s ease, box-shadow .15s ease;
+    }
+    .step-index{ font-weight:900; margin-right:0.9rem; }
+    .step-text{ display:inline-block; vertical-align:middle; }
+
+    #recipe-steps-content .recipe-step:nth-child(2){ margin-left:18px; }
+    #recipe-steps-content .recipe-step:nth-child(3){ margin-left:36px; }
+    #recipe-steps-content .recipe-step:nth-child(4){ margin-left:54px; }
+    #recipe-steps-content .recipe-step:nth-child(5){ margin-left:72px; }
+    #recipe-steps-content .recipe-step:nth-child(6){ margin-left:90px; }
+    #recipe-steps-content .recipe-step:nth-child(7){ margin-left:108px; }
+
+    .recipe-step.step-selected{
+        background:#0d6efd; color:#fff;
+        box-shadow:0 0.35rem 0.9rem rgba(13,110,253,0.45);
+    }
+    .recipe-step.empty-step{ border-left-color:#adb5bd; color:#6c757d; }
+
+    /* ✅ useBlender 스위치 UI */
+    .blender-switch-row{
+        display:flex; align-items:center; justify-content:space-between; gap:1rem;
+        padding:0.65rem 0.85rem;
+        border-radius:0.85rem;
+        border:1px solid #e9ecef;
+        background:#fff7ed;
+        margin-bottom:0.75rem;
+    }
+    .blender-switch-title{
+        display:flex; flex-direction:column; gap:0.1rem; min-width:0;
+    }
+    .blender-switch-title .title{
+        font-weight:800; letter-spacing:-0.2px;
+        display:flex; align-items:center; gap:0.4rem;
+    }
+    .blender-switch-title .desc{
+        font-size:0.85rem; color:#6c757d; line-height:1.25;
     }
 
-    .temp-group .btn-outline-danger,
-    .temp-group .btn-outline-primary {
-        font-weight: 600;
+    .blender-badge-inline{
+        display:inline-flex; align-items:center; justify-content:center;
+        width:28px; height:28px; border-radius:999px;
+        border:2px solid rgba(111,78,55,0.45);
+        background:#fff;
+        box-shadow:0 2px 8px rgba(0,0,0,0.08);
+        overflow:hidden; position:relative;
     }
-
-    /* ✅ 레시피 기본정보(위쪽 테이블 느낌 영역) 라운드 렉트 */
-    .form-wrapper {
-        border-radius: 1rem;
-        border: 2px solid #fd7e14;     /* 주황색 테두리 */
-        padding: 1rem 1.25rem;
-        background-color: #ffffff;
-        margin-bottom: 1rem;
+    .blender-badge-inline::before{
+        content:""; position:absolute; inset:-40%;
+        background: conic-gradient(
+                from 0deg,
+                rgba(111,78,55,0.25),
+                rgba(171,120,84,0.55),
+                rgba(111,78,55,0.25),
+                rgba(140,92,62,0.55),
+                rgba(111,78,55,0.25)
+        );
+        animation: blenderGradSpin 10s linear infinite;
     }
-
-    /* ✅ 레시피 단계 전체를 감싸는 라운드 렉트 (주황색 테두리) */
-    .step-wrapper {
-        border-radius: 1rem;
-        border: 2px solid #fd7e14; /* 주황색 테두리 */
-        padding: 0.75rem 0.75rem 0.25rem;
-        background-color: #ffffff;
+    .blender-badge-inline::after{
+        content:""; position:absolute; inset:3px;
+        background:#fff; border-radius:999px;
     }
-
-    /* 🔢 Step 옆 초 입력 UI */
-    .step-time-group {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.25rem;
-        margin-left: 0.75rem;
+    .blender-emoji-inline{
+        position:relative; z-index:1; font-size:16px;
+        filter: sepia(1) saturate(6) hue-rotate(340deg) brightness(0.9) contrast(1.05);
+        animation: blenderEmojiSpin 10s linear infinite;
+        transform-origin:50% 50%;
     }
+    @keyframes blenderGradSpin{ from{transform:rotate(0deg);} to{transform:rotate(360deg);} }
+    @keyframes blenderEmojiSpin{ from{transform:rotate(0deg);} to{transform:rotate(360deg);} }
 
-    .step-time-input {
-        width: 70px;
-        padding: 0.1rem 0.35rem;
-        font-size: 0.8rem;
-        text-align: right;
+    .blender-switch-row .form-check{
+        margin:0; display:flex; align-items:center; gap:0.5rem; flex-shrink:0;
     }
-
-    .step-time-label {
-        font-size: 0.8rem;
-        color: #6c757d;
-        white-space: nowrap;
+    .blender-switch-row .form-check-input{
+        cursor:pointer; width:3.2em; height:1.7em;
     }
-
-    /* ==============================
-       레시피 미리보기 모달 스타일
-       (목록 페이지 팝업 느낌으로)
-       ============================== */
-
-    #recipePreviewModal .modal-dialog {
-        max-width: 1200px;
-        width: 95%;
+    .blender-switch-row .form-check-label{
+        font-weight:800; letter-spacing:-0.2px; user-select:none;
     }
-
-    #recipePreviewModal .modal-content {
-        border-radius: 0.75rem;
-        box-shadow: 0 0.75rem 1.5rem rgba(0,0,0,0.25);
-        max-height: 90vh;
+    .blender-status-pill{
+        font-size:0.85rem; font-weight:800;
+        padding:0.18rem 0.55rem;
+        border-radius:999px;
+        border:1px solid #dee2e6;
+        background:#fff; color:#6c757d;
     }
-
-    #recipePreviewModal .modal-body {
-        font-size: 2.4rem;
-        max-height: 80vh;
-        overflow-y: auto;
-    }
-
-    #recipePreviewMeta {
-        font-size: 2rem !important;
-    }
-
-    #recipe-steps-content {
-        padding-right: 0.5rem;
-    }
-
-    /* 팝업 내 스텝 카드 (계단 형태 + 선택 스타일) */
-    .recipe-step {
-        position: relative;
-        background-color: #ffffff;
-        border-radius: 0.5rem;
-        padding: 1.1rem 1.4rem;
-        margin-bottom: 1rem;
-        box-shadow: 0 0.35rem 0.8rem rgba(0, 0, 0, 0.08);
-        border-left: 6px solid #0d6efd;
-
-        font-size: 2.7rem;
-        line-height: 1.45;
-        cursor: pointer;
-        transition: background-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
-    }
-
-    .step-index {
-        font-weight: 900;
-        margin-right: 0.9rem;
-    }
-
-    .step-text {
-        display: inline-block;
-        vertical-align: middle;
-    }
-
-    /* 🔹 계단 효과 */
-    #recipe-steps-content .recipe-step:nth-child(2) { margin-left: 18px; }
-    #recipe-steps-content .recipe-step:nth-child(3) { margin-left: 36px; }
-    #recipe-steps-content .recipe-step:nth-child(4) { margin-left: 54px; }
-    #recipe-steps-content .recipe-step:nth-child(5) { margin-left: 72px; }
-    #recipe-steps-content .recipe-step:nth-child(6) { margin-left: 90px; }
-    #recipe-steps-content .recipe-step:nth-child(7) { margin-left: 108px; }
-
-    .recipe-step.step-selected {
-        background-color: #0d6efd;
-        color: #fff;
-        box-shadow: 0 0.35rem 0.9rem rgba(13,110,253,0.45);
-    }
-
-    .recipe-step.empty-step {
-        border-left-color: #adb5bd;
-        color: #6c757d;
+    .blender-status-pill.on{
+        color:#dc3545;
+        border-color: rgba(220,53,69,0.35);
+        background: rgba(220,53,69,0.06);
     }
 </style>
 
@@ -167,106 +148,60 @@
     <div class="row justify-content-center">
         <div class="col-lg-8 col-md-10">
 
-            <!-- 제목 -->
             <div class="mb-3 d-flex justify-content-between align-items-center">
                 <div>
                     <h3 class="mb-0 fw-bold">☕ 메뉴 레시피 수정</h3>
-                    <div class="text-muted small mt-1">
-                        저장된 레시피 내용을 수정하고 다시 저장할 수 있습니다.
-                    </div>
+                    <div class="text-muted small mt-1">저장된 레시피 내용을 수정하고 다시 저장할 수 있습니다.</div>
                 </div>
 
-                <!-- ID 배지 + 레시피 만들기 + 목록 버튼 -->
                 <div class="d-flex align-items-center gap-2">
-                    <span class="badge bg-light text-muted">
-                        ID: {{recipeId}}
-                    </span>
-                    <a href="/cafe/recipe/new" class="btn btn-sm btn-success">
-                        레시피 만들기
-                    </a>
-                    <a href="/cafe/recipes" class="btn btn-sm btn-outline-secondary">
-                        목록
-                    </a>
+                    <span class="badge bg-light text-muted">ID: {{recipeId}}</span>
+                    <a href="/cafe/recipe/new" class="btn btn-sm btn-success">레시피 만들기</a>
+                    <a href="/cafe/recipes" class="btn btn-sm btn-outline-secondary">목록</a>
                 </div>
             </div>
 
-            <!-- 레시피 수정 폼 -->
             <form method="post"
                   action="/cafe/recipe/{{recipeId}}/update"
                   id="recipe-form"
                   data-temp="{{recipe.temperature}}"
                   data-cup="{{recipe.cupSize}}"
-                  data-category="{{recipe.category}}">
+                  data-category="{{recipe.category}}"
+                  data-use-blender="{{recipe.useBlender}}">
 
                 <input type="hidden" name="id" value="{{recipeId}}">
 
-                <!-- ✅ 기본 정보들을 하나의 라운드 박스로 감싼다 -->
                 <div class="form-wrapper">
 
-                    <!-- 메뉴 이름 + 노출 여부 체크박스 + 템플릿 등록 체크박스 -->
                     <div class="mb-3">
                         <div class="d-flex justify-content-between align-items-center mb-1">
                             <label for="menuName" class="form-label fw-semibold mb-0">메뉴 이름</label>
                             <div class="d-flex align-items-center gap-3">
-                                <!-- 노출 여부 -->
                                 <div class="form-check mb-0">
-                                    <input class="form-check-input"
-                                           type="checkbox"
-                                           id="visible"
-                                           name="visible"
-                                           {{#recipe.visible}}checked{{/recipe.visible}}>
-                                    <label class="form-check-label small" for="visible">
-                                        노출 여부
-                                    </label>
+                                    <input class="form-check-input" type="checkbox" id="visible" name="visible" {{#recipe.visible}}checked{{/recipe.visible}}>
+                                    <label class="form-check-label small" for="visible">노출 여부</label>
                                 </div>
-                                <!-- 템플릿 등록 -->
                                 <div class="form-check mb-0">
-                                    <input class="form-check-input"
-                                           type="checkbox"
-                                           id="template"
-                                           name="template"
-                                           {{#recipe.template}}checked{{/recipe.template}}>
-                                    <label class="form-check-label small" for="template">
-                                        템플릿 등록
-                                    </label>
+                                    <input class="form-check-input" type="checkbox" id="template" name="template" {{#recipe.template}}checked{{/recipe.template}}>
+                                    <label class="form-check-label small" for="template">템플릿 등록</label>
                                 </div>
                             </div>
                         </div>
-                        <input type="text"
-                               class="form-control"
-                               id="menuName"
-                               name="menuName"
-                               value="{{recipe.menuName}}"
-                               placeholder="예) 바닐라라떼"
-                               required>
+                        <input type="text" class="form-control" id="menuName" name="menuName" value="{{recipe.menuName}}" placeholder="예) 바닐라라떼" required>
                     </div>
 
-                    <!-- 작성자 -->
                     <div class="mb-3">
                         <label for="author" class="form-label fw-semibold">작성자</label>
-                        <input type="text"
-                               class="form-control"
-                               id="author"
-                               name="author"
-                               value="{{recipe.author}}"
-                               placeholder="본인 이름 또는 닉네임"
-                               required>
+                        <input type="text" class="form-control" id="author" name="author" value="{{recipe.author}}" placeholder="본인 이름 또는 닉네임" required>
                     </div>
 
-                    <!-- 간단 설명 (옵션) -->
                     <div class="mb-3">
                         <label for="description" class="form-label fw-semibold">
                             간단 설명 <span class="text-muted small">(선택)</span>
                         </label>
-                        <input type="text"
-                               class="form-control"
-                               id="description"
-                               name="description"
-                               value="{{recipe.description}}"
-                               placeholder="예) 아이스 전용, 연한 단맛, 초보 바리스타용">
+                        <input type="text" class="form-control" id="description" name="description" value="{{recipe.description}}" placeholder="예) 아이스 전용, 연한 단맛, 초보 바리스타용">
                     </div>
 
-                    <!-- HOT / ICE 선택 -->
                     <div class="mb-3">
                         <label class="form-label fw-semibold d-block">HOT / ICE</label>
                         <div class="btn-group temp-group" role="group" aria-label="Temperature select">
@@ -278,7 +213,6 @@
                         </div>
                     </div>
 
-                    <!-- 컵 사이즈 선택 -->
                     <div class="mb-3">
                         <label class="form-label fw-semibold d-block">컵 사이즈</label>
                         <div class="btn-group cup-group" role="group" aria-label="Cup size select">
@@ -296,7 +230,39 @@
                         </div>
                     </div>
 
-                    <!-- 카테고리 선택 (칩 형태) -->
+                    <!-- ✅ useBlender 스위치 (카테고리 바로 위) : Spring 표준 마커 방식으로 수정 -->
+                    <div class="mb-2">
+                        <label class="form-label fw-semibold d-block">블렌더 사용</label>
+
+                        <!-- ✅ unchecked일 때 false 처리용 마커 (name이 _useBlender 이어야 함) -->
+                        <input type="hidden" name="_useBlender" value="on">
+
+                        <div class="blender-switch-row">
+                            <div class="blender-switch-title">
+                                <div class="title">
+                                    <span class="blender-badge-inline" aria-hidden="true">
+                                        <span class="blender-emoji-inline">🌀</span>
+                                    </span>
+                                    블렌더 사용 여부
+                                    <span id="blender-status-pill" class="blender-status-pill">OFF</span>
+                                </div>
+                                <div class="desc">
+                                    블렌더를 사용하는 레시피라면 ON으로 설정해 주세요. (목록/팝업에 블렌더 표시)
+                                </div>
+                            </div>
+
+                            <div class="form-check form-switch">
+                                <input class="form-check-input"
+                                       type="checkbox"
+                                       id="useBlender"
+                                       name="useBlender"
+                                       value="true"
+                                       {{#recipe.useBlender}}checked{{/recipe.useBlender}}>
+                                <label class="form-check-label" for="useBlender">ON / OFF</label>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="mb-1">
                         <label class="form-label fw-semibold d-block">카테고리</label>
                         <div class="category-chip-group" id="category-chip-group">
@@ -322,33 +288,19 @@
                             <button type="button" class="category-chip" data-value="BASE">베이스</button>
                         </div>
                         <input type="hidden" name="category" id="category-input" required>
-                        <div class="form-text text-muted small">
-                            위 카테고리 중 하나를 선택해 주세요.
-                        </div>
+                        <div class="form-text text-muted small">위 카테고리 중 하나를 선택해 주세요.</div>
                     </div>
 
-                </div> <!-- .form-wrapper 끝 -->
+                </div>
 
-                <!-- 레시피 스텝들 -->
                 <div class="mb-2 d-flex justify-content-between align-items-center">
                     <label class="form-label fw-semibold mb-0">레시피 단계</label>
                     <div class="d-flex gap-2">
-                        <!-- ✅ 새로 추가된 레시피 미리보기 버튼 (녹색) -->
-                        <button type="button"
-                                class="btn btn-sm btn-success"
-                                id="btn-preview">
-                            레시피 미리보기
-                        </button>
-
-                        <button type="button"
-                                class="btn btn-sm btn-outline-primary"
-                                id="btn-add-step">
-                            + 단계 추가
-                        </button>
+                        <button type="button" class="btn btn-sm btn-success" id="btn-preview">레시피 미리보기</button>
+                        <button type="button" class="btn btn-sm btn-outline-primary" id="btn-add-step">+ 단계 추가</button>
                     </div>
                 </div>
 
-                <!-- ✅ 스텝 카드들을 주황색 라운드 박스로 감쌈 -->
                 <div class="step-wrapper mb-3">
                     <div id="steps-container" class="mb-1">
                         {{#recipe.steps}}
@@ -357,31 +309,19 @@
                                     <div class="d-flex justify-content-between align-items-center mb-2">
                                         <div class="fw-semibold d-flex align-items-center">
                                             Step <span class="step-number ms-1">0</span>
-                                            <!-- 🔢 이 단계의 시간 입력 (초) -->
                                             <div class="step-time-group">
-                                                <input type="number"
-                                                       class="form-control form-control-sm step-time-input"
-                                                       name="stepTimes"
-                                                       min="1"
-                                                       value="10">
+                                                <input type="number" class="form-control form-control-sm step-time-input" name="stepTimes" min="1" value="10">
                                                 <span class="step-time-label">초</span>
                                             </div>
                                         </div>
-                                        <button type="button"
-                                                class="btn btn-sm btn-outline-danger btn-remove-step">
-                                            삭제
-                                        </button>
+                                        <button type="button" class="btn btn-sm btn-outline-danger btn-remove-step">삭제</button>
                                     </div>
-                                    <textarea class="form-control step-textarea"
-                                              name="steps"
-                                              rows="2"
-                                              required>{{.}}</textarea>
+                                    <textarea class="form-control step-textarea" name="steps" rows="2" required>{{.}}</textarea>
                                 </div>
                             </div>
                         {{/recipe.steps}}
                     </div>
 
-                    <!-- 🔥 서버에서 내려온 stepTimes를 숨겨서 JS에서 매핑용으로 사용 -->
                     <div id="initial-step-times" style="display:none;">
                         {{#recipe.stepTimes}}
                             <span class="init-step-time" data-time="{{.}}"></span>
@@ -389,21 +329,10 @@
                     </div>
                 </div>
 
-                <!-- 저장 / 삭제 버튼 -->
                 <div class="d-flex justify-content-end gap-2">
-                    <a href="/cafe/recipes" class="btn btn-outline-secondary">
-                        목록
-                    </a>
-                    <!-- 🔥 삭제 버튼 추가 -->
-                    <button type="button"
-                            class="btn btn-outline-danger"
-                            id="btn-delete-recipe"
-                            data-recipe-id="{{recipeId}}">
-                        삭제
-                    </button>
-                    <button type="submit" class="btn btn-primary">
-                        변경사항 저장
-                    </button>
+                    <a href="/cafe/recipes" class="btn btn-outline-secondary">목록</a>
+                    <button type="button" class="btn btn-outline-danger" id="btn-delete-recipe" data-recipe-id="{{recipeId}}">삭제</button>
+                    <button type="submit" class="btn btn-primary">변경사항 저장</button>
                 </div>
             </form>
 
@@ -411,7 +340,6 @@
     </div>
 </div>
 
-<!-- ✅ 레시피 미리보기 모달 (목록 페이지 스타일 참고) -->
 <div class="modal fade" id="recipePreviewModal" tabindex="-1" aria-labelledby="recipePreviewModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-xl">
         <div class="modal-content">
@@ -443,6 +371,33 @@
         const form = document.getElementById('recipe-form');
 
         /* =========================
+           useBlender 스위치 초기값 + 상태표시
+           ========================= */
+        const useBlenderToggle = document.getElementById('useBlender');
+        const blenderStatusPill = document.getElementById('blender-status-pill');
+
+        function parseTruth(v) {
+            const s = String(v || '').trim().toLowerCase();
+            return (s === 'true' || s === '1' || s === 'y' || s === 'yes');
+        }
+
+        function refreshBlenderStatus() {
+            if (!blenderStatusPill || !useBlenderToggle) return;
+            const on = !!useBlenderToggle.checked;
+            blenderStatusPill.textContent = on ? 'ON' : 'OFF';
+            blenderStatusPill.classList.toggle('on', on);
+        }
+
+        (function initUseBlender() {
+            if (!useBlenderToggle) return;
+            // Mustache에서 checked를 이미 주지만, dataset 기반으로도 보정(안전)
+            const initial = parseTruth(form.dataset.useBlender);
+            useBlenderToggle.checked = initial;
+            refreshBlenderStatus();
+            useBlenderToggle.addEventListener('change', refreshBlenderStatus);
+        })();
+
+        /* =========================
            레시피 단계 (Step) 관리
            ========================= */
         const stepsContainer = document.getElementById('steps-container');
@@ -468,15 +423,9 @@
                                 <span class="step-time-label">초</span>
                             </div>
                         </div>
-                        <button type="button"
-                                class="btn btn-sm btn-outline-danger btn-remove-step">
-                            삭제
-                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-danger btn-remove-step">삭제</button>
                     </div>
-                    <textarea class="form-control step-textarea"
-                              name="steps"
-                              rows="2"
-                              required>${content || ''}</textarea>
+                    <textarea class="form-control step-textarea" name="steps" rows="2" required>${content || ''}</textarea>
                 </div>
             `;
             return wrapper;
@@ -486,9 +435,7 @@
             const stepCards = stepsContainer.querySelectorAll('.card');
             stepCards.forEach((card, idx) => {
                 const numberSpan = card.querySelector('.step-number');
-                if (numberSpan) {
-                    numberSpan.textContent = idx + 1;
-                }
+                if (numberSpan) numberSpan.textContent = idx + 1;
             });
             stepIndex = stepCards.length;
         }
@@ -515,7 +462,6 @@
             bindRemoveEvent(el);
         }
 
-        // 🔥 서버에서 내려온 stepTimes를 각 카드의 input에 매핑
         function applyInitialStepTimes() {
             const initContainer = document.getElementById('initial-step-times');
             if (!initContainer) return;
@@ -530,30 +476,22 @@
                 const span = initTimes[idx];
                 if (span) {
                     const t = span.dataset.time;
-                    if (t !== undefined && t !== null && t !== '') {
-                        timeInput.value = t;
-                    }
+                    if (t !== undefined && t !== null && t !== '') timeInput.value = t;
                 }
             });
         }
 
-        // 초기: 서버에서 렌더링된 스텝 카드가 있으면 그것을 기준으로 세팅
         (function initSteps() {
             const existingCards = stepsContainer.querySelectorAll('.card');
-            if (existingCards.length === 0) {
-                addStep('');
-            } else {
+            if (existingCards.length === 0) addStep('');
+            else {
                 existingCards.forEach(card => bindRemoveEvent(card));
                 refreshStepNumbers();
             }
-
-            // 🔥 stepTimes 초기 값 적용
             applyInitialStepTimes();
         })();
 
-        addStepBtn.addEventListener('click', function () {
-            addStep('');
-        });
+        addStepBtn.addEventListener('click', function () { addStep(''); });
 
         /* =========================
            HOT / ICE & 컵 사이즈 연동
@@ -565,50 +503,28 @@
         const cup32 = document.getElementById('cup32');
 
         function setDefaultCupByTemp(temp) {
-            if (temp === 'HOT') {
-                cup20.checked = true;
-            } else if (temp === 'ICE') {
-                cup24.checked = true;
-            }
+            if (temp === 'HOT') cup20.checked = true;
+            else if (temp === 'ICE') cup24.checked = true;
         }
 
-        tempHot.addEventListener('change', function () {
-            if (tempHot.checked) {
-                setDefaultCupByTemp('HOT');
-            }
-        });
-
-        tempIce.addEventListener('change', function () {
-            if (tempIce.checked) {
-                setDefaultCupByTemp('ICE');
-            }
-        });
+        tempHot.addEventListener('change', function () { if (tempHot.checked) setDefaultCupByTemp('HOT'); });
+        tempIce.addEventListener('change', function () { if (tempIce.checked) setDefaultCupByTemp('ICE'); });
 
         /* =========================
            초기값 세팅 (temperature, cupSize, category)
            ========================= */
         (function initSelections() {
-            const initialTemp = form.dataset.temp;       // HOT / ICE
-            const initialCup = form.dataset.cup;         // OZ20 / OZ24 / OZ32
-            const initialCategory = form.dataset.category; // RecipeCategory enum 값
+            const initialTemp = form.dataset.temp;
+            const initialCup = form.dataset.cup;
+            const initialCategory = form.dataset.category;
 
-            // temperature
-            if (initialTemp === 'ICE') {
-                tempIce.checked = true;
-            } else {
-                tempHot.checked = true;
-            }
+            if (initialTemp === 'ICE') tempIce.checked = true;
+            else tempHot.checked = true;
 
-            // cupSize
-            if (initialCup === 'OZ24') {
-                cup24.checked = true;
-            } else if (initialCup === 'OZ32') {
-                cup32.checked = true;
-            } else {
-                cup20.checked = true;
-            }
+            if (initialCup === 'OZ24') cup24.checked = true;
+            else if (initialCup === 'OZ32') cup32.checked = true;
+            else cup20.checked = true;
 
-            // category chips
             const categoryInput = document.getElementById('category-input');
             const categoryGroup = document.getElementById('category-chip-group');
             const categoryChips = categoryGroup.querySelectorAll('.category-chip');
@@ -642,14 +558,10 @@
 
         function openPreviewModal() {
             if (!previewModalEl) return;
-
             if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
-                if (!previewModalInstance) {
-                    previewModalInstance = new bootstrap.Modal(previewModalEl);
-                }
+                if (!previewModalInstance) previewModalInstance = new bootstrap.Modal(previewModalEl);
                 previewModalInstance.show();
             } else {
-                // Bootstrap JS가 없을 경우를 위한 fallback
                 previewModalEl.style.display = 'block';
                 previewModalEl.classList.add('show');
             }
@@ -683,49 +595,34 @@
             const cupValue = selectedCup ? selectedCup.value : '';
             const categoryLabel = selectedChip ? selectedChip.textContent.trim() : '';
 
-            // 상단 정보 세팅
             const previewMenuNameEl = document.getElementById('preview-menu-name');
             const previewDescriptionEl = document.getElementById('preview-description');
             const previewBasicInfoEl = document.getElementById('preview-basic-info');
 
-            if (previewMenuNameEl) {
-                previewMenuNameEl.textContent = menuName || '메뉴 이름 미입력';
-            }
-            if (previewDescriptionEl) {
-                previewDescriptionEl.textContent = description || '';
-            }
+            if (previewMenuNameEl) previewMenuNameEl.textContent = menuName || '메뉴 이름 미입력';
+            if (previewDescriptionEl) previewDescriptionEl.textContent = description || '';
 
             const infoParts = [];
-
-            if (tempValue) {
-                infoParts.push(tempValue === 'HOT' ? 'HOT (핫)' : 'ICE (아이스)');
-            }
+            if (tempValue) infoParts.push(tempValue === 'HOT' ? 'HOT (핫)' : 'ICE (아이스)');
 
             if (cupValue) {
                 let cupLabel = '';
                 if (cupValue === 'OZ20') cupLabel = '20oz';
                 else if (cupValue === 'OZ24') cupLabel = '24oz';
                 else if (cupValue === 'OZ32') cupLabel = '32oz';
-                if (cupLabel) {
-                    infoParts.push('컵: ' + cupLabel);
-                }
+                if (cupLabel) infoParts.push('컵: ' + cupLabel);
             }
+            if (categoryLabel) infoParts.push('카테고리: ' + categoryLabel);
 
-            if (categoryLabel) {
-                infoParts.push('카테고리: ' + categoryLabel);
-            }
+            if (useBlenderToggle) infoParts.push('블렌더: ' + (useBlenderToggle.checked ? 'ON' : 'OFF'));
 
-            if (previewBasicInfoEl) {
-                previewBasicInfoEl.textContent = infoParts.join(' · ');
-            }
+            if (previewBasicInfoEl) previewBasicInfoEl.textContent = infoParts.join(' · ');
 
-            // 스텝 계단 스타일 세팅
             const previewStepsEl = document.getElementById('recipe-steps-content');
             if (!previewStepsEl) return;
 
             previewStepsEl.innerHTML = '';
 
-            // 🔥 각 카드에서 textarea + timeInput 둘 다 읽어서 미리보기 구성
             const stepCards = stepsContainer.querySelectorAll('.card');
             let visibleIndex = 0;
 
@@ -769,14 +666,11 @@
                 previewStepsEl.appendChild(emptyRow);
             }
 
-            // 클릭 핸들러 + 첫 스텝 자동 선택
             attachPreviewStepClickHandlers();
 
             const firstStep = previewStepsEl.querySelector('.recipe-step');
             if (firstStep) {
-                previewStepsEl
-                        .querySelectorAll('.recipe-step')
-                        .forEach(s => s.classList.remove('step-selected'));
+                previewStepsEl.querySelectorAll('.recipe-step').forEach(s => s.classList.remove('step-selected'));
                 firstStep.classList.add('step-selected');
             }
         }
@@ -798,17 +692,13 @@
             if (!ok) return;
 
             try {
-                const res = await fetch('/api/cafe/recipe/' + recipeId + '/delete', {
-                    method: 'POST'
-                    // CSRF 사용 시 여기서 헤더 추가
-                });
+                const res = await fetch('/api/cafe/recipe/' + recipeId + '/delete', { method: 'POST' });
 
                 if (!res.ok && res.status !== 204) {
                     alert('레시피 삭제에 실패했습니다. (' + res.status + ')');
                     return;
                 }
 
-                // 성공 시 목록 페이지로 이동
                 window.location.href = '/cafe/recipes';
             } catch (e) {
                 console.error(e);
@@ -818,8 +708,7 @@
 
         if (deleteBtn) {
             deleteBtn.addEventListener('click', function () {
-                const recipeId = deleteBtn.dataset.recipeId ||
-                        document.querySelector('input[name="id"]')?.value;
+                const recipeId = deleteBtn.dataset.recipeId || document.querySelector('input[name="id"]')?.value;
                 if (!recipeId) {
                     alert('레시피 ID를 찾을 수 없습니다.');
                     return;

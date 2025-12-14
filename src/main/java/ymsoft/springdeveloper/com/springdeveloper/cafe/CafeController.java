@@ -1,5 +1,6 @@
 package ymsoft.springdeveloper.com.springdeveloper.cafe;
 
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -11,6 +12,7 @@ import ymsoft.springdeveloper.com.springdeveloper.dto.RecipeGroupDto;
 import ymsoft.springdeveloper.com.springdeveloper.entity.Recipe;
 import ymsoft.springdeveloper.com.springdeveloper.service.RecipeService;
 
+import java.util.Arrays;
 import java.util.List;
 
 @Slf4j
@@ -106,9 +108,10 @@ public class CafeController {
     }
 
     @PostMapping("/recipe/{id}/update")
-    public String update(@PathVariable Long id, @ModelAttribute RecipeCreateRequestDto dto) {
-
+    public String update(@PathVariable Long id, @ModelAttribute RecipeCreateRequestDto dto, HttpServletRequest request) {
+        log.info("useBlender param values={}", Arrays.toString(request.getParameterValues("useBlender")));
         log.info("update recipe: {}", dto);
+
         recipeService.updateRecipe(id, dto);
 
         log.info("update recipe id: {}", id);
