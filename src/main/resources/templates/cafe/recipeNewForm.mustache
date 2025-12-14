@@ -281,6 +281,13 @@
 
                             <input type="radio" class="btn-check" name="cupSize" id="cup32" value="OZ32" autocomplete="off">
                             <label class="btn btn-outline-secondary" for="cup32">32oz</label>
+
+                            <!-- ✅ 추가된 enum: L17 / L20 -->
+                            <input type="radio" class="btn-check" name="cupSize" id="cupL17" value="L17" autocomplete="off">
+                            <label class="btn btn-outline-secondary" for="cupL17">1.7L</label>
+
+                            <input type="radio" class="btn-check" name="cupSize" id="cupL20" value="L20" autocomplete="off">
+                            <label class="btn btn-outline-secondary" for="cupL20">2.0L</label>
                         </div>
                         <div class="form-text text-muted small">
                             기본 추천: HOT → 20oz, ICE → 24oz 이지만, 필요에 따라 자유롭게 변경할 수 있습니다.
@@ -416,6 +423,21 @@
         useBlenderToggle?.addEventListener('change', refreshBlenderStatus);
 
         /* =========================
+           ✅ 컵 라벨 디스플레이 유틸 (템플릿 목록/적용 공통)
+           - L17 -> 1.7L, L20 -> 2.0L
+           ========================= */
+        function cupLabelByValue(v) {
+            switch (v) {
+                case 'OZ20': return '20oz';
+                case 'OZ24': return '24oz';
+                case 'OZ32': return '32oz';
+                case 'L17':  return '1.7L';
+                case 'L20':  return '2.0L';
+                default: return v || '';
+            }
+        }
+
+        /* =========================
            레시피 단계 (Step) 관리
            ========================= */
         const stepsContainer = document.getElementById('steps-container');
@@ -497,13 +519,25 @@
         const cup20 = document.getElementById('cup20');
         const cup24 = document.getElementById('cup24');
         const cup32 = document.getElementById('cup32');
+        const cupL17 = document.getElementById('cupL17');
+        const cupL20 = document.getElementById('cupL20');
+
         const tempHot = document.getElementById('tempHot');
         const tempIce = document.getElementById('tempIce');
+
+        function setDefaultCupByTemp(temp) {
+            // 기존 권장 규칙 유지
+            if (temp === 'HOT') cup20.checked = true;
+            else if (temp === 'ICE') cup24.checked = true;
+        }
 
         (function initDefault() {
             tempHot.checked = true;
             cup20.checked = true;
         })();
+
+        tempHot.addEventListener('change', function(){ if (tempHot.checked) setDefaultCupByTemp('HOT'); });
+        tempIce.addEventListener('change', function(){ if (tempIce.checked) setDefaultCupByTemp('ICE'); });
 
         /* =========================
            카테고리 칩 선택 관리
@@ -591,6 +625,8 @@
                 card.className = 'template-card';
                 card.dataset.id = tpl.id;
 
+                const cupLabel = cupLabelByValue(tpl.cupSize);
+
                 card.innerHTML = `
                     <div class="template-card-header">
                         <div class="template-title">${tpl.menuName}</div>
@@ -599,7 +635,7 @@
                     <div class="template-meta">${tpl.description || ''}</div>
                     <div class="template-tags">
                         <span class="template-tag">온도: ${tpl.temperature}</span>
-                        <span class="template-tag">컵: ${tpl.cupSize}</span>
+                        <span class="template-tag">컵: ${cupLabel}</span>
                         <span class="template-tag">카테고리: ${tpl.category}</span>
                         ${tpl.useBlender ? '<span class="template-tag">블렌더</span>' : ''}
                         ${tpl.visible ? '<span class="template-tag">노출</span>' : ''}
@@ -639,8 +675,11 @@
             if (tpl.temperature === 'ICE') tempIce.checked = true;
             else tempHot.checked = true;
 
+            // ✅ 컵사이즈: L17/L20 포함
             if (tpl.cupSize === 'OZ24') cup24.checked = true;
             else if (tpl.cupSize === 'OZ32') cup32.checked = true;
+            else if (tpl.cupSize === 'L17') cupL17.checked = true;
+            else if (tpl.cupSize === 'L20') cupL20.checked = true;
             else cup20.checked = true;
 
             selectCategoryByValue(tpl.category);

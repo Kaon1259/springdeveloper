@@ -326,10 +326,42 @@
             return (s === "true" || s === "1" || s === "y" || s === "yes" || s === "on");
         }
 
+        // ✅ 기존 기본 출력(모달 원래 로직) 유지용: 2자리 숫자만 잡아서 oz로 만드는 방식
         function normalizeOz(cupText) {
             const raw = String(cupText || "").trim();
             const m = raw.match(/(\d{2})/);
             return m ? (m[1] + "oz") : raw;
+        }
+
+        // ✅ 요구사항: "기본 목록 뱃지"는 기존대로 두되,
+        // - 컵사이즈가 17이면 "1.7"
+        // - 컵사이즈가 20이면 "2.0"
+        // 만 바꿔서 표시
+        function displayBadgeText(rawCupText) {
+            const raw = String(rawCupText || "").trim().toUpperCase();
+
+            // enum(L17/L20) 또는 숫자/리터 표기 대응
+            if (raw === "L17" || raw === "17L" || raw === "57") return "1.7";
+            if (raw === "L20" || raw === "20L" || raw === "67") return "2.0";
+
+            // 기존처럼 20/24/32는 2자리 숫자만 표시
+            const m = raw.match(/(\d{2})/);
+            return m ? m[1] : raw;
+        }
+
+        // ✅ 요구사항: "팝업(모달)"에서만
+        // - 17, L17, 17L, 57 -> 1.7L
+        // - 20, L20, 20L, 67 -> 2.0L
+        // 그 외는 기존대로(20oz/24oz/32oz 등)
+        function normalizeCupForModal(cupText) {
+            const raw = String(cupText || "").trim().toUpperCase();
+
+            // 17/20 리터계열만 변환
+            if (raw === "L17" || raw === "17" || raw === "17L" || raw === "57") return "1.7L";
+            if (raw === "L20" || raw === "20" || raw === "20L" || raw === "67") return "2.0L";
+
+            // 나머지는 기존 로직 유지
+            return normalizeOz(cupText);
         }
 
         function applyCupBadgeColorsAndBlenderImage() {
@@ -345,10 +377,9 @@
                 if (temp === "ICE") badge.classList.add("cup-ice");
                 else if (temp === "HOT") badge.classList.add("cup-hot");
 
-                // 표시 텍스트는 20 / 24 / 32 로 축약 유지
-                const raw = (badge.textContent || "").trim();
-                const m = raw.match(/(\d{2})/);
-                if (m) badge.textContent = m[1];
+                // ✅ 기본 목록 출력: 기존 유지 + 17->1.7, 20->2.0만 적용
+                const rawBadge = (badge.textContent || "").trim();
+                badge.textContent = displayBadgeText(rawBadge);
 
                 pill.querySelectorAll(".blender-img-inline").forEach(el => el.remove());
 
@@ -375,13 +406,13 @@
             });
         }
 
-        // ✅ 모달 타이틀: 레시피명 + 블렌더(사용/미사용) + 온도(HOT/ICE) + 컵(oz)
-        function setModalTitle(name, useBlender, temp, cupOzText) {
+        // ✅ 모달 타이틀: 레시피명 + 블렌더(사용/미사용) + 온도(HOT/ICE) + 컵(팝업에서만 1.7L/2.0L 변환)
+        function setModalTitle(name, useBlender, temp, cupRaw) {
             const titleEl = document.getElementById("recipeDetailModalLabel");
             if (!titleEl) return;
 
             const t = String(temp || "").toUpperCase();
-            const oz = normalizeOz(cupOzText);
+            const cupLabel = normalizeCupForModal(cupRaw); // ✅ 팝업용 변환만 적용
 
             titleEl.innerHTML = "";
 
@@ -414,10 +445,10 @@
             tempChip.textContent = t ? t : "TEMP";
             wrap.appendChild(tempChip);
 
-            // 컵 칩
+            // 컵 칩 (✅ 팝업에서만 1.7L / 2.0L)
             const cupChip = document.createElement("span");
             cupChip.className = "meta-chip cup-chip";
-            cupChip.textContent = oz || "컵";
+            cupChip.textContent = cupLabel || "컵";
             wrap.appendChild(cupChip);
 
             titleEl.appendChild(wrap);
@@ -432,7 +463,7 @@
 
             const stepsHtml = document.getElementById("recipe-steps-" + id)?.innerHTML;
 
-            // ✅ 타이틀에 블렌더 사용/미사용 + HOT/ICE + oz 표기
+            // ✅ 팝업에서만 17/20 => 1.7L/2.0L 변환
             setModalTitle(name, useBlender, temp, cup);
 
             document.getElementById("recipe-steps-content").innerHTML =

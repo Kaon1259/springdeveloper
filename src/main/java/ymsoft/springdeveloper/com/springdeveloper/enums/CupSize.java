@@ -5,7 +5,9 @@ public enum CupSize {
 
     OZ20(20),
     OZ24(24),
-    OZ32(32);
+    OZ32(32),
+    L17(57),
+    L20(67);
 
     private final int ounce;
 
@@ -25,6 +27,10 @@ public enum CupSize {
                 return OZ24;
             case 32:
                 return OZ32;
+            case 57:
+                return L17;
+            case 67:
+                return L20;
             default:
                 throw new IllegalArgumentException("지원하지 않는 컵 용량: " + ounce);
         }

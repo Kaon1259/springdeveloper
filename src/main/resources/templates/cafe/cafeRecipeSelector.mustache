@@ -143,7 +143,7 @@
 
     /* ✅ 팝업에서 블렌더 이미지는 더 크게 */
     .blender-img-modal{
-        height: 4.6rem;   /* 여기 키우면 팝업에서 더 커집니다 */
+        height: 4.6rem;
         width: auto;
         object-fit: contain;
         display:inline-block;
@@ -224,8 +224,8 @@
                                 <div class="d-flex gap-2 align-items-center">
                                     <span class="temp-badge temp-{{temperature}}">{{temperature}}</span>
 
-                                    <span class="cup-badge">
-                                        {{cupSize}}
+                                    <!-- ✅ 목록(기본 출력)은 그대로 출력하되, JS에서 17/20만 1.7/2.0으로 변환 -->
+                                    <span class="cup-badge cup-badge-js">{{cupSize}}
                                         {{#useBlender}}
                                             <img class="blender-img-inline"
                                                  src="/img/blender.jpg"
@@ -260,7 +260,6 @@
     </div>
 </div>
 
-<!-- ✅ 팝업(모달) 추가: 기존 코드엔 이게 없어서 안 떴습니다 -->
 <div class="modal fade" id="recipePopupModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-xl modal-dialog-centered">
         <div class="modal-content">
@@ -309,11 +308,49 @@
             if (selectedCountEl) selectedCountEl.textContent = String(n);
         }
 
+        // ✅ 목록(기본 출력)용: 17 -> 1.7, 20 -> 2.0 만 적용, 나머지는 그대로
+        function displayCupInList(rawCupText) {
+            const raw = String(rawCupText || '').trim().toUpperCase();
+
+            // enum / 리터 / 숫자(ounce 저장값) 모두 대응
+            if (raw === 'L17' || raw === '17L' || raw === '57' || raw === '17') return '1.7';
+            if (raw === 'L20' || raw === '20L' || raw === '67' || raw === '20') return '2.0';
+
+            return String(rawCupText || '').trim();
+        }
+
+        // ✅ 팝업(모달)용: 17 -> 1.7L, 20 -> 2.0L 만 적용, 나머지는 그대로
+        function displayCupInModal(rawCupText) {
+            const raw = String(rawCupText || '').trim().toUpperCase();
+
+            if (raw === 'L17' || raw === '17L' || raw === '57' || raw === '17') return '1.7L';
+            if (raw === 'L20' || raw === '20L' || raw === '67' || raw === '20') return '2.0L';
+
+            return String(rawCupText || '').trim();
+        }
+
+        // ✅ 페이지 로드시 기본 출력(카드의 컵뱃지)에서 17/20만 변환
+        function applyCupDisplayOnCards() {
+            const badges = grid.querySelectorAll('.cup-badge-js');
+            badges.forEach(badge => {
+                // blender img가 같이 들어있으니, 텍스트만 안전하게 바꾸기
+                // 1) 현재 텍스트만 추출
+                const textNodes = Array.from(badge.childNodes).filter(n => n.nodeType === Node.TEXT_NODE);
+                const rawText = (textNodes.map(n => n.textContent).join('') || '').trim();
+
+                const newText = displayCupInList(rawText);
+
+                // 2) 기존 텍스트 노드 제거 후, 맨 앞에 새 텍스트 노드 삽입
+                textNodes.forEach(n => badge.removeChild(n));
+                badge.insertBefore(document.createTextNode(newText + ' '), badge.firstChild);
+            });
+        }
+
         function buildPopup(card) {
             const id = card.dataset.recipeId;
             const name = card.dataset.recipeName || '레시피';
             const temp = (card.dataset.recipeTemp || '').toUpperCase();
-            const cup = card.dataset.recipeCup || '';
+            const cupRaw = card.dataset.recipeCup || '';
             const category = card.dataset.recipeCategory || '';
             const useBlender = parseTruth(card.dataset.useBlender);
 
@@ -337,9 +374,10 @@
                 popupTitleWrap.appendChild(note);
             }
 
-            // 메타 정보
+            // 메타 정보 (✅ 팝업에서만 1.7L / 2.0L 표기)
             const tempLabel = temp === 'HOT' ? 'HOT 🔥' : (temp === 'ICE' ? 'ICE ❄' : temp);
-            popupMeta.textContent = `카테고리: ${category} · 온도: ${tempLabel} · 컵: ${cup}`;
+            const cupLabel = displayCupInModal(cupRaw);
+            popupMeta.textContent = `카테고리: ${category} · 온도: ${tempLabel} · 컵: ${cupLabel}`;
 
             // 스텝/시간 읽기
             const hidden = document.getElementById('recipe-steps-' + id);
@@ -381,7 +419,6 @@
         function openModal(card) {
             buildPopup(card);
 
-            // bootstrap bundle이 header에 이미 포함되어 있어야 합니다.
             if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
                 const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
                 modal.show();
@@ -402,8 +439,9 @@
             openModal(card);
         });
 
-        // 초기 카운트
+        // 초기 카운트 + 컵 표기 보정
         setSelectedCount(0);
+        applyCupDisplayOnCards();
     })();
 </script>
 
