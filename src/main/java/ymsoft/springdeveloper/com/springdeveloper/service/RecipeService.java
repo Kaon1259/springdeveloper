@@ -86,6 +86,7 @@ public class RecipeService {
         recipe.setMenuName(dto.getMenuName());
         recipe.setAuthor(dto.getAuthor());
         recipe.setDescription(dto.getDescription());
+        recipe.setImgname(dto.getImgname());
         recipe.setVisible(dto.isVisible());
         recipe.setTemplate(dto.isTemplate());
         recipe.setTemperature(dto.getTemperature());
@@ -133,6 +134,7 @@ public class RecipeService {
                 .visible(recipe.isVisible())
                 .template(recipe.isTemplate())
                 .useBlender(recipe.isUseBlender())
+                .imgname(recipe.getImgname())
                 .temperature(recipe.getTemperature() != null ? recipe.getTemperature().name() : null)
                 .cupSize(recipe.getCupSize() != null ? recipe.getCupSize().name() : null)
                 .steps(stepDtos)

@@ -23,6 +23,7 @@ public class RecipeCreateRequestDto {
     private String menuName;
     private String author;
     private String description;
+    private String imgname;
 
     private boolean visible;
     private boolean template;
@@ -44,6 +45,7 @@ public class RecipeCreateRequestDto {
                 .menuName(menuName)
                 .author(author)
                 .description(description)
+                .imgname(imgname)
                 .temperature(temperature)
                 .visible(Boolean.TRUE.equals(visible))
                 .template(Boolean.TRUE.equals(template))
@@ -81,6 +83,7 @@ public class RecipeCreateRequestDto {
                 .menuName(recipe.getMenuName())
                 .author(recipe.getAuthor())
                 .description(recipe.getDescription())
+                .imgname(recipe.getImgname() == null ? "" : recipe.getImgname())
                 .visible(recipe.isVisible())
                 .template(recipe.isTemplate())
                 .useBlender(recipe.isUseBlender())

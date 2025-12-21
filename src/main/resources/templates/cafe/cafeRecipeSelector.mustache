@@ -44,16 +44,11 @@
         width: 56px;
         height: 56px;
         clip-path: polygon(0 0, 100% 0, 0 100%);
+        z-index: 2;
     }
 
     .menu-card[data-recipe-temp="HOT"]::before { background-color: #dc3545; }
     .menu-card[data-recipe-temp="ICE"]::before { background-color: #0d6efd; }
-
-    .menu-name {
-        font-size: 2rem;
-        font-weight: 800;
-        text-align: center;
-    }
 
     .menu-grid-wrapper {
         height: calc(100vh - 210px);
@@ -112,6 +107,71 @@
     }
 
     /* =========================
+       ✅ 카드 좌/우 분할(이미지/정보)
+       ========================= */
+    .menu-card-split{
+        display:flex;
+        flex-direction: row;
+        gap: 0;
+        padding: 0;
+        min-height: 160px;
+    }
+
+    .menu-card-left{
+        width: 48%;
+        border-right: 1px solid #eef1f4;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        padding: 0.75rem;
+        background: #fbfcfe;
+    }
+
+    .menu-card-right{
+        width: 52%;
+        padding: 0.9rem 0.9rem;
+        display:flex;
+        flex-direction: column;
+        align-items:center;
+        justify-content:center;
+        gap: 0.75rem;
+    }
+
+    /* ✅ [수정] 카드 이미지: 전체 보이게 (잘림 방지) */
+    .menu-img{
+        width: 100%;
+        height: 150px;               /* 카드에서 동일 높이 유지 */
+        object-fit: contain;         /* ✅ cover → contain (전체 표시) */
+        object-position: center;
+        border-radius: 0.75rem;
+        border: 1px solid #e9ecef;
+        background: #fff;            /* 레터박스 배경 */
+        display: block;
+    }
+
+    .menu-img-placeholder{
+        width: 100%;
+        height: 150px;
+        border-radius: 0.75rem;
+        border: 1px dashed #ced4da;
+        background: #ffffff;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        color:#6c757d;
+        font-weight: 800;
+        font-size: 1.1rem;
+    }
+
+    .menu-name {
+        font-size: 1.9rem;
+        font-weight: 900;
+        text-align: center;
+        line-height: 1.1;
+        word-break: keep-all;
+    }
+
+    /* =========================
        ✅ 팝업(모달) 스타일
        ========================= */
     #recipePopupModal .modal-dialog{
@@ -139,6 +199,19 @@
         font-size: 2.4rem;
         font-weight: 900;
         letter-spacing: -0.2px;
+    }
+
+    /* ✅ [수정] 팝업 이미지: 전체 보이게 (잘림 방지) */
+    .popup-img{
+        width: 100%;
+        height: 320px;               /* ✅ max-height 대신 고정 높이로 통일(스크롤 안정) */
+        object-fit: contain;         /* ✅ cover → contain */
+        object-position: center;
+        border-radius: 0.85rem;
+        border: 1px solid #e9ecef;
+        background:#fff;
+        margin-bottom: 1rem;
+        display:block;
     }
 
     /* ✅ 팝업에서 블렌더 이미지는 더 크게 */
@@ -213,40 +286,59 @@
                          data-recipe-temp="{{temperature}}"
                          data-recipe-cup="{{cupSize}}"
                          data-recipe-category="{{category}}"
-                         data-use-blender="{{useBlender}}">
+                         data-use-blender="{{useBlender}}"
+                         data-imgname="{{imgname}}">
 
-                        <div class="card-body d-flex flex-column align-items-center justify-content-center">
-                            <div class="menu-name mb-3">{{menuName}}</div>
+                        <div class="menu-card-split">
+                            <!-- ✅ 왼쪽: 이미지 -->
+                            <div class="menu-card-left">
+                                {{#imgname}}
+                                    <img class="menu-img"
+                                         src="/img/{{imgname}}"
+                                         alt="{{menuName}}"
+                                         loading="lazy"
+                                         onerror="this.onerror=null; this.style.display='none'; this.parentElement.querySelector('.menu-img-placeholder')?.classList.remove('d-none');">
+                                    <div class="menu-img-placeholder d-none">NO IMAGE</div>
+                                {{/imgname}}
 
-                            <div class="d-flex flex-column align-items-center gap-2">
-                                <span class="badge text-bg-light">{{category}}</span>
+                                {{^imgname}}
+                                    <div class="menu-img-placeholder">NO IMAGE</div>
+                                {{/imgname}}
+                            </div>
 
-                                <div class="d-flex gap-2 align-items-center">
-                                    <span class="temp-badge temp-{{temperature}}">{{temperature}}</span>
+                            <!-- ✅ 오른쪽: 정보 -->
+                            <div class="menu-card-right">
+                                <div class="menu-name">{{menuName}}</div>
 
-                                    <!-- ✅ 목록(기본 출력)은 그대로 출력하되, JS에서 17/20만 1.7/2.0으로 변환 -->
-                                    <span class="cup-badge cup-badge-js">{{cupSize}}
-                                        {{#useBlender}}
-                                            <img class="blender-img-inline"
-                                                 src="/img/blender.jpg"
-                                                 alt="블렌더 사용"
-                                                 title="블렌더 사용">
-                                        {{/useBlender}}
-                                    </span>
+                                <div class="d-flex flex-column align-items-center gap-2">
+                                    <span class="badge text-bg-light">{{category}}</span>
+
+                                    <div class="d-flex gap-2 align-items-center">
+                                        <span class="temp-badge temp-{{temperature}}">{{temperature}}</span>
+
+                                        <span class="cup-badge cup-badge-js">{{cupSize}}
+                                            {{#useBlender}}
+                                                <img class="blender-img-inline"
+                                                     src="/img/blender.jpg"
+                                                     alt="블렌더 사용"
+                                                     title="블렌더 사용">
+                                            {{/useBlender}}
+                                        </span>
+                                    </div>
                                 </div>
                             </div>
-
-                            <!-- ✅ hidden steps/times (팝업에서 사용) -->
-                            <div class="d-none recipe-steps" id="recipe-steps-{{id}}">
-                                {{#steps}}
-                                    <div class="recipe-step-text">{{.}}</div>
-                                {{/steps}}
-                                {{#stepTimes}}
-                                    <div class="recipe-step-time">{{.}}</div>
-                                {{/stepTimes}}
-                            </div>
-
                         </div>
+
+                        <!-- ✅ hidden steps/times (팝업에서 사용) -->
+                        <div class="d-none recipe-steps" id="recipe-steps-{{id}}">
+                            {{#steps}}
+                                <div class="recipe-step-text">{{.}}</div>
+                            {{/steps}}
+                            {{#stepTimes}}
+                                <div class="recipe-step-time">{{.}}</div>
+                            {{/stepTimes}}
+                        </div>
+
                     </div>
                 </div>
             {{/recipeRows}}
@@ -271,6 +363,9 @@
             </div>
 
             <div class="modal-body">
+                <!-- ✅ 팝업 이미지 영역(있을 때만 JS로 넣음) -->
+                <div id="popup-img-wrap"></div>
+
                 <div class="popup-meta" id="popup-meta"></div>
                 <div id="popup-steps"></div>
             </div>
@@ -294,6 +389,7 @@
         const popupTitle = document.getElementById('popup-title');
         const popupMeta = document.getElementById('popup-meta');
         const popupSteps = document.getElementById('popup-steps');
+        const popupImgWrap = document.getElementById('popup-img-wrap');
 
         function parseTruth(v) {
             const s = String(v || '').trim().toLowerCase();
@@ -311,21 +407,16 @@
         // ✅ 목록(기본 출력)용: 17 -> 1.7, 20 -> 2.0 만 적용, 나머지는 그대로
         function displayCupInList(rawCupText) {
             const raw = String(rawCupText || '').trim().toUpperCase();
-
-            // enum / 리터 / 숫자(ounce 저장값) 모두 대응
             if (raw === 'L17' || raw === '17L' || raw === '57' || raw === '17') return '1.7';
             if (raw === 'L20' || raw === '20L' || raw === '67' || raw === '20') return '2.0';
-
             return String(rawCupText || '').trim();
         }
 
         // ✅ 팝업(모달)용: 17 -> 1.7L, 20 -> 2.0L 만 적용, 나머지는 그대로
         function displayCupInModal(rawCupText) {
             const raw = String(rawCupText || '').trim().toUpperCase();
-
             if (raw === 'L17' || raw === '17L' || raw === '57' || raw === '17') return '1.7L';
             if (raw === 'L20' || raw === '20L' || raw === '67' || raw === '20') return '2.0L';
-
             return String(rawCupText || '').trim();
         }
 
@@ -333,14 +424,9 @@
         function applyCupDisplayOnCards() {
             const badges = grid.querySelectorAll('.cup-badge-js');
             badges.forEach(badge => {
-                // blender img가 같이 들어있으니, 텍스트만 안전하게 바꾸기
-                // 1) 현재 텍스트만 추출
                 const textNodes = Array.from(badge.childNodes).filter(n => n.nodeType === Node.TEXT_NODE);
                 const rawText = (textNodes.map(n => n.textContent).join('') || '').trim();
-
                 const newText = displayCupInList(rawText);
-
-                // 2) 기존 텍스트 노드 제거 후, 맨 앞에 새 텍스트 노드 삽입
                 textNodes.forEach(n => badge.removeChild(n));
                 badge.insertBefore(document.createTextNode(newText + ' '), badge.firstChild);
             });
@@ -353,11 +439,12 @@
             const cupRaw = card.dataset.recipeCup || '';
             const category = card.dataset.recipeCategory || '';
             const useBlender = parseTruth(card.dataset.useBlender);
+            const imgname = (card.dataset.imgname || '').trim();
 
             // 제목
             popupTitle.textContent = name;
 
-            // 제목 옆 블렌더 이미지(팝업에서 크게)
+            // 제목 옆 블렌더(팝업)
             popupTitleWrap.querySelectorAll('img.blender-img-modal, span.blender-note').forEach(el => el.remove());
             if (useBlender) {
                 const img = document.createElement('img');
@@ -374,10 +461,26 @@
                 popupTitleWrap.appendChild(note);
             }
 
-            // 메타 정보 (✅ 팝업에서만 1.7L / 2.0L 표기)
+            // ✅ 팝업 이미지(있을 때만) - CSS에서 contain이라 전체가 보입니다.
+            if (popupImgWrap) {
+                popupImgWrap.innerHTML = '';
+                if (imgname) {
+                    const imgEl = document.createElement('img');
+                    imgEl.className = 'popup-img';
+                    imgEl.src = '/img/' + imgname;
+                    imgEl.alt = name;
+                    imgEl.loading = 'lazy';
+                    imgEl.onerror = function () {
+                        popupImgWrap.innerHTML = '';
+                    };
+                    popupImgWrap.appendChild(imgEl);
+                }
+            }
+
+            // 메타
             const tempLabel = temp === 'HOT' ? 'HOT 🔥' : (temp === 'ICE' ? 'ICE ❄' : temp);
             const cupLabel = displayCupInModal(cupRaw);
-            popupMeta.textContent = `카테고리: ${category} · 온도: ${tempLabel} · 컵: ${cupLabel}`;
+            popupMeta.textContent = `카테고리: ${category} · 온도: ${tempLabel} · 컵: ${cupLabel}` + (imgname ? ` · 이미지: ${imgname}` : '');
 
             // 스텝/시간 읽기
             const hidden = document.getElementById('recipe-steps-' + id);
@@ -399,7 +502,7 @@
                 row.className = 'popup-step';
                 row.innerHTML = `
                     <span class="idx">Step ${idx + 1}.</span>
-                    <span class="txt">${txt.replace(/\n/g, '<br>')}</span>
+                    <span class="txt">${txt.replace(/\\n/g, '<br>')}</span>
                     ${t ? `<span class="time">(${t}초)</span>` : ``}
                 `;
 
@@ -411,7 +514,6 @@
                 popupSteps.appendChild(row);
             });
 
-            // 첫 스텝 선택
             const first = popupSteps.querySelector('.popup-step');
             if (first) first.classList.add('selected');
         }

@@ -105,7 +105,7 @@ public class CafeController {
         // 2) 엔티티 → DTO 변환 (폼에 뿌릴 값 세팅)
         RecipeCreateRequestDto dto = RecipeCreateRequestDto.toForm(recipe);
 
-        log.info("dto: " + dto);
+        log.info("edit : dto: " + dto);
 
         // 3) 모델에 담아서 뷰로 전달
         model.addAttribute("recipeId", id);   // hidden 필드용 등

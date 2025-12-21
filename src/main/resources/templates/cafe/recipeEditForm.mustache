@@ -202,6 +202,23 @@
                         <input type="text" class="form-control" id="description" name="description" value="{{recipe.description}}" placeholder="예) 아이스 전용, 연한 단맛, 초보 바리스타용">
                     </div>
 
+                    <!-- ✅ 추가: 이미지 이름(imgname) - 간단설명 아래 -->
+                    <!-- ✅ Mustache 안전 접근: recipe.imgname 금지 / recipe 컨텍스트 안에서 imgname -->
+                    <div class="mb-3">
+                        <label for="imgname" class="form-label fw-semibold">
+                            이미지 이름 <span class="text-muted small">(선택)</span>
+                        </label>
+                        <input type="text"
+                               class="form-control"
+                               id="imgname"
+                               name="imgname"
+                               value="{{#recipe}}{{imgname}}{{/recipe}}"
+                               placeholder="예) vanilla_latte.png">
+                        <div class="form-text text-muted small">
+                            현재 값이 없어도 정상 동작합니다. 파일명만 저장하는 용도라면 확장자 포함으로 입력해 주세요.
+                        </div>
+                    </div>
+
                     <div class="mb-3">
                         <label class="form-label fw-semibold d-block">HOT / ICE</label>
                         <div class="btn-group temp-group" role="group" aria-label="Temperature select">
@@ -225,7 +242,6 @@
                             <input type="radio" class="btn-check" name="cupSize" id="cup32" value="OZ32" autocomplete="off">
                             <label class="btn btn-outline-secondary" for="cup32">32oz</label>
 
-                            <!-- ✅ 추가된 enum: L17 / L20 -->
                             <input type="radio" class="btn-check" name="cupSize" id="cupL17" value="L17" autocomplete="off">
                             <label class="btn btn-outline-secondary" for="cupL17">1.7L</label>
 
@@ -237,11 +253,8 @@
                         </div>
                     </div>
 
-                    <!-- ✅ useBlender 스위치 (카테고리 바로 위) : Spring 표준 마커 방식으로 수정 -->
                     <div class="mb-2">
                         <label class="form-label fw-semibold d-block">블렌더 사용</label>
-
-                        <!-- ✅ unchecked일 때 false 처리용 마커 (name이 _useBlender 이어야 함) -->
                         <input type="hidden" name="_useBlender" value="on">
 
                         <div class="blender-switch-row">
@@ -512,7 +525,6 @@
         const cupL20 = document.getElementById('cupL20');
 
         function setDefaultCupByTemp(temp) {
-            // 기존 규칙 유지: HOT=20oz, ICE=24oz
             if (temp === 'HOT') cup20.checked = true;
             else if (temp === 'ICE') cup24.checked = true;
         }
@@ -520,11 +532,6 @@
         tempHot.addEventListener('change', function () { if (tempHot.checked) setDefaultCupByTemp('HOT'); });
         tempIce.addEventListener('change', function () { if (tempIce.checked) setDefaultCupByTemp('ICE'); });
 
-        /* =========================
-           컵 표시 라벨(미리보기용)
-           - enum CupSize: OZ20/OZ24/OZ32/L17/L20
-           - 화면표시: L17 -> 1.7L, L20 -> 2.0L
-           ========================= */
         function cupLabelByValue(v) {
             switch (v) {
                 case 'OZ20': return '20oz';
@@ -536,9 +543,6 @@
             }
         }
 
-        /* =========================
-           초기값 세팅 (temperature, cupSize, category)
-           ========================= */
         (function initSelections() {
             const initialTemp = form.dataset.temp;
             const initialCup = form.dataset.cup;
@@ -547,7 +551,6 @@
             if (initialTemp === 'ICE') tempIce.checked = true;
             else tempHot.checked = true;
 
-            // ✅ 초기 컵사이즈: L17/L20 포함
             if (initialCup === 'OZ24') cup24.checked = true;
             else if (initialCup === 'OZ32') cup32.checked = true;
             else if (initialCup === 'L17') cupL17.checked = true;
@@ -612,6 +615,7 @@
         function buildPreview() {
             const menuNameInput = document.getElementById('menuName');
             const descInput = document.getElementById('description');
+            const imgInput = document.getElementById('imgname');
 
             const selectedTemp = form.querySelector('input[name="temperature"]:checked');
             const selectedCup = form.querySelector('input[name="cupSize"]:checked');
@@ -619,6 +623,7 @@
 
             const menuName = menuNameInput ? menuNameInput.value.trim() : '';
             const description = descInput ? descInput.value.trim() : '';
+            const imgname = imgInput ? imgInput.value.trim() : '';
 
             const tempValue = selectedTemp ? selectedTemp.value : '';
             const cupValue = selectedCup ? selectedCup.value : '';
@@ -629,14 +634,16 @@
             const previewBasicInfoEl = document.getElementById('preview-basic-info');
 
             if (previewMenuNameEl) previewMenuNameEl.textContent = menuName || '메뉴 이름 미입력';
-            if (previewDescriptionEl) previewDescriptionEl.textContent = description || '';
+
+            if (previewDescriptionEl) {
+                const descLine = description || '';
+                const imgLine = imgname ? ` (img: ${imgname})` : '';
+                previewDescriptionEl.textContent = (descLine + imgLine).trim();
+            }
 
             const infoParts = [];
             if (tempValue) infoParts.push(tempValue === 'HOT' ? 'HOT (핫)' : 'ICE (아이스)');
-
-            // ✅ 미리보기 컵 표시: L17=1.7L, L20=2.0L
             if (cupValue) infoParts.push('컵: ' + cupLabelByValue(cupValue));
-
             if (categoryLabel) infoParts.push('카테고리: ' + categoryLabel);
             if (useBlenderToggle) infoParts.push('블렌더: ' + (useBlenderToggle.checked ? 'ON' : 'OFF'));
 

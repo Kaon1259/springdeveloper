@@ -57,6 +57,38 @@
         box-shadow:0 0.25rem 0.6rem rgba(0,0,0,0.1);
     }
 
+    /* =========================
+       ✅ (추가) pill 좌측 썸네일 이미지
+       - "온즈(컵뱃지) 왼쪽"에 위치
+       - 전체가 보이도록 contain
+       ========================= */
+    .recipe-thumb{
+        width:2.2rem;
+        height:2.2rem;
+        min-width:2.2rem;
+        border-radius:0.6rem;
+        border:1px solid #dee2e6;
+        background:#fff;
+        object-fit:contain;
+        display:inline-block;
+        flex:0 0 auto;
+    }
+    .recipe-thumb-placeholder{
+        width:2.2rem;
+        height:2.2rem;
+        min-width:2.2rem;
+        border-radius:0.6rem;
+        border:1px dashed #ced4da;
+        background:#ffffff;
+        display:inline-flex;
+        align-items:center;
+        justify-content:center;
+        color:#6c757d;
+        font-weight:900;
+        font-size:0.75rem;
+        flex:0 0 auto;
+    }
+
     .cup-badge{
         width:2.0rem;
         height:2.0rem;
@@ -154,6 +186,23 @@
         max-height:80vh;
         overflow-y:auto;
     }
+
+    /* =========================
+       ✅ (추가) 모달 상단 이미지 영역
+       - 전체가 보이도록 contain
+       ========================= */
+    .modal-recipe-img{
+        width:100%;
+        max-height:320px;
+        height:auto;
+        object-fit:contain;
+        border-radius:0.85rem;
+        border:1px solid #e9ecef;
+        background:#fff;
+        margin-bottom:1rem;
+        display:block;
+    }
+
     #recipeDetailMeta{ font-size:2rem !important; }
     #recipe-steps-content{ padding-right:0.5rem; }
 
@@ -225,9 +274,23 @@
                                      data-name="{{menuName}}"
                                      data-temp="{{temperature}}"
                                      data-cup="{{cupSize}}"
-                                     data-use-blender="{{useBlender}}">
+                                     data-use-blender="{{useBlender}}"
+                                     data-imgname="{{imgname}}">
 
                                     <span class="recipe-pill" data-temp="{{temperature}}">
+                                        <!-- ✅ (추가) 썸네일: 온즈(컵뱃지) 왼쪽 -->
+                                        {{#imgname}}
+                                            <img class="recipe-thumb"
+                                                 src="/img/{{imgname}}"
+                                                 alt="{{menuName}}"
+                                                 loading="lazy"
+                                                 onerror="this.onerror=null; this.style.display='none'; this.parentElement.querySelector('.recipe-thumb-placeholder')?.classList.remove('d-none');">
+                                            <span class="recipe-thumb-placeholder d-none">NO</span>
+                                        {{/imgname}}
+                                        {{^imgname}}
+                                            <span class="recipe-thumb-placeholder">NO</span>
+                                        {{/imgname}}
+
                                         <span class="cup-badge cup-badge-js">{{cupSize}}</span>
                                         <span class="menu-name-text">{{menuName}}</span>
                                     </span>
@@ -276,6 +339,9 @@
             </div>
 
             <div class="modal-body">
+                <!-- ✅ (추가) 모달 이미지 영역: JS로 넣음(있을 때만) -->
+                <div id="recipeDetailImgWrap"></div>
+
                 <div id="recipeDetailMeta" class="mb-3 text-muted"></div>
                 <div id="recipe-steps-content"></div>
             </div>
@@ -333,34 +399,24 @@
             return m ? (m[1] + "oz") : raw;
         }
 
-        // ✅ 요구사항: "기본 목록 뱃지"는 기존대로 두되,
-        // - 컵사이즈가 17이면 "1.7"
-        // - 컵사이즈가 20이면 "2.0"
-        // 만 바꿔서 표시
+        // ✅ 목록 뱃지: 17->1.7, 20->2.0만. 나머지는 2자리만
         function displayBadgeText(rawCupText) {
             const raw = String(rawCupText || "").trim().toUpperCase();
 
-            // enum(L17/L20) 또는 숫자/리터 표기 대응
-            if (raw === "L17" || raw === "17L" || raw === "57") return "1.7";
-            if (raw === "L20" || raw === "20L" || raw === "67") return "2.0";
+            if (raw === "L17" || raw === "17L" || raw === "57" || raw === "17") return "1.7";
+            if (raw === "L20" || raw === "20L" || raw === "67" || raw === "20") return "2.0";
 
-            // 기존처럼 20/24/32는 2자리 숫자만 표시
             const m = raw.match(/(\d{2})/);
             return m ? m[1] : raw;
         }
 
-        // ✅ 요구사항: "팝업(모달)"에서만
-        // - 17, L17, 17L, 57 -> 1.7L
-        // - 20, L20, 20L, 67 -> 2.0L
-        // 그 외는 기존대로(20oz/24oz/32oz 등)
+        // ✅ 모달(팝업)에서만 17/20 리터계열 표기 변환
         function normalizeCupForModal(cupText) {
             const raw = String(cupText || "").trim().toUpperCase();
 
-            // 17/20 리터계열만 변환
             if (raw === "L17" || raw === "17" || raw === "17L" || raw === "57") return "1.7L";
             if (raw === "L20" || raw === "20" || raw === "20L" || raw === "67") return "2.0L";
 
-            // 나머지는 기존 로직 유지
             return normalizeOz(cupText);
         }
 
@@ -377,7 +433,7 @@
                 if (temp === "ICE") badge.classList.add("cup-ice");
                 else if (temp === "HOT") badge.classList.add("cup-hot");
 
-                // ✅ 기본 목록 출력: 기존 유지 + 17->1.7, 20->2.0만 적용
+                // ✅ 기본 목록 출력 변환
                 const rawBadge = (badge.textContent || "").trim();
                 badge.textContent = displayBadgeText(rawBadge);
 
@@ -406,13 +462,13 @@
             });
         }
 
-        // ✅ 모달 타이틀: 레시피명 + 블렌더(사용/미사용) + 온도(HOT/ICE) + 컵(팝업에서만 1.7L/2.0L 변환)
+        // ✅ 모달 타이틀: 레시피명 + 블렌더 + 온도 + 컵
         function setModalTitle(name, useBlender, temp, cupRaw) {
             const titleEl = document.getElementById("recipeDetailModalLabel");
             if (!titleEl) return;
 
             const t = String(temp || "").toUpperCase();
-            const cupLabel = normalizeCupForModal(cupRaw); // ✅ 팝업용 변환만 적용
+            const cupLabel = normalizeCupForModal(cupRaw);
 
             titleEl.innerHTML = "";
 
@@ -422,10 +478,8 @@
             const nameSpan = document.createElement("span");
             nameSpan.className = "modal-title-name";
             nameSpan.textContent = name;
-
             wrap.appendChild(nameSpan);
 
-            // 블렌더 칩 + (사용이면 이미지)
             const blenderChip = document.createElement("span");
             blenderChip.className = "meta-chip " + (useBlender ? "blender-yes" : "blender-no");
             blenderChip.textContent = useBlender ? "블렌더 사용" : "블렌더 미사용";
@@ -439,13 +493,11 @@
                 wrap.appendChild(img);
             }
 
-            // 온도 칩
             const tempChip = document.createElement("span");
             tempChip.className = "meta-chip " + (t === "HOT" ? "temp-hot" : (t === "ICE" ? "temp-ice" : ""));
             tempChip.textContent = t ? t : "TEMP";
             wrap.appendChild(tempChip);
 
-            // 컵 칩 (✅ 팝업에서만 1.7L / 2.0L)
             const cupChip = document.createElement("span");
             cupChip.className = "meta-chip cup-chip";
             cupChip.textContent = cupLabel || "컵";
@@ -454,17 +506,40 @@
             titleEl.appendChild(wrap);
         }
 
+        // ✅ (추가) 모달 이미지 빌드: imgname 있을 때만 출력 (이전 코드 방식)
+        function setModalImage(imgname, altText) {
+            const wrap = document.getElementById("recipeDetailImgWrap");
+            if (!wrap) return;
+
+            wrap.innerHTML = "";
+            const name = String(imgname || "").trim();
+            if (!name) return;
+
+            const img = document.createElement("img");
+            img.className = "modal-recipe-img";
+            img.src = "/img/" + name;
+            img.alt = altText || "레시피 이미지";
+            img.loading = "lazy";
+            img.onerror = function () {
+                // 이미지가 실제로 없으면 깔끔하게 제거
+                wrap.innerHTML = "";
+            };
+            wrap.appendChild(img);
+        }
+
         function openRecipeModal(wrapper) {
             const id = wrapper.dataset.id;
             const name = wrapper.dataset.name || "레시피 상세";
             const useBlender = parseTruth(wrapper.dataset.useBlender);
             const temp = wrapper.dataset.temp || "";
             const cup = wrapper.dataset.cup || "";
+            const imgname = wrapper.dataset.imgname || "";
 
             const stepsHtml = document.getElementById("recipe-steps-" + id)?.innerHTML;
 
-            // ✅ 팝업에서만 17/20 => 1.7L/2.0L 변환
+            // ✅ 타이틀/이미지/내용 세팅
             setModalTitle(name, useBlender, temp, cup);
+            setModalImage(imgname, name);
 
             document.getElementById("recipe-steps-content").innerHTML =
                     stepsHtml ? stepsHtml : "<p>스텝 없음</p>";

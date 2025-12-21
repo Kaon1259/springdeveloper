@@ -39,6 +39,9 @@ public class Recipe {
     @Column(length = 255)
     private String description;
 
+    @Column(length = 255)
+    private String imgname;
+
     @Column(nullable = false)
     private boolean visible = false;   // 기본 비노출
 
