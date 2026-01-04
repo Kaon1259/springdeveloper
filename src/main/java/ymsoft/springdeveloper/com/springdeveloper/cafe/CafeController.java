@@ -1,5 +1,7 @@
 package ymsoft.springdeveloper.com.springdeveloper.cafe;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,6 +24,9 @@ public class CafeController {
 
     @Autowired
     private RecipeService recipeService;
+
+    @Autowired
+    private ObjectMapper objectMapper; // ✅ 스프링이 모듈 등록된 ObjectMapper를 주입
 
     @GetMapping("")
     public String cafe(Model model) {
@@ -88,9 +93,13 @@ public class CafeController {
 
 
     @GetMapping("/recipe/new")
-    public String showCreateForm(Model model) {
+    public String showCreateForm(Model model) throws JsonProcessingException {
         List<RecipeCreateRequestDto>  templateRecipesDto = recipeService.getTemplateRecipes();
         model.addAttribute("templateRecipes", templateRecipesDto);
+
+        String json = objectMapper.writeValueAsString(templateRecipesDto);
+        json = json.replace("</", "<\\/"); // ✅ </script> 깨짐 방지
+        model.addAttribute("templateRecipesJson", json);
 
         return "cafe/recipeNewForm";
     }

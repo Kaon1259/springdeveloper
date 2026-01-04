@@ -34,11 +34,26 @@
     .category-badge.cat-hukdang{ border-color:#111; color:#111; }
     .category-badge.cat-ade{ border-color:#0d6efd; color:#0d6efd; }
 
+    /* =========================
+       ✅ (변경) 레시피 목록을 "한 줄씩" 세로 출력
+       ========================= */
+    .recipe-list-vertical{
+        display:flex;
+        flex-direction:column;
+        gap:0.6rem;              /* 줄 간격 */
+    }
+    .recipe-pill-wrapper.recipe-line{
+        width:100%;
+    }
+
+    /* =========================
+       ✅ (변경) pill을 한 행(100%)으로
+       ========================= */
     .recipe-pill{
-        display:inline-flex;
+        display:flex;            /* inline-flex -> flex */
         align-items:center;
         gap:0.55rem;
-        padding:0.48rem 1rem 0.48rem 0.7rem;
+        padding:0.55rem 1rem 0.55rem 0.7rem;
         border-radius:999px;
         font-weight:700;
         cursor:pointer;
@@ -49,6 +64,7 @@
         font-size:0.98rem;
         user-select:none;
         line-height:1;
+        width:100%;              /* ✅ 한 줄 꽉 차게 */
     }
     .recipe-pill[data-temp="HOT"]{ border-color:#dc3545; }
     .recipe-pill[data-temp="ICE"]{ border-color:#0d6efd; }
@@ -58,9 +74,7 @@
     }
 
     /* =========================
-       ✅ (추가) pill 좌측 썸네일 이미지
-       - "온즈(컵뱃지) 왼쪽"에 위치
-       - 전체가 보이도록 contain
+       ✅ pill 좌측 썸네일 이미지
        ========================= */
     .recipe-thumb{
         width:2.2rem;
@@ -188,8 +202,7 @@
     }
 
     /* =========================
-       ✅ (추가) 모달 상단 이미지 영역
-       - 전체가 보이도록 contain
+       ✅ 모달 상단 이미지 영역
        ========================= */
     .modal-recipe-img{
         width:100%;
@@ -267,9 +280,10 @@
                         <span class="category-badge category-badge-js">{{categoryLabel}}</span>
                     </td>
                     <td>
-                        <div class="d-flex flex-wrap gap-2">
+                        <!-- ✅ (변경) 한 행에 한 레시피씩(세로) -->
+                        <div class="recipe-list-vertical">
                             {{#recipes}}
-                                <div class="recipe-pill-wrapper"
+                                <div class="recipe-pill-wrapper recipe-line"
                                      data-id="{{id}}"
                                      data-name="{{menuName}}"
                                      data-temp="{{temperature}}"
@@ -278,7 +292,7 @@
                                      data-imgname="{{imgname}}">
 
                                     <span class="recipe-pill" data-temp="{{temperature}}">
-                                        <!-- ✅ (추가) 썸네일: 온즈(컵뱃지) 왼쪽 -->
+                                        <!-- ✅ 썸네일: 왼쪽 -->
                                         {{#imgname}}
                                             <img class="recipe-thumb"
                                                  src="/img/{{imgname}}"
@@ -339,7 +353,6 @@
             </div>
 
             <div class="modal-body">
-                <!-- ✅ (추가) 모달 이미지 영역: JS로 넣음(있을 때만) -->
                 <div id="recipeDetailImgWrap"></div>
 
                 <div id="recipeDetailMeta" class="mb-3 text-muted"></div>
@@ -368,7 +381,6 @@
 
                 const lower = txt.toLowerCase();
 
-                // 흑당/주스/스무디/퐁크러쉬 → 파란색(cat-ice)
                 if (txt.includes("흑당") || txt.includes("주스") || txt.includes("스무디") || txt.includes("퐁크러쉬")) {
                     badge.classList.add("cat-ice");
                     return;
@@ -392,14 +404,12 @@
             return (s === "true" || s === "1" || s === "y" || s === "yes" || s === "on");
         }
 
-        // ✅ 기존 기본 출력(모달 원래 로직) 유지용: 2자리 숫자만 잡아서 oz로 만드는 방식
         function normalizeOz(cupText) {
             const raw = String(cupText || "").trim();
             const m = raw.match(/(\d{2})/);
             return m ? (m[1] + "oz") : raw;
         }
 
-        // ✅ 목록 뱃지: 17->1.7, 20->2.0만. 나머지는 2자리만
         function displayBadgeText(rawCupText) {
             const raw = String(rawCupText || "").trim().toUpperCase();
 
@@ -410,7 +420,6 @@
             return m ? m[1] : raw;
         }
 
-        // ✅ 모달(팝업)에서만 17/20 리터계열 표기 변환
         function normalizeCupForModal(cupText) {
             const raw = String(cupText || "").trim().toUpperCase();
 
@@ -433,7 +442,6 @@
                 if (temp === "ICE") badge.classList.add("cup-ice");
                 else if (temp === "HOT") badge.classList.add("cup-hot");
 
-                // ✅ 기본 목록 출력 변환
                 const rawBadge = (badge.textContent || "").trim();
                 badge.textContent = displayBadgeText(rawBadge);
 
@@ -462,7 +470,6 @@
             });
         }
 
-        // ✅ 모달 타이틀: 레시피명 + 블렌더 + 온도 + 컵
         function setModalTitle(name, useBlender, temp, cupRaw) {
             const titleEl = document.getElementById("recipeDetailModalLabel");
             if (!titleEl) return;
@@ -506,7 +513,6 @@
             titleEl.appendChild(wrap);
         }
 
-        // ✅ (추가) 모달 이미지 빌드: imgname 있을 때만 출력 (이전 코드 방식)
         function setModalImage(imgname, altText) {
             const wrap = document.getElementById("recipeDetailImgWrap");
             if (!wrap) return;
@@ -521,7 +527,6 @@
             img.alt = altText || "레시피 이미지";
             img.loading = "lazy";
             img.onerror = function () {
-                // 이미지가 실제로 없으면 깔끔하게 제거
                 wrap.innerHTML = "";
             };
             wrap.appendChild(img);
@@ -537,7 +542,6 @@
 
             const stepsHtml = document.getElementById("recipe-steps-" + id)?.innerHTML;
 
-            // ✅ 타이틀/이미지/내용 세팅
             setModalTitle(name, useBlender, temp, cup);
             setModalImage(imgname, name);
 

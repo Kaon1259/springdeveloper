@@ -3,93 +3,72 @@
 <style>
     body { background-color: #f8f9fa; }
 
-    .card-count-badge { font-size: 0.85rem; }
-
-    /* 카테고리 칩 스타일 */
-    .category-chip-group { display:flex; flex-wrap:wrap; gap:0.5rem; }
+    .category-chip-group{ display:flex; flex-wrap:wrap; gap:0.5rem; }
     .category-chip{
         border-radius:999px; border:1px solid #dee2e6; background:#fff;
         padding:0.35rem 0.9rem; font-size:0.9rem; cursor:pointer;
         transition: background-color 0.1s ease, color 0.1s ease, box-shadow 0.1s ease, border-color 0.1s ease;
         white-space:nowrap;
     }
-    .category-chip:hover { background:#f1f3f5; }
+    .category-chip:hover{ background:#f1f3f5; }
     .category-chip.selected{
         background:#0d6efd; color:#fff; border-color:#0d6efd;
         box-shadow:0 0.3rem 0.7rem rgba(13,110,253,0.35);
     }
 
-    /* HOT / ICE, 컵 사이즈용 버튼 그룹 약간 크게 */
-    .temp-group .btn, .cup-group .btn { min-width:80px; }
-    .temp-group .btn-outline-danger, .temp-group .btn-outline-primary { font-weight:600; }
+    .temp-group .btn, .cup-group .btn { min-width: 80px; }
+    .temp-group .btn-outline-danger, .temp-group .btn-outline-primary { font-weight: 600; }
 
-    /* ✅ 상단 기본 입력 영역 라운드 렉트 (주황색 테두리) */
     .form-wrapper{
-        border-radius:1rem;
-        border:2px solid #fd7e14;
-        padding:1rem 1.25rem;
-        background:#fff;
-        margin-bottom:1rem;
+        border-radius:1rem; border:2px solid #fd7e14;
+        padding:1rem 1.25rem; background:#fff; margin-bottom:1rem;
     }
 
-    /* ✅ 레시피 단계 영역 라운드 렉트 (주황색 테두리) */
     .step-wrapper{
-        border-radius:1rem;
-        border:2px solid #fd7e14;
-        padding:0.75rem 0.75rem 0.25rem;
-        background:#fff;
+        border-radius:1rem; border:2px solid #fd7e14;
+        padding:0.75rem 0.75rem 0.25rem; background:#fff;
     }
 
-    /* =========================
-       템플릿 모달용 스타일
-       ========================= */
-    .template-list{ display:flex; flex-direction:column; gap:0.75rem; }
-
-    .template-card{
-        border-radius:0.9rem;
-        border:2px solid #dee2e6;
-        padding:0.75rem 1rem;
-        background:#fff;
-        cursor:pointer;
-        transition: box-shadow 0.15s ease, border-color 0.15s ease, background-color 0.15s ease;
-    }
-    .template-card:hover{
-        box-shadow:0 0.45rem 1rem rgba(0,0,0,0.12);
-        border-color:#0d6efd;
-    }
-    .template-card.selected{
-        border-color:#0d6efd;
-        background:#e7f1ff;
-        box-shadow:0 0.55rem 1.2rem rgba(13,110,253,0.35);
-    }
-    .template-card-header{
-        display:flex; justify-content:space-between; align-items:center;
-        margin-bottom:0.35rem;
-    }
-    .template-title{ font-weight:700; font-size:1rem; }
-    .template-meta{ font-size:0.8rem; color:#6c757d; }
-    .template-tags{ display:flex; flex-wrap:wrap; gap:0.25rem; margin-top:0.25rem; }
-    .template-tag{
-        border-radius:999px;
-        padding:0.1rem 0.5rem;
-        font-size:0.75rem;
-        border:1px solid #ced4da;
-        background:#f8f9fa;
-    }
-
-    /* 🔢 Step 옆 초 입력 UI */
     .step-time-group{ display:inline-flex; align-items:center; gap:0.25rem; margin-left:0.75rem; }
     .step-time-input{ width:70px; padding:0.1rem 0.35rem; font-size:0.8rem; text-align:right; }
     .step-time-label{ font-size:0.8rem; color:#6c757d; white-space:nowrap; }
 
-    /* =========================
-       ✅ useBlender 스위치 UI (신규 작성에도 동일 적용)
-       ========================= */
+    #recipePreviewModal .modal-dialog{ max-width:1200px; width:95%; }
+    #recipePreviewModal .modal-content{
+        border-radius:0.75rem; box-shadow:0 0.75rem 1.5rem rgba(0,0,0,0.25);
+        max-height:90vh;
+    }
+    #recipePreviewModal .modal-body{ font-size:2.4rem; max-height:80vh; overflow-y:auto; }
+
+    #recipe-steps-content{ padding-right:0.5rem; }
+
+    .recipe-step{
+        position:relative; background:#fff; border-radius:0.5rem;
+        padding:1.1rem 1.4rem; margin-bottom:1rem;
+        box-shadow:0 0.35rem 0.8rem rgba(0,0,0,0.08);
+        border-left:6px solid #0d6efd;
+        font-size:2.7rem; line-height:1.45; cursor:pointer;
+        transition: background-color .15s ease, color .15s ease, box-shadow .15s ease;
+    }
+    .step-index{ font-weight:900; margin-right:0.9rem; }
+    .step-text{ display:inline-block; vertical-align:middle; }
+
+    #recipe-steps-content .recipe-step:nth-child(2){ margin-left:18px; }
+    #recipe-steps-content .recipe-step:nth-child(3){ margin-left:36px; }
+    #recipe-steps-content .recipe-step:nth-child(4){ margin-left:54px; }
+    #recipe-steps-content .recipe-step:nth-child(5){ margin-left:72px; }
+    #recipe-steps-content .recipe-step:nth-child(6){ margin-left:90px; }
+    #recipe-steps-content .recipe-step:nth-child(7){ margin-left:108px; }
+
+    .recipe-step.step-selected{
+        background:#0d6efd; color:#fff;
+        box-shadow:0 0.35rem 0.9rem rgba(13,110,253,0.45);
+    }
+    .recipe-step.empty-step{ border-left-color:#adb5bd; color:#6c757d; }
+
+    /* ✅ useBlender 스위치 UI */
     .blender-switch-row{
-        display:flex;
-        align-items:center;
-        justify-content:space-between;
-        gap:1rem;
+        display:flex; align-items:center; justify-content:space-between; gap:1rem;
         padding:0.65rem 0.85rem;
         border-radius:0.85rem;
         border:1px solid #e9ecef;
@@ -97,40 +76,26 @@
         margin-bottom:0.75rem;
     }
     .blender-switch-title{
-        display:flex;
-        flex-direction:column;
-        gap:0.1rem;
-        min-width:0;
+        display:flex; flex-direction:column; gap:0.1rem; min-width:0;
     }
     .blender-switch-title .title{
-        font-weight:800;
-        letter-spacing:-0.2px;
-        display:flex;
-        align-items:center;
-        gap:0.4rem;
+        font-weight:800; letter-spacing:-0.2px;
+        display:flex; align-items:center; gap:0.4rem;
     }
     .blender-switch-title .desc{
-        font-size:0.85rem;
-        color:#6c757d;
-        line-height:1.25;
+        font-size:0.85rem; color:#6c757d; line-height:1.25;
     }
+
     .blender-badge-inline{
-        display:inline-flex;
-        align-items:center;
-        justify-content:center;
-        width:28px;
-        height:28px;
-        border-radius:999px;
+        display:inline-flex; align-items:center; justify-content:center;
+        width:28px; height:28px; border-radius:999px;
         border:2px solid rgba(111,78,55,0.45);
         background:#fff;
         box-shadow:0 2px 8px rgba(0,0,0,0.08);
-        overflow:hidden;
-        position:relative;
+        overflow:hidden; position:relative;
     }
     .blender-badge-inline::before{
-        content:"";
-        position:absolute;
-        inset:-40%;
+        content:""; position:absolute; inset:-40%;
         background: conic-gradient(
                 from 0deg,
                 rgba(111,78,55,0.25),
@@ -142,53 +107,64 @@
         animation: blenderGradSpin 10s linear infinite;
     }
     .blender-badge-inline::after{
-        content:"";
-        position:absolute;
-        inset:3px;
-        background:#fff;
-        border-radius:999px;
+        content:""; position:absolute; inset:3px;
+        background:#fff; border-radius:999px;
     }
     .blender-emoji-inline{
-        position:relative;
-        z-index:1;
-        font-size:16px;
+        position:relative; z-index:1; font-size:16px;
         filter: sepia(1) saturate(6) hue-rotate(340deg) brightness(0.9) contrast(1.05);
         animation: blenderEmojiSpin 10s linear infinite;
         transform-origin:50% 50%;
     }
-    @keyframes blenderGradSpin{ from{ transform:rotate(0deg);} to{ transform:rotate(360deg);} }
-    @keyframes blenderEmojiSpin{ from{ transform:rotate(0deg);} to{ transform:rotate(360deg);} }
+    @keyframes blenderGradSpin{ from{transform:rotate(0deg);} to{transform:rotate(360deg);} }
+    @keyframes blenderEmojiSpin{ from{transform:rotate(0deg);} to{transform:rotate(360deg);} }
 
     .blender-switch-row .form-check{
-        margin:0;
-        display:flex;
-        align-items:center;
-        gap:0.5rem;
-        flex-shrink:0;
+        margin:0; display:flex; align-items:center; gap:0.5rem; flex-shrink:0;
     }
     .blender-switch-row .form-check-input{
-        cursor:pointer;
-        width:3.2em;
-        height:1.7em;
+        cursor:pointer; width:3.2em; height:1.7em;
     }
     .blender-switch-row .form-check-label{
-        font-weight:800;
-        letter-spacing:-0.2px;
-        user-select:none;
+        font-weight:800; letter-spacing:-0.2px; user-select:none;
     }
     .blender-status-pill{
-        font-size:0.85rem;
-        font-weight:800;
+        font-size:0.85rem; font-weight:800;
         padding:0.18rem 0.55rem;
         border-radius:999px;
         border:1px solid #dee2e6;
-        background:#fff;
-        color:#6c757d;
+        background:#fff; color:#6c757d;
     }
     .blender-status-pill.on{
         color:#dc3545;
         border-color: rgba(220,53,69,0.35);
         background: rgba(220,53,69,0.06);
+    }
+
+    /* ✅ 템플릿 모달 UI */
+    #templateModal .modal-dialog { max-width: 980px; width:95%; }
+    .template-row{
+        cursor:pointer;
+        border:1px solid #e9ecef;
+        border-radius:0.8rem;
+        padding:0.75rem 0.9rem;
+        background:#fff;
+        transition: transform .08s ease, box-shadow .08s ease, border-color .08s ease;
+    }
+    .template-row:hover{
+        transform: translateY(-1px);
+        box-shadow: 0 0.35rem 0.8rem rgba(0,0,0,0.08);
+        border-color:#0d6efd;
+    }
+    .template-title{ font-weight:800; letter-spacing:-0.2px; }
+    .template-meta{ color:#6c757d; font-size:0.9rem; }
+    .template-pill{
+        font-size:0.8rem; font-weight:800;
+        padding:0.12rem 0.5rem;
+        border-radius:999px;
+        border:1px solid #dee2e6;
+        background:#f8f9fa;
+        white-space:nowrap;
     }
 </style>
 
@@ -196,41 +172,38 @@
     <div class="row justify-content-center">
         <div class="col-lg-8 col-md-10">
 
-            <!-- 제목 + 상단 버튼들 (템플릿 불러오기 + 목록) -->
             <div class="mb-3 d-flex justify-content-between align-items-center">
                 <div>
-                    <h3 class="mb-0 fw-bold">☕ 메뉴 레시피 작성</h3>
-                    <div class="text-muted small mt-1">
-                        메뉴 이름, 작성자, HOT/ICE, 컵 사이즈, 카테고리, 레시피를 순서대로 입력해 주세요.
-                    </div>
+                    <h3 class="mb-0 fw-bold">☕ 메뉴 레시피 만들기</h3>
+                    <div class="text-muted small mt-1">새 레시피를 등록합니다.</div>
                 </div>
-                <div class="d-flex gap-2">
-                    <button type="button"
-                            class="btn btn-sm btn-outline-primary"
-                            data-bs-toggle="modal"
-                            data-bs-target="#templateModal">
+
+                <div class="d-flex align-items-center gap-2">
+                    <!-- ✅ 추가: 템플릿 불러오기 버튼 -->
+                    <button type="button" class="btn btn-sm btn-outline-primary" id="btn-open-template">
                         템플릿 불러오기
                     </button>
 
-                    <a href="/cafe/recipes" class="btn btn-sm btn-outline-secondary">
-                        목록
-                    </a>
+                    <a href="/cafe/recipes" class="btn btn-sm btn-outline-secondary">목록</a>
                 </div>
             </div>
 
-            <!-- 레시피 작성 폼 -->
-            <form method="post" action="/cafe/recipe/save" id="recipe-form">
+            <form method="post"
+                  action="/cafe/recipe/save"
+                  id="recipe-form"
+                  data-temp="ICE"
+                  data-cup="OZ24"
+                  data-category="ICE_COFFEE"
+                  data-use-blender="false">
 
-                <!-- ✅ 기본 정보 영역 전체 라운드 박스 -->
                 <div class="form-wrapper">
 
-                    <!-- 메뉴 이름 + 노출 여부 체크박스 + 템플릿 등록 체크박스 -->
                     <div class="mb-3">
                         <div class="d-flex justify-content-between align-items-center mb-1">
                             <label for="menuName" class="form-label fw-semibold mb-0">메뉴 이름</label>
                             <div class="d-flex align-items-center gap-3">
                                 <div class="form-check mb-0">
-                                    <input class="form-check-input" type="checkbox" id="visible" name="visible">
+                                    <input class="form-check-input" type="checkbox" id="visible" name="visible" checked>
                                     <label class="form-check-label small" for="visible">노출 여부</label>
                                 </div>
                                 <div class="form-check mb-0">
@@ -242,38 +215,36 @@
                         <input type="text" class="form-control" id="menuName" name="menuName" placeholder="예) 바닐라라떼" required>
                     </div>
 
-                    <!-- 작성자 -->
                     <div class="mb-3">
                         <label for="author" class="form-label fw-semibold">작성자</label>
                         <input type="text" class="form-control" id="author" name="author" placeholder="본인 이름 또는 닉네임" required>
                     </div>
 
-                    <!-- 간단 설명 (옵션) -->
                     <div class="mb-3">
                         <label for="description" class="form-label fw-semibold">
                             간단 설명 <span class="text-muted small">(선택)</span>
                         </label>
-                        <input type="text" class="form-control" id="description" name="description"
-                               placeholder="예) 아이스 전용, 연한 단맛, 초보 바리스타용">
+                        <input type="text" class="form-control" id="description" name="description" placeholder="예) 아이스 전용, 연한 단맛, 초보 바리스타용">
                     </div>
 
-                    <!-- ✅ 이미지 이름 (옵션) - 요청사항: name="imgname" -->
                     <div class="mb-3">
                         <label for="imgname" class="form-label fw-semibold">
                             이미지 이름 <span class="text-muted small">(선택)</span>
                         </label>
-                        <input type="text" class="form-control" id="imgname" name="imgname"
-                               placeholder="예) vanilla_latte.png (서버/스토리지에 저장된 파일명)">
+                        <input type="text"
+                               class="form-control"
+                               id="imgname"
+                               name="imgname"
+                               placeholder="예) vanilla_latte.png">
                         <div class="form-text text-muted small">
-                            저장 시 폼 데이터로 <code>imgname</code> 값이 전달됩니다.
+                            비어 있어도 정상 동작합니다. 파일명만 저장하려면 확장자 포함으로 입력하세요.
                         </div>
                     </div>
 
-                    <!-- HOT / ICE 선택 -->
                     <div class="mb-3">
                         <label class="form-label fw-semibold d-block">HOT / ICE</label>
                         <div class="btn-group temp-group" role="group" aria-label="Temperature select">
-                            <input type="radio" class="btn-check" name="temperature" id="tempHot" value="HOT" autocomplete="off" checked>
+                            <input type="radio" class="btn-check" name="temperature" id="tempHot" value="HOT" autocomplete="off">
                             <label class="btn btn-outline-danger" for="tempHot">HOT</label>
 
                             <input type="radio" class="btn-check" name="temperature" id="tempIce" value="ICE" autocomplete="off">
@@ -281,11 +252,10 @@
                         </div>
                     </div>
 
-                    <!-- 컵 사이즈 선택 -->
                     <div class="mb-3">
                         <label class="form-label fw-semibold d-block">컵 사이즈</label>
                         <div class="btn-group cup-group" role="group" aria-label="Cup size select">
-                            <input type="radio" class="btn-check" name="cupSize" id="cup20" value="OZ20" autocomplete="off" checked>
+                            <input type="radio" class="btn-check" name="cupSize" id="cup20" value="OZ20" autocomplete="off">
                             <label class="btn btn-outline-secondary" for="cup20">20oz</label>
 
                             <input type="radio" class="btn-check" name="cupSize" id="cup24" value="OZ24" autocomplete="off">
@@ -294,7 +264,6 @@
                             <input type="radio" class="btn-check" name="cupSize" id="cup32" value="OZ32" autocomplete="off">
                             <label class="btn btn-outline-secondary" for="cup32">32oz</label>
 
-                            <!-- ✅ 추가된 enum: L17 / L20 -->
                             <input type="radio" class="btn-check" name="cupSize" id="cupL17" value="L17" autocomplete="off">
                             <label class="btn btn-outline-secondary" for="cupL17">1.7L</label>
 
@@ -302,15 +271,12 @@
                             <label class="btn btn-outline-secondary" for="cupL20">2.0L</label>
                         </div>
                         <div class="form-text text-muted small">
-                            기본 추천: HOT → 20oz, ICE → 24oz 이지만, 필요에 따라 자유롭게 변경할 수 있습니다.
+                            HOT 선택 시 기본 20oz, ICE 선택 시 기본 24oz가 자동 선택됩니다.
                         </div>
                     </div>
 
-                    <!-- ✅ useBlender 스위치 (카테고리 바로 위) -->
                     <div class="mb-2">
                         <label class="form-label fw-semibold d-block">블렌더 사용</label>
-
-                        <!-- ✅ Spring 체크박스 마커: 체크 안해도 false로 바인딩되게 -->
                         <input type="hidden" name="_useBlender" value="on">
 
                         <div class="blender-switch-row">
@@ -333,14 +299,11 @@
                                        id="useBlender"
                                        name="useBlender"
                                        value="true">
-                                <label class="form-check-label" for="useBlender">
-                                    ON / OFF
-                                </label>
+                                <label class="form-check-label" for="useBlender">ON / OFF</label>
                             </div>
                         </div>
                     </div>
 
-                    <!-- 카테고리 선택 (칩 형태) -->
                     <div class="mb-1">
                         <label class="form-label fw-semibold d-block">카테고리</label>
                         <div class="category-chip-group" id="category-chip-group">
@@ -348,4 +311,643 @@
                             <button type="button" class="category-chip" data-value="ICE_COFFEE">Ice 커피</button>
                             <button type="button" class="category-chip" data-value="HOT_LATTE">Hot 라떼</button>
                             <button type="button" class="category-chip" data-value="ICE_LATTE">Ice 라떼</button>
-                            <button t
+                            <button type="button" class="category-chip" data-value="ICE_NON_COFFEE">Ice 논커피</button>
+                            <button type="button" class="category-chip" data-value="ICE_NON_COFFEE_HUKDANG">흑당</button>
+                            <button type="button" class="category-chip" data-value="HOT_NON_COFFEE">Hot 논커피</button>
+                            <button type="button" class="category-chip" data-value="HOT_COLD_BREW">HOT 콜드브루</button>
+                            <button type="button" class="category-chip" data-value="HOT_LATTE_COLD_BREW">HOT 콜드브루라떼</button>
+                            <button type="button" class="category-chip" data-value="ICE_COLD_BREW">ICE 콜드브루</button>
+                            <button type="button" class="category-chip" data-value="ICE_LATTE_COLD_BREW">ICE 콜드브루라떼</button>
+                            <button type="button" class="category-chip" data-value="SMOOTHIE_ADE">스무디</button>
+                            <button type="button" class="category-chip" data-value="ADE">에이드</button>
+                            <button type="button" class="category-chip" data-value="JUICE">주스</button>
+                            <button type="button" class="category-chip" data-value="FRAPPE">프라페</button>
+                            <button type="button" class="category-chip" data-value="PONG_CRUSH">퐁크러쉬</button>
+                            <button type="button" class="category-chip" data-value="ICE_TEA">아이스티</button>
+                            <button type="button" class="category-chip" data-value="HOT_TEA">핫티</button>
+                            <button type="button" class="category-chip" data-value="FOOD">푸드</button>
+                            <button type="button" class="category-chip" data-value="BASE">베이스</button>
+                        </div>
+                        <input type="hidden" name="category" id="category-input" required>
+                        <div class="form-text text-muted small">위 카테고리 중 하나를 선택해 주세요.</div>
+                    </div>
+
+                </div>
+
+                <div class="mb-2 d-flex justify-content-between align-items-center">
+                    <label class="form-label fw-semibold mb-0">레시피 단계</label>
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-sm btn-success" id="btn-preview">레시피 미리보기</button>
+                        <button type="button" class="btn btn-sm btn-outline-primary" id="btn-add-step">+ 단계 추가</button>
+                    </div>
+                </div>
+
+                <div class="step-wrapper mb-3">
+                    <div id="steps-container" class="mb-1">
+                        <div class="card mb-2">
+                            <div class="card-body py-2">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <div class="fw-semibold d-flex align-items-center">
+                                        Step <span class="step-number ms-1">1</span>
+                                        <div class="step-time-group">
+                                            <input type="number" class="form-control form-control-sm step-time-input" name="stepTimes" min="1" value="10">
+                                            <span class="step-time-label">초</span>
+                                        </div>
+                                    </div>
+                                    <button type="button" class="btn btn-sm btn-outline-danger btn-remove-step">삭제</button>
+                                </div>
+                                <textarea class="form-control step-textarea" name="steps" rows="2" required></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-end gap-2">
+                    <a href="/cafe/recipes" class="btn btn-outline-secondary">목록</a>
+                    <button type="submit" class="btn btn-primary">레시피 저장</button>
+                </div>
+            </form>
+
+        </div>
+    </div>
+</div>
+
+<!-- ✅ 템플릿 선택 모달 -->
+<div class="modal fade" id="templateModal" tabindex="-1" aria-labelledby="templateModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content" style="border-radius:0.9rem;">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold" id="templateModalLabel">템플릿 불러오기</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="닫기"></button>
+            </div>
+            <div class="modal-body">
+                <div class="d-flex gap-2 mb-3">
+                    <input type="text" class="form-control" id="template-search" placeholder="검색: 메뉴명/작성자/카테고리">
+                    <button type="button" class="btn btn-outline-secondary" id="template-search-clear">지우기</button>
+                </div>
+
+                <div id="template-empty" class="text-muted small" style="display:none;">
+                    불러올 템플릿이 없습니다.
+                </div>
+
+                <div id="template-list" class="d-grid gap-2"></div>
+
+                <div class="text-muted small mt-3">
+                    템플릿을 선택하면 현재 폼 입력 값이 템플릿 내용으로 덮어써집니다.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">닫기</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 기존 미리보기 모달 -->
+<div class="modal fade" id="recipePreviewModal" tabindex="-1" aria-labelledby="recipePreviewModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold" id="recipePreviewModalLabel">레시피 미리보기</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="닫기"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-2">
+                    <div class="fw-bold fs-5" id="preview-menu-name">메뉴 이름</div>
+                    <div class="text-muted small" id="preview-description"></div>
+                </div>
+                <div class="mb-2 small text-secondary" id="preview-basic-info"></div>
+                <hr class="my-2">
+                <div id="recipe-steps-content"></div>
+                <div class="mt-2 text-muted small">
+                    현재 입력된 내용을 기준으로 한 미리보기입니다.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">닫기</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ✅ 템플릿 JSON을 안전하게 주입 -->
+<script id="templateRecipesJson" type="application/json">
+{{#templateRecipesJson}}{{{templateRecipesJson}}}{{/templateRecipesJson}}{{^templateRecipesJson}}[]{{/templateRecipesJson}}
+</script>
+
+<script>
+    (function () {
+        const form = document.getElementById('recipe-form');
+        if (!form) return;
+
+        /* =========================
+           공통 유틸
+           ========================= */
+        function parseTruth(v) {
+            const s = String(v || '').trim().toLowerCase();
+            return (s === 'true' || s === '1' || s === 'y' || s === 'yes' || s === 'on');
+        }
+        function safeStr(v){ return (v == null) ? '' : String(v); }
+
+        /* =========================
+           템플릿 JSON 로드 (안전)
+           ========================= */
+        let templates = [];
+        (function initTemplates(){
+            try {
+                const el = document.getElementById('templateRecipesJson');
+                const raw = (el && el.textContent) ? el.textContent.trim() : '[]';
+                templates = raw ? JSON.parse(raw) : [];
+                if (!Array.isArray(templates)) templates = [];
+            } catch (e) {
+                console.error('templateRecipesJson parse failed', e);
+                templates = [];
+            }
+        })();
+
+        /* =========================
+           useBlender 스위치 초기값 + 상태표시
+           ========================= */
+        const useBlenderToggle = document.getElementById('useBlender');
+        const blenderStatusPill = document.getElementById('blender-status-pill');
+
+        function refreshBlenderStatus() {
+            if (!blenderStatusPill || !useBlenderToggle) return;
+            const on = !!useBlenderToggle.checked;
+            blenderStatusPill.textContent = on ? 'ON' : 'OFF';
+            blenderStatusPill.classList.toggle('on', on);
+        }
+
+        (function initUseBlender() {
+            if (!useBlenderToggle) return;
+            useBlenderToggle.checked = parseTruth(form.dataset.useBlender);
+            refreshBlenderStatus();
+            useBlenderToggle.addEventListener('change', refreshBlenderStatus);
+        })();
+
+        /* =========================
+           레시피 단계 (Step) 관리
+           ========================= */
+        const stepsContainer = document.getElementById('steps-container');
+        const addStepBtn = document.getElementById('btn-add-step');
+
+        let stepIndex = 0;
+
+        function createStepElement(index, content, timeVal) {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'card mb-2';
+
+            const initTime = (timeVal != null && String(timeVal).trim() !== '') ? String(timeVal).trim() : '10';
+
+            wrapper.innerHTML = `
+                <div class="card-body py-2">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <div class="fw-semibold d-flex align-items-center">
+                            Step <span class="step-number ms-1">${index + 1}</span>
+                            <div class="step-time-group">
+                                <input type="number"
+                                       class="form-control form-control-sm step-time-input"
+                                       name="stepTimes"
+                                       min="1"
+                                       value="${initTime}">
+                                <span class="step-time-label">초</span>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-outline-danger btn-remove-step">삭제</button>
+                    </div>
+                    <textarea class="form-control step-textarea" name="steps" rows="2" required>${content || ''}</textarea>
+                </div>
+            `;
+            return wrapper;
+        }
+
+        function refreshStepNumbers() {
+            const stepCards = stepsContainer.querySelectorAll('.card');
+            stepCards.forEach((card, idx) => {
+                const numberSpan = card.querySelector('.step-number');
+                if (numberSpan) numberSpan.textContent = idx + 1;
+            });
+            stepIndex = stepCards.length;
+        }
+
+        function bindRemoveEvent(card) {
+            const removeBtn = card.querySelector('.btn-remove-step');
+            if (!removeBtn) return;
+
+            removeBtn.addEventListener('click', function () {
+                const total = stepsContainer.querySelectorAll('.card').length;
+                if (total <= 1) {
+                    alert('최소 1개 이상의 단계가 필요합니다.');
+                    return;
+                }
+                card.remove();
+                refreshStepNumbers();
+            });
+        }
+
+        function addStep(defaultContent, defaultTime) {
+            const el = createStepElement(stepIndex, defaultContent, defaultTime);
+            stepsContainer.appendChild(el);
+            stepIndex++;
+            bindRemoveEvent(el);
+        }
+
+        function resetStepsToOne() {
+            stepsContainer.innerHTML = '';
+            const first = createStepElement(0, '', '10');
+            stepsContainer.appendChild(first);
+            bindRemoveEvent(first);
+            refreshStepNumbers();
+        }
+
+        (function initSteps() {
+            const existingCards = stepsContainer.querySelectorAll('.card');
+            existingCards.forEach(card => bindRemoveEvent(card));
+            refreshStepNumbers();
+        })();
+
+        if (addStepBtn) addStepBtn.addEventListener('click', function () { addStep('', '10'); });
+
+        /* =========================
+           HOT / ICE & 컵 사이즈 연동 (신규 기본값 포함)
+           ========================= */
+        const tempHot = document.getElementById('tempHot');
+        const tempIce = document.getElementById('tempIce');
+
+        const cup20 = document.getElementById('cup20');
+        const cup24 = document.getElementById('cup24');
+        const cup32 = document.getElementById('cup32');
+        const cupL17 = document.getElementById('cupL17');
+        const cupL20 = document.getElementById('cupL20');
+
+        function setDefaultCupByTemp(temp) {
+            if (temp === 'HOT') cup20.checked = true;
+            else if (temp === 'ICE') cup24.checked = true;
+        }
+
+        if (tempHot) tempHot.addEventListener('change', function () { if (tempHot.checked) setDefaultCupByTemp('HOT'); });
+        if (tempIce) tempIce.addEventListener('change', function () { if (tempIce.checked) setDefaultCupByTemp('ICE'); });
+
+        function cupLabelByValue(v) {
+            switch (v) {
+                case 'OZ20': return '20oz';
+                case 'OZ24': return '24oz';
+                case 'OZ32': return '32oz';
+                case 'L17':  return '1.7L';
+                case 'L20':  return '2.0L';
+                default: return v || '';
+            }
+        }
+
+        function selectTemp(value) {
+            if (value === 'HOT') tempHot.checked = true;
+            else if (value === 'ICE') tempIce.checked = true;
+        }
+        function selectCup(value) {
+            [cup20, cup24, cup32, cupL17, cupL20].forEach(r => { if (r) r.checked = false; });
+            if (value === 'OZ20') cup20.checked = true;
+            else if (value === 'OZ24') cup24.checked = true;
+            else if (value === 'OZ32') cup32.checked = true;
+            else if (value === 'L17') cupL17.checked = true;
+            else if (value === 'L20') cupL20.checked = true;
+        }
+
+        function selectCategory(value) {
+            const categoryInput = document.getElementById('category-input');
+            const categoryGroup = document.getElementById('category-chip-group');
+            if (!categoryInput || !categoryGroup) return;
+
+            const chips = categoryGroup.querySelectorAll('.category-chip');
+            chips.forEach(c => c.classList.remove('selected'));
+
+            const found = Array.from(chips).find(c => c.dataset.value === value);
+            if (found) {
+                found.classList.add('selected');
+                categoryInput.value = value;
+            } else if (chips.length > 0) {
+                chips[0].classList.add('selected');
+                categoryInput.value = chips[0].dataset.value;
+            }
+        }
+
+        (function initSelections() {
+            // ✅ 신규 기본값: ICE / OZ24
+            tempIce.checked = true;
+            cup24.checked = true;
+
+            // ✅ 기본 카테고리 선택
+            const categoryInput = document.getElementById('category-input');
+            const categoryGroup = document.getElementById('category-chip-group');
+            if (!categoryInput || !categoryGroup) return;
+
+            const initialCategory = (form.dataset.category || 'ICE_COFFEE').trim();
+            const categoryChips = categoryGroup.querySelectorAll('.category-chip');
+
+            categoryChips.forEach(chip => {
+                chip.addEventListener('click', function () {
+                    categoryChips.forEach(c => c.classList.remove('selected'));
+                    chip.classList.add('selected');
+                    categoryInput.value = chip.dataset.value;
+                });
+
+                if (chip.dataset.value === initialCategory) {
+                    chip.classList.add('selected');
+                    categoryInput.value = initialCategory;
+                }
+            });
+
+            if (!categoryInput.value && categoryChips.length > 0) {
+                categoryChips[0].classList.add('selected');
+                categoryInput.value = categoryChips[0].dataset.value;
+            }
+        })();
+
+        /* =========================
+           ✅ 템플릿 모달: 렌더 + 선택 적용
+           ========================= */
+        const templateBtn = document.getElementById('btn-open-template');
+        const templateModalEl = document.getElementById('templateModal');
+        const templateListEl = document.getElementById('template-list');
+        const templateEmptyEl = document.getElementById('template-empty');
+        const templateSearchEl = document.getElementById('template-search');
+        const templateSearchClearBtn = document.getElementById('template-search-clear');
+
+        let templateModalInstance = null;
+
+        function openTemplateModal() {
+            if (!templateModalEl) return;
+            if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+                if (!templateModalInstance) templateModalInstance = new bootstrap.Modal(templateModalEl);
+                templateModalInstance.show();
+            } else {
+                templateModalEl.style.display = 'block';
+                templateModalEl.classList.add('show');
+            }
+        }
+        function closeTemplateModal() {
+            if (!templateModalEl) return;
+            if (templateModalInstance) templateModalInstance.hide();
+        }
+
+        function templateToSearchText(t) {
+            const parts = [
+                safeStr(t.menuName),
+                safeStr(t.author),
+                safeStr(t.category),
+                safeStr(t.temperature),
+                safeStr(t.cupSize),
+                safeStr(t.description)
+            ];
+            return parts.join(' ').toLowerCase();
+        }
+
+        function renderTemplates(filterText) {
+            if (!templateListEl) return;
+            templateListEl.innerHTML = '';
+
+            const q = (filterText || '').trim().toLowerCase();
+            const filtered = (templates || []).filter(t => {
+                if (!q) return true;
+                return templateToSearchText(t).includes(q);
+            });
+
+            if (templateEmptyEl) templateEmptyEl.style.display = (filtered.length === 0) ? 'block' : 'none';
+
+            filtered.forEach((t, idx) => {
+                const div = document.createElement('div');
+                div.className = 'template-row';
+
+                const name = safeStr(t.menuName) || `(이름없음 템플릿 ${idx+1})`;
+                const author = safeStr(t.author);
+                const cat = safeStr(t.category);
+                const temp = safeStr(t.temperature);
+                const cup = safeStr(t.cupSize);
+                const blender = parseTruth(t.useBlender);
+
+                const pills = [];
+                if (temp) pills.push(`<span class="template-pill">${temp}</span>`);
+                if (cup) pills.push(`<span class="template-pill">${cupLabelByValue(cup)}</span>`);
+                if (cat) pills.push(`<span class="template-pill">${cat}</span>`);
+                if (blender) pills.push(`<span class="template-pill" style="border-color:rgba(220,53,69,.35); color:#dc3545; background:rgba(220,53,69,.06);">블렌더</span>`);
+
+                div.innerHTML = `
+                    <div class="d-flex justify-content-between align-items-start gap-3">
+                        <div class="flex-grow-1" style="min-width:0;">
+                            <div class="template-title text-truncate">${name}</div>
+                            <div class="template-meta mt-1 text-truncate">
+                                ${author ? `작성자: ${author}` : '작성자 미상'}
+                                ${t.description ? ` · ${safeStr(t.description)}` : ''}
+                            </div>
+                        </div>
+                        <div class="d-flex flex-wrap justify-content-end" style="gap:0.35rem;">
+                            ${pills.join('')}
+                            <button type="button" class="btn btn-sm btn-primary ms-2">불러오기</button>
+                        </div>
+                    </div>
+                `;
+
+                div.addEventListener('click', function () {
+                    applyTemplateToForm(t);
+                    closeTemplateModal();
+                });
+
+                templateListEl.appendChild(div);
+            });
+        }
+
+        function applyTemplateToForm(t) {
+            const menuNameInput = document.getElementById('menuName');
+            const authorInput = document.getElementById('author');
+            const descInput = document.getElementById('description');
+            const imgInput = document.getElementById('imgname');
+
+            if (menuNameInput) menuNameInput.value = safeStr(t.menuName);
+            if (authorInput) authorInput.value = safeStr(t.author);
+            if (descInput) descInput.value = safeStr(t.description);
+            if (imgInput) imgInput.value = safeStr(t.imgname);
+
+            // 온도/컵/카테고리/블렌더
+            if (t.temperature) selectTemp(safeStr(t.temperature).trim());
+            if (t.cupSize) selectCup(safeStr(t.cupSize).trim());
+            if (t.category) selectCategory(safeStr(t.category).trim());
+
+            if (useBlenderToggle) {
+                useBlenderToggle.checked = parseTruth(t.useBlender);
+                refreshBlenderStatus();
+            }
+
+            // Steps/Times
+            const steps = Array.isArray(t.steps) ? t.steps : [];
+            const times = Array.isArray(t.stepTimes) ? t.stepTimes : [];
+
+            resetStepsToOne();
+
+            if (steps.length > 0) {
+                const firstCard = stepsContainer.querySelector('.card');
+                if (firstCard) {
+                    const ta = firstCard.querySelector('.step-textarea');
+                    const ti = firstCard.querySelector('.step-time-input');
+                    if (ta) ta.value = safeStr(steps[0]);
+                    if (ti) ti.value = (times[0] != null && String(times[0]).trim() !== '') ? String(times[0]).trim() : '10';
+                }
+                for (let i = 1; i < steps.length; i++) {
+                    addStep(safeStr(steps[i]), (times[i] != null ? String(times[i]) : '10'));
+                }
+                refreshStepNumbers();
+            }
+        }
+
+        if (templateBtn) {
+            templateBtn.addEventListener('click', function () {
+                renderTemplates(templateSearchEl ? templateSearchEl.value : '');
+                openTemplateModal();
+            });
+        }
+        if (templateSearchEl) {
+            templateSearchEl.addEventListener('input', function () {
+                renderTemplates(templateSearchEl.value);
+            });
+        }
+        if (templateSearchClearBtn) {
+            templateSearchClearBtn.addEventListener('click', function () {
+                if (templateSearchEl) templateSearchEl.value = '';
+                renderTemplates('');
+            });
+        }
+
+        /* =========================
+           레시피 미리보기 팝업 (원본 그대로)
+           ========================= */
+        const previewBtn = document.getElementById('btn-preview');
+        const previewModalEl = document.getElementById('recipePreviewModal');
+
+        let previewModalInstance = null;
+
+        function openPreviewModal() {
+            if (!previewModalEl) return;
+            if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+                if (!previewModalInstance) previewModalInstance = new bootstrap.Modal(previewModalEl);
+                previewModalInstance.show();
+            } else {
+                previewModalEl.style.display = 'block';
+                previewModalEl.classList.add('show');
+            }
+        }
+
+        function attachPreviewStepClickHandlers() {
+            const container = document.getElementById('recipe-steps-content');
+            if (!container) return;
+
+            const steps = container.querySelectorAll('.recipe-step');
+            steps.forEach(step => {
+                step.addEventListener('click', () => {
+                    steps.forEach(s => s.classList.remove('step-selected'));
+                    step.classList.add('step-selected');
+                });
+            });
+        }
+
+        function buildPreview() {
+            const menuNameInput = document.getElementById('menuName');
+            const descInput = document.getElementById('description');
+            const imgInput = document.getElementById('imgname');
+
+            const selectedTemp = form.querySelector('input[name="temperature"]:checked');
+            const selectedCup = form.querySelector('input[name="cupSize"]:checked');
+            const selectedChip = document.querySelector('.category-chip.selected');
+
+            const menuName = menuNameInput ? menuNameInput.value.trim() : '';
+            const description = descInput ? descInput.value.trim() : '';
+            const imgname = imgInput ? imgInput.value.trim() : '';
+
+            const tempValue = selectedTemp ? selectedTemp.value : '';
+            const cupValue = selectedCup ? selectedCup.value : '';
+            const categoryLabel = selectedChip ? selectedChip.textContent.trim() : '';
+
+            const previewMenuNameEl = document.getElementById('preview-menu-name');
+            const previewDescriptionEl = document.getElementById('preview-description');
+            const previewBasicInfoEl = document.getElementById('preview-basic-info');
+
+            if (previewMenuNameEl) previewMenuNameEl.textContent = menuName || '메뉴 이름 미입력';
+
+            if (previewDescriptionEl) {
+                const descLine = description || '';
+                const imgLine = imgname ? ` (img: ${imgname})` : '';
+                previewDescriptionEl.textContent = (descLine + imgLine).trim();
+            }
+
+            const infoParts = [];
+            if (tempValue) infoParts.push(tempValue === 'HOT' ? 'HOT (핫)' : 'ICE (아이스)');
+            if (cupValue) infoParts.push('컵: ' + cupLabelByValue(cupValue));
+            if (categoryLabel) infoParts.push('카테고리: ' + categoryLabel);
+            if (useBlenderToggle) infoParts.push('블렌더: ' + (useBlenderToggle.checked ? 'ON' : 'OFF'));
+
+            if (previewBasicInfoEl) previewBasicInfoEl.textContent = infoParts.join(' · ');
+
+            const previewStepsEl = document.getElementById('recipe-steps-content');
+            if (!previewStepsEl) return;
+
+            previewStepsEl.innerHTML = '';
+
+            const stepCards = stepsContainer.querySelectorAll('.card');
+            let visibleIndex = 0;
+
+            stepCards.forEach((card) => {
+                const textarea = card.querySelector('.step-textarea');
+                if (!textarea) return;
+
+                const text = (textarea.value || '').trim();
+                if (!text) return;
+
+                const timeInput = card.querySelector('.step-time-input');
+                const timeVal = timeInput ? (timeInput.value || '').trim() : '';
+
+                const row = document.createElement('div');
+                row.className = 'recipe-step';
+
+                const safeText = text.replace(/\n/g, '<br>');
+
+                let timeHtml = '';
+                if (timeVal) {
+                    timeHtml = `<span class="step-time-preview ms-2 text-muted" style="font-size:2.0rem;">(${timeVal}초)</span>`;
+                }
+
+                row.innerHTML = `
+                    <span class="step-index">Step ${visibleIndex + 1}.</span>
+                    <span class="step-text">${safeText}</span>
+                    ${timeHtml}
+                `;
+
+                previewStepsEl.appendChild(row);
+                visibleIndex++;
+            });
+
+            if (visibleIndex === 0) {
+                const emptyRow = document.createElement('div');
+                emptyRow.className = 'recipe-step empty-step';
+                emptyRow.innerHTML = `
+                    <span class="step-index">Step 1.</span>
+                    <span class="step-text text-muted">등록된 단계가 없습니다. 단계 내용을 입력해 주세요.</span>
+                `;
+                previewStepsEl.appendChild(emptyRow);
+            }
+
+            attachPreviewStepClickHandlers();
+
+            const firstStep = previewStepsEl.querySelector('.recipe-step');
+            if (firstStep) {
+                previewStepsEl.querySelectorAll('.recipe-step').forEach(s => s.classList.remove('step-selected'));
+                firstStep.classList.add('step-selected');
+            }
+        }
+
+        if (previewBtn) {
+            previewBtn.addEventListener('click', function () {
+                buildPreview();
+                openPreviewModal();
+            });
+        }
+    })();
+</script>
+
+{{>layouts/footer}}
