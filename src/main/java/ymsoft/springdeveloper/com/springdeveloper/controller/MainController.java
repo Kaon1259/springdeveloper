@@ -50,7 +50,7 @@ public class MainController {
         }
 
         try{
-            Users user = userService.login(request.getEmail(), request.getPassword());
+            Users user = userService.signin(request.getEmail(), request.getPassword());
 
             if(user != null) {
                 return "redirect:/members";

@@ -3,6 +3,9 @@ package ymsoft.springdeveloper.com.springdeveloper.service;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import ymsoft.springdeveloper.com.springdeveloper.dto.UserDto;
@@ -11,7 +14,7 @@ import ymsoft.springdeveloper.com.springdeveloper.repository.UsersRepository;
 
 @Slf4j
 @Service
-public class UserService {
+public class UserService implements UserDetailsService {
 
     @Autowired
     private UsersRepository usersRepository;
@@ -51,7 +54,7 @@ public class UserService {
      * 로그인 (아이디=nickname, 비밀번호 검증)
      * 실패 시 BadCredentialsException 발생
      */
-    public Users login(String email, String rawPassword) {
+    public Users signin(String email, String rawPassword) {
         // 1) 닉네임으로 사용자 조회
         Users user = usersRepository.findByEmail(email).orElse(null);
 
@@ -68,5 +71,10 @@ public class UserService {
     // 빈 문자열을 null로 치환 (옵션 필드 편의용)
     private String emptyToNull(String s) {
         return (s == null || s.isBlank()) ? null : s.trim();
+    }
+
+    @Override
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        return usersRepository.findByEmail(username).orElseThrow(()-> new IllegalArgumentException(username));
     }
 }
