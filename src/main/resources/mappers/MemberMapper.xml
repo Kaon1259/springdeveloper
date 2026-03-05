@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ymsoft.springdeveloper.com.springdeveloper.mapper.MemberMapper">
+
+    <resultMap id="memberMap" type="ymsoft.springdeveloper.com.springdeveloper.entity.Member">
+        <id property="id" column="id"/>
+        <result property="name" column="name"/>
+        <result property="gender" column="gender"/>
+        <result property="startDate" column="start_date"/>
+        <result property="phone" column="phone"/>
+        <result property="email" column="email"/>
+        <result property="ssn" column="ssn"/>
+        <result property="hourlyWage" column="hourly_wage"/>
+        <result property="hourlyWage2" column="hourly_wage2"/>
+        <result property="healthCertExpiry" column="health_cert_expiry"/>
+        <result property="hasHealthCertificate" column="has_health_certificate"/>
+        <result property="bankName" column="bank_name"/>
+        <result property="bankAccount" column="bank_account"/>
+        <result property="status" column="status"
+                typeHandler="org.apache.ibatis.type.EnumTypeHandler"/>
+        <result property="memo" column="memo"/>
+        <result property="payday" column="payday"/>
+        <result property="includeWeeklyHolidayAllowance" column="include_weekly_holiday_allowance"/>
+        <result property="applyTax" column="apply_tax"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+    </resultMap>
+
+    <resultMap id="memberWithSchedulesMap" type="ymsoft.springdeveloper.com.springdeveloper.entity.Member"
+               extends="memberMap">
+        <collection property="schedules"
+                    ofType="ymsoft.springdeveloper.com.springdeveloper.entity.ScheduleItem"
+                    columnPrefix="si_">
+            <id property="id" column="id"/>
+            <result property="memberId" column="member_id"/>
+            <result property="day" column="day_name"
+                    typeHandler="org.apache.ibatis.type.EnumTypeHandler"/>
+            <result property="start" column="start_time"/>
+            <result property="end" column="end_time"/>
+        </collection>
+    </resultMap>
+
+    <select id="findById" resultMap="memberMap">
+        SELECT * FROM member WHERE id = #{id}
+    </select>
+
+    <select id="findWithSchedulesById" resultMap="memberWithSchedulesMap">
+        SELECT m.*,
+               si.id AS si_id,
+               si.member_id AS si_member_id,
+               si.day_name AS si_day_name,
+               si.start_time AS si_start_time,
+               si.end_time AS si_end_time
+        FROM member m
+        LEFT JOIN schedule_item si ON si.member_id = m.id
+        WHERE m.id = #{id}
+    </select>
+
+    <select id="findAll" resultMap="memberWithSchedulesMap">
+        SELECT m.*,
+               si.id AS si_id,
+               si.member_id AS si_member_id,
+               si.day_name AS si_day_name,
+               si.start_time AS si_start_time,
+               si.end_time AS si_end_time
+        FROM member m
+        LEFT JOIN schedule_item si ON si.member_id = m.id
+        ORDER BY m.name
+    </select>
+
+    <select id="findByStatus" resultMap="memberWithSchedulesMap">
+        SELECT m.*,
+               si.id AS si_id,
+               si.member_id AS si_member_id,
+               si.day_name AS si_day_name,
+               si.start_time AS si_start_time,
+               si.end_time AS si_end_time
+        FROM member m
+        LEFT JOIN schedule_item si ON si.member_id = m.id
+        WHERE m.status = #{status}
+        ORDER BY m.name
+    </select>
+
+    <select id="findByStatusIn" resultMap="memberWithSchedulesMap">
+        SELECT m.*,
+               si.id AS si_id,
+               si.member_id AS si_member_id,
+               si.day_name AS si_day_name,
+               si.start_time AS si_start_time,
+               si.end_time AS si_end_time
+        FROM member m
+        LEFT JOIN schedule_item si ON si.member_id = m.id
+        WHERE m.status IN
+        <foreach item="s" collection="statuses" open="(" separator="," close=")">
+            #{s}
+        </foreach>
+        ORDER BY m.name
+    </select>
+
+    <select id="existsById" resultType="boolean">
+        SELECT COUNT(*) > 0 FROM member WHERE id = #{id}
+    </select>
+
+    <select id="existsByPhone" resultType="boolean">
+        SELECT COUNT(*) > 0 FROM member WHERE phone = #{phone}
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO member (name, gender, start_date, phone, email, ssn,
+                           hourly_wage, hourly_wage2, health_cert_expiry,
+                           has_health_certificate, bank_name, bank_account,
+                           status, memo, payday,
+                           include_weekly_holiday_allowance, apply_tax,
+                           created_at, updated_at)
+        VALUES (#{name}, #{gender}, #{startDate}, #{phone}, #{email}, #{ssn},
+                #{hourlyWage}, #{hourlyWage2}, #{healthCertExpiry},
+                #{hasHealthCertificate}, #{bankName}, #{bankAccount},
+                #{status, typeHandler=org.apache.ibatis.type.EnumTypeHandler},
+                #{memo}, #{payday},
+                #{includeWeeklyHolidayAllowance}, #{applyTax},
+                NOW(), NOW())
+    </insert>
+
+    <update id="update">
+        UPDATE member SET
+            name = #{name},
+            gender = #{gender},
+            start_date = #{startDate},
+            phone = #{phone},
+            email = #{email},
+            ssn = #{ssn},
+            hourly_wage = #{hourlyWage},
+            hourly_wage2 = #{hourlyWage2},
+            health_cert_expiry = #{healthCertExpiry},
+            has_health_certificate = #{hasHealthCertificate},
+            bank_name = #{bankName},
+            bank_account = #{bankAccount},
+            status = #{status, typeHandler=org.apache.ibatis.type.EnumTypeHandler},
+            memo = #{memo},
+            payday = #{payday},
+            include_weekly_holiday_allowance = #{includeWeeklyHolidayAllowance},
+            apply_tax = #{applyTax},
+            updated_at = NOW()
+        WHERE id = #{id}
+    </update>
+
+</mapper>

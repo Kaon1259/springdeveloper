@@ -6,7 +6,7 @@
     <title>{{#pageTitle}}{{pageTitle}}{{/pageTitle}}{{^pageTitle}}Cafe Friends Manager - 회원가입{{/pageTitle}}</title>
 
     <!-- Bootstrap -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css"
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
           rel="stylesheet" crossorigin="anonymous">
     <script defer src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
             crossorigin="anonymous"></script>
@@ -291,6 +291,7 @@
                            name="password"
                            placeholder="영문/숫자 포함 8자 이상"
                            required>
+                    <div id="pw-error" class="form-text" style="color:#c2410c; display:none;"></div>
                 </div>
                 <div class="col-sm-6">
                     <label for="passwordConfirm" class="form-label">
@@ -303,6 +304,7 @@
                            name="passwordConfirm"
                            placeholder="비밀번호를 다시 입력"
                            required>
+                    <div id="pw-confirm-error" class="form-text" style="color:#c2410c; display:none;"></div>
                 </div>
             </div>
 
@@ -340,11 +342,11 @@
                 <div class="form-check">
                     <input class="form-check-input"
                            type="checkbox"
-                           value="Y"
-                           id="agree"
-                           name="agree"
+                           value="true"
+                           id="agreedTerms"
+                           name="agreedTerms"
                            required>
-                    <label class="form-check-label" for="agree" style="font-size:0.85rem;">
+                    <label class="form-check-label" for="agreedTerms" style="font-size:0.85rem;">
                         <span class="required-badge">(필수)</span>
                         서비스 이용 약관 및 개인정보 처리방침에 동의합니다.
                     </label>
@@ -381,26 +383,56 @@
         }, 400);
     });
 
-    // 🔒 회원가입 폼 클라이언트 측 유효성 검사
+    // 회원가입 폼 클라이언트 측 유효성 검사 (인라인 에러 표시)
+    const pwInput = document.getElementById("password");
+    const pw2Input = document.getElementById("passwordConfirm");
+    const pwError = document.getElementById("pw-error");
+    const pw2Error = document.getElementById("pw-confirm-error");
+
+    function clearErrors() {
+        pwError.style.display = "none";
+        pw2Error.style.display = "none";
+        pwInput.classList.remove("is-invalid");
+        pw2Input.classList.remove("is-invalid");
+    }
+
+    pwInput.addEventListener("input", function () {
+        if (pwInput.value.length >= 8) {
+            pwError.style.display = "none";
+            pwInput.classList.remove("is-invalid");
+        }
+    });
+
+    pw2Input.addEventListener("input", function () {
+        if (pw2Input.value === pwInput.value) {
+            pw2Error.style.display = "none";
+            pw2Input.classList.remove("is-invalid");
+        }
+    });
+
     document.getElementById("signupForm").addEventListener("submit", function (e) {
-        const pw = document.getElementById("password").value.trim();
-        const pw2 = document.getElementById("passwordConfirm").value.trim();
+        clearErrors();
+        const pw = pwInput.value.trim();
+        const pw2 = pw2Input.value.trim();
+        let valid = true;
 
-        // 1) 비밀번호 길이 체크
         if (pw.length < 8) {
-            alert("비밀번호는 최소 8자 이상이어야 합니다.");
-            e.preventDefault();
-            document.getElementById("password").focus();
-            return;
+            pwError.textContent = "비밀번호는 최소 8자 이상이어야 합니다.";
+            pwError.style.display = "block";
+            pwInput.classList.add("is-invalid");
+            pwInput.focus();
+            valid = false;
         }
 
-        // 2) 비밀번호 일치 여부 체크
         if (pw !== pw2) {
-            alert("비밀번호와 비밀번호 확인이 서로 다릅니다.");
-            e.preventDefault();
-            document.getElementById("passwordConfirm").focus();
-            return;
+            pw2Error.textContent = "비밀번호와 비밀번호 확인이 서로 다릅니다.";
+            pw2Error.style.display = "block";
+            pw2Input.classList.add("is-invalid");
+            if (valid) pw2Input.focus();
+            valid = false;
         }
+
+        if (!valid) e.preventDefault();
     });
 </script>
 

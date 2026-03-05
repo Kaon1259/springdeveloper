@@ -37,7 +37,7 @@ public class PayrollMonthResponse {
     public static PayrollMonthResponse fromEntity(PayrollMonth entity) {
         PayrollMonthResponse res = new PayrollMonthResponse();
         res.id = entity.getId();
-        res.memberId = entity.getMember().getId(); //getMemberId();
+        res.memberId = entity.getMemberId();
         res.payYear = entity.getPayYear();
         res.payMonth = entity.getPayMonth();
         res.hourlyWage = entity.getHourlyWage();

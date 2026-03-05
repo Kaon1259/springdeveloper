@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(sc query:*)",
+      "Bash(netstat:*)",
+      "Bash(mysql:*)",
+      "Bash(xargs grep:*)",
+      "Bash(./gradlew build:*)",
+      "Bash(curl:*)"
+    ]
+  }
+}

@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ymsoft.springdeveloper.com.springdeveloper.mapper.WorkScheduleMapper">
+
+    <resultMap id="wsMap" type="ymsoft.springdeveloper.com.springdeveloper.entity.WorkSchedule">
+        <id property="id" column="id"/>
+        <result property="memberId" column="member_id"/>
+        <result property="workDate" column="work_date"/>
+        <result property="start" column="start_time"/>
+        <result property="end" column="end_time"/>
+        <result property="source" column="source"
+                typeHandler="org.apache.ibatis.type.EnumTypeHandler"/>
+        <result property="note" column="note"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+    </resultMap>
+
+    <resultMap id="wsWithMemberMap" type="ymsoft.springdeveloper.com.springdeveloper.entity.WorkSchedule"
+               extends="wsMap">
+        <association property="member"
+                     javaType="ymsoft.springdeveloper.com.springdeveloper.entity.Member"
+                     columnPrefix="m_">
+            <id property="id" column="id"/>
+            <result property="name" column="name"/>
+            <result property="phone" column="phone"/>
+            <result property="status" column="status"
+                    typeHandler="org.apache.ibatis.type.EnumTypeHandler"/>
+        </association>
+    </resultMap>
+
+    <select id="findByMemberIdAndWorkDate" resultMap="wsMap">
+        SELECT * FROM work_schedule
+        WHERE member_id = #{memberId} AND work_date = #{workDate}
+    </select>
+
+    <select id="findByMemberIdInAndWorkDate" resultMap="wsMap">
+        SELECT * FROM work_schedule
+        WHERE work_date = #{workDate}
+        AND member_id IN
+        <foreach item="id" collection="memberIds" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </select>
+
+    <select id="findByMemberIdAndWorkDateBetweenOrderByWorkDateAscStartAsc" resultMap="wsMap">
+        SELECT * FROM work_schedule
+        WHERE member_id = #{memberId}
+          AND work_date BETWEEN #{start} AND #{end}
+        ORDER BY work_date ASC, start_time ASC
+    </select>
+
+    <delete id="deleteByMemberIdAndWorkDate">
+        DELETE FROM work_schedule
+        WHERE member_id = #{memberId} AND work_date = #{workDate}
+    </delete>
+
+    <select id="findByWorkDateWithMember" resultMap="wsWithMemberMap">
+        SELECT ws.*,
+               m.id AS m_id,
+               m.name AS m_name,
+               m.phone AS m_phone,
+               m.status AS m_status
+        FROM work_schedule ws
+        JOIN member m ON ws.member_id = m.id
+        WHERE ws.work_date = #{date}
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO work_schedule (member_id, work_date, start_time, end_time, source, note, created_at, updated_at)
+        VALUES (#{memberId}, #{workDate}, #{start}, #{end},
+                #{source, typeHandler=org.apache.ibatis.type.EnumTypeHandler},
+                #{note}, NOW(), NOW())
+    </insert>
+
+    <delete id="deleteAll">
+        DELETE FROM work_schedule WHERE id IN
+        <foreach item="id" collection="ids" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+    <select id="existsByMemberId" resultType="boolean">
+        SELECT COUNT(*) > 0 FROM work_schedule WHERE member_id = #{memberId}
+    </select>
+
+</mapper>

@@ -1,538 +1,498 @@
 {{>layouts/header}}
 
 <main class="container my-4">
-    <div class="card shadow-sm border-0">
-        <div class="card-header fw-bold d-flex justify-content-between align-items-center bg-white border-bottom-0 pb-2 pt-3">
-            <div class="d-flex flex-column flex-sm-row align-items-sm-center gap-2">
-                <span class="h6 mb-0">금일 근무 현황</span>
-                <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle">
-                    금 (2025-11-08)
-                </span>
+    <!-- 1. 현재 시각 + 상단 컨트롤 -->
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+        <div class="d-flex align-items-baseline gap-2 flex-wrap">
+            <span id="nowClockBig" class="realtime-clock-big fw-bold">--:--:--</span>
+            <span class="text-muted fs-6">현재 시각</span>
+        </div>
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+            <label class="small text-muted mb-0">자동저장</label>
+            <input type="number" id="autoSaveMin" class="form-control form-control-sm"
+                   value="10" min="1" max="60" style="width:56px;text-align:center;">
+            <span class="small text-muted">분</span>
+            <button id="btnAutoSaveAdd" class="btn btn-sm btn-outline-success rounded-pill px-3">10분 추기</button>
+            <button id="btnRegisterActual" class="btn btn-sm btn-success rounded-pill px-3 fw-semibold" disabled>
+                실시간 반영
+            </button>
+        </div>
+    </div>
+
+    <!-- 2. 요약 배지 -->
+    <div class="d-flex flex-wrap gap-2 mb-3 align-items-center">
+        <span class="rt-summary-badge">
+            <strong id="totalCount">0</strong> 전체
+        </span>
+        <span class="rt-summary-badge rt-badge-working">
+            <strong id="workingCount">0</strong> 근무중
+        </span>
+        <span class="rt-summary-badge rt-badge-waiting">
+            <strong id="waitingCount">0</strong> 예정/대기
+        </span>
+        <span class="rt-summary-badge rt-badge-done">
+            <strong id="doneCount">0</strong> 완료
+        </span>
+    </div>
+
+    <!-- 3. 멤버 카드 영역 -->
+    <div class="member-cards-outer mb-4">
+        <div id="miniCalendars" class="mini-cal-wrapper">
+            <!-- JS 렌더링 -->
+        </div>
+    </div>
+
+    <!-- 4. 시간대별 근무 현황 (간트) -->
+    <div class="gantt-section">
+        <div class="gantt-section-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <div class="d-flex align-items-center gap-2">
+                <span style="font-size:1.1rem;">&#x1F4C5;</span>
+                <span class="fw-semibold">시간대별 근무 현황</span>
             </div>
-            <div class="d-flex align-items-center gap-2 small text-muted">
-                <span class="text-success fw-semibold">● 실시간</span>
-                <!-- 상단 오른쪽 작은 시계 (시:분:초) -->
-                <span id="nowClock" class="fw-semibold">--:--:--</span>
+            <div class="d-flex align-items-center gap-2">
+                <button id="btnSaveSchedule" class="btn btn-sm btn-success rounded-pill px-3">일정 저장</button>
+                <div class="btn-group btn-group-sm" id="scaleButtons">
+                    <button class="btn btn-dark scale-btn active" data-scale="10">10분</button>
+                    <button class="btn btn-outline-secondary scale-btn" data-scale="30">30분</button>
+                    <button class="btn btn-outline-secondary scale-btn" data-scale="60">1시간</button>
+                </div>
             </div>
         </div>
-
-        <div class="card-body pt-2">
-
-            <!-- 상단 컨트롤 바: 실시간 + 인원수 + 반영 버튼 -->
-            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
-                <div class="small text-muted">
-                    <span class="fw-semibold text-secondary">실시간 근무 현황</span>
-                    <span class="ms-1">
-                        상단 요약과 테이블은 실시간으로 갱신됩니다.
-                    </span>
-                    <!-- 가운데 크게 현재 시간 (시:분:초) -->
-                    <div class="mt-1">
-                        <span class="me-1 text-secondary">현재 시각</span>
-                        <span id="nowClockInline" class="current-time-big fw-bold text-primary">--:--:--</span>
-                    </div>
-                </div>
-
-                <div class="d-flex align-items-center gap-2">
-                    <span id="memberCountBadge"
-                          class="badge bg-light border text-dark px-3 py-2 rounded-pill small">
-                        0명 근무 예정
-                    </span>
-                    <button id="btnRegisterActual" class="btn btn-sm btn-success px-3" title="10분 단위에서만 활성화됩니다." disabled>
-                        실시간 반영
-                    </button>
-                </div>
-            </div>
-
-            <!-- 상단: 아르바이트 3열 카드 (금일 근무자) -->
-            <div id="miniCalendars" class="mini-cal-wrapper mb-4">
-                <!-- JS로 카드 렌더링 -->
-            </div>
-
-            <!-- 단위 설정 블록: 타임테이블 바로 위 -->
-            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
-                <div class="small text-muted">
-                    <span class="fw-semibold text-secondary">단위 설정</span>
-                    <span class="text-muted ms-1">슬롯 단위별로 근무 상태를 확인합니다.</span>
-                </div>
-
-                <!-- 단위 선택 버튼 그룹 -->
-                <div class="btn-group btn-group-sm" role="group" aria-label="슬롯 단위 선택">
-                    <button type="button"
-                            class="btn btn-outline-secondary"
-                            data-step-btn
-                            data-step="10">
-                        10분
-                    </button>
-                    <button type="button"
-                            class="btn btn-outline-secondary active"
-                            data-step-btn
-                            data-step="30">
-                        30분
-                    </button>
-                    <button type="button"
-                            class="btn btn-outline-secondary"
-                            data-step-btn
-                            data-step="60">
-                        60분
-                    </button>
-                </div>
-            </div>
-
-            <!-- ===== 타임테이블 섹션(접었다/폈다) ===== -->
-            <section id="timetableSection" class="timetable-section collapsed">
-
-                <!-- 타임테이블 헤더 + 토글 버튼 -->
-                <div class="d-flex align-items-center justify-content-between mb-2 timetable-header-row">
-                    <div class="small text-secondary fw-semibold">
-                        시간대별 근무 현황 테이블
-                    </div>
-                    <button id="btnToggleTimetable"
-                            type="button"
-                            class="btn btn-sm btn-outline-secondary timetable-toggle-btn"
-                            aria-expanded="false">
-                        타임테이블 펼치기
-                    </button>
-                </div>
-
-                <!-- 근무현황 테이블 -->
-                <div class="table-responsive position-relative timetable-wrapper" id="ttScroll">
-                    <table class="table table-sm table-bordered align-middle text-center timetable-10m mb-0" id="tt10m">
-                        <thead class="table-light">
-                        <tr id="tt10mHead">
-                            <th style="width:90px;" class="text-secondary small">시간</th>
-                            <!-- JS가 금일 근무자 이름으로 동적 th 생성 -->
-                            <!-- 마지막에 '시간대 합' th 생성 -->
-                        </tr>
-                        </thead>
-                        <tbody id="tt10mBody">
-                        <!-- JS가 HOUR_START~HOUR_END, 선택 단위 간격으로 행 생성 -->
-                        </tbody>
-                    </table>
-                </div>
-
-                <!-- Legend / 설명 -->
-                <div class="d-flex flex-wrap gap-3 align-items-center small text-muted mt-3 timetable-legend">
-                    <div class="d-flex align-items-center gap-1">
-                        <span class="legend-box legend-planned"></span>
-                        <span>노란색: 계획된 스케줄</span>
-                    </div>
-                    <div class="d-flex align-items-center gap-1">
-                        <span class="legend-box legend-done"></span>
-                        <span>연두색: 현재 시각까지 경과한 구간</span>
-                    </div>
-                    <div class="d-flex align-items-center gap-1">
-                        <span class="legend-box legend-current"></span>
-                        <span>깜빡임: <strong>현재 시간 슬롯의 실제 근무</strong></span>
-                    </div>
-                    <div class="ms-auto small text-secondary">
-                        오른쪽 <strong>‘시간대 합’</strong>은 해당 시간대 근무 예정 인원 수입니다.
-                    </div>
-                </div>
-            </section>
+        <div id="rtGanttContainer" class="rt-gantt-container mt-2">
+            <!-- JS 간트 차트 렌더링 -->
         </div>
     </div>
 </main>
 
 <style>
-    /* ===== 현재 시간(가운데 큰 글씨) ===== */
-    .current-time-big {
-        font-size: 2.4rem; /* 기존 대비 약 3배 수준 (부트스트랩 small 기준) */
-        line-height: 1.1;
-        letter-spacing: 0.04em;
-    }
-
-    @media (max-width: 576px) {
-        .current-time-big {
-            font-size: 1.8rem;
-        }
-    }
-
-    /* ===== 공통/레이아웃 ===== */
-    .timetable-10m {
-        border-collapse: separate;
-        border-spacing: 0;
-    }
-
-    .timetable-10m th,
-    .timetable-10m td {
-        vertical-align: middle;
-        font-size: 0.85rem;
-        border-color: #e5e7eb !important;
-    }
-
-    .timecell {
+    /* ===== 1. 큰 시계 ===== */
+    .realtime-clock-big {
+        font-size: 3rem;
+        line-height: 1;
+        letter-spacing: 0.03em;
         font-variant-numeric: tabular-nums;
+        color: #1e293b;
+    }
+    @media (max-width: 576px) {
+        .realtime-clock-big { font-size: 2rem; }
     }
 
-    #tt10m td {
-        padding: 0.04rem 0.06rem;
+    /* ===== 2. 요약 배지 ===== */
+    .rt-summary-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 6px 16px;
+        border-radius: 999px;
+        border: 1px solid #d1d5db;
+        background: #fff;
+        font-size: 0.85rem;
+        color: #374151;
+        white-space: nowrap;
+    }
+    .rt-summary-badge strong {
+        font-size: 1rem;
+    }
+    .rt-badge-working {
+        border-color: #22c55e;
+        color: #16a34a;
+    }
+    .rt-badge-working strong { color: #16a34a; }
+    .rt-badge-waiting {
+        border-color: #f59e0b;
+        color: #d97706;
+    }
+    .rt-badge-waiting strong { color: #d97706; }
+    .rt-badge-done {
+        border-color: #9ca3af;
+        color: #6b7280;
+    }
+    .rt-badge-done strong { color: #6b7280; }
+
+    /* ===== 3. 멤버 카드 영역 ===== */
+    .member-cards-outer {
+        border: 1px solid #e5e7eb;
+        border-radius: 16px;
+        background: #fff;
+        padding: 16px;
+        box-shadow: 0 4px 12px rgba(15,23,42,.04);
     }
 
-    /* ===== 상단 아르바이트 카드 ===== */
-    .mini-cal-wrapper{
+    .mini-cal-wrapper {
         display: flex;
         flex-wrap: wrap;
         gap: 12px;
     }
 
-    .mini-cal-card{
+    .mini-cal-card {
         flex: 0 0 calc((100% - 24px) / 3);
         max-width: calc((100% - 24px) / 3);
-        border-radius: 16px;
+        border-radius: 14px;
         border: 1px solid #e5e7eb;
         background: #ffffff;
-        padding: 12px 14px 10px 14px;
-        box-shadow: 0 10px 25px rgba(15,23,42,.06);
         display: flex;
         flex-direction: column;
-        min-height: 120px;
+        min-height: 130px;
+        overflow: hidden;
         transition: box-shadow .15s ease, border-color .15s ease, transform .12s ease;
-        cursor: default;
     }
-
-    .mini-cal-card:hover{
-        border-color: #bfdbfe;
-        box-shadow: 0 16px 32px rgba(15,23,42,.12);
+    .mini-cal-card:hover {
+        border-color: #d1d5db;
+        box-shadow: 0 8px 20px rgba(15,23,42,.08);
         transform: translateY(-1px);
     }
-
-    .mini-cal-card.current-working{
-        border-color:#2563eb;
-        box-shadow:0 0 0 1px rgba(37,99,235,.4), 0 18px 36px rgba(37,99,235,.25);
+    .mini-cal-card.current-working {
+        border-color: #22c55e;
+        box-shadow: 0 0 0 1px rgba(34,197,94,.4), 0 12px 28px rgba(34,197,94,.15);
     }
 
     @media (max-width: 992px) {
-        .mini-cal-card{
+        .mini-cal-card {
             flex: 0 0 calc((100% - 12px) / 2);
             max-width: calc((100% - 12px) / 2);
         }
     }
-
     @media (max-width: 576px) {
-        .mini-cal-card{
+        .mini-cal-card {
             flex: 1 1 100%;
             max-width: 100%;
         }
     }
 
-    .mini-cal-header{
-        margin: -4px -6px 6px -6px;
-        padding: 6px 10px;
-        border-radius: 12px;
-        background: linear-gradient(90deg, #2563eb, #1d4ed8);
-        color:#eff6ff;
-        display:flex;
-        flex-direction:column;
-        gap:3px;
+    /* 카드 헤더 */
+    .mini-cal-header {
+        padding: 10px 14px;
+        background: var(--card-gradient);
+        color: #fff;
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
     }
-
-    .mini-cal-header-top{
-        display:flex;
-        align-items:center;
-        justify-content:space-between;
-        gap:6px;
-    }
-
-    .mini-cal-name{
-        display:flex;
-        align-items:center;
-        gap:6px;
-        font-weight:700;
-        font-size:0.9rem;
-    }
-
-    .mini-cal-name-text{
-        display:inline-block;
-        color:#f9fafb;
-    }
-
-    .mini-cal-dot{
-        width:11px;
-        height:11px;
-        border-radius:50%;
-        border:2px solid rgba(239,246,255,0.95);
-        box-shadow:0 0 0 1px rgba(191,219,254,0.9);
-        flex:0 0 auto;
-    }
-
-    .mini-cal-status-pill{
-        border-radius:999px;
-        padding:2px 8px;
-        font-size:0.72rem;
-        font-weight:600;
-        border:1px solid rgba(239,246,255,.9);
-        color:#f9fafb;
-        background:rgba(15,23,42,0.15);
-        white-space:nowrap;
-    }
-    .mini-cal-status-pill.status-working{
-        background:rgba(34,197,94,0.2);
-        border-color:rgba(34,197,94,0.9);
-    }
-    .mini-cal-status-pill.status-done{
-        background:rgba(148,163,184,0.25);
-        border-color:rgba(148,163,184,0.9);
-    }
-    .mini-cal-status-pill.status-rest{
-        background:rgba(251,191,36,0.2);
-        border-color:rgba(251,191,36,0.9);
-    }
-
-    .mini-cal-header-sub{
-        font-size:0.75rem;
-        color:#e5e7eb;
-        display:flex;
-        flex-wrap:wrap;
-        gap:4px;
-    }
-
-    .mini-cal-header-sub span + span::before{
-        content:"·";
-        margin:0 4px;
-        opacity:.7;
-    }
-
-    .mini-cal-main{
-        display:flex;
-        flex-direction:column;
-        gap:6px;
-        font-size:0.8rem;
-        margin-top:4px;
-    }
-
-    .mini-cal-seg{
-        border-radius:999px;
-        padding:4px 9px;
-        background: #ffffff;
-        border:1px solid #e5e7eb;
-        display:flex;
-        align-items:center;
-        justify-content:space-between;
-        gap:6px;
-        position: relative;
-        overflow: hidden;
-    }
-    .mini-cal-seg-time{
-        font-weight:600;
-        font-size:0.8rem;
-    }
-    .mini-cal-seg-label{
-        font-size:0.75rem;
-        color:#6b7280;
-    }
-
-    .mini-cal-seg-current{
-        animation: miniSegBlink 1s step-start infinite;
-        background: rgba(255, 193, 7, 0.9);
-        border-color: rgba(255, 193, 7, 1);
-        box-shadow: 0 0 0 2px rgba(255,193,7,0.6);
-    }
-    @keyframes miniSegBlink{
-        0%   { filter:brightness(1.0); box-shadow:0 0 0 0 rgba(255,193,7,0.0); }
-        50%  { filter:brightness(1.2); box-shadow:0 0 0 2px rgba(255,193,7,0.7); }
-        100% { filter:brightness(1.0); box-shadow:0 0 0 0 rgba(255,193,7,0.0); }
-    }
-
-    /* ===== 타임테이블 섹션 접기/펼치기 ===== */
-    .timetable-section {
-        border-radius: 0.75rem;
-        border: 1px solid #edf0f4;
-        padding: 0.75rem 0.75rem 0.5rem 0.75rem;
-        background-color: #ffffff;
-    }
-
-    .timetable-section.collapsed .timetable-wrapper,
-    .timetable-section.collapsed .timetable-legend {
-        display: none !important;
-    }
-
-    .timetable-header-row {
-        border-bottom: 1px dashed #e5e7eb;
-        padding-bottom: 0.4rem;
-        margin-bottom: 0.6rem;
-    }
-
-    .timetable-toggle-btn {
-        border-radius: 999px;
-        font-size: 0.75rem;
-        padding: 0.2rem 0.8rem;
-    }
-
-    /* ===== 하단 타임테이블 래퍼 ===== */
-    .timetable-wrapper {
-        border-radius: 0.75rem;
-        border: 1px solid #edf0f4;
-        max-height: calc(100vh - 260px);
-        overflow-y: auto;
-        overflow-x: auto;
-        background-color: #ffffff;
-        background-attachment: local;
-    }
-
-    .timetable-10m tbody tr:nth-child(even) td:not(.sum-cell),
-    .timetable-10m tbody tr:nth-child(even) th.timecell {
-        background-color: #fcfdff;
-    }
-
-    .timetable-10m tbody tr:hover td:not(.sum-cell),
-    .timetable-10m tbody tr:hover th.timecell {
-        background-color: #f3f4ff;
-    }
-
-    .hour-start-row th.timecell,
-    .hour-start-row td {
-        border-top-color: #d1d5db !important;
-        border-top-width: 2px !important;
-    }
-
-    .member-head {
-        font-size: 0.8rem;
-        font-weight: 600;
-        position: relative;
-        padding-top: 0.5rem;
-        padding-bottom: 0.5rem;
-        background-color: #f9fafb;
-    }
-    .member-head .member-name {
-        display: inline-flex;
+    .mini-cal-header-top {
+        display: flex;
         align-items: center;
+        justify-content: space-between;
         gap: 6px;
     }
-    .member-name-text{
-        display:inline-block;
+    .mini-cal-name {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-weight: 700;
+        font-size: 0.92rem;
     }
-    .member-status-text{
-        display:inline-block;
-        margin-left:4px;
-        font-size:0.78rem;
-        color:#6b7280;
+    .mini-cal-name-text {
+        color: #f9fafb;
     }
-    .member-head .member-dot {
+    .mini-cal-dot {
+        width: 11px;
+        height: 11px;
+        border-radius: 50%;
+        border: 2px solid rgba(239,246,255,0.95);
+        box-shadow: 0 0 0 1px rgba(191,219,254,0.9);
+        flex: 0 0 auto;
+    }
+    .mini-cal-status-pill {
+        border-radius: 999px;
+        padding: 2px 10px;
+        font-size: 0.72rem;
+        font-weight: 600;
+        border: 1px solid rgba(239,246,255,.9);
+        color: #f9fafb;
+        background: rgba(15,23,42,0.15);
+        white-space: nowrap;
+    }
+    .mini-cal-status-pill.status-working {
+        background: rgba(34,197,94,0.2);
+        border-color: rgba(34,197,94,0.9);
+    }
+    .mini-cal-status-pill.status-done {
+        background: rgba(148,163,184,0.25);
+        border-color: rgba(148,163,184,0.9);
+    }
+    .mini-cal-status-pill.status-rest {
+        background: rgba(251,191,36,0.2);
+        border-color: rgba(251,191,36,0.9);
+    }
+    .mini-cal-header-sub {
+        font-size: 0.75rem;
+        color: #e5e7eb;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+    }
+    .mini-cal-header-sub span + span::before {
+        content: "\00B7";
+        margin: 0 4px;
+        opacity: .7;
+    }
+
+    /* 카드 바디 */
+    .mini-cal-body {
+        padding: 10px 14px 6px 14px;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        flex: 1;
+    }
+    .mini-cal-seg {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 5px 0;
+        border-bottom: 1px solid #f3f4f6;
+        font-size: 0.82rem;
+    }
+    .mini-cal-seg:last-child {
+        border-bottom: none;
+    }
+    .mini-cal-seg-time {
+        font-weight: 600;
+        font-size: 0.82rem;
+        color: #374151;
+    }
+    .mini-cal-seg-label {
+        font-size: 0.75rem;
+        color: #9ca3af;
+        font-weight: 500;
+    }
+    .mini-cal-seg-label.seg-done { color: #6b7280; }
+    .mini-cal-seg-label.seg-working { color: #16a34a; font-weight: 600; }
+    .mini-cal-seg-label.seg-pending { color: #d97706; }
+
+    /* 카드 프로그레스 바 */
+    .mini-cal-progress-wrap {
+        padding: 0 14px;
+        margin-top: auto;
+    }
+    .mini-cal-progress {
+        height: 4px;
+        border-radius: 2px;
+        background: #f3f4f6;
+        overflow: hidden;
+    }
+    .mini-cal-progress-bar {
+        height: 100%;
+        border-radius: 2px;
+        transition: width 1s linear;
+        background: var(--bar-color, #64748b);
+    }
+
+    /* 카드 푸터 */
+    .mini-cal-footer {
+        padding: 4px 14px 8px 14px;
+        text-align: right;
+        font-size: 0.75rem;
+        color: #9ca3af;
+    }
+    .mini-cal-footer.footer-done {
+        color: #6b7280;
+    }
+
+    /* 카드 비활성 상태 */
+    .mini-cal-card.done-card {
+        opacity: 0.55;
+        filter: grayscale(0.3);
+    }
+    .mini-cal-card.done-card .mini-cal-header {
+        background: linear-gradient(135deg, #94a3b8, #64748b) !important;
+    }
+
+    /* ===== 4. 간트 섹션 ===== */
+    .gantt-section {
+        border: 1px solid #e5e7eb;
+        border-radius: 16px;
+        background: #fff;
+        padding: 16px;
+        box-shadow: 0 4px 12px rgba(15,23,42,.04);
+    }
+    .gantt-section-header {
+        padding-bottom: 10px;
+        border-bottom: 1px solid #f3f4f6;
+    }
+
+    .rt-gantt-container {
+        border: 1px solid #edf0f4;
+        border-radius: 0.5rem;
+        background: #fff;
+        overflow-x: auto;
+        overflow-y: auto;
+        max-height: calc(100vh - 300px);
+    }
+
+    /* 간트 시간 헤더 행 */
+    .rt-gantt-time-row {
+        display: flex;
+        align-items: flex-end;
+        height: 32px;
+        border-bottom: 2px solid #d1d5db;
+        position: sticky;
+        top: 0;
+        z-index: 5;
+        background: #f8fafc;
+    }
+
+    /* 간트 멤버 행 */
+    .rt-gantt-row {
+        display: flex;
+        align-items: center;
+        height: 38px;
+        border-bottom: 1px solid #edf0f4;
+        transition: background 0.15s;
+    }
+    .rt-gantt-row:hover {
+        background: #f8fafc;
+    }
+
+    /* 간트 라벨 셀 */
+    .rt-gantt-label-cell {
+        width: 110px;
+        min-width: 110px;
+        flex: 0 0 110px;
+        font-size: 0.8rem;
+        padding: 0 8px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-weight: 600;
+        border-right: 1px solid #edf0f4;
+        position: sticky;
+        left: 0;
+        background: inherit;
+        z-index: 2;
+    }
+    .rt-gantt-dot {
         width: 10px;
         height: 10px;
         border-radius: 50%;
         flex: 0 0 auto;
         border: 1px solid rgba(0,0,0,0.08);
     }
-    .member-head .member-plan {
-        display: block;
-        font-size: 0.75rem;
-        color: #6c757d;
-        margin-top: 2px;
-    }
-    .member-head::after {
-        content: "";
-        position: absolute;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        height: 3px;
-        background: var(--member-color, transparent);
+    .rt-gantt-name {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
 
-    #tt10m th.member-col,
-    #tt10m td.member-col {
-        border-left-color: #e5e7eb !important;
-    }
-
-    #tt10m th.member-col + th.member-col,
-    #tt10m td.member-col + td.member-col {
-        border-left-width: 10px !important;
-        border-left-color: transparent !important;
-    }
-
-    .slot-10m {
-        display: block;
-        width: 100%;
+    /* 간트 트랙 셀 */
+    .rt-gantt-track-cell {
+        flex: 1;
+        position: relative;
         height: 100%;
-        min-height: 14px;
-        border: 1px solid #eef2f6;
-        border-radius: 6px;
-        background: #fff;
-        transition: background-color .12s ease, border-color .12s ease, box-shadow .12s ease;
-    }
-    .slot-10m.planned {
-        background: rgba(255, 193, 7, .25);
-        border-color: rgba(255, 193, 7, .45);
-    }
-    .slot-10m.done {
-        background: rgba(25, 135, 84, .35);
-        border-color: rgba(25, 135, 84, .55);
+        min-width: 600px;
     }
 
-    #tt10m thead th {
-        position: sticky;
+    /* 간트 시간 눈금 */
+    .rt-gantt-grid-line {
+        position: absolute;
         top: 0;
-        z-index: 3;
-        background: #f8fafc;
-        box-shadow: 0 2px 3px rgba(15, 23, 42, 0.04);
+        bottom: 0;
+        width: 1px;
+        background: #edf0f4;
+        pointer-events: none;
     }
-    #tt10m tbody th {
-        position: sticky;
-        left: 0;
-        z-index: 2;
-        background: #fafafa;
-        box-shadow: 2px 0 3px rgba(15, 23, 42, 0.03);
+    .rt-gantt-grid-line.grid-hour {
+        background: #d1d5db;
+    }
+    .rt-gantt-grid-line.grid-half {
+        background: #e5e7eb;
+    }
+
+    /* 간트 시간 마크 */
+    .rt-gantt-hour-mark {
+        position: absolute;
+        font-size: 0.68rem;
+        color: #6b7280;
+        transform: translateX(-50%);
+        bottom: 4px;
         font-weight: 500;
     }
-
-    .now-row th.timecell {
-        background:#fff3cd;
-    }
-    .now-row td .slot-10m {
-        box-shadow: inset 0 0 0 1px rgba(255,193,7,.35);
+    .rt-gantt-half-mark {
+        color: #9ca3af;
+        font-weight: 400;
     }
 
-    .sum-head {
-        width: 110px;
-        font-size: 0.8rem;
+    /* 간트 바 */
+    .rt-gantt-bar {
+        position: absolute;
+        top: 6px;
+        bottom: 6px;
+        border-radius: 5px;
+        border: none;
+        background: var(--bar-color-light, rgba(148,163,184,0.25));
+        overflow: hidden;
+        z-index: 1;
+    }
+    .rt-gantt-bar-fill {
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        border-radius: 5px 0 0 5px;
+        background: var(--bar-color, #94a3b8);
+        opacity: 0.65;
+        transition: width 1s linear;
+    }
+    .rt-gantt-bar.fully-done {
+        background: var(--bar-color, #94a3b8);
+        opacity: 0.45;
+    }
+    .rt-gantt-bar.fully-done .rt-gantt-bar-fill {
+        display: none;
+    }
+    .rt-gantt-bar.active-now {
+        box-shadow: 0 0 6px rgba(0,0,0,0.08);
+    }
+    .rt-gantt-bar-label {
+        position: absolute;
+        left: 6px;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 0.65rem;
+        color: #374151;
         white-space: nowrap;
-    }
-    .sum-cell {
-        background:#fafafa;
-        font-weight:600;
-        font-size: 0.8rem;
-        border-left: 1px solid #e2e8f0 !important;
-    }
-    .timetable-10m tbody tr:hover .sum-cell {
-        background:#edf7ef;
-    }
-    .sum-cell.now-hour {
-        background:#e8f5e9;
-        border-left:2px solid #198754 !important;
-        color:#146c43;
+        pointer-events: none;
+        z-index: 2;
+        font-weight: 500;
+        text-shadow: 0 0 3px rgba(255,255,255,0.8);
     }
 
-    .slot-10m.current-working {
-        animation: slotCurrentBlink 1s step-start infinite;
-        background: rgba(255, 193, 7, 0.95) !important;
-        border-color: rgba(255, 193, 7, 1) !important;
-        box-shadow: 0 0 0 2px rgba(255,193,7,0.6);
+    /* 현재 시간 라인 */
+    .rt-gantt-now-line {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background: #ef4444;
+        z-index: 4;
+        pointer-events: none;
     }
-    @keyframes slotCurrentBlink {
-        0%   { filter: brightness(1.0); box-shadow: 0 0 0 0 rgba(255,193,7,0.0); }
-        50%  { filter: brightness(1.25); box-shadow: 0 0 0 2px rgba(255,193,7,0.7); }
-        100% { filter: brightness(1.0); box-shadow: 0 0 0 0 rgba(255,193,7,0.0); }
+    .rt-gantt-now-line::before {
+        content: '';
+        position: absolute;
+        top: -3px;
+        left: -3px;
+        width: 8px;
+        height: 8px;
+        background: #ef4444;
+        border-radius: 50%;
     }
 
-    .legend-box {
-        width: 14px;
-        height: 14px;
-        border-radius: 3px;
-        border: 1px solid #dee2e6;
-        display: inline-block;
+    /* 간트 합계 셀 */
+    .rt-gantt-hours-cell {
+        width: 60px;
+        min-width: 60px;
+        flex: 0 0 60px;
+        text-align: center;
+        font-size: 0.78rem;
+        font-weight: 600;
+        color: #64748b;
+        border-left: 1px solid #edf0f4;
     }
-    .legend-planned {
-        background: rgba(255, 193, 7, .35);
-        border-color: rgba(255, 193, 7, .7);
-    }
-    .legend-done {
-        background: rgba(25, 135, 84, .4);
-        border-color: rgba(25, 135, 84, .7);
-    }
-    .legend-current {
-        background: rgba(255, 193, 7, .9);
-        border-color: rgba(255, 193, 7, 1);
+
+    /* ===== 스케일 버튼 활성 상태 ===== */
+    .scale-btn.active {
+        pointer-events: none;
     }
 </style>
 
@@ -541,642 +501,498 @@
 </script>
 
 <script>
-    (function () {
-        function todayStr() {
-            const d = new Date();
-            const y = d.getFullYear();
-            const m = String(d.getMonth() + 1).padStart(2,'0');
-            const day = String(d.getDate()).padStart(2,'0');
-            return `${y}-${m}-${day}`;
-        }
+(function () {
+    /* ===== 유틸 함수 ===== */
+    function todayStr() {
+        const d = new Date();
+        return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    }
+    function parseHm(hm) {
+        const [h,m] = (hm||'0:0').split(':').map(n => parseInt(n,10));
+        return { h: h||0, m: m||0 };
+    }
+    function getSchedules(m) {
+        if (Array.isArray(m?.schedule)) return m.schedule;
+        if (Array.isArray(m?.schedules)) return m.schedules;
+        return [];
+    }
+    function dayKeyOf(d) {
+        return ['SUN','MON','TUE','WED','THU','FRI','SAT'][d.getDay()];
+    }
+    function escapeHtml(s) {
+        if (s == null) return '';
+        return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+    }
+    function hexToRgb(hex) {
+        return { r: parseInt(hex.slice(1,3),16), g: parseInt(hex.slice(3,5),16), b: parseInt(hex.slice(5,7),16) };
+    }
+    function colorForMember(m) {
+        const key = (m.id != null ? String(m.id) : (m.name || 'x'));
+        return hslToHex(seededHash(key) % 360, 65, 55);
+    }
+    function seededHash(str) {
+        let h = 2166136261 >>> 0;
+        for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = (h * 16777619) >>> 0; }
+        return h >>> 0;
+    }
+    function hslToHex(h,s,l) {
+        s /= 100; l /= 100;
+        const k = n => (n + h/30) % 12;
+        const a = s * Math.min(l, 1-l);
+        const f = n => l - a * Math.max(-1, Math.min(k(n)-3, Math.min(9-k(n), 1)));
+        const toHex = x => Math.round(255*x).toString(16).padStart(2,'0');
+        return `#${toHex(f(0))}${toHex(f(8))}${toHex(f(4))}`;
+    }
+    function todaySpanLabel(segs) {
+        if (!segs || !segs.length) return '';
+        const first = segs.reduce((min, s) => s.start < min.start ? s : min, segs[0]);
+        const last  = segs.reduce((max, s) => s.end   > max.end   ? s : max, segs[0]);
+        return `${first.start} ~ ${last.end}`;
+    }
 
-        const API_ENDPOINT = '/api/schedule/actual-bulk-register';
-        const TARGET_DATE_STR = todayStr();
-        const HOUR_START = 6, HOUR_END = 22;
+    /* ===== 상수 & DOM ===== */
+    const API_ENDPOINT = '/api/schedule/actual-bulk-register';
+    const TARGET_DATE_STR = todayStr();
+    const HOUR_START = 6, HOUR_END = 22;
+    const TOTAL_MIN = (HOUR_END - HOUR_START) * 60;
 
-        let STEP_MIN = 30;
-        let SLOTS_PER_HOUR = 60 / STEP_MIN;
-        let TOTAL_ROWS = (HOUR_END - HOUR_START) * SLOTS_PER_HOUR;
+    const nowClockBig      = document.getElementById('nowClockBig');
+    const btnRegisterActual = document.getElementById('btnRegisterActual');
+    const btnAutoSaveAdd   = document.getElementById('btnAutoSaveAdd');
+    const autoSaveMinInput = document.getElementById('autoSaveMin');
+    const btnSaveSchedule  = document.getElementById('btnSaveSchedule');
+    const miniCalendars    = document.getElementById('miniCalendars');
+    const ganttContainer   = document.getElementById('rtGanttContainer');
 
-        const nowClock = document.getElementById('nowClock');
-        const nowClockInline = document.getElementById('nowClockInline');
-        const memberCountBadge = document.getElementById('memberCountBadge');
-        const headRow = document.getElementById('tt10mHead');
-        const bodyEl = document.getElementById('tt10mBody');
-        const scrollBox = document.getElementById('ttScroll');
-        const btnRegisterActual = document.getElementById('btnRegisterActual');
-        const stepButtons = document.querySelectorAll('[data-step-btn]');
-        const miniCalendars = document.getElementById('miniCalendars');
-        const timetableSection = document.getElementById('timetableSection');
-        const btnToggleTimetable = document.getElementById('btnToggleTimetable');
+    /* ===== 데이터 ===== */
+    let allMembers = [];
+    try { allMembers = JSON.parse(document.getElementById('membersData').textContent || '[]'); } catch(e) { allMembers = []; }
 
-        let allMembers = [];
-        try {
-            allMembers = JSON.parse(document.getElementById('membersData').textContent || '[]');
-        } catch (e) {
-            allMembers = [];
-        }
+    const targetDate = new Date(`${TARGET_DATE_STR}T00:00:00`);
+    const DAY_KEY = dayKeyOf(targetDate);
 
-        const targetDate = new Date(`${TARGET_DATE_STR}T00:00:00`);
-        const DAY_KEY = dayKeyOf(targetDate);
+    const todayMembers = (allMembers || [])
+        .filter(m => getSchedules(m).some(s => s.day === DAY_KEY))
+        .sort((a,b) => (a.name||'').localeCompare(b.name||'', 'ko'));
 
-        const todayMembers = (allMembers || [])
-                .filter(m => getSchedules(m).some(s => s.day === DAY_KEY))
-                .sort((a,b) => (a.name||'').localeCompare(b.name||'', 'ko'));
+    const colorMap = {};
+    todayMembers.forEach(m => { colorMap[m.id] = colorForMember(m); });
 
-        const colorMap = {};
-        todayMembers.forEach(m => { colorMap[m.id] = colorForMember(m); });
+    let currentScale = 10; // 기본 10분 스케일
 
-        const hourlyTotals = computeHourlyTotals(todayMembers);
+    /* ===== 초기 렌더링 ===== */
+    renderNow();
+    renderMiniCalendars(todayMembers);
+    renderGantt(todayMembers);
+    updateGanttBars();
+    updateMiniCalendarState(todayMembers);
+    updateSummaryBadges(todayMembers);
+    updateActualButtonState();
 
-        let didAutoScrollOnce = false;
-        let lastMinute = -1;
-
-        function updateActualButtonState() {
-            const enable = (STEP_MIN === 10) && (todayMembers.length > 0);
-            btnRegisterActual.disabled = !enable;
-            btnRegisterActual.title = enable ? '' : '10분 단위에서만 활성화됩니다.';
-        }
-
-        /* ==== 초기 렌더링 ==== */
+    /* ===== 1초 타이머 ===== */
+    setInterval(() => {
         renderNow();
-        renderMiniCalendars(todayMembers);
-        renderTableHeader(todayMembers);
-        renderTableBody();
-        paintPlanned(todayMembers);
-        updateDoneColors(todayMembers);
-        highlightHourSum();
-        updateCurrentWorkingBlink(todayMembers);
+        updateGanttBars();
         updateMiniCalendarState(todayMembers);
-        updateMemberHeaderState(todayMembers);
+        updateSummaryBadges(todayMembers);
+    }, 1000);
 
-        memberCountBadge.textContent = `${todayMembers.length}명 근무 예정`;
-        updateActualButtonState();
+    /* ===== 시계 ===== */
+    function renderNow() {
+        const d = new Date();
+        const text = `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}:${String(d.getSeconds()).padStart(2,'0')}`;
+        if (nowClockBig) nowClockBig.textContent = text;
+    }
 
-        scrollBox.addEventListener('scroll', function(){}, { passive: true });
+    /* ===== 요약 배지 업데이트 ===== */
+    function updateSummaryBadges(members) {
+        const now = new Date();
+        const nowMin = now.getHours() * 60 + now.getMinutes();
+        let working = 0, waiting = 0, done = 0;
 
-        /* ===== 타임테이블 토글 ===== */
-        if (btnToggleTimetable && timetableSection) {
-            btnToggleTimetable.addEventListener('click', () => {
-                const collapsed = timetableSection.classList.toggle('collapsed');
-                if (collapsed) {
-                    btnToggleTimetable.textContent = '타임테이블 펼치기';
-                    btnToggleTimetable.setAttribute('aria-expanded', 'false');
-                } else {
-                    btnToggleTimetable.textContent = '타임테이블 접기';
-                    btnToggleTimetable.setAttribute('aria-expanded', 'true');
-                }
+        members.forEach(m => {
+            const segs = getSchedules(m).filter(s => s.day === DAY_KEY);
+            let isWorking = false, hasFuture = false, allDone = true;
+            segs.forEach(s => {
+                const stMin = parseHm(s.start).h * 60 + parseHm(s.start).m;
+                const edMin = parseHm(s.end).h * 60 + parseHm(s.end).m;
+                if (nowMin >= stMin && nowMin < edMin) isWorking = true;
+                if (nowMin < edMin) allDone = false;
+                if (nowMin < stMin) hasFuture = true;
             });
-        }
-
-        /* ===== 단위 선택 버튼 ===== */
-        stepButtons.forEach(btn => {
-            btn.addEventListener('click', () => {
-                const newStep = parseInt(btn.dataset.step, 10);
-                if (!newStep || newStep === STEP_MIN) {
-                    stepButtons.forEach(b => b.classList.remove('active'));
-                    btn.classList.add('active');
-                    updateActualButtonState();
-                    return;
-                }
-
-                STEP_MIN = newStep;
-                SLOTS_PER_HOUR = 60 / STEP_MIN;
-                TOTAL_ROWS = (HOUR_END - HOUR_START) * SLOTS_PER_HOUR;
-
-                stepButtons.forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-
-                renderTableBody();
-                paintPlanned(todayMembers);
-                updateDoneColors(todayMembers);
-                highlightHourSum();
-                updateCurrentWorkingBlink(todayMembers);
-                updateMiniCalendarState(todayMembers);
-                updateMemberHeaderState(todayMembers);
-                updateActualButtonState();
-                scrollToNowRow({ smooth: true });
-            });
+            if (isWorking) working++;
+            else if (allDone && segs.length) done++;
+            else waiting++;
         });
 
-        function safeIndexToHM(idx) {
-            const totalMin = (HOUR_START * 60) + idx * STEP_MIN;
-            const hh = String(Math.floor(totalMin / 60)).padStart(2,'0');
-            const mm = String(totalMin % 60).padStart(2,'0');
-            return `${hh}:${mm}`;
-        }
+        document.getElementById('totalCount').textContent = members.length;
+        document.getElementById('workingCount').textContent = working;
+        document.getElementById('waitingCount').textContent = waiting;
+        document.getElementById('doneCount').textContent = done;
+    }
 
-        /* ===== 실시간 반영 버튼 ===== */
-        btnRegisterActual.addEventListener('click', async () => {
-            if (!todayMembers.length) return alert('금일 근무자가 없습니다.');
-            if (STEP_MIN !== 10) return alert('실시간 반영은 10분 단위에서만 가능합니다.');
+    /* ===== 버튼 활성화 ===== */
+    function updateActualButtonState() {
+        const enable = todayMembers.length > 0;
+        btnRegisterActual.disabled = !enable;
+        btnRegisterActual.title = enable ? '' : '금일 근무자가 없습니다.';
+    }
 
-            const confirmMsg = '현재까지의 실제 근무(연두색) 구간을 서버에 등록하시겠습니까?';
-            if (!confirm(confirmMsg)) return;
+    /* ===== 실시간 반영 버튼 ===== */
+    btnRegisterActual.addEventListener('click', async () => {
+        if (!todayMembers.length) return alert('금일 근무자가 없습니다.');
+        if (!confirm('현재까지의 실제 근무 구간을 서버에 등록하시겠습니까?')) return;
 
-            const items = todayMembers.map(m => {
-                const doneIdx = collectDoneIndexesForMember(m.id);
-                const ranges = compressIndexesToRanges(doneIdx);
-                const segments = ranges.map(([a, b]) => ({
-                    start: safeIndexToHM(a),
-                    end:   safeIndexToHM(b + 1)
-                }));
-                return { memberId: m.id, segments };
-            }).filter(x => x.segments.length > 0);
+        const now = new Date();
+        const nowMin = now.getHours() * 60 + now.getMinutes();
 
-            if (!items.length) {
-                return alert('등록할 실제 근무 구간(연두색)이 없습니다.');
-            }
-
-            const payload = {
-                date: todayStr(),
-                segments: items
-            };
-
-            try {
-                const res = await fetch(API_ENDPOINT, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-
-                const data = await res.json().catch(() => ({}));
-                if (res.ok && (data.success === undefined || data.success === true)) {
-                    alert('✅ 실시간 반영 완료');
-                } else {
-                    alert('⚠️ 반영 실패: ' + (data.message || res.statusText || '알 수 없는 오류'));
-                    console.error('Server response:', data);
+        const items = todayMembers.map(m => {
+            const segs = getSchedules(m).filter(s => s.day === DAY_KEY);
+            const segments = [];
+            segs.forEach(s => {
+                const stMin = parseHm(s.start).h * 60 + parseHm(s.start).m;
+                const edMin = parseHm(s.end).h * 60 + parseHm(s.end).m;
+                if (nowMin > stMin) {
+                    const endMin = Math.min(nowMin, edMin);
+                    segments.push({ start: s.start, end: `${String(Math.floor(endMin/60)).padStart(2,'0')}:${String(endMin%60).padStart(2,'0')}` });
                 }
-            } catch (err) {
-                alert('❌ 네트워크 오류로 반영에 실패했습니다.');
-                console.error(err);
-            }
-        });
+            });
+            return { memberId: m.id, segments };
+        }).filter(x => x.segments.length > 0);
 
-        /* ===== 주기적 업데이트 (1초마다, 초까지 포함) ===== */
-        setInterval(() => {
-            renderNow();                         // 시:분:초 실시간
-            updateDoneColors(todayMembers);      // 연두색 영역 갱신
-            highlightHourSum();                  // 현재 시간대 합 강조
-            updateCurrentWorkingBlink(todayMembers); // 현재 슬롯 깜빡임
-            updateMiniCalendarState(todayMembers);
-            updateMemberHeaderState(todayMembers);
+        if (!items.length) return alert('등록할 실제 근무 구간이 없습니다.');
 
-            const now = new Date();
-            if (now.getMinutes() !== lastMinute) {
-                lastMinute = now.getMinutes();
-                scrollToNowRow({ smooth: true });
+        try {
+            const res = await fetch(API_ENDPOINT, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ date: todayStr(), segments: items })
+            });
+            const data = await res.json().catch(() => ({}));
+            if (res.ok && (data.success === undefined || data.success === true)) {
+                alert('실시간 반영 완료');
             } else {
-                highlightNowRow();
+                alert('반영 실패: ' + (data.message || res.statusText || '알 수 없는 오류'));
             }
-        }, 1000);
+        } catch (err) {
+            alert('네트워크 오류로 반영에 실패했습니다.');
+            console.error(err);
+        }
+    });
 
-        /* ===== 상단 미니 캘린더 렌더링 ===== */
+    /* ===== 자동저장 추기 버튼 ===== */
+    btnAutoSaveAdd.addEventListener('click', () => {
+        const cur = parseInt(autoSaveMinInput.value, 10) || 10;
+        autoSaveMinInput.value = cur + 10;
+        btnAutoSaveAdd.textContent = `${cur + 10}분 추기`;
+    });
 
-        function renderMiniCalendars(members){
-            miniCalendars.innerHTML = '';
-            if (!members.length){
-                miniCalendars.innerHTML = '<div class="text-muted small">금일 근무자가 없습니다.</div>';
-                return;
+    /* ===== 일정 저장 버튼 ===== */
+    btnSaveSchedule.addEventListener('click', async () => {
+        if (!todayMembers.length) return alert('금일 근무자가 없습니다.');
+        if (!confirm('현재까지의 실제 근무 구간을 저장하시겠습니까?')) return;
+
+        const now = new Date();
+        const nowMin = now.getHours() * 60 + now.getMinutes();
+
+        const items = todayMembers.map(m => {
+            const segs = getSchedules(m).filter(s => s.day === DAY_KEY);
+            const segments = [];
+            segs.forEach(s => {
+                const stMin = parseHm(s.start).h * 60 + parseHm(s.start).m;
+                const edMin = parseHm(s.end).h * 60 + parseHm(s.end).m;
+                if (nowMin > stMin) {
+                    const endMin = Math.min(nowMin, edMin);
+                    segments.push({ start: s.start, end: `${String(Math.floor(endMin/60)).padStart(2,'0')}:${String(endMin%60).padStart(2,'0')}` });
+                }
+            });
+            return { memberId: m.id, segments };
+        }).filter(x => x.segments.length > 0);
+
+        if (!items.length) return alert('등록할 실제 근무 구간이 없습니다.');
+
+        try {
+            const res = await fetch(API_ENDPOINT, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ date: todayStr(), segments: items })
+            });
+            const data = await res.json().catch(() => ({}));
+            if (res.ok && (data.success === undefined || data.success === true)) {
+                alert('일정 저장 완료');
+            } else {
+                alert('저장 실패: ' + (data.message || res.statusText || '알 수 없는 오류'));
             }
+        } catch (err) {
+            alert('네트워크 오류로 저장에 실패했습니다.');
+            console.error(err);
+        }
+    });
 
-            members.forEach(m => {
-                const segs = getSchedules(m).filter(s => s.day === DAY_KEY);
-                const color = colorMap[m.id];
-                const card = document.createElement('div');
-                card.className = 'mini-cal-card';
-                card.dataset.memberId = String(m.id);
+    /* ===== 스케일 버튼 토글 ===== */
+    document.getElementById('scaleButtons').addEventListener('click', e => {
+        const btn = e.target.closest('.scale-btn');
+        if (!btn || btn.classList.contains('active')) return;
 
-                const segHtml = segs.map(s => `
-                    <div class="mini-cal-seg"
-                         data-start="${s.start}"
-                         data-end="${s.end}">
-                        <span class="mini-cal-seg-time">${s.start} ~ ${s.end}</span>
-                        <span class="mini-cal-seg-label">예정</span>
-                    </div>
-                `).join('');
+        document.querySelectorAll('.scale-btn').forEach(b => {
+            b.classList.remove('active', 'btn-dark');
+            b.classList.add('btn-outline-secondary');
+        });
+        btn.classList.add('active', 'btn-dark');
+        btn.classList.remove('btn-outline-secondary');
 
-                const spanLabel = todaySpanLabel(segs);
-                const segCountLabel = segs.length ? `${segs.length}개 스케줄` : '스케줄 없음';
+        currentScale = parseInt(btn.dataset.scale, 10);
+        renderGantt(todayMembers);
+        updateGanttBars();
+    });
 
-                card.innerHTML = `
-                    <div class="mini-cal-header">
-                        <div class="mini-cal-header-top">
-                            <div class="mini-cal-name">
-                                <span class="mini-cal-dot" style="background:${color};"></span>
-                                <span class="mini-cal-name-text">${escapeHtml(m.name || '-')}</span>
-                            </div>
-                            <span class="mini-cal-status-pill" data-status-pill>휴식중</span>
+    /* ===== 멤버 카드 렌더링 ===== */
+    function renderMiniCalendars(members) {
+        miniCalendars.innerHTML = '';
+        if (!members.length) {
+            miniCalendars.innerHTML = '<div class="text-muted small p-3">금일 근무자가 없습니다.</div>';
+            return;
+        }
+
+        members.forEach(m => {
+            const segs = getSchedules(m).filter(s => s.day === DAY_KEY);
+            const color = colorMap[m.id];
+            const rgb = hexToRgb(color);
+
+            const card = document.createElement('div');
+            card.className = 'mini-cal-card';
+            card.dataset.memberId = String(m.id);
+            card.style.setProperty('--card-gradient',
+                `linear-gradient(135deg, rgba(${rgb.r},${rgb.g},${rgb.b},0.85), rgba(${Math.max(0,rgb.r-40)},${Math.max(0,rgb.g-40)},${Math.max(0,rgb.b-40)},0.95))`);
+            card.style.setProperty('--bar-color', color);
+
+            const segHtml = segs.map(s => `
+                <div class="mini-cal-seg" data-start="${s.start}" data-end="${s.end}">
+                    <span class="mini-cal-seg-time">${s.start} ~ ${s.end}</span>
+                    <span class="mini-cal-seg-label">예정</span>
+                </div>
+            `).join('');
+
+            const spanLabel = todaySpanLabel(segs);
+            const segCountLabel = segs.length ? `${segs.length}개 스케줄` : '스케줄 없음';
+
+            card.innerHTML = `
+                <div class="mini-cal-header">
+                    <div class="mini-cal-header-top">
+                        <div class="mini-cal-name">
+                            <span class="mini-cal-dot" style="background:${color};"></span>
+                            <span class="mini-cal-name-text">${escapeHtml(m.name || '-')}</span>
                         </div>
-                        <div class="mini-cal-header-sub">
-                            ${spanLabel ? `<span>오늘: ${spanLabel}</span>` : ''}
-                            <span>${segCountLabel}</span>
-                        </div>
+                        <span class="mini-cal-status-pill" data-status-pill>대기중</span>
                     </div>
-                    <div class="mini-cal-main">
-                        ${segHtml || '<span class="text-muted small">등록된 스케줄이 없습니다.</span>'}
+                    <div class="mini-cal-header-sub">
+                        ${spanLabel ? `<span>오늘: ${spanLabel}</span>` : ''}
+                        <span>${segCountLabel}</span>
                     </div>
-                `;
-                miniCalendars.appendChild(card);
-            });
-        }
+                </div>
+                <div class="mini-cal-body">
+                    ${segHtml || '<span class="text-muted small">등록된 스케줄이 없습니다.</span>'}
+                </div>
+                <div class="mini-cal-progress-wrap">
+                    <div class="mini-cal-progress">
+                        <div class="mini-cal-progress-bar" data-progress-bar style="width:0%"></div>
+                    </div>
+                </div>
+                <div class="mini-cal-footer" data-footer-text></div>
+            `;
+            miniCalendars.appendChild(card);
+        });
+    }
 
-        function updateMiniCalendarState(members){
-            miniCalendars.querySelectorAll('.mini-cal-seg-current')
-                    .forEach(el => el.classList.remove('mini-cal-seg-current'));
-            miniCalendars.querySelectorAll('.mini-cal-card.current-working')
-                    .forEach(el => el.classList.remove('current-working'));
+    /* ===== 카드 상태 업데이트 ===== */
+    function updateMiniCalendarState(members) {
+        const now = new Date();
+        const nowMin = now.getHours() * 60 + now.getMinutes();
 
-            const now = new Date();
-            const nowMin = now.getHours() * 60 + now.getMinutes();
+        members.forEach(m => {
+            const card = miniCalendars.querySelector(`.mini-cal-card[data-member-id="${CSS.escape(String(m.id))}"]`);
+            if (!card) return;
 
-            members.forEach(m => {
-                const card = miniCalendars.querySelector(`.mini-cal-card[data-member-id="${CSS.escape(String(m.id))}"]`);
-                if (!card) return;
+            const segs = getSchedules(m).filter(s => s.day === DAY_KEY);
+            const segEls = card.querySelectorAll('.mini-cal-seg');
+            let isWorking = false, hasFuture = false, hasPast = false;
+            let totalMin = 0, elapsedMin = 0;
 
-                const segEls = card.querySelectorAll('.mini-cal-seg');
-                let hasPast = false;
-                let hasFuture = false;
-                let isWorking = false;
+            segEls.forEach(seg => {
+                const st = parseHm(seg.dataset.start);
+                const ed = parseHm(seg.dataset.end);
+                const stMin = st.h*60 + st.m;
+                const edMin = ed.h*60 + ed.m;
+                const dur = edMin - stMin;
+                totalMin += dur;
 
-                segEls.forEach(seg => {
-                    const st = parseHm(seg.dataset.start);
-                    const ed = parseHm(seg.dataset.end);
-                    const stMin = st.h*60 + st.m;
-                    const edMin = ed.h*60 + ed.m;
+                const labelEl = seg.querySelector('.mini-cal-seg-label');
 
-                    let labelText = '예정';
-
-                    if (nowMin >= edMin) {
-                        labelText = '완료';
-                        hasPast = true;
-                    } else if (nowMin >= stMin && nowMin < edMin) {
-                        labelText = '진행중';
-                        seg.classList.add('mini-cal-seg-current');
-                        isWorking = true;
-                    } else if (nowMin < stMin) {
-                        labelText = '예정';
-                        hasFuture = true;
-                    }
-
-                    const labelEl = seg.querySelector('.mini-cal-seg-label');
-                    if (labelEl) labelEl.textContent = labelText;
-                });
-
-                let statusType = 'rest';
-                if (isWorking) {
-                    statusType = 'working';
-                } else if (!hasFuture && hasPast) {
-                    statusType = 'done';
-                }
-
-                const pill = card.querySelector('[data-status-pill]');
-                if (pill) {
-                    pill.classList.remove('status-working','status-done','status-rest');
-                    if (statusType === 'working') {
-                        pill.textContent = '근무중';
-                        pill.classList.add('status-working');
-                        card.classList.add('current-working');
-                    } else if (statusType === 'done') {
-                        pill.textContent = '근무시간종료';
-                        pill.classList.add('status-done');
-                    } else {
-                        pill.textContent = '휴식중';
-                        pill.classList.add('status-rest');
-                    }
+                if (nowMin >= edMin) {
+                    hasPast = true;
+                    elapsedMin += dur;
+                    if (labelEl) { labelEl.textContent = '완료'; labelEl.className = 'mini-cal-seg-label seg-done'; }
+                } else if (nowMin >= stMin) {
+                    isWorking = true;
+                    elapsedMin += (nowMin - stMin);
+                    if (labelEl) { labelEl.textContent = '진행중'; labelEl.className = 'mini-cal-seg-label seg-working'; }
+                } else {
+                    hasFuture = true;
+                    if (labelEl) { labelEl.textContent = '예정'; labelEl.className = 'mini-cal-seg-label seg-pending'; }
                 }
             });
-        }
 
-        function updateMemberHeaderState(members){
-            const now = new Date();
-            const nowMin = now.getHours() * 60 + now.getMinutes();
-
-            members.forEach(m => {
-                const segs = getSchedules(m).filter(s => s.day === DAY_KEY);
-                if (!segs.length) return;
-
-                let hasPast = false;
-                let hasFuture = false;
-                let isWorking = false;
-
-                segs.forEach(s => {
-                    const st = parseHm(s.start);
-                    const ed = parseHm(s.end);
-                    const stMin = st.h*60 + st.m;
-                    const edMin = ed.h*60 + ed.m;
-
-                    if (nowMin >= edMin) {
-                        hasPast = true;
-                    } else if (nowMin >= stMin && nowMin < edMin) {
-                        isWorking = true;
-                    } else if (nowMin < stMin) {
-                        hasFuture = true;
-                    }
-                });
-
-                let statusType = 'rest';
-                if (isWorking) {
-                    statusType = 'working';
-                } else if (!hasFuture && hasPast) {
-                    statusType = 'done';
-                }
-
-                const th = headRow.querySelector(`th[data-member-id="${String(m.id)}"]`);
-                if (!th) return;
-                const txtEl = th.querySelector('.member-status-text');
-                if (!txtEl) return;
-
-                if (statusType === 'working') txtEl.textContent = ' (근무중)';
-                else if (statusType === 'done') txtEl.textContent = ' (근무시간종료)';
-                else txtEl.textContent = ' (휴식중)';
-            });
-        }
-
-        /* ===== 테이블 관련 렌더링 ===== */
-
-        function renderNow() {
-            const d = new Date();
-            const hh = String(d.getHours()).padStart(2,'0');
-            const mm = String(d.getMinutes()).padStart(2,'0');
-            const ss = String(d.getSeconds()).padStart(2,'0');
-            const text = `${hh}:${mm}:${ss}`;
-            if (nowClock) nowClock.textContent = text;
-            if (nowClockInline) nowClockInline.textContent = text;
-        }
-
-        function renderTableHeader(members) {
-            const memberHeads = members
-                    .map(m => {
-                        const color = colorMap[m.id];
-                        const planLabel = todayPlanLabel(m);
-                        return `
-                        <th data-member-id="${String(m.id)}"
-                            class="member-head member-col"
-                            style="--member-color: ${color};">
-                            <span class="member-name">
-                                <span class="member-dot" style="background:${color};"></span>
-                                <span class="member-name-text">${escapeHtml(m.name || '-')}</span>
-                                <span class="member-status-text"></span>
-                            </span>
-                            ${planLabel ? `<span class="member-plan">${planLabel}</span>` : ''}
-                        </th>
-                    `;
-                    })
-                    .join('');
-
-            const sumHead = `<th class="sum-head text-secondary small">시간대 합</th>`;
-            headRow.innerHTML = `<th style="width:90px;" class="text-secondary small">시간</th>${memberHeads}${sumHead}`;
-        }
-
-        function renderTableBody() {
-            const rows = [];
-            for (let i = 0; i < TOTAL_ROWS; i++) {
-                const tMin = HOUR_START * 60 + i * STEP_MIN;
-                const h = Math.floor(tMin / 60), m = tMin % 60;
-                const label = (m === 0)
-                        ? `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`
-                        : '';
-
-                const rowClass = (m === 0) ? ' class="hour-start-row"' : '';
-
-                let row = `
-        <tr data-row-index="${i}"${rowClass}>
-          <th class="timecell">${label}</th>
-          ${todayMembers.map(mb => `<td class="member-col" data-member-id="${String(mb.id)}"><div class="slot-10m"></div></td>`).join('')}
-      `;
-                if (m === 0) {
-                    const total = hourlyTotals[h] ?? 0;
-                    row += `<td class="sum-cell" data-hour="${h}" rowspan="${SLOTS_PER_HOUR}">${total}명</td>`;
-                }
-                row += `</tr>`;
-                rows.push(row);
+            /* 프로그레스 바 */
+            const progressBar = card.querySelector('[data-progress-bar]');
+            if (progressBar && totalMin > 0) {
+                progressBar.style.width = Math.min(100, elapsedMin / totalMin * 100) + '%';
             }
-            bodyEl.innerHTML = rows.join('');
+
+            /* 상태 pill */
+            const pill = card.querySelector('[data-status-pill]');
+            card.classList.remove('current-working', 'done-card');
+
+            const footer = card.querySelector('[data-footer-text]');
+
+            if (isWorking) {
+                if (pill) { pill.textContent = '근무중'; pill.className = 'mini-cal-status-pill status-working'; }
+                card.classList.add('current-working');
+                if (footer) { footer.textContent = ''; footer.className = 'mini-cal-footer'; }
+            } else if (!hasFuture && hasPast) {
+                if (pill) { pill.textContent = '근무 완료'; pill.className = 'mini-cal-status-pill status-done'; }
+                card.classList.add('done-card');
+                if (footer) { footer.textContent = '근무 완료 \u2713'; footer.className = 'mini-cal-footer footer-done'; }
+            } else {
+                if (pill) { pill.textContent = '예정/대기'; pill.className = 'mini-cal-status-pill status-rest'; }
+                if (footer) { footer.textContent = ''; footer.className = 'mini-cal-footer'; }
+            }
+        });
+    }
+
+    /* ===== 간트 차트 렌더링 ===== */
+    function renderGantt(members) {
+        if (!ganttContainer) return;
+        let html = '';
+
+        /* 시간 헤더 */
+        html += '<div class="rt-gantt-time-row">';
+        html += '<div class="rt-gantt-label-cell" style="font-size:0.7rem;color:#9ca3af;">근무자</div>';
+        html += '<div class="rt-gantt-track-cell" style="position:relative">';
+
+        for (let h = HOUR_START; h <= HOUR_END; h++) {
+            const pct = (h - HOUR_START) * 60 / TOTAL_MIN * 100;
+            html += `<span class="rt-gantt-hour-mark" style="left:${pct}%">${String(h).padStart(2,'0')}:00</span>`;
+            if (h < HOUR_END) {
+                const halfPct = ((h - HOUR_START) * 60 + 30) / TOTAL_MIN * 100;
+                html += `<span class="rt-gantt-hour-mark rt-gantt-half-mark" style="left:${halfPct}%">:30</span>`;
+            }
         }
 
-        function paintPlanned(members) {
-            members.forEach(m => {
-                const segs = getSchedules(m).filter(s => s.day === DAY_KEY);
-                if (!segs.length) return;
+        html += '</div>';
+        html += '<div class="rt-gantt-hours-cell" style="font-size:0.68rem;color:#9ca3af;"></div>';
+        html += '</div>';
 
-                const slots = bodyEl.querySelectorAll(`td[data-member-id="${String(m.id)}"] .slot-10m`);
-                if (!slots.length) return;
+        /* 멤버별 행 */
+        members.forEach(m => {
+            const color = colorMap[m.id];
+            const segs = getSchedules(m).filter(s => s.day === DAY_KEY);
+            const totalMins = segs.reduce((sum, s) => {
+                const st = parseHm(s.start), ed = parseHm(s.end);
+                return sum + (ed.h*60+ed.m) - (st.h*60+st.m);
+            }, 0);
 
-                segs.forEach(s => {
-                    const st = parseHm(s.start);
-                    const ed = parseHm(s.end);
-                    const stMin = st.h * 60 + st.m;
-                    const edMin = ed.h * 60 + ed.m;
+            const rgb = hexToRgb(color);
+            html += `<div class="rt-gantt-row" data-member-id="${m.id}" style="--bar-color:${color};--bar-color-light:rgba(${rgb.r},${rgb.g},${rgb.b},0.2)">`;
+            html += `<div class="rt-gantt-label-cell">`;
+            html += `<span class="rt-gantt-dot" style="background:${color}"></span>`;
+            html += `<span class="rt-gantt-name">${escapeHtml(m.name || '-')}</span>`;
+            html += `</div>`;
+            html += `<div class="rt-gantt-track-cell">`;
 
-                    for (let i = 0; i < slots.length; i++) {
-                        const slotStartMin = HOUR_START * 60 + i * STEP_MIN;
-                        const slotEndMin   = slotStartMin + STEP_MIN;
+            /* 그리드 라인 */
+            for (let h = HOUR_START; h <= HOUR_END; h++) {
+                const pct = (h - HOUR_START) * 60 / TOTAL_MIN * 100;
+                html += `<div class="rt-gantt-grid-line grid-hour" style="left:${pct}%"></div>`;
 
-                        const overlap = Math.max(
-                                0,
-                                Math.min(edMin, slotEndMin) - Math.max(stMin, slotStartMin)
-                        );
-                        if (overlap > 0) {
-                            slots[i].classList.add('planned');
+                if (h < HOUR_END) {
+                    if (currentScale <= 30) {
+                        const halfPct = ((h - HOUR_START) * 60 + 30) / TOTAL_MIN * 100;
+                        html += `<div class="rt-gantt-grid-line grid-half" style="left:${halfPct}%"></div>`;
+                    }
+                    if (currentScale <= 10) {
+                        for (let tick = 10; tick < 60; tick += 10) {
+                            if (tick === 30) continue;
+                            const tickPct = ((h - HOUR_START) * 60 + tick) / TOTAL_MIN * 100;
+                            html += `<div class="rt-gantt-grid-line" style="left:${tickPct}%"></div>`;
                         }
                     }
-                });
-            });
-        }
-
-        function updateDoneColors(members) {
-            const currentIndex = indexFromNow();
-            members.forEach(m => {
-                const slots = bodyEl.querySelectorAll(`td[data-member-id="${String(m.id)}"] .slot-10m`);
-                slots.forEach((slot, i) => {
-                    if (slot.classList.contains('planned')) {
-                        if (i <= currentIndex - 1) slot.classList.add('done');
-                        else slot.classList.remove('done');
-                    } else {
-                        slot.classList.remove('done');
-                    }
-                });
-            });
-            highlightNowRow();
-        }
-
-        function updateCurrentWorkingBlink(members) {
-            bodyEl.querySelectorAll('.slot-10m.current-working')
-                    .forEach(el => el.classList.remove('current-working'));
-
-            const now = new Date();
-            const nowMin = now.getHours() * 60 + now.getMinutes();
-            const idxNow = indexFromNow();
-
-            members.forEach(m => {
-                const segs = getSchedules(m).filter(s => s.day === DAY_KEY);
-                if (!segs.length) return;
-
-                const slots = bodyEl.querySelectorAll(`td[data-member-id="${String(m.id)}"] .slot-10m`);
-                if (!slots.length || idxNow < 0 || idxNow >= slots.length) return;
-
-                const isWorkingNow = segs.some(s => {
-                    const st = parseHm(s.start);
-                    const ed = parseHm(s.end);
-                    const stMin = st.h * 60 + st.m;
-                    const edMin = ed.h * 60 + ed.m;
-                    return nowMin >= stMin && nowMin < edMin;
-                });
-
-                if (isWorkingNow) {
-                    slots[idxNow].classList.add('current-working');
                 }
+            }
+
+            /* 스케줄 바 */
+            segs.forEach((s, si) => {
+                const st = parseHm(s.start), ed = parseHm(s.end);
+                const stMin = st.h*60 + st.m, edMin = ed.h*60 + ed.m;
+                const clampStart = Math.max(stMin, HOUR_START*60);
+                const clampEnd = Math.min(edMin, HOUR_END*60);
+                if (clampEnd <= clampStart) return;
+
+                const leftPct = (clampStart - HOUR_START*60) / TOTAL_MIN * 100;
+                const widthPct = (clampEnd - clampStart) / TOTAL_MIN * 100;
+
+                html += `<div class="rt-gantt-bar" data-seg-idx="${si}" data-start="${s.start}" data-end="${s.end}" style="left:${leftPct}%;width:${widthPct}%">`;
+                html += `<div class="rt-gantt-bar-fill"></div>`;
+                if (widthPct > 5) {
+                    html += `<span class="rt-gantt-bar-label">${s.start}~${s.end}</span>`;
+                }
+                html += `</div>`;
             });
-        }
 
-        /* ===== 기타 유틸 ===== */
+            /* 현재 시간 라인 */
+            html += `<div class="rt-gantt-now-line"></div>`;
+            html += `</div>`; /* track-cell */
+            html += `<div class="rt-gantt-hours-cell"></div>`;
+            html += `</div>`; /* row */
+        });
 
-        function collectDoneIndexesForMember(memberId){
-            const slots = bodyEl.querySelectorAll(`td[data-member-id="${String(memberId)}"] .slot-10m`);
-            const idx = [];
-            slots.forEach((el, i) => { if (el.classList.contains('done')) idx.push(i); });
-            return idx;
-        }
+        ganttContainer.innerHTML = html;
+    }
 
-        function compressIndexesToRanges(indexes){
-            if (!indexes.length) return [];
-            const ranges = [];
-            let a = indexes[0], p = indexes[0];
-            for (let i = 1; i < indexes.length; i++){
-                if (indexes[i] === p + 1) { p = indexes[i]; continue; }
-                ranges.push([a, p]);
-                a = p = indexes[i];
-            }
-            ranges.push([a, p]);
-            return ranges;
-        }
+    /* ===== 간트 바 업데이트 ===== */
+    function updateGanttBars() {
+        if (!ganttContainer) return;
+        const now = new Date();
+        const nowMin = now.getHours() * 60 + now.getMinutes();
+        const nowPct = Math.max(0, Math.min(100, (nowMin - HOUR_START*60) / TOTAL_MIN * 100));
 
-        function indexFromNow() {
-            const now = new Date();
-            const base = new Date(now.getFullYear(), now.getMonth(), now.getDate(), HOUR_START, 0, 0);
-            const end  = new Date(now.getFullYear(), now.getMonth(), now.getDate(), HOUR_END, 0, 0);
-            if (now <= base) return 0;
-            if (now >= end) return TOTAL_ROWS - 1;
-            const diffMin = Math.floor((now - base) / 60000);
-            return Math.min(TOTAL_ROWS - 1, Math.max(0, Math.floor(diffMin / STEP_MIN)));
-        }
+        ganttContainer.querySelectorAll('.rt-gantt-now-line').forEach(el => {
+            el.style.left = nowPct + '%';
+            el.style.display = (nowMin >= HOUR_START*60 && nowMin <= HOUR_END*60) ? '' : 'none';
+        });
 
-        function highlightNowRow() {
-            bodyEl.querySelectorAll('.now-row').forEach(tr => tr.classList.remove('now-row'));
-            const idx = indexFromNow();
-            const row = bodyEl.querySelector(`tr[data-row-index="${idx}"]`);
-            if (row) row.classList.add('now-row');
-        }
-
-        function highlightHourSum() {
-            bodyEl.querySelectorAll('.sum-cell').forEach(td => td.classList.remove('now-hour'));
-            const now = new Date();
-            const h = now.getHours();
-            const sumTd = bodyEl.querySelector(`.sum-cell[data-hour="${h}"]`);
-            if (sumTd) sumTd.classList.add('now-hour');
-        }
-
-        function scrollToNowRow({ smooth = false } = {}) {
-            const idx = indexFromNow();
-            const row = bodyEl.querySelector(`tr[data-row-index="${idx}"]`);
-            if (!row) return;
-
-            if (!didAutoScrollOnce || smooth) {
-                row.scrollIntoView({
-                    block: 'center',
-                    behavior: smooth ? 'smooth' : 'auto'
-                });
-                didAutoScrollOnce = true;
-            }
-        }
-
-        function parseHm(hm) {
-            const [h,m] = (hm||'0:0').split(':').map(n => parseInt(n,10));
-            return {h: h||0, m: m||0};
-        }
-
-        function computeHourlyTotals(members) {
-            const totals = {};
-            for (let h = HOUR_START; h < HOUR_END; h++) {
-                let count = 0;
-                members.forEach(m => {
-                    const segs = getSchedules(m).filter(s => s.day === DAY_KEY);
-                    if (segs.some(s => intervalHitHour(parseHm(s.start), parseHm(s.end), h))) count++;
-                });
-                totals[h] = count;
-            }
-            return totals;
-        }
-
-        function intervalHitHour(st, ed, h) {
+        ganttContainer.querySelectorAll('.rt-gantt-bar').forEach(bar => {
+            const st = parseHm(bar.dataset.start);
+            const ed = parseHm(bar.dataset.end);
             const stMin = st.h*60 + st.m;
             const edMin = ed.h*60 + ed.m;
-            const a = h*60, b = (h+1)*60;
-            return Math.max(0, Math.min(edMin, b) - Math.max(stMin, a)) > 0;
-        }
+            const fill = bar.querySelector('.rt-gantt-bar-fill');
+            if (!fill) return;
 
-        function todayPlanLabel(m) {
-            const segs = getSchedules(m).filter(s => s.day === DAY_KEY);
-            if (!segs.length) return '';
-            if (segs.length === 1) return `${segs[0].start}–${segs[0].end}`;
-            const first = segs.reduce((min, s) => s.start < min.start ? s : min, segs[0]);
-            const last  = segs.reduce((max, s) => s.end   > max.end   ? s : max,  segs[0]);
-            return `${first.start}–${last.end} (${segs.length}개 구간)`;
-        }
-
-        function todaySpanLabel(segs){
-            if (!segs || !segs.length) return '';
-            const first = segs.reduce((min, s) => s.start < min.start ? s : min, segs[0]);
-            const last  = segs.reduce((max, s) => s.end   > max.end   ? s : max,  segs[0]);
-            return `${first.start} ~ ${last.end}`;
-        }
-
-        function getSchedules(m) {
-            if (Array.isArray(m?.schedule)) return m.schedule;
-            if (Array.isArray(m?.schedules)) return m.schedules;
-            return [];
-        }
-
-        function dayKeyOf(d) {
-            return ['SUN','MON','TUE','WED','THU','FRI','SAT'][d.getDay()];
-        }
-
-        function escapeHtml(s) {
-            if (s == null) return '';
-            return String(s)
-                    .replace(/&/g,'&amp;')
-                    .replace(/</g,'&lt;')
-                    .replace(/>/g,'&gt;')
-                    .replace(/"/g,'&quot;')
-                    .replace(/'/g,'&#39;');
-        }
-
-        function colorForMember(m) {
-            const key = (m.id != null ? String(m.id) : (m.name || 'x'));
-            const h = seededHash(key) % 360;
-            const s = 65, l = 55;
-            return hslToHex(h, s, l);
-        }
-
-        function seededHash(str) {
-            let h = 2166136261>>>0;
-            for (let i=0;i<str.length;i++){
-                h^=str.charCodeAt(i);
-                h=(h*16777619)>>>0;
+            if (nowMin >= edMin) {
+                fill.style.width = '100%';
+                bar.classList.add('fully-done');
+                bar.classList.remove('active-now');
+            } else if (nowMin <= stMin) {
+                fill.style.width = '0%';
+                bar.classList.remove('fully-done', 'active-now');
+            } else {
+                fill.style.width = ((nowMin - stMin) / (edMin - stMin) * 100) + '%';
+                bar.classList.remove('fully-done');
+                bar.classList.add('active-now');
             }
-            return h>>>0;
-        }
-
-        function hslToHex(h,s,l){
-            s/=100; l/=100;
-            const k=n=>(n + h/30)%12;
-            const a=s*Math.min(l,1-l);
-            const f=n=>l - a*Math.max(-1, Math.min(k(n)-3, Math.min(9-k(n),1)));
-            const toHex=x=>Math.round(255*x).toString(16).padStart(2,'0');
-            return `#${toHex(f(0))}${toHex(f(8))}${toHex(f(4))}`;
-        }
-    })();
+        });
+    }
+})();
 </script>
 
 {{>layouts/footer}}

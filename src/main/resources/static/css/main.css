@@ -1,13 +1,7 @@
-/* 전역 기본 */
+/* ===== 전역 기본 ===== */
 body {
     font-family: 'Noto Sans KR', sans-serif;
     background-color: #f8f9fa;
-    /* ❌ 전역 중앙정렬은 제거: 네비/레이아웃 깨짐 원인
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh;
-    */
     padding-top: 72px; /* fixed-top navbar 높이만큼 여백 */
 }
 
@@ -22,14 +16,13 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
-    min-height: calc(100vh - 72px); /* 네비게이션 높이 제외 */
+    min-height: calc(100vh - 72px);
 }
 
-
-/* 폼 박스 */
+/* ===== 폼 박스 ===== */
 .form-box {
     width: 100%;
-    max-width: 480px;      /* 반응형: 작은 화면 고려 */
+    max-width: 480px;
     background: #fff;
     border: 1px solid #e5e7eb;
     border-radius: 12px;
@@ -37,16 +30,13 @@ body {
     padding: 28px;
 }
 
-/* 제목 */
 .form-box h2 {
     text-align: center;
     margin-bottom: 20px;
     color: #333;
 }
 
-/* 라벨/입력 */
-.mb-3 { margin-bottom: 14px; }
-
+/* ===== 라벨/입력 ===== */
 .form-label {
     display: block;
     margin-bottom: 6px;
@@ -61,13 +51,20 @@ body {
     border-radius: 8px;
     box-sizing: border-box;
     font-size: 14px;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-/* 버튼 */
+.form-input:focus, .form-control:focus {
+    border-color: #86b7fe;
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.15);
+    outline: none;
+}
+
+/* ===== 버튼 ===== */
 .btn-submit {
     width: 100%;
     padding: 10px;
-    background-color: #0d6efd; /* 부트스트랩 primary 색상과 맞춤 */
+    background-color: #0d6efd;
     color: #fff;
     border: none;
     border-radius: 8px;
@@ -79,7 +76,7 @@ body {
 .btn-submit:hover { background-color: #0b5ed7; }
 .btn-submit:active { transform: translateY(1px); }
 
-/* 테이블 상단 여백 */
+/* ===== 테이블 ===== */
 .table { margin-top: 16px; }
 
 /* 작은 화면에서 여백/폰트 보정 */
@@ -88,12 +85,12 @@ body {
     .form-box h2 { font-size: 1.25rem; }
 }
 
-
+/* ===== 메시지 컨테이너 ===== */
 #message-container {
     width: 100%;
     text-align: center;
     margin-top: 16px;
-    padding: 0 16px; /* 좌우 여백 */
+    padding: 0 16px;
     box-sizing: border-box;
 }
 
@@ -111,20 +108,19 @@ body {
     transition: opacity 0.5s ease-out;
 }
 
-/* 깔끔한 숫자 정렬용 */
+/* ===== 숫자 정렬 ===== */
 .text-mono {
     font-variant-numeric: tabular-nums;
     letter-spacing: -0.01em;
 }
 
-/* 카드 헤더 그라디언트 */
+/* ===== 급여 미리보기 카드 ===== */
 .wage-preview-header {
     background: linear-gradient(135deg, #198754 0%, #20c997 100%);
     color: #fff;
     border-bottom: none;
 }
 
-/* 테이블 비주얼 다듬기 */
 .wage-preview-table thead th {
     background: #f6f9fb;
     color: #6c757d;
@@ -141,20 +137,15 @@ body {
     color: #7a8a99;
 }
 
-/* 반응형 여백/간격 */
 .wage-preview-card .table > :not(caption) > * > * {
     padding: 0.9rem 1rem;
 }
 
- .text-mono { font-variant-numeric: tabular-nums; letter-spacing:-0.01em; }
-.wage-preview-header { background: linear-gradient(135deg, #198754 0%, #20c997 100%); color:#fff; border-bottom:none; }
-.wage-preview-card .table > :not(caption) > * > * { padding: 0.9rem 1rem; }
-.wage-preview-table thead th { background:#f6f9fb; color:#6c757d; font-weight:600; border-bottom:1px solid #e9ecef; }
-.wage-preview-table tbody tr:not(.table-subtle) td { border-top: 1px dashed #eef2f6; }
-.wage-preview-table .table-subtle td { background:#fafcfd; color:#7a8a99; }
-@media (min-width: 992px){ .sticky-side { position: sticky; top: 12px; } }
+@media (min-width: 992px) {
+    .sticky-side { position: sticky; top: 12px; }
+}
 
-/* ==== 모달 내 주간 타임테이블 선택 스타일 ==== */
+/* ===== 모달 내 주간 타임테이블 선택 ===== */
 .week-grid {
     width: 100%;
     border: 1px solid #e5e7eb;
@@ -162,6 +153,7 @@ body {
     overflow: hidden;
     user-select: none;
 }
+
 .week-grid table {
     width: 100%;
     border-collapse: separate;
@@ -169,9 +161,10 @@ body {
     table-layout: fixed;
     background: #fff;
 }
+
 .week-grid thead th {
     background: #f8fafc;
-    color:#64748b;
+    color: #64748b;
     font-weight: 600;
     font-size: 0.95rem;
     border-bottom: 1px solid #e5e7eb;
@@ -179,9 +172,10 @@ body {
     padding: .6rem .4rem;
     position: sticky; top: 0; z-index: 2;
 }
+
 .week-grid tbody th {
     background: #fafafa;
-    color:#6b7280;
+    color: #6b7280;
     font-weight: 600;
     width: 70px;
     border-right: 1px solid #e5e7eb;
@@ -189,6 +183,7 @@ body {
     padding: .45rem .25rem;
     font-size: .9rem;
 }
+
 .slot {
     border-bottom: 1px dashed #eef2f6;
     border-right: 1px dashed #eef2f6;
@@ -196,39 +191,45 @@ body {
     cursor: pointer;
     position: relative;
     background: #ffffff;
+    transition: background 0.1s ease;
 }
+
 .slot:hover { background: #f8fbff; }
+
 .slot.selected {
     background: rgba(25,135,84,.18);
     box-shadow: inset 0 0 0 1px rgba(25,135,84,.25);
 }
+
 .grid-toolbar {
     display: flex; gap: 8px; align-items: center; justify-content: space-between;
     margin-bottom: .5rem;
 }
-.grid-toolbar .left, .grid-toolbar .right { display: flex; gap: 8px; align-items: center; }
-.modal { background: rgba(0,0,0,.35); position: fixed; inset: 0; display:none; }
-.modal-dialog { margin: 50px auto; max-width: 980px; }
-.modal-content { background:#fff; border-radius: 12px; }
 
-/* 합계(실제), 예상 급여 행 강조 */
+.grid-toolbar .left, .grid-toolbar .right { display: flex; gap: 8px; align-items: center; }
+
+.modal { background: rgba(0,0,0,.35); position: fixed; inset: 0; display: none; }
+.modal-dialog { margin: 50px auto; max-width: 980px; }
+.modal-content { background: #fff; border-radius: 12px; }
+
+/* ===== 합계/예상 급여 행 강조 ===== */
 .highlight-row {
-    background-color: #fffbe6 !important; /* 연한 노란색 */
+    background-color: #fffbe6 !important;
 }
 
-/* 현재 메뉴 강조 */
+/* ===== 네비게이션 메뉴 강조 ===== */
 .navbar .nav-link.active,
 .navbar .nav-link[aria-current="page"] {
     font-weight: 700;
-    background: rgba(13,110,253,.12);
+    background: #e3f7e9;
     border-radius: .5rem;
+    color: #1f6b3b !important;
     text-decoration: underline;
     text-underline-offset: 3px;
 }
 
-/* 호버 */
 .navbar .nav-link:hover {
-    background: rgba(0,0,0,.05);
+    background: #f0fbf3;
     border-radius: .5rem;
 }
 
@@ -237,14 +238,12 @@ body {
     opacity: 1;
 }
 
-/* 마우스 오버 시 하위 메뉴 표시 */
 .hover-dropdown:hover > .dropdown-menu {
     display: block;
     margin-top: 0;
     opacity: 1;
 }
 
-/* 드롭다운 기본 스타일/애니메이션 */
 .navbar .dropdown-menu {
     display: none;
     opacity: 0;
@@ -254,66 +253,115 @@ body {
     box-shadow: 0 3px 12px rgba(0,0,0,.1);
 }
 
-/* 활성화 스타일 보정 (부트스트랩 기본과 어울리게) */
 .navbar .dropdown-item.active,
 .navbar .dropdown-item:active {
     background-color: #0d6efd;
     color: #fff;
 }
 
-/* ✅ 현재 시간에 근무 중인 슬롯 깜빡이는 효과 */
-/*.slot-10m.blinking {*/
-/*    animation: blink-green 1s ease-in-out infinite;*/
-/*}*/
-
-/*@keyframes blink-green {*/
-/*    0%, 100% {*/
-/*        background: rgba(25, 135, 84, .25);   !* 연두색 약하게 *!*/
-/*        box-shadow: 0 0 0 0 rgba(25,135,84,.5);*/
-/*    }*/
-/*    50% {*/
-/*        background: rgba(25, 135, 84, .9);    !* 연두색 진하게 *!*/
-/*        box-shadow: 0 0 8px 2px rgba(25,135,84,.8);*/
-/*    }*/
-/*}*/
+/* ===== 현재 근무 중 슬롯 깜빡임 ===== */
 .slot-10m.blinking {
     animation: blink-orange 1s ease-in-out infinite;
 }
 
 @keyframes blink-orange {
     0%, 100% {
-        background: rgba(255, 159, 10, 0.25);   /* 밝은 주황 */
+        background: rgba(255, 159, 10, 0.25);
         box-shadow: 0 0 0 0 rgba(255, 159, 10, 0.5);
     }
     50% {
-        background: rgba(255, 159, 10, 0.9);    /* 진한 주황 */
+        background: rgba(255, 159, 10, 0.9);
         box-shadow: 0 0 8px 2px rgba(255, 159, 10, 0.8);
     }
 }
 
-
+/* ===== 멤버 칩 ===== */
 .member-chip.active {
     border-color: rgba(13,110,253,.45);
     box-shadow: 0 0 0 3px rgba(13,110,253,.15) inset;
     background: #f0f6ff;
-    color: #212529; /* 글씨색 고정 (기본 텍스트 색상) */
+    color: #212529;
 }
 
 .member-chip.active .fw-semibold,
 .member-chip.active .text-muted,
 .member-chip.active small {
-    color: #212529 !important; /* 내부 텍스트도 모두 기본색 유지 */
+    color: #212529 !important;
 }
 
-.legend { display:inline-block; width:14px; height:14px; border-radius:3px; border:1px solid #ddd; vertical-align:middle; }
+/* ===== 범례 ===== */
+.legend { display: inline-block; width: 14px; height: 14px; border-radius: 3px; border: 1px solid #ddd; vertical-align: middle; }
 .legend-plan { background: rgba(13,110,253,.25); border-color: rgba(13,110,253,.45); }
 .legend-actual { background: rgba(25,135,84,.25); border-color: rgba(25,135,84,.40); }
 
-.min-badge { display:inline-block; min-width:52px; text-align:right; }
+.min-badge { display: inline-block; min-width: 52px; text-align: right; }
 
-/* ✅ 시간 옆 “전체” 버튼 */
+/* 시간 옆 "전체" 버튼 */
 .btn-hour-all {
     padding: 0 6px;
     font-size: .7rem;
     line-height: 1.2;
+}
+
+/* ===== 푸터 ===== */
+.app-footer {
+    background: #f8f9fa;
+    border-top: 1px solid #e9ecef;
+    padding: 1.5rem 0;
+    margin-top: 3rem;
+    color: #8b8b8b;
+    font-size: 0.85rem;
+}
+
+.app-footer a {
+    color: #6c757d;
+    text-decoration: none;
+    transition: color 0.15s ease;
+}
+
+.app-footer a:hover {
+    color: #495057;
+}
+
+/* ===== 카드 호버 효과 ===== */
+.card {
+    transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.card:hover {
+    box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+}
+
+/* ===== 페이지 진입 애니메이션 ===== */
+.page-fade-in {
+    animation: pageFadeIn 0.3s ease-out;
+}
+
+@keyframes pageFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ===== 로그아웃 버튼 ===== */
+.btn-logout {
+    font-size: 0.85rem;
+    padding: 0.3rem 0.8rem;
+    border-radius: 999px;
+    border: 1px solid #e2d3c3;
+    color: #8b7a6d;
+    background: transparent;
+    font-weight: 500;
+    transition: all 0.15s ease;
+}
+
+.btn-logout:hover {
+    background: #fff3e6;
+    border-color: #d4a574;
+    color: #5b3a29;
 }

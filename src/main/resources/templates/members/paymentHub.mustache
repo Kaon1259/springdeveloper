@@ -1,9 +1,9 @@
 {{>layouts/header}}
 
 <div class="container-fluid schedule-hub-container">
-    <!-- 🔹 급여 관리 허브 탭 헤더 -->
+    <!-- 급여 관리 허브 탭 헤더 -->
     <ul class="nav nav-tabs schedule-hub-tabs" id="paymentHubTabs" role="tablist">
-        <!-- 1) 급여관리 (/payment) -->
+        <!-- 1) 급여(개별) (/payment) -->
         <li class="nav-item" role="presentation">
             <a
                     class="nav-link active"
@@ -14,26 +14,11 @@
                     role="tab"
                     aria-controls="payment-main-tab"
                     aria-selected="true">
-                개인별관리
+                급여관리
             </a>
         </li>
 
-        <!-- 2) 급여관리현황 (/payment/paymanagerdashboard) -->
-        <li class="nav-item" role="presentation">
-            <a
-                    class="nav-link"
-                    id="payment-manager-tab-btn"
-                    data-bs-toggle="tab"
-                    data-toggle="tab"
-                    href="#payment-manager-tab"
-                    role="tab"
-                    aria-controls="payment-manager-tab"
-                    aria-selected="false">
-                전체급여내역보기
-            </a>
-        </li>
-
-        <!-- 3) 개별지급현황 (/payment/payid) -->
+        <!-- 2) 지급관리 (/payment/payid) -->
         <li class="nav-item" role="presentation">
             <a
                     class="nav-link"
@@ -44,32 +29,16 @@
                     role="tab"
                     aria-controls="payment-id-tab"
                     aria-selected="false">
-                개인별지급내역보기
+                지급관리
             </a>
         </li>
 
-        <!-- 4) 전체지급현황 (/payment/payiddashboard) -->
-        <li class="nav-item" role="presentation">
-            <a
-                    class="nav-link"
-                    id="payment-id-all-tab-btn"
-                    data-bs-toggle="tab"
-                    data-toggle="tab"
-                    href="#payment-id-all-tab"
-                    role="tab"
-                    aria-controls="payment-id-all-tab"
-                    aria-selected="false">
-                전체지급내역보기
-            </a>
-        </li>
     </ul>
 
-    <!-- 🔹 탭 컨텐츠 -->
+    <!-- 탭 컨텐츠 -->
     <div class="tab-content schedule-hub-content" id="paymentHubTabContent">
 
-        <!-- 1) 급여관리: @GetMapping("/payment") -->
-        <!-- ⚠️ 이 허브 페이지의 매핑은 /payment/hub 처럼 따로 두고,
-             이 iframe 은 실제 급여관리 화면(/payment)에 연결하는 식으로 사용하시면 됩니다. -->
+        <!-- 1) 급여(개별): /payment -->
         <div
                 class="tab-pane fade show active schedule-hub-pane"
                 id="payment-main-tab"
@@ -79,58 +48,26 @@
                     id="payment-main-frame"
                     class="schedule-hub-iframe"
                     src="/payment"
-                    title="급여관리"
+                    title="급여(개별)"
                     style="width:100%; border:none; min-height:calc(100vh - 180px);">
             </iframe>
         </div>
 
-        <!-- 2) 급여관리현황: @GetMapping("/payment/paymanagerdashboard") -->
-        <div
-                class="tab-pane fade schedule-hub-pane"
-                id="payment-manager-tab"
-                role="tabpanel"
-                aria-labelledby="payment-manager-tab-btn">
-            <!-- lazy-load: 처음엔 data-src 만 설정 -->
-            <iframe
-                    id="payment-manager-frame"
-                    class="schedule-hub-iframe"
-                    data-src="/payment/paymanagerdashboard"
-                    title="급여관리현황"
-                    style="width:100%; border:none; min-height:calc(100vh - 180px);">
-            </iframe>
-        </div>
-
-        <!-- 3) 개별지급현황: @GetMapping("/payment/payid") -->
+        <!-- 2) 지급관리: /payment/payid -->
         <div
                 class="tab-pane fade schedule-hub-pane"
                 id="payment-id-tab"
                 role="tabpanel"
                 aria-labelledby="payment-id-tab-btn">
-            <!-- lazy-load -->
             <iframe
                     id="payment-id-frame"
                     class="schedule-hub-iframe"
                     data-src="/payment/payid"
-                    title="개별지급현황"
+                    title="지급관리"
                     style="width:100%; border:none; min-height:calc(100vh - 180px);">
             </iframe>
         </div>
 
-        <!-- 4) 전체지급현황: @GetMapping("/payment/payiddashboard") -->
-        <div
-                class="tab-pane fade schedule-hub-pane"
-                id="payment-id-all-tab"
-                role="tabpanel"
-                aria-labelledby="payment-id-all-tab-btn">
-            <!-- lazy-load -->
-            <iframe
-                    id="payment-id-all-frame"
-                    class="schedule-hub-iframe"
-                    data-src="/payment/payiddashboard"
-                    title="전체지급현황"
-                    style="width:100%; border:none; min-height:calc(100vh - 180px);">
-            </iframe>
-        </div>
     </div>
 </div>
 

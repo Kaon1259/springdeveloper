@@ -2,26 +2,18 @@
 
 <main class="container my-4">
 
-    <!-- ✅ 전체를 감싸는 라운드 박스(외부 테이블 느낌) -->
     <div class="pay-shell">
-
-        <!-- ✅ 외부 상단 헤더 : 파란색 배경 -->
         <div class="pay-shell-header">
-            <div class="d-flex align-items-center gap-2">
-                <span class="fw-bold text-white fs-5">주차별 급여 테이블 (실근무 기준)</span>
-            </div>
+            <span class="fw-bold text-white fs-5">급여(전체)</span>
         </div>
 
-        <!-- ✅ 외부 내용 영역 -->
         <div class="pay-shell-body">
 
-            <!-- 상단: 상태별 보기 + 상태 선택 + PDF + 월 네비 -->
+            <!-- 상단 컨트롤 -->
             <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
-                <!-- 왼쪽: 상태별 보기 + 드롭다운 + PDF -->
                 <div class="d-flex flex-wrap align-items-center gap-2">
-                    <span class="small text-muted">상태별 보기</span>
-
-                    <select id="statusSelect" class="form-select form-select-sm" style="width:auto;min-width:140px;">
+                    <span class="small text-muted">상태</span>
+                    <select id="statusSelect" class="form-select form-select-sm" style="width:auto;min-width:120px;">
                         <option value="WORKING" selected>근무중</option>
                         <option value="WAITING">시작전</option>
                         <option value="RESTING">휴식중</option>
@@ -29,15 +21,17 @@
                         <option value="RESIGNED">퇴사</option>
                     </select>
 
-                    <a id="pdfBtn"
-                       class="btn btn-sm btn-outline-primary ms-1"
-                       target="_blank">
-                        PDF
-                    </a>
+                    <span class="small text-muted ms-2">보기</span>
+                    <select id="viewSelect" class="form-select form-select-sm" style="width:auto;min-width:130px;">
+                        <option value="actual" selected>근무시간</option>
+                        <option value="plan">일정(예상)</option>
+                    </select>
+
+                    <a id="pdfBtn" class="btn btn-sm btn-outline-primary ms-1" target="_blank">PDF</a>
                 </div>
 
-                <!-- 오른쪽: 월 이동 내비게이션 -->
                 <div class="d-flex align-items-center small text-muted gap-2 flex-wrap">
+
                     <span id="monthRangeLabel">0000.00.01 ~ 00.00</span>
                     <button type="button" class="btn btn-sm btn-outline-secondary" id="btnMonthPrev">◀ 이전 달</button>
                     <button type="button" class="btn btn-sm btn-outline-secondary" id="btnMonthThis">이번 달</button>
@@ -45,764 +39,547 @@
                 </div>
             </div>
 
-            <!-- 안내 문구 -->
-            <div class="small text-muted mb-3">
-                선택한 <b>상태</b>의 아르바이트만 대상으로, 해당 월의 <b>주차별 실근무 기준 급여</b>를 집계합니다.<br>
-                각 주차의 마지막 행은 파란색 하단 보더로 구분됩니다.
+            <!-- 상태별 근무자 리스트 (pill) -->
+            <div class="mb-3" id="memberPillWrap">
+                <div class="d-flex flex-wrap gap-1" id="memberPillList"></div>
             </div>
 
-            <!-- 📊 내부: 주차별 급여 상세 테이블 (실근무 기준) -->
-            <div class="table-responsive mb-4">
-                <table class="table table-bordered align-middle text-center" id="weeklyPayTable">
-                    <!-- ✅ 내부 헤더: 파란색 + 상단 모서리 라운드 -->
-                    <thead class="inner-table-header">
-                    <tr>
-                        <th style="width:120px;">주차</th>
-                        <th style="width:160px;">근무자명</th>
-                        <th style="width:140px;" class="text-end">근무시간</th>
-                        <th style="width:120px;" class="text-end">시급</th>
-                        <th style="width:130px;">주휴수당부가</th>
-                        <th style="width:130px;">세금부가</th>
-                        <th style="width:140px;" class="text-end">근무수당</th>
-                        <th style="width:140px;" class="text-end">주휴수당</th>
-                        <th style="width:140px;" class="text-end">세금(3.3%)</th>
-                        <th style="width:140px;" class="text-end">실수령액</th>
-                        <th style="width:120px;">지급일</th>
-                    </tr>
-                    </thead>
-                    <tbody id="weeklyPayBody">
-                    <!-- JS 렌더 -->
-                    </tbody>
-                    <tfoot>
-                    <tr class="table-secondary fw-bold">
-                        <!-- 전체 11컬럼: 6 + 4 + 1 -->
-                        <td colspan="6" class="text-end">월 합계 (실근무)</td>
-                        <td class="text-end" id="monthWorkPaySum">-</td>
-                        <td class="text-end" id="monthJuhyuPaySum">-</td>
-                        <td class="text-end" id="monthTaxSum">-</td>
-                        <td class="text-end" id="monthNetSum">-</td>
-                        <td></td>
-                    </tr>
-                    </tfoot>
-                </table>
-            </div>
-
-            <!-- 하단 설명 (실근무 기준) -->
-            <div class="small text-muted mb-4">
-                * 주휴수당은 멤버 설정이 “적용”이고 해당 주 실근무가 15시간 이상일 때만 계산됩니다.<br>
-                * 근무시간 표기는 “H시간 M분”. 금액은 KRW 통화 형식으로 출력합니다.<br>
-                * 세금(3.3%)는 근무수당+주휴수당에 일괄 적용되며, 실수령액 = (근무수당+주휴수당) - 세금 입니다.
-            </div>
-
-            <!-- ============================== -->
-            <!-- 🔵 추가: 계획일정 기준 주차별 급여 테이블 -->
-            <!-- ============================== -->
-
-            <div class="d-flex align-items-center gap-2 mb-2 flex-wrap">
-                <span class="fw-bold">주차별 급여 테이블 (계획일정 기준)</span>
-                <span class="small text-muted">실근무가 아닌, 계획 일정만으로 환산한 주차별 급여입니다.</span>
-                <!-- ✅ 요약보기 버튼 -->
-                <button type="button"
-                        id="btnPlanSummary"
-                        class="btn btn-sm btn-outline-primary"
-                        data-bs-toggle="modal"
-                        data-bs-target="#planSummaryModal">
-                    요약보기
-                </button>
-            </div>
-
-            <!-- 📊 내부: 주차별 급여 상세 테이블 (계획 기준) -->
-            <div class="table-responsive">
-                <table class="table table-bordered align-middle text-center" id="weeklyPlanTable">
-                    <thead class="inner-table-header">
-                    <tr>
-                        <th style="width:120px;">주차</th>
-                        <th style="width:160px;">근무자명</th>
-                        <th style="width:140px;" class="text-end">계획근무시간</th>
-                        <th style="width:120px;" class="text-end">시급</th>
-                        <th style="width:130px;">주휴수당부가</th>
-                        <th style="width:130px;">세금부가</th>
-                        <th style="width:140px;" class="text-end">근무수당(계획)</th>
-                        <th style="width:140px;" class="text-end">주휴수당(계획)</th>
-                        <th style="width:140px;" class="text-end">세금(3.3%)</th>
-                        <th style="width:140px;" class="text-end">실수령액(계획)</th>
-                        <th style="width:120px;">지급일</th>
-                    </tr>
-                    </thead>
-                    <tbody id="weeklyPlanBody">
-                    <!-- JS 렌더 -->
-                    </tbody>
-                    <tfoot>
-                    <tr class="table-secondary fw-bold">
-                        <!-- 전체 11컬럼: 6 + 4 + 1 -->
-                        <td colspan="6" class="text-end">월 합계 (계획)</td>
-                        <td class="text-end" id="monthPlanWorkPaySum">-</td>
-                        <td class="text-end" id="monthPlanJuhyuPaySum">-</td>
-                        <td class="text-end" id="monthPlanTaxSum">-</td>
-                        <td class="text-end" id="monthPlanNetSum">-</td>
-                        <td></td>
-                    </tr>
-                    </tfoot>
-                </table>
-            </div>
-
-            <!-- 하단 설명 (계획 기준) -->
-            <div class="small text-muted mt-2">
-                * 상단 실근무 기준 테이블과 계산 방식은 동일하나, 실제 근무시간 대신 <b>계획된 근무시간</b>을 기준으로 산출합니다.<br>
-                * 실제 지급액과의 차이를 비교할 때 참고용으로 사용할 수 있습니다.
-            </div>
-        </div><!-- .pay-shell-body -->
-    </div><!-- .pay-shell -->
-
-</main>
-
-<!-- 🔵 계획 요약 모달 (Look & Feel 일치) -->
-<div class="modal fade" id="planSummaryModal" tabindex="-1" aria-labelledby="planSummaryModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-xl modal-dialog-scrollable">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="planSummaryModalLabel">계획일정 기준 월 합산 요약</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="닫기"></button>
-            </div>
-            <div class="modal-body">
-                <div class="small text-muted mb-2">
-                    현재 선택된 <b>상태</b>와 <b>월</b>을 기준으로, 각 인원의 모든 주차(계획) 급여를 합산한 요약입니다.
+            <!-- 월합계 요약 테이블 -->
+            <div class="mb-3">
+                <div class="d-flex align-items-center gap-2 mb-2">
+                    <span class="fw-bold" id="summaryTitle">월합계 지급 내역 (근무시간)</span>
+                    <span class="small text-muted" id="summaryPeriod"></span>
+                    <button type="button" class="btn btn-sm btn-outline-primary ms-auto" id="btnOpenDetail">주차별 상세보기</button>
                 </div>
                 <div class="table-responsive">
-                    <table class="table table-bordered align-middle text-center" id="planSummaryTable">
-                        <!-- ✅ 동일한 파란 헤더 / 라운드 코너 -->
+                    <table class="table table-bordered align-middle text-center" id="monthlySummaryTable">
                         <thead class="inner-table-header">
                         <tr>
-                            <th style="width:160px;">근무자명</th>
-                            <th class="text-end" style="width:150px;">계획근무시간 합계</th>
-                            <th class="text-end" style="width:120px;">시급</th>
-                            <th style="width:110px;">주휴수당부가</th>
-                            <th style="width:110px;">세금부가</th>
-                            <th class="text-end" style="width:150px;">근무수당 합계</th>
-                            <th class="text-end" style="width:150px;">주휴수당 합계</th>
-                            <th class="text-end" style="width:150px;">세금 합계</th>
-                            <th class="text-end" style="width:150px;">실수령액 합계</th>
+                            <th style="width:140px;">근무자명</th>
+                            <th style="width:120px;" class="text-end">근무시간</th>
+                            <th style="width:100px;" class="text-end">시급</th>
+                            <th style="width:120px;" class="text-end">근무수당</th>
+                            <th style="width:120px;" class="text-end">주휴수당</th>
+                            <th style="width:120px;" class="text-end">세금(3.3%)</th>
+                            <th style="width:130px;" class="text-end">실수령액</th>
                         </tr>
                         </thead>
-                        <tbody id="planSummaryTbody">
-                        <!-- JS 렌더 -->
+                        <tbody id="monthlySummaryBody">
                         </tbody>
                         <tfoot>
                         <tr class="table-secondary fw-bold">
-                            <td class="text-end">선택 상태/월 전체 합계</td>
-                            <td class="text-end" id="planSummaryTotalWorkTime">-</td>
+                            <td class="text-end">합계</td>
+                            <td class="text-end" id="sumTotalTime">-</td>
                             <td></td>
-                            <td></td>
-                            <td></td>
-                            <td class="text-end" id="planSummaryTotalWorkPay">-</td>
-                            <td class="text-end" id="planSummaryTotalJuhyuPay">-</td>
-                            <td class="text-end" id="planSummaryTotalTax">-</td>
-                            <td class="text-end" id="planSummaryTotalNet">-</td>
+                            <td class="text-end" id="sumTotalWorkPay">-</td>
+                            <td class="text-end" id="sumTotalJuhyuPay">-</td>
+                            <td class="text-end" id="sumTotalTax">-</td>
+                            <td class="text-end" id="sumTotalNet">-</td>
                         </tr>
                         </tfoot>
                     </table>
                 </div>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">닫기</button>
+
+        </div>
+    </div>
+
+</main>
+
+<!-- 주차별 상세 팝업 -->
+<div class="pmd-popup-overlay d-none" id="detailPopupOverlay">
+    <div class="pmd-popup">
+        <div class="pmd-popup-header">
+            <div>
+                <div class="pmd-popup-title" id="popupTitle">주차별 급여 상세 (근무시간)</div>
+                <div class="pmd-popup-subtitle" id="popupSubtitle"></div>
             </div>
+            <button type="button" class="btn btn-sm btn-outline-dark" id="btnCloseDetail">닫기</button>
+        </div>
+        <div class="pmd-popup-body">
+
+            <!-- 실근무 주차별 -->
+            <div id="viewActual">
+                <div class="table-responsive">
+                    <table class="table table-bordered align-middle text-center" id="weeklyPayTable">
+                        <thead class="inner-table-header">
+                        <tr>
+                            <th style="width:100px;">주차</th>
+                            <th style="width:130px;">근무자명</th>
+                            <th style="width:110px;" class="text-end">근무시간</th>
+                            <th style="width:90px;" class="text-end">시급</th>
+                            <th style="width:80px;">주휴</th>
+                            <th style="width:80px;">세금</th>
+                            <th style="width:110px;" class="text-end">근무수당</th>
+                            <th style="width:110px;" class="text-end">주휴수당</th>
+                            <th style="width:110px;" class="text-end">세금(3.3%)</th>
+                            <th style="width:120px;" class="text-end">실수령액</th>
+                            <th style="width:90px;">지급일</th>
+                        </tr>
+                        </thead>
+                        <tbody id="weeklyPayBody"></tbody>
+                        <tfoot>
+                        <tr class="table-secondary fw-bold">
+                            <td colspan="6" class="text-end">월 합계</td>
+                            <td class="text-end" id="monthWorkPaySum">-</td>
+                            <td class="text-end" id="monthJuhyuPaySum">-</td>
+                            <td class="text-end" id="monthTaxSum">-</td>
+                            <td class="text-end" id="monthNetSum">-</td>
+                            <td></td>
+                        </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 계획 주차별 -->
+            <div id="viewPlan" class="d-none">
+                <div class="table-responsive">
+                    <table class="table table-bordered align-middle text-center" id="weeklyPlanTable">
+                        <thead class="inner-table-header inner-table-header-plan">
+                        <tr>
+                            <th style="width:100px;">주차</th>
+                            <th style="width:130px;">근무자명</th>
+                            <th style="width:110px;" class="text-end">계획시간</th>
+                            <th style="width:90px;" class="text-end">시급</th>
+                            <th style="width:80px;">주휴</th>
+                            <th style="width:80px;">세금</th>
+                            <th style="width:110px;" class="text-end">근무수당</th>
+                            <th style="width:110px;" class="text-end">주휴수당</th>
+                            <th style="width:110px;" class="text-end">세금(3.3%)</th>
+                            <th style="width:120px;" class="text-end">실수령액</th>
+                            <th style="width:90px;">지급일</th>
+                        </tr>
+                        </thead>
+                        <tbody id="weeklyPlanBody"></tbody>
+                        <tfoot>
+                        <tr class="table-secondary fw-bold">
+                            <td colspan="6" class="text-end">월 합계</td>
+                            <td class="text-end" id="monthPlanWorkPaySum">-</td>
+                            <td class="text-end" id="monthPlanJuhyuPaySum">-</td>
+                            <td class="text-end" id="monthPlanTaxSum">-</td>
+                            <td class="text-end" id="monthPlanNetSum">-</td>
+                            <td></td>
+                        </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+
         </div>
     </div>
 </div>
 
-<!-- 💄 스타일 -->
 <style>
     .text-money{color:#0d6efd;font-weight:600}
     .text-time{color:#198754;font-weight:600}
-    .small-muted{color:#6c757d;font-size:.85rem}
     .week-label{white-space:nowrap}
 
-    /* ✅ 전체 외부 라운드 박스 */
-    .pay-shell{
-        border-radius:1rem;
-        border:1px solid #dee2e6;
-        overflow:hidden;
-        background:#ffffff;
-        box-shadow:0 4px 12px rgba(0,0,0,0.03);
-    }
+    .pay-shell{ border-radius:1rem; border:1px solid #dee2e6; overflow:hidden; background:#fff; box-shadow:0 4px 12px rgba(0,0,0,.03); }
+    .pay-shell-header{ background:#0d6efd; color:#fff; padding:.75rem 1rem; display:flex; align-items:center; justify-content:space-between; }
+    .pay-shell-body{ padding:1.25rem 1.5rem 1.5rem; }
 
-    /* ✅ 외부 상단 헤더 (파란색) */
-    .pay-shell-header{
-        background:#0d6efd;
-        color:#ffffff;
-        padding:0.75rem 1rem;
-        display:flex;
-        align-items:center;
-        justify-content:space-between;
-        gap:1rem;
-    }
+    .inner-table-header th{ background:#0d6efd !important; color:#fff !important; border-color:#0b5ed7 !important; vertical-align:middle; font-size:.82rem; }
+    .inner-table-header th:first-child{ border-top-left-radius:.75rem; }
+    .inner-table-header th:last-child{ border-top-right-radius:.75rem; }
+    .inner-table-header-plan th{ background:#6366f1 !important; border-color:#5558e6 !important; }
 
-    /* 외부 내용 영역 */
-    .pay-shell-body{
-        padding:1.25rem 1.5rem 1.5rem;
+    #weeklyPayTable, #weeklyPlanTable, #monthlySummaryTable{
+        border-collapse:separate; border-spacing:0; border-radius:.75rem; overflow:hidden; background:#fff;
     }
-
-    /* ✅ 내부 주차별 급여/요약 테이블 헤더: 파란색 + 상단 모서리 라운드 */
-    .inner-table-header th{
-        background:#0d6efd !important;
-        color:#ffffff !important;
-        border-color:#0b5ed7 !important;
-        vertical-align:middle;
-    }
-    .inner-table-header th:first-child{
-        border-top-left-radius:0.75rem;
-    }
-    .inner-table-header th:last-child{
-        border-top-right-radius:0.75rem;
-    }
-
-    /* 내부 테이블 자체 모서리 라운드 (실근무/계획/요약 공통) */
-    #weeklyPayTable,
-    #weeklyPlanTable,
-    #planSummaryTable{
-        border-collapse:separate;
-        border-spacing:0;
-        border-radius:0.75rem;
-        overflow:hidden;
-        background:#ffffff;
-    }
-
-    /* ✅ 주차별 가로 구분선: 주 마지막 행 하단 보더 두껍게 (실근무/계획 공통) */
     #weeklyPayTable tbody tr.week-end-border td,
-    #weeklyPlanTable tbody tr.week-end-border td{
-        border-bottom-width:3px;
-        border-bottom-color:#0d6efd;
+    #weeklyPlanTable tbody tr.week-end-border td{ border-bottom-width:3px; border-bottom-color:#0d6efd; }
+    #weeklyPayTable tbody td.week-label-border,
+    #weeklyPlanTable tbody td.week-label-border{ border-bottom-width:3px; border-bottom-color:#0d6efd; }
+
+    /* 팝업 */
+    .pmd-popup-overlay{
+        position:fixed; inset:0; z-index:2000;
+        background:rgba(0,0,0,.45);
+        display:flex; align-items:center; justify-content:center;
+        padding:20px;
+    }
+    .pmd-popup{
+        background:#fff; border-radius:16px;
+        width:100%; max-width:1400px; max-height:90vh;
+        display:flex; flex-direction:column;
+        box-shadow:0 12px 40px rgba(0,0,0,.15);
+    }
+    .pmd-popup-header{
+        display:flex; justify-content:space-between; align-items:center;
+        padding:16px 24px; border-bottom:1px solid #e9ecef;
+        flex-shrink:0;
+    }
+    .pmd-popup-title{ font-size:1.05rem; font-weight:700; }
+    .pmd-popup-subtitle{ font-size:.78rem; color:#6c757d; margin-top:2px; }
+    .pmd-popup-body{
+        flex:1; overflow-y:auto; padding:20px 24px;
     }
 
-    /* ✅ 주차 컬럼(td, rowspan 적용된 셀)에도 동일하게 굵은 하단선 (실근무/계획 공통) */
-    #weeklyPayTable tbody td.week-label-border,
-    #weeklyPlanTable tbody td.week-label-border{
-        border-bottom-width:3px;
-        border-bottom-color:#0d6efd;
+    /* 멤버 pill */
+    .member-pill{
+        display:inline-flex; align-items:center; gap:5px;
+        padding:3px 12px; border-radius:999px;
+        font-size:.78rem; font-weight:600;
+        background:#e9ecef; color:#374151;
+        border:2px solid transparent;
+        cursor:default; white-space:nowrap;
+        transition:background .15s, border-color .15s;
+    }
+    .member-pill .pill-dot{
+        width:10px; height:10px; border-radius:50%;
+        border:1px solid rgba(0,0,0,.08);
+        flex:0 0 10px;
+    }
+
+    /* 테이블 근무자명 앞 색상 dot */
+    .name-dot{
+        display:inline-block; width:10px; height:10px; border-radius:50%;
+        border:1px solid rgba(0,0,0,.08);
+        margin-right:6px; vertical-align:middle;
     }
 </style>
 
-<!-- 서버에서 내려준 멤버 JSON -->
 <script id="membersData" type="application/json">
 {{{membersJson}}}
 </script>
 
 <script>
     (function(){
-        /* ===== 설정/API ===== */
-        const API_BASE_ACTUAL = '/api/schedule';       // GET /{memberId}/{startIso}/{endIso}  (실제)
-        const API_BASE_PLAN   = '/api/schedule/work';  // GET /{memberId}/{startIso}/{endIso}  (계획)
+        const API_BASE_ACTUAL = '/api/schedule';
+        const API_BASE_PLAN   = '/api/schedule/work';
 
-        /* ===== DOM ===== */
-        const statusSelect     = document.getElementById('statusSelect');
+        const statusSelect      = document.getElementById('statusSelect');
+        const viewSelect        = document.getElementById('viewSelect');
+        const viewActualDiv     = document.getElementById('viewActual');
+        const viewPlanDiv       = document.getElementById('viewPlan');
+        const summaryTitleEl    = document.getElementById('summaryTitle');
+        const summaryPeriodEl   = document.getElementById('summaryPeriod');
 
-        const btnMonthPrev     = document.getElementById('btnMonthPrev');
-        const btnMonthThis     = document.getElementById('btnMonthThis');
-        const btnMonthNext     = document.getElementById('btnMonthNext');
-        const monthRangeLabel  = document.getElementById('monthRangeLabel');
+        const btnMonthPrev      = document.getElementById('btnMonthPrev');
+        const btnMonthThis      = document.getElementById('btnMonthThis');
+        const btnMonthNext      = document.getElementById('btnMonthNext');
+        const monthRangeLabel   = document.getElementById('monthRangeLabel');
 
-        // 실근무 기준 테이블
-        const weeklyPayBody        = document.getElementById('weeklyPayBody');
-        const monthWorkPaySumEl    = document.getElementById('monthWorkPaySum');
-        const monthJuhyuPaySumEl   = document.getElementById('monthJuhyuPaySum');
-        const monthTaxSumEl        = document.getElementById('monthTaxSum');
-        const monthNetSumEl        = document.getElementById('monthNetSum');
+        const weeklyPayBody         = document.getElementById('weeklyPayBody');
+        const monthWorkPaySumEl     = document.getElementById('monthWorkPaySum');
+        const monthJuhyuPaySumEl    = document.getElementById('monthJuhyuPaySum');
+        const monthTaxSumEl         = document.getElementById('monthTaxSum');
+        const monthNetSumEl         = document.getElementById('monthNetSum');
 
-        // 계획 기준 테이블
         const weeklyPlanBody          = document.getElementById('weeklyPlanBody');
         const monthPlanWorkPaySumEl   = document.getElementById('monthPlanWorkPaySum');
         const monthPlanJuhyuPaySumEl  = document.getElementById('monthPlanJuhyuPaySum');
         const monthPlanTaxSumEl       = document.getElementById('monthPlanTaxSum');
         const monthPlanNetSumEl       = document.getElementById('monthPlanNetSum');
 
-        // 계획 요약 모달 관련 DOM
-        const btnPlanSummary                = document.getElementById('btnPlanSummary');
-        const planSummaryTbody              = document.getElementById('planSummaryTbody');
-        const planSummaryTotalWorkTimeEl    = document.getElementById('planSummaryTotalWorkTime');
-        const planSummaryTotalWorkPayEl     = document.getElementById('planSummaryTotalWorkPay');
-        const planSummaryTotalJuhyuPayEl    = document.getElementById('planSummaryTotalJuhyuPay');
-        const planSummaryTotalTaxEl         = document.getElementById('planSummaryTotalTax');
-        const planSummaryTotalNetEl         = document.getElementById('planSummaryTotalNet');
+        const monthlySummaryBody  = document.getElementById('monthlySummaryBody');
+        const sumTotalTimeEl      = document.getElementById('sumTotalTime');
+        const sumTotalWorkPayEl   = document.getElementById('sumTotalWorkPay');
+        const sumTotalJuhyuPayEl  = document.getElementById('sumTotalJuhyuPay');
+        const sumTotalTaxEl       = document.getElementById('sumTotalTax');
+        const sumTotalNetEl       = document.getElementById('sumTotalNet');
 
-        /* ===== 상태 ===== */
+        const memberPillList     = document.getElementById('memberPillList');
+
+        const detailPopupOverlay = document.getElementById('detailPopupOverlay');
+        const popupTitleEl       = document.getElementById('popupTitle');
+        const popupSubtitleEl    = document.getElementById('popupSubtitle');
+        const btnOpenDetail      = document.getElementById('btnOpenDetail');
+        const btnCloseDetail     = document.getElementById('btnCloseDetail');
+
         let allMembers = [];
         try { allMembers = JSON.parse(document.getElementById('membersData').textContent || '[]'); }
         catch(e){ allMembers = []; }
 
         let filteredMembers   = [];
         let currentMonthStart = firstDayOfMonth(new Date());
+        let currentView       = 'actual';
 
-        // 계획 요약용 누적 맵: { memberId: { member, minutesSum, workPaySum, juhyuPaySum, taxSum, netSum } }
-        let planSummaryMap = {};
+        let actualSummaryMap = {};
+        let planSummaryMap   = {};
 
-        /* ===== 초기화 ===== */
-        if (Array.isArray(allMembers) && allMembers.length>0) {
-            statusSelect.value = allMembers[0].status || 'WORKING';
-        }
+        statusSelect.value = 'WORKING';
 
         statusSelect.addEventListener('change', refreshMembers);
-        btnMonthPrev.addEventListener('click', ()=> {
-            currentMonthStart = new Date(
-                    currentMonthStart.getFullYear(),
-                    currentMonthStart.getMonth()-1,
-                    1
-            );
-            loadAllTables();
-        });
-        btnMonthThis.addEventListener('click', ()=> {
-            currentMonthStart = firstDayOfMonth(new Date());
-            loadAllTables();
-        });
-        btnMonthNext.addEventListener('click', ()=> {
-            currentMonthStart = new Date(
-                    currentMonthStart.getFullYear(),
-                    currentMonthStart.getMonth()+1,
-                    1
-            );
-            loadAllTables();
+
+        viewSelect.addEventListener('change', function(){
+            currentView = viewSelect.value;
+            viewActualDiv.classList.toggle('d-none', currentView !== 'actual');
+            viewPlanDiv.classList.toggle('d-none', currentView !== 'plan');
+            updateSummaryTitle();
+            renderMonthlySummary();
         });
 
-        // 🔹 PDF 버튼 – 현재 상태값을 쿼리로 붙여서 호출 (실근무 기준 용)
+        btnMonthPrev.addEventListener('click', ()=> { currentMonthStart = new Date(currentMonthStart.getFullYear(), currentMonthStart.getMonth()-1, 1); loadAllTables(); });
+        btnMonthThis.addEventListener('click', ()=> { currentMonthStart = firstDayOfMonth(new Date()); loadAllTables(); });
+        btnMonthNext.addEventListener('click', ()=> { currentMonthStart = new Date(currentMonthStart.getFullYear(), currentMonthStart.getMonth()+1, 1); loadAllTables(); });
+
         document.getElementById('pdfBtn').addEventListener('click', function(){
-            const status = document.getElementById('statusSelect').value;
-            this.href = `/payment/paymanagerdashboard/print?status=${encodeURIComponent(status)}`;
+            this.href = `/payment/paymanagerdashboard/print?status=${encodeURIComponent(statusSelect.value)}`;
         });
 
-        // 🔹 요약보기 버튼 클릭 시, 요약 테이블 렌더
-        if (btnPlanSummary) {
-            btnPlanSummary.addEventListener('click', renderPlanSummaryTable);
+        // 팝업
+        btnOpenDetail.addEventListener('click', openDetailPopup);
+        btnCloseDetail.addEventListener('click', closeDetailPopup);
+        detailPopupOverlay.addEventListener('click', function(e){ if(e.target === detailPopupOverlay) closeDetailPopup(); });
+        document.addEventListener('keydown', function(e){ if(e.key === 'Escape' && !detailPopupOverlay.classList.contains('d-none')) closeDetailPopup(); });
+
+        function openDetailPopup(){
+            const ms = firstDayOfMonth(currentMonthStart);
+            const me = lastDayOfMonth(currentMonthStart);
+            const viewLabel = currentView === 'actual' ? '근무시간' : '일정(예상)';
+            popupTitleEl.textContent = `주차별 급여 상세 (${viewLabel})`;
+            popupSubtitleEl.textContent = `${ms.getFullYear()}.${pad2(ms.getMonth()+1)}.${pad2(ms.getDate())} ~ ${pad2(me.getMonth()+1)}.${pad2(me.getDate())} · ${statusLabel(statusSelect.value)}`;
+            detailPopupOverlay.classList.remove('d-none');
+            document.body.style.overflow = 'hidden';
+        }
+        function closeDetailPopup(){
+            detailPopupOverlay.classList.add('d-none');
+            document.body.style.overflow = '';
+        }
+        function statusLabel(v){ return {WORKING:'근무중',WAITING:'시작전',RESTING:'휴식중',PAUSED:'일시중지',RESIGNED:'퇴사'}[v]||v; }
+
+        function updateSummaryTitle(){
+            const ms = firstDayOfMonth(currentMonthStart);
+            const me = lastDayOfMonth(currentMonthStart);
+            const viewLabel = currentView === 'actual' ? '근무시간' : '일정(예상)';
+            summaryTitleEl.textContent = `월합계 지급 내역 (${viewLabel})`;
+            summaryPeriodEl.textContent = `${ms.getFullYear()}.${pad2(ms.getMonth()+1)}.${pad2(ms.getDate())} ~ ${pad2(me.getMonth()+1)}.${pad2(me.getDate())}`;
         }
 
         refreshMembers();
 
-        /* ===== 멤버 필터 ===== */
         function refreshMembers(){
-            const status = statusSelect.value;
-            filteredMembers = (allMembers||[]).filter(m => m.status === status);
+            filteredMembers = (allMembers||[]).filter(m => m.status === statusSelect.value);
+            renderMemberPills();
             loadAllTables();
         }
 
-        /* ===== 실근무/계획 테이블 둘 다 로딩 ===== */
-        function loadAllTables(){
-            loadWeeklyActualTable();
-            loadWeeklyPlanTable();
-        }
-
-        /* ===== 주차 테이블 렌더 (실근무 기준) ===== */
-        async function loadWeeklyActualTable(){
-            const ms = firstDayOfMonth(currentMonthStart);
-            const me = lastDayOfMonth(currentMonthStart);
-            monthRangeLabel.textContent =
-                    `${ms.getFullYear()}.${pad2(ms.getMonth()+1)}.01 ~ ${pad2(me.getMonth()+1)}.${pad2(me.getDate())}`;
-
-            weeklyPayBody.innerHTML = '';
-            setFooterSumsActual(0,0,0,0);
-
-            if (!filteredMembers.length){
-                const tr = document.createElement('tr');
-                tr.classList.add('week-end-border'); // 주가 아예 없을 때도 하단선 유지
-                tr.innerHTML = `<td colspan="11" class="text-muted">표시할 멤버가 없습니다.</td>`;
-                weeklyPayBody.appendChild(tr);
+        function renderMemberPills(){
+            const sorted = [...filteredMembers].sort((a,b)=>(a.name||'').localeCompare(b.name||'','ko'));
+            if (!sorted.length){
+                memberPillList.innerHTML = '<span class="small text-muted">해당 상태의 근무자가 없습니다.</span>';
                 return;
             }
-
-            const msIso = toIso(ms), meIso = toIso(me);
-            const memberDayMap = {}; // { memberId: { isoDate: {minutes, segments[]} } }
-
-            await Promise.all(filteredMembers.map(async m=>{
-                try{
-                    const url = `${API_BASE_ACTUAL}/${encodeURIComponent(m.id)}/${msIso}/${meIso}`;
-                    const resp = await fetch(url, { headers: { 'Accept':'application/json' } });
-                    if (resp.ok){
-                        const data = await resp.json();
-                        memberDayMap[m.id] = normalizeDays(data);
-                    } else {
-                        memberDayMap[m.id] = {};
-                    }
-                }catch(e){
-                    console.error('schedule actual fetch error', e);
-                    memberDayMap[m.id] = {};
-                }
-            }));
-
-            // 월을 포함하는 모든 주(월~일) 시작일 목록(Mon)
-            const weeks   = [];
-            let wStart    = toMonday(ms);
-            const monthEnd = new Date(me);
-            while (wStart <= monthEnd){
-                weeks.push(new Date(wStart));
-                wStart.setDate(wStart.getDate()+7);
-            }
-
-            // 월 합계
-            let monthWorkPaySum = 0;
-            let monthJuhyuPaySum = 0;
-            let monthTaxSum = 0;
-            let monthNetSum = 0;
-
-            // 주차별 렌더
-            weeks.forEach((weekStart, idx)=>{
-                const weekEnd = addDays(weekStart, 6);
-
-                // 해당 주 각 멤버의 주간 합계 계산
-                const rows = [];
-                filteredMembers.forEach(m=>{
-                    const wage = Number(m.hourlyWage)||0;
-                    const includeJuhyu = !!m.includeWeeklyHolidayAllowance;
-                    const applyTax = isTaxApplied(m);
-
-                    let weekMinutes = 0;
-                    for (let i=0;i<7;i++){
-                        const d = addDays(weekStart, i);
-                        if (d < ms || d > me) continue;
-                        const iso = toIso(d);
-                        const info = (memberDayMap[m.id]||{})[iso] || {minutes:0};
-                        weekMinutes += (info.minutes||0);
-                    }
-                    if (weekMinutes <= 0) return; // 근무 없는 멤버는 표에서 제외
-
-                    const workPay = Math.round((weekMinutes/60) * wage);
-                    let juhyuPay = 0;
-                    let juhyuApplied = false;
-                    if (includeJuhyu && weekMinutes >= 15*60){
-                        const juhyuMinutes = Math.round(weekMinutes / 5);
-                        juhyuPay = Math.round((juhyuMinutes/60) * wage);
-                        juhyuApplied = true;
-                    }
-
-                    const grossTotal = workPay + juhyuPay;
-                    let taxAmount = 0;
-                    let netTotal = grossTotal;
-                    if (applyTax && grossTotal > 0){
-                        taxAmount = Math.round(grossTotal * 0.033);
-                        netTotal  = grossTotal - taxAmount;
-                    }
-
-                    rows.push({
-                        member: m,
-                        weekMinutes,
-                        wage,
-                        juhyuApplied,
-                        workPay,
-                        juhyuPay,
-                        applyTax,
-                        taxAmount,
-                        grossTotal,
-                        netTotal
-                    });
-                });
-
-                // 주에 표시할 데이터가 없다면 한 줄로 "해당 주 실근무 없음"
-                if (rows.length === 0) {
-                    const tr = document.createElement('tr');
-                    const weekLabel = `${pad2(weekStart.getMonth()+1)}.${pad2(weekStart.getDate())} ~ ${pad2(weekEnd.getMonth()+1)}.${pad2(weekEnd.getDate())}`;
-                    tr.innerHTML = `
-          <td class="week-label week-label-border">${idx+1}주차<br><small class="text-muted">(${weekLabel})</small></td>
-          <td colspan="10" class="text-muted text-start">해당 주 실근무 내역이 없습니다.</td>
-        `;
-                    tr.classList.add('week-end-border'); // 주 마지막 행
-                    weeklyPayBody.appendChild(tr);
-                    return;
-                }
-
-                // 이름순 정렬
-                rows.sort((a,b)=>(a.member.name||'').localeCompare(b.member.name||'','ko'));
-
-                // 주차 rowSpan
-                const rowSpan   = rows.length;
-                const weekLabel = `${pad2(weekStart.getMonth()+1)}.${pad2(weekStart.getDate())} ~ ${pad2(weekEnd.getMonth()+1)}.${pad2(weekEnd.getDate())}`;
-
-                rows.forEach((r, i)=>{
-                    const tr = document.createElement('tr');
-                    const weekCell = (i===0)
-                            ? `<td class="week-label week-label-border" rowspan="${rowSpan}">
-               ${idx+1}주차<br><small class="text-muted">(${weekLabel})</small>
-             </td>`
-                            : '';
-
-                    tr.innerHTML = `
-          ${weekCell}
-          <td class="text-start">${escapeHtml(r.member.name||'-')}</td>
-          <td class="text-end"><span class="text-time">${formatMins(r.weekMinutes)}</span></td>
-          <td class="text-end">${r.wage ? krw(r.wage) : '-'}</td>
-          <td>${r.juhyuApplied ? '<span class="text-success fw-bold">적용</span>' : '<span class="text-muted">미적용</span>'}</td>
-          <td>${r.applyTax ? '<span class="text-danger fw-bold">부과</span>' : '<span class="text-muted">미부과</span>'}</td>
-          <td class="text-end">${krw(r.workPay)}</td>
-          <td class="text-end">${krw(r.juhyuPay)}</td>
-          <td class="text-end">${r.applyTax ? krw(r.taxAmount) : '-'}</td>
-          <td class="text-end"><span class="fw-bold text-primary">${krw(r.netTotal)}</span></td>
-          <td class="text-center small">(매월)${formatPayday(r.member.payday)}</td>
-        `;
-
-                    // ✅ 이 주(week)의 마지막 행이면, 가로 구분선 클래스 추가
-                    if (i === rows.length - 1) {
-                        tr.classList.add('week-end-border');
-                    }
-
-                    weeklyPayBody.appendChild(tr);
-                });
-
-                // 월 합계 누적
-                monthWorkPaySum  += rows.reduce((sum,r)=> sum + r.workPay,    0);
-                monthJuhyuPaySum += rows.reduce((sum,r)=> sum + r.juhyuPay,   0);
-                monthTaxSum      += rows.reduce((sum,r)=> sum + r.taxAmount,  0);
-                monthNetSum      += rows.reduce((sum,r)=> sum + r.netTotal,   0);
-            });
-
-            setFooterSumsActual(monthWorkPaySum, monthJuhyuPaySum, monthTaxSum, monthNetSum);
+            memberPillList.innerHTML = sorted.map(m => {
+                const color = colorForMember(m);
+                return `<span class="member-pill"><span class="pill-dot" style="background:${color}"></span>${escapeHtml(m.name||'-')}</span>`;
+            }).join('');
         }
 
-        /* ===== 주차 테이블 렌더 (계획일정 기준) ===== */
-        async function loadWeeklyPlanTable(){
+        async function loadAllTables(){
+            updateSummaryTitle();
+            await Promise.all([ loadWeeklyTable('actual'), loadWeeklyTable('plan') ]);
+            renderMonthlySummary();
+        }
+
+        /* ===== 주차 테이블 (actual / plan 공용) ===== */
+        async function loadWeeklyTable(type){
+            const isActual = (type === 'actual');
+            const apiBase  = isActual ? API_BASE_ACTUAL : API_BASE_PLAN;
+            const tbody    = isActual ? weeklyPayBody : weeklyPlanBody;
+            const summMap  = isActual ? (actualSummaryMap = {}) : (planSummaryMap = {});
+
+            // 실제로 summMap 참조를 유지하기 위해
+            if (isActual) actualSummaryMap = {}; else planSummaryMap = {};
+            const sMap = isActual ? actualSummaryMap : planSummaryMap;
+
             const ms = firstDayOfMonth(currentMonthStart);
             const me = lastDayOfMonth(currentMonthStart);
 
-            weeklyPlanBody.innerHTML = '';
-            setFooterSumsPlan(0,0,0,0);
+            if (isActual) {
+                monthRangeLabel.textContent = `${ms.getFullYear()}.${pad2(ms.getMonth()+1)}.01 ~ ${pad2(me.getMonth()+1)}.${pad2(me.getDate())}`;
+            }
 
-            // 요약 맵 초기화
-            planSummaryMap = {};
+            tbody.innerHTML = '';
+            setFooterSums(type, 0, 0, 0, 0);
 
             if (!filteredMembers.length){
                 const tr = document.createElement('tr');
                 tr.classList.add('week-end-border');
                 tr.innerHTML = `<td colspan="11" class="text-muted">표시할 멤버가 없습니다.</td>`;
-                weeklyPlanBody.appendChild(tr);
+                tbody.appendChild(tr);
                 return;
             }
 
-            const msIso = toIso(ms), meIso = toIso(me);
-            const memberDayMapPlan = {}; // { memberId: { isoDate: {minutes, segments[]} } }
+            // 전체 주 범위로 API 호출 (월 경계를 넘는 주차도 완전히 포함)
+            const fetchStart = toMonday(ms);
+            const fetchEnd   = addDays(toMonday(me), 6);
+            const fetchStartIso = toIso(fetchStart);
+            const fetchEndIso   = toIso(fetchEnd);
 
+            const memberDayMap = {};
             await Promise.all(filteredMembers.map(async m=>{
                 try{
-                    const url = `${API_BASE_PLAN}/${encodeURIComponent(m.id)}/${msIso}/${meIso}`;
-                    const resp = await fetch(url, { headers: { 'Accept':'application/json' } });
-                    if (resp.ok){
-                        const data = await resp.json();
-                        memberDayMapPlan[m.id] = normalizeDays(data);
-                    } else {
-                        memberDayMapPlan[m.id] = {};
-                    }
-                }catch(e){
-                    console.error('schedule plan fetch error', e);
-                    memberDayMapPlan[m.id] = {};
-                }
+                    const resp = await fetch(`${apiBase}/${encodeURIComponent(m.id)}/${fetchStartIso}/${fetchEndIso}`, { headers: { 'Accept':'application/json' } });
+                    memberDayMap[m.id] = resp.ok ? normalizeDays(await resp.json()) : {};
+                }catch(e){ memberDayMap[m.id] = {}; }
             }));
 
-            // 월을 포함하는 모든 주(월~일) 시작일 목록(Mon)
-            const weeks   = [];
-            let wStart    = toMonday(ms);
-            const monthEnd = new Date(me);
-            while (wStart <= monthEnd){
-                weeks.push(new Date(wStart));
-                wStart.setDate(wStart.getDate()+7);
-            }
+            const weeks = buildWeeks(ms, me);
+            let mWP=0, mJP=0, mTx=0, mNt=0;
 
-            // 월 합계 (계획)
-            let monthPlanWorkPaySum  = 0;
-            let monthPlanJuhyuPaySum = 0;
-            let monthPlanTaxSum      = 0;
-            let monthPlanNetSum      = 0;
-
-            weeks.forEach((weekStart, idx)=>{
+            let weekNum = 0;
+            weeks.forEach((weekStart)=>{
                 const weekEnd = addDays(weekStart, 6);
+                const rows = buildWeekRows(filteredMembers, memberDayMap, weekStart, ms, me);
 
-                const rows = [];
-                filteredMembers.forEach(m=>{
-                    const wage = Number(m.hourlyWage)||0;
-                    const includeJuhyu = !!m.includeWeeklyHolidayAllowance;
-                    const applyTax = isTaxApplied(m);
+                if (!rows.length) return;
 
-                    let weekMinutes = 0;
-                    for (let i=0;i<7;i++){
-                        const d = addDays(weekStart, i);
-                        if (d < ms || d > me) continue;
-                        const iso = toIso(d);
-                        const info = (memberDayMapPlan[m.id]||{})[iso] || {minutes:0};
-                        weekMinutes += (info.minutes||0);
-                    }
-                    if (weekMinutes <= 0) return; // 계획 없는 멤버는 표에서 제외
-
-                    const workPay = Math.round((weekMinutes/60) * wage);
-                    let juhyuPay = 0;
-                    let juhyuApplied = false;
-                    if (includeJuhyu && weekMinutes >= 15*60){
-                        const juhyuMinutes = Math.round(weekMinutes / 5);
-                        juhyuPay = Math.round((juhyuMinutes/60) * wage);
-                        juhyuApplied = true;
-                    }
-
-                    const grossTotal = workPay + juhyuPay;
-                    let taxAmount = 0;
-                    let netTotal = grossTotal;
-                    if (applyTax && grossTotal > 0){
-                        taxAmount = Math.round(grossTotal * 0.033);
-                        netTotal  = grossTotal - taxAmount;
-                    }
-
-                    rows.push({
-                        member: m,
-                        weekMinutes,
-                        wage,
-                        juhyuApplied,
-                        workPay,
-                        juhyuPay,
-                        applyTax,
-                        taxAmount,
-                        grossTotal,
-                        netTotal
-                    });
-
-                    // 🔵 계획 요약 맵에 누적 (모든 주차 합산)
-                    let acc = planSummaryMap[m.id];
-                    if (!acc){
-                        acc = {
-                            member: m,
-                            minutesSum: 0,
-                            workPaySum: 0,
-                            juhyuPaySum: 0,
-                            taxSum: 0,
-                            netSum: 0
-                        };
-                        planSummaryMap[m.id] = acc;
-                    }
-                    acc.minutesSum += weekMinutes;
-                    acc.workPaySum += workPay;
-                    acc.juhyuPaySum += juhyuPay;
-                    acc.taxSum     += taxAmount;
-                    acc.netSum     += netTotal;
-                });
-
-                if (rows.length === 0) {
-                    const tr = document.createElement('tr');
-                    const weekLabel = `${pad2(weekStart.getMonth()+1)}.${pad2(weekStart.getDate())} ~ ${pad2(weekEnd.getMonth()+1)}.${pad2(weekEnd.getDate())}`;
-                    tr.innerHTML = `
-          <td class="week-label week-label-border">${idx+1}주차<br><small class="text-muted">(${weekLabel})</small></td>
-          <td colspan="10" class="text-muted text-start">해당 주 계획 근무 내역이 없습니다.</td>
-        `;
-                    tr.classList.add('week-end-border');
-                    weeklyPlanBody.appendChild(tr);
-                    return;
-                }
-
+                weekNum++;
                 rows.sort((a,b)=>(a.member.name||'').localeCompare(b.member.name||'','ko'));
-
-                const rowSpan   = rows.length;
-                const weekLabel = `${pad2(weekStart.getMonth()+1)}.${pad2(weekStart.getDate())} ~ ${pad2(weekEnd.getMonth()+1)}.${pad2(weekEnd.getDate())}`;
+                const clipStart = weekStart < ms ? ms : weekStart;
+                const clipEnd   = weekEnd > me ? me : weekEnd;
+                const wl = weekLabelStr(clipStart, clipEnd);
 
                 rows.forEach((r, i)=>{
                     const tr = document.createElement('tr');
-                    const weekCell = (i===0)
-                            ? `<td class="week-label week-label-border" rowspan="${rowSpan}">
-               ${idx+1}주차<br><small class="text-muted">(${weekLabel})</small>
-             </td>`
-                            : '';
+                    const wc = (i===0) ? `<td class="week-label week-label-border" rowspan="${rows.length}">${weekNum}주차<br><small class="text-muted">(${wl})</small></td>` : '';
+                    const mColor = colorForMember(r.member);
 
-                    tr.innerHTML = `
-          ${weekCell}
-          <td class="text-start">${escapeHtml(r.member.name||'-')}</td>
-          <td class="text-end"><span class="text-time">${formatMins(r.weekMinutes)}</span></td>
-          <td class="text-end">${r.wage ? krw(r.wage) : '-'}</td>
-          <td>${r.juhyuApplied ? '<span class="text-success fw-bold">적용</span>' : '<span class="text-muted">미적용</span>'}</td>
-          <td>${r.applyTax ? '<span class="text-danger fw-bold">부과</span>' : '<span class="text-muted">미부과</span>'}</td>
-          <td class="text-end">${krw(r.workPay)}</td>
-          <td class="text-end">${krw(r.juhyuPay)}</td>
-          <td class="text-end">${r.applyTax ? krw(r.taxAmount) : '-'}</td>
-          <td class="text-end"><span class="fw-bold text-primary">${krw(r.netTotal)}</span></td>
-          <td class="text-center small">(매월)${formatPayday(r.member.payday)}</td>
-        `;
+                    tr.innerHTML = `${wc}
+                        <td class="text-start"><span class="name-dot" style="background:${mColor}"></span>${escapeHtml(r.member.name||'-')}</td>
+                        <td class="text-end"><span class="text-time">${formatMins(r.monthMinutes)}</span></td>
+                        <td class="text-end">${r.wage ? krw(r.wage) : '-'}</td>
+                        <td>${r.juhyuApplied ? '<span class="text-success fw-bold">적용</span>' : '<span class="text-muted">미적용</span>'}</td>
+                        <td>${r.applyTax ? '<span class="text-danger fw-bold">부과</span>' : '<span class="text-muted">미부과</span>'}</td>
+                        <td class="text-end">${krw(r.monthWorkPay)}</td>
+                        <td class="text-end">${krw(r.monthJuhyuPay)}</td>
+                        <td class="text-end">${r.applyTax ? krw(r.monthTax) : '-'}</td>
+                        <td class="text-end"><span class="fw-bold text-primary">${krw(r.monthNet)}</span></td>
+                        <td class="text-center small">(매월)${formatPayday(r.member.payday)}</td>`;
+                    if (i === rows.length - 1) tr.classList.add('week-end-border');
+                    tbody.appendChild(tr);
 
-                    if (i === rows.length - 1) {
-                        tr.classList.add('week-end-border');
-                    }
-
-                    weeklyPlanBody.appendChild(tr);
+                    accumulateSummary(sMap, r);
                 });
 
-                monthPlanWorkPaySum  += rows.reduce((sum,r)=> sum + r.workPay,    0);
-                monthPlanJuhyuPaySum += rows.reduce((sum,r)=> sum + r.juhyuPay,   0);
-                monthPlanTaxSum      += rows.reduce((sum,r)=> sum + r.taxAmount,  0);
-                monthPlanNetSum      += rows.reduce((sum,r)=> sum + r.netTotal,   0);
+                mWP += rows.reduce((s,r)=>s+r.monthWorkPay,0);
+                mJP += rows.reduce((s,r)=>s+r.monthJuhyuPay,0);
+                mTx += rows.reduce((s,r)=>s+r.monthTax,0);
+                mNt += rows.reduce((s,r)=>s+r.monthNet,0);
             });
 
-            setFooterSumsPlan(monthPlanWorkPaySum, monthPlanJuhyuPaySum, monthPlanTaxSum, monthPlanNetSum);
+            setFooterSums(type, mWP, mJP, mTx, mNt);
         }
 
-        function setFooterSumsActual(work, juhyu, tax, net){
-            monthWorkPaySumEl.textContent  = krw(work|0);
-            monthJuhyuPaySumEl.textContent = krw(juhyu|0);
-            monthTaxSumEl.textContent      = tax ? krw(tax|0) : '-';
-            monthNetSumEl.textContent      = krw(net|0);
+        /* ===== 주별 행 데이터 생성 (해당월 기준, 주휴수당은 일요일 귀속 원칙) ===== */
+        function buildWeekRows(members, dayMap, weekStart, ms, me){
+            const rows = [];
+            const weekEnd = addDays(weekStart, 6);
+            const sundayInMonth = (weekEnd >= ms && weekEnd <= me);
+
+            members.forEach(m=>{
+                const wage = Number(m.hourlyWage)||0;
+                const includeJuhyu = !!m.includeWeeklyHolidayAllowance;
+                const applyTax = isTaxApplied(m);
+
+                let fullMinutes = 0, monthMinutes = 0;
+
+                for (let i=0;i<7;i++){
+                    const d = addDays(weekStart, i);
+                    const iso = toIso(d);
+                    const mins = ((dayMap[m.id]||{})[iso] || {minutes:0}).minutes || 0;
+                    fullMinutes += mins;
+                    if (d >= ms && d <= me) {
+                        monthMinutes += mins;
+                    }
+                }
+
+                // 근무수당: 해당월 근무시간 기준
+                const monthWorkPay = Math.round((monthMinutes/60) * wage);
+
+                // 주휴수당: 일요일이 해당월에 포함될 때만 발생, 전체 주 근무시간 기준 판정
+                let monthJuhyuPay = 0, juhyuApplied = false;
+                if (includeJuhyu && fullMinutes >= 15*60 && sundayInMonth){
+                    monthJuhyuPay = Math.round((Math.round(fullMinutes/5)/60) * wage);
+                    juhyuApplied = true;
+                }
+
+                if (monthMinutes <= 0 && monthJuhyuPay <= 0) return;
+
+                const monthGross = monthWorkPay + monthJuhyuPay;
+                let monthTax = 0, monthNet = monthGross;
+                if (applyTax && monthGross > 0){ monthTax = Math.round(monthGross * 0.033); monthNet = monthGross - monthTax; }
+
+                rows.push({
+                    member:m, wage, juhyuApplied, applyTax,
+                    monthMinutes, monthWorkPay, monthJuhyuPay, monthTax, monthNet
+                });
+            });
+            return rows;
         }
 
-        function setFooterSumsPlan(work, juhyu, tax, net){
-            monthPlanWorkPaySumEl.textContent  = krw(work|0);
-            monthPlanJuhyuPaySumEl.textContent = krw(juhyu|0);
-            monthPlanTaxSumEl.textContent      = tax ? krw(tax|0) : '-';
-            monthPlanNetSumEl.textContent      = krw(net|0);
+        function accumulateSummary(map, r){
+            let acc = map[r.member.id];
+            if (!acc){
+                acc = { member:r.member, minutesSum:0, workPaySum:0, juhyuPaySum:0, taxSum:0, netSum:0 };
+                map[r.member.id] = acc;
+            }
+            acc.minutesSum  += r.monthMinutes;
+            acc.workPaySum  += r.monthWorkPay;
+            acc.juhyuPaySum += r.monthJuhyuPay;
+            acc.taxSum      += r.monthTax;
+            acc.netSum      += r.monthNet;
         }
 
-        /* ===== 계획 요약 모달 렌더 ===== */
-        function renderPlanSummaryTable(){
-            planSummaryTbody.innerHTML = '';
-
-            const entries = Object.values(planSummaryMap || {}).filter(e => (e.minutesSum||0) > 0);
+        /* ===== 월합계 요약 렌더 ===== */
+        function renderMonthlySummary(){
+            monthlySummaryBody.innerHTML = '';
+            const map = (currentView === 'actual') ? actualSummaryMap : planSummaryMap;
+            const entries = Object.values(map || {}).filter(e => (e.minutesSum||0) > 0);
 
             if (!entries.length){
-                const tr = document.createElement('tr');
-                tr.innerHTML = `<td colspan="9" class="text-muted">표시할 요약 데이터가 없습니다.</td>`;
-                planSummaryTbody.appendChild(tr);
-                setPlanSummaryFooter(0,0,0,0,0);
+                monthlySummaryBody.innerHTML = `<tr><td colspan="7" class="text-muted">표시할 데이터가 없습니다.</td></tr>`;
+                sumTotalTimeEl.textContent = '-'; sumTotalWorkPayEl.textContent = '-';
+                sumTotalJuhyuPayEl.textContent = '-'; sumTotalTaxEl.textContent = '-'; sumTotalNetEl.textContent = '-';
                 return;
             }
 
-            // 이름 순 정렬
             entries.sort((a,b)=>(a.member.name||'').localeCompare(b.member.name||'','ko'));
-
-            let totalMinutes = 0;
-            let totalWorkPay = 0;
-            let totalJuhyuPay = 0;
-            let totalTax = 0;
-            let totalNet = 0;
+            let tMin=0, tWP=0, tJP=0, tTx=0, tNt=0;
 
             entries.forEach(e=>{
-                const m = e.member || {};
-                totalMinutes += e.minutesSum||0;
-                totalWorkPay += e.workPaySum||0;
-                totalJuhyuPay += e.juhyuPaySum||0;
-                totalTax     += e.taxSum||0;
-                totalNet     += e.netSum||0;
-
+                const m = e.member;
+                tMin += e.minutesSum; tWP += e.workPaySum; tJP += e.juhyuPaySum; tTx += e.taxSum; tNt += e.netSum;
+                const color = colorForMember(m);
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
-          <td class="text-start">${escapeHtml(m.name || '-')}</td>
-          <td class="text-end"><span class="text-time">${formatMins(e.minutesSum||0)}</span></td>
-          <td class="text-end">${m.hourlyWage ? krw(m.hourlyWage) : '-'}</td>
-          <td>${m.includeWeeklyHolidayAllowance ? '<span class="text-success fw-bold">적용</span>' : '<span class="text-muted">미적용</span>'}</td>
-          <td>${isTaxApplied(m) ? '<span class="text-danger fw-bold">부과</span>' : '<span class="text-muted">미부과</span>'}</td>
-          <td class="text-end">${krw(e.workPaySum||0)}</td>
-          <td class="text-end">${krw(e.juhyuPaySum||0)}</td>
-          <td class="text-end">${isTaxApplied(m) ? krw(e.taxSum||0) : '-'}</td>
-          <td class="text-end"><span class="fw-bold text-primary">${krw(e.netSum||0)}</span></td>
-        `;
-                planSummaryTbody.appendChild(tr);
+                    <td class="text-start"><span class="name-dot" style="background:${color}"></span>${escapeHtml(m.name||'-')}</td>
+                    <td class="text-end"><span class="text-time">${formatMins(e.minutesSum)}</span></td>
+                    <td class="text-end">${m.hourlyWage ? krw(m.hourlyWage) : '-'}</td>
+                    <td class="text-end">${krw(e.workPaySum)}</td>
+                    <td class="text-end">${krw(e.juhyuPaySum)}</td>
+                    <td class="text-end">${isTaxApplied(m) ? krw(e.taxSum) : '-'}</td>
+                    <td class="text-end"><span class="fw-bold text-primary">${krw(e.netSum)}</span></td>`;
+                monthlySummaryBody.appendChild(tr);
             });
 
-            setPlanSummaryFooter(totalMinutes, totalWorkPay, totalJuhyuPay, totalTax, totalNet);
+            sumTotalTimeEl.textContent     = formatMins(tMin);
+            sumTotalWorkPayEl.textContent  = krw(tWP);
+            sumTotalJuhyuPayEl.textContent = krw(tJP);
+            sumTotalTaxEl.textContent      = tTx ? krw(tTx) : '-';
+            sumTotalNetEl.textContent      = krw(tNt);
         }
 
-        function setPlanSummaryFooter(totalMinutes, totalWorkPay, totalJuhyuPay, totalTax, totalNet){
-            if (!planSummaryTotalWorkTimeEl) return; // 안전장치
-
-            planSummaryTotalWorkTimeEl.textContent = totalMinutes > 0 ? formatMins(totalMinutes) : '-';
-            planSummaryTotalWorkPayEl.textContent  = krw(totalWorkPay|0);
-            planSummaryTotalJuhyuPayEl.textContent = krw(totalJuhyuPay|0);
-            planSummaryTotalTaxEl.textContent      = totalTax ? krw(totalTax|0) : '-';
-            planSummaryTotalNetEl.textContent      = krw(totalNet|0);
+        function setFooterSums(type, w, j, t, n){
+            if (type === 'actual'){
+                monthWorkPaySumEl.textContent  = krw(w|0); monthJuhyuPaySumEl.textContent = krw(j|0);
+                monthTaxSumEl.textContent = t ? krw(t|0) : '-'; monthNetSumEl.textContent = krw(n|0);
+            } else {
+                monthPlanWorkPaySumEl.textContent  = krw(w|0); monthPlanJuhyuPaySumEl.textContent = krw(j|0);
+                monthPlanTaxSumEl.textContent = t ? krw(t|0) : '-'; monthPlanNetSumEl.textContent = krw(n|0);
+            }
         }
 
         /* ===== 유틸 ===== */
+        function buildWeeks(ms, me){
+            const weeks = []; let w = toMonday(ms);
+            while (w <= me){ weeks.push(new Date(w)); w.setDate(w.getDate()+7); }
+            return weeks;
+        }
+        function weekLabelStr(s,e){ if(toIso(s)===toIso(e)) return `${pad2(s.getMonth()+1)}.${pad2(s.getDate())}`; return `${pad2(s.getMonth()+1)}.${pad2(s.getDate())} ~ ${pad2(e.getMonth()+1)}.${pad2(e.getDate())}`; }
         function firstDayOfMonth(d){ return new Date(d.getFullYear(), d.getMonth(), 1); }
         function lastDayOfMonth(d){ return new Date(d.getFullYear(), d.getMonth()+1, 0); }
         function toIso(d){ return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`; }
@@ -817,69 +594,45 @@
             arr.forEach(d=>{
                 const date=String(d.date);
                 const segs=Array.isArray(d.segments)?d.segments:[];
-                const minutes=(typeof d.minutes==='number')
-                        ? d.minutes
-                        : segs.reduce((acc,s)=>acc+diffMinutes(s.start,s.end),0);
+                const minutes=(typeof d.minutes==='number') ? d.minutes : segs.reduce((acc,s)=>acc+diffMinutes(s.start,s.end),0);
                 map[date] = { segments: segs, minutes };
             });
             return map;
         }
-        function diffMinutes(start,end){
-            const s=parseHm(start), e=parseHm(end);
-            return (e.h*60+e.m) - (s.h*60+s.m);
-        }
-        function parseHm(hm){
-            if(!hm || typeof hm!=='string') return {h:0,m:0};
-            const [h,m]=hm.split(':').map(n=>parseInt(n,10));
-            return {h:isNaN(h)?0:h, m:isNaN(m)?0:m};
-        }
-        function formatMins(mins){
-            mins=Math.max(0, mins|0);
-            const h=Math.floor(mins/60), m=mins%60;
-            return m===0?`${h}시간`:`${h}시간 ${m}분`;
-        }
-        function krw(v){
-            return new Intl.NumberFormat('ko-KR',{
-                style:'currency',
-                currency:'KRW',
-                maximumFractionDigits:0
-            }).format(v|0);
-        }
-        function escapeHtml(s){
-            if(s==null) return '';
-            return String(s)
-                    .replace(/&/g,'&amp;')
-                    .replace(/</g,'&lt;')
-                    .replace(/>/g,'&gt;')
-                    .replace(/"/g,'&quot;')
-                    .replace(/'/g,'&#39;');
-        }
-
-        // applyTax 값(Y/N, true/false, 1/0 등)을 boolean 으로 정규화
+        function diffMinutes(start,end){ const s=parseHm(start), e=parseHm(end); return (e.h*60+e.m)-(s.h*60+s.m); }
+        function parseHm(hm){ if(!hm||typeof hm!=='string') return {h:0,m:0}; const [h,m]=hm.split(':').map(n=>parseInt(n,10)); return {h:isNaN(h)?0:h,m:isNaN(m)?0:m}; }
+        function formatMins(mins){ mins=Math.max(0,mins|0); const h=Math.floor(mins/60),m=mins%60; return m===0?`${h}시간`:`${h}시간 ${m}분`; }
+        function krw(v){ return new Intl.NumberFormat('ko-KR',{style:'currency',currency:'KRW',maximumFractionDigits:0}).format(v|0); }
+        function escapeHtml(s){ if(s==null) return ''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
         function isTaxApplied(member){
-            const v = member?.applyTax;
-            if (v === true) return true;
-            if (v === false || v == null) return false;
-            if (typeof v === 'number') return v === 1;
-            if (typeof v === 'string'){
-                const s = v.trim().toUpperCase();
-                return s === 'Y' || s === 'TRUE' || s === 'T' || s === '1';
-            }
+            const v=member?.applyTax; if(v===true) return true; if(v===false||v==null) return false;
+            if(typeof v==='number') return v===1;
+            if(typeof v==='string'){ const s=v.trim().toUpperCase(); return s==='Y'||s==='TRUE'||s==='T'||s==='1'; }
             return false;
         }
-
-        // ✅ payday 포맷팅
         function formatPayday(v){
-            if (!v) return '미지정';
-            const s = String(v).trim().toUpperCase();
-            if (s === 'EOM') return '말일';
-            if (/^\d+$/.test(s)) {
-                const n = parseInt(s, 10);
-                if (n >= 1 && n <= 31) return `${n}일`;
-            }
-            return s;
+            if(!v) return '미지정'; const s=String(v).trim().toUpperCase();
+            if(s==='EOM') return '말일'; if(/^\d+$/.test(s)){ const n=parseInt(s,10); if(n>=1&&n<=31) return `${n}일`; } return s;
         }
 
+        function colorForMember(m){
+            const key = (m?.id != null ? String(m.id) : (m?.name || 'x'));
+            const h = seededHash(key) % 360, s = 65, l = 55;
+            return hslToHex(h, s, l);
+        }
+        function seededHash(str){
+            let h = 2166136261 >>> 0;
+            for(let i=0; i<str.length; i++){ h ^= str.charCodeAt(i); h = (h * 16777619) >>> 0; }
+            return h >>> 0;
+        }
+        function hslToHex(h,s,l){
+            s /= 100; l /= 100;
+            const k = n => (n + h/30) % 12;
+            const a = s * Math.min(l, 1-l);
+            const f = n => l - a * Math.max(-1, Math.min(k(n)-3, Math.min(9-k(n), 1)));
+            const toHex = x => Math.round(255*x).toString(16).padStart(2,'0');
+            return `#${toHex(f(0))}${toHex(f(8))}${toHex(f(4))}`;
+        }
     })();
 </script>
 

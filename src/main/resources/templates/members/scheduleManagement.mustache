@@ -8,7 +8,7 @@
             <!-- 🔵 헤더까지 모두 포함하는 파란 라운드 패널 -->
             <div class="status-panel-blue">
                 <!-- 타이틀 + 기간 -->
-                <div class="d-flex justify-content-between align-items-center mb-3">
+                <div class="d-flex justify-content-between align-items-center mb-2">
                     <div>
                         <div class="status-title">아르바이트 상태별 보기</div>
                         <div class="status-subtitle-small">
@@ -22,41 +22,35 @@
                 </div>
 
                 <!-- 본문: 상태 선택 + 칩 리스트 -->
-                <div class="row g-3 align-items-start">
-                    <!-- 왼쪽: 상태 선택 -->
-                    <div class="col-12 col-md-4">
-                        <label class="form-label small status-label" for="statusSelect">상태</label>
-                        <select id="statusSelect" class="form-select status-select">
+                <div class="row g-2 align-items-start">
+                    <!-- 왼쪽: 상태 선택 + 보기 선택 -->
+                    <div class="col-6 col-md-2">
+                        <label class="form-label small status-label mb-1" for="statusSelect" style="font-size:.72rem;">상태</label>
+                        <select id="statusSelect" class="form-select form-select-sm status-select">
                             <option value="WORKING" selected>근무중</option>
                             <option value="WAITING">시작전</option>
                             <option value="RESTING">휴식중</option>
                             <option value="PAUSED">일시중지</option>
                             <option value="RESIGNED">퇴사</option>
                         </select>
-                        <div class="form-text status-help-text">
-                            상태를 바꾸면 오른쪽 리스트와 아래 월간 일정이 함께 바뀝니다.
-                        </div>
+                    </div>
+                    <div class="col-6 col-md-2">
+                        <label class="form-label small status-label mb-1" for="dataTypeSelect" style="font-size:.72rem;">보기</label>
+                        <select id="dataTypeSelect" class="form-select form-select-sm status-select">
+                            <option value="schedule" selected>일정</option>
+                            <option value="actual">근무시간</option>
+                        </select>
                     </div>
 
                     <!-- 오른쪽: 필터된 아르바이트 생 칩 리스트 -->
                     <div class="col-12 col-md-8">
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <span class="small status-subtitle">필터된 아르바이트생</span>
-                            <!-- ▷ 오른쪽 끝 인원 배지 -->
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="small status-subtitle" style="font-size:.72rem;">필터된 아르바이트생</span>
                             <span id="statusCountBadgeTop" class="badge bg-light text-dark status-count-badge">0명</span>
                         </div>
 
                         <!-- 칩( pill ) 리스트 -->
                         <div id="memberPills" class="vlist status-pill-list"></div>
-
-                        <div class="small status-caption mt-2">
-                            * 각 사람 옆의 색상은 근로자의 고유 색입니다. (달력 일정에도 동일 색상 사용)
-                        </div>
-
-                        <div class="mt-2 d-flex align-items-center gap-3">
-                            <span class="legend legend-plan"></span><span class="small status-legend-text">계획(주간 템플릿)</span>
-                            <span class="legend legend-actual"></span><span class="small status-legend-text">저장된 일정</span>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -64,16 +58,13 @@
         </div>
     </div>
 
-    <!-- ============ 하단: 월간 타임테이블 (모든 근로자 표시) ============ -->
+    <!-- ============ 하단: 월간 매트릭스 (모든 근로자 표시) ============ -->
     <div class="card">
         <div id="monthCardHeader"
              class="card-header fw-bold d-flex align-items-center justify-content-between">
 
-            <!-- 🔵 왼쪽: 시간보기/감추기 토글 + 제목 -->
+            <!-- 🔵 왼쪽: 제목 -->
             <div class="d-flex align-items-center gap-2">
-                <button id="btnToggleTimeView" type="button" class="btn btn-sm btn-outline-secondary">
-                    시간보기
-                </button>
                 <span>
                     선택 월 실제 일정 (모든 근로자)
                     <small id="selectedMemberNameRight" class="text-muted ms-2">[하이라이트: 전체]</small>
@@ -99,11 +90,12 @@
                 <div id="emptyHint" class="small text-muted mt-2">* 상단 칩에서 아르바이트생을 선택한 후 눌러주세요.</div>
             </div>
 
-            <!-- ✅ 요일 헤더 (sticky 대상) -->
-            <div class="calendar-dow-row d-none" id="calendarDowRow"></div>
-
-            <!-- 날짜 칸 그리드: 모든 근로자 배지 표시 -->
-            <div class="calendar-grid d-none" id="calendarGrid"></div>
+            <!-- ✅ 매트릭스 뷰 -->
+            <div id="monthMatrixOuter" class="mm-outer d-none">
+                <div id="monthMatrixWrap" class="mm-wrap">
+                    <!-- JS가 buildMonthMatrix()로 렌더링 -->
+                </div>
+            </div>
 
             <div class="mt-3">
                 <div class="d-flex justify-content-between">
@@ -114,151 +106,86 @@
                     <div class="fw-semibold" id="monthActualTotalCell">0시간</div>
                 </div>
             </div>
-            <div class="small text-muted mt-2">
-                * 날짜 셀의 <b>사람별 배지</b>를 클릭하면 해당 근로자를 선택(배지 테두리 표시)합니다.<br>
-                * <b>상단 칩으로 근로자를 하이라이트한 경우에만</b> 선택된 배지 기준으로 날짜 헤더에 <b>‘근무일정 수정 / 삭제’</b> 버튼이 나타납니다.<br>
-                * <b>하이라이트한 근로자의 일정이 없는 날짜 셀을 클릭</b>하면 우상단에 <b>‘일정 생성하기’</b> 버튼이 나타납니다.
-            </div>
             <span id="monthLabel" class="d-none">0000-00-01</span>
+        </div>
+    </div>
+
+    <!-- ============ 하단: 멤버 선택 시 월간 캘린더 뷰 ============ -->
+    <div class="card mt-3 d-none" id="memberCalendarCard">
+        <div class="card-header fw-bold d-flex justify-content-between align-items-center" style="background:#5b4434;color:#fff;border-radius:12px 12px 0 0;">
+            <span id="memberCalendarTitle">홍길동 - 2026년 3월 일정</span>
+        </div>
+        <div class="card-body p-2">
+            <div id="memberCalendarWrap"></div>
         </div>
     </div>
 </main>
 
-<!-- ===== 편집 모달 (좌: 요약 / 우: 그리드, 10/30/60, 기본 30 / 저장은 10분에서만) ===== -->
-<div class="modal" id="editModal" style="display:none;">
-    <div class="modal-dialog">
-        <div class="modal-content p-3">
-            <div class="d-flex justify-content-between align-items-center mb-2 edit-modal-header">
-                <div class="fw-bold">
-                    <span id="editTitleDate">0000-00-00</span>
-                    <span class="text-muted">/</span>
-                    <span id="editTitleMember">알바생 이름</span>
-                </div>
-                <div class="d-flex gap-2">
-                    <!-- 저장은 10분 단위에서만 가능 -->
-                    <button id="btnSaveEdit" class="btn btn-sm btn-primary" disabled>저장</button>
-                    <button id="btnCancelEdit" class="btn btn-sm btn-outline-secondary">취소</button>
-                    <button id="btnCloseModal" class="btn btn-sm btn-outline-dark">닫기</button>
+<!-- ===== Gantt 팝업 (풀스크린 overlay) ===== -->
+<div class="dg-popup-overlay d-none" id="dgPopupOverlay">
+    <div class="dg-popup">
+        <div class="dg-popup-header">
+            <div>
+                <div class="dg-popup-title" id="dgPopupTitle">0000-00-00 (월)</div>
+                <div class="dg-popup-subtitle" id="dgPopupSubtitle">전체 아르바이트생 일정 · 바를 드래그하여 편집</div>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <button type="button" class="btn btn-sm btn-outline-light d-none" id="dgBtnDelete" style="border-radius:999px;font-size:.73rem;padding:.25rem .8rem;font-weight:600;">삭제</button>
+                <button type="button" class="dg-popup-close-btn" id="dgBtnClose">닫기</button>
+            </div>
+        </div>
+        <div class="dg-popup-body">
+            <div class="dg-popup-gantt-outer">
+                <div class="dg-popup-gantt-wrap" id="dgPopupGanttWrap">
+                    <!-- JS가 buildDgPopupGantt()로 렌더링 -->
                 </div>
             </div>
-
-            <div class="edit-modal-body">
-                <div class="row g-3">
-                    <!-- 좌: 일정 요약 -->
-                    <div class="col-12 col-md-5">
-                        <div class="summary-box p-2 border rounded-3">
-                            <div class="d-flex align-items-center justify-content-between mb-2">
-                                <div class="small text-muted">일정 요약</div>
-                                <span class="badge bg-light text-dark" id="summaryStepBadge">슬롯: 30분</span>
-                            </div>
-
-                            <div class="mb-2">
-                                <div class="small fw-semibold">저장된 일정</div>
-                                <div id="summaryOriginal" class="d-flex flex-wrap gap-2 small text-muted">
-                                    <!-- 원본 세그먼트 칩 -->
-                                </div>
-                            </div>
-
-                            <div class="mb-2">
-                                <div class="small fw-semibold">수정안(현재 선택)</div>
-                                <div id="summaryCurrent" class="d-flex flex-wrap gap-2 small">
-                                    <!-- 현재 선택 세그먼트 칩 -->
-                                </div>
-                            </div>
-
-                            <div class="mt-2 small">
-                                <div class="d-flex justify-content-between">
-                                    <span class="text-muted">원본 총 시간</span>
-                                    <span id="summaryOriginalTotal" class="fw-semibold">0분</span>
-                                </div>
-                                <div class="d-flex justify-content-between">
-                                    <span class="text-muted">수정안 총 시간</span>
-                                    <span id="summaryCurrentTotal" class="fw-semibold">0분</span>
-                                </div>
-                                <div class="d-flex justify-content-between">
-                                    <span class="text-muted">증감(수정안 - 원본)</span>
-                                    <span id="summaryDiffTotal" class="fw-semibold">0분</span>
-                                </div>
-                            </div>
-
-                            <div class="mt-2 small">
-                                <span class="legend legend-actual"></span> 원본 유지 블록
-                                &nbsp;·&nbsp;
-                                <span class="legend legend-plan" style="background: rgba(13,110,253,.16); border-color: rgba(13,110,253,.45)"></span> 새로 추가된 블록(파란색)
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- 우: 편집 그리드 (라운드렉트 스타일) -->
-                    <div class="col-12 col-md-7">
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <div class="btn-group btn-group-sm" id="slotStepButtons" role="group" aria-label="슬롯 단위">
-                                <button type="button" class="btn btn-outline-secondary" data-step="10">10분</button>
-                                <button type="button" class="btn btn-outline-secondary active" data-step="30">30분</button>
-                                <button type="button" class="btn btn-outline-secondary" data-step="60">1시간</button>
-                            </div>
-                            <div class="small text-muted">시간 슬롯을 드래그로 선택/해제합니다. (06:00 ~ 22:00)</div>
-                        </div>
-
-                        <div class="day-grid mb-2">
-                            <table id="dayGridTable">
-                                <thead>
-                                <tr>
-                                    <th style="width:74px;">시간</th>
-                                    <th>선택</th>
-                                </tr>
-                                </thead>
-                                <tbody id="dayGridBody">
-                                <!-- JS 렌더 -->
-                                </tbody>
-                            </table>
-                        </div>
-
-                        <div class="text-end small">
-                            총 선택: <span id="selectedMinutes" class="fw-bold">0</span>분
-                        </div>
-                    </div>
-                </div>
+        </div>
+        <div class="dg-popup-footer">
+            <div class="dg-popup-legend">
+                <span class="dg-legend-item"><span class="dg-legend-swatch dg-legend-modified"></span> 변경됨</span>
+                <span class="dg-legend-item"><span class="dg-legend-swatch dg-legend-selected"></span> 선택됨</span>
+                <span id="dgChangeInfo" class="small ms-2" style="color:rgba(255,255,255,.7);"></span>
             </div>
-
+            <div class="d-flex gap-2">
+                <button type="button" class="btn btn-sm d-none" id="dgBtnCancel" style="background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.3);border-radius:999px;font-size:.73rem;padding:.3rem 1rem;">취소</button>
+                <button type="button" class="btn btn-sm d-none" id="dgBtnSave" style="background:#16a34a;color:#fff;border:none;border-radius:999px;font-size:.73rem;padding:.3rem 1rem;font-weight:600;">저장</button>
+            </div>
         </div>
     </div>
 </div>
 
+<!-- ===== 플로팅 드래그 툴팁 ===== -->
+<div id="dragTimeTooltip" class="drag-time-tooltip"></div>
+
 <style>
-    :root { --month-header-height: 80px; }
-
-    .legend { display:inline-block; width:14px; height:14px; border-radius:3px; border:1px solid #ddd; vertical-align:middle; }
-    .legend-plan { background: rgba(13,110,253,.25); border-color: rgba(13,110,253,.45); }
-    .legend-actual { background: rgba(25,135,84,.25); border-color: rgba(25,135,84,.40); }
-
-    /* ===== 🔵 상단 아르바이트 상태 패널 (헤더 포함 전체 파란 배경 + 라운드 직사각형) ===== */
+    /* ===== 🔵 상단 아르바이트 상태 패널 ===== */
     .status-panel-blue {
         background: linear-gradient(135deg, #1d4ed8, #2563eb);
-        border-radius: 18px;
-        padding: 16px 20px 18px;
-        box-shadow: 0 14px 30px rgba(15, 23, 42, 0.28);
+        border-radius: 14px;
+        padding: 10px 16px 12px;
+        box-shadow: 0 8px 20px rgba(15, 23, 42, 0.22);
         color: #e5eeff;
     }
     .status-title {
-        font-size: 1.1rem;
+        font-size: .95rem;
         font-weight: 700;
         letter-spacing: .02em;
     }
     .status-subtitle-small {
-        font-size: .8rem;
-        margin-top: 2px;
+        font-size: .72rem;
+        margin-top: 1px;
         color: rgba(226, 232, 255, 0.78);
     }
     .status-period-label-caption {
-        font-size: .75rem;
+        font-size: .68rem;
         color: rgba(226, 232, 255, 0.7);
     }
     .status-period-label-value {
-        font-size: .85rem;
+        font-size: .78rem;
         font-weight: 600;
         margin-top: 1px;
-        padding: 2px 8px;
+        padding: 1px 7px;
         border-radius: 999px;
         background: rgba(15, 23, 42, 0.32);
         border: 1px solid rgba(191, 219, 254, 0.6);
@@ -266,21 +193,13 @@
     .status-label {
         color: rgba(226, 232, 255, 0.9) !important;
     }
-    .status-help-text {
-        color: rgba(226, 232, 255, 0.85) !important;
-    }
     .status-subtitle {
         color: rgba(226, 232, 255, 0.9);
     }
-    .status-caption {
-        color: rgba(226, 232, 255, 0.8);
-    }
-    .status-legend-text {
-        color: rgba(226, 232, 255, 0.85);
-    }
     .status-count-badge {
         border-radius: 999px;
-        padding: 3px 10px;
+        padding: 1px 8px;
+        font-size: .75rem;
         font-weight: 600;
     }
     .status-select {
@@ -301,238 +220,295 @@
         margin-top: 2px;
     }
 
-    /* ===== 아르바이트 리스트: 칩 스타일 (파란 배경에 어울리게 조정) ===== */
-    .vlist { display:flex; flex-wrap:wrap; gap:8px; }
+    /* ===== 아르바이트 칩 스타일 ===== */
+    .vlist { display:flex; flex-wrap:wrap; gap:5px; }
     .pill {
-        display:flex; align-items:center; gap:8px; padding:8px 10px;
+        display:flex; align-items:center; gap:5px; padding:4px 10px;
         border-radius:999px;
         border:1px solid rgba(191, 219, 254, 0.7);
         background: rgba(15, 23, 42, 0.18);
         cursor:pointer;
-        font-size:.9rem;
+        font-size:.78rem;
         transition: background .15s, box-shadow .15s, border-color .15s, transform .08s;
         color:#e5eeff;
+        white-space: nowrap;
     }
     .pill:hover {
         background: rgba(15, 23, 42, 0.28);
         border-color: rgba(248, 250, 252, 0.95);
         transform: translateY(-1px);
-        box-shadow: 0 6px 16px rgba(15, 23, 42, 0.45);
+        box-shadow: 0 4px 12px rgba(15, 23, 42, 0.4);
     }
     .pill.active {
         border-color: rgba(191, 219, 254, 0.95);
-        box-shadow: 0 0 0 2px rgba(191, 219, 254, 0.7), 0 10px 25px rgba(15, 23, 42, 0.55);
+        box-shadow: 0 0 0 2px rgba(191, 219, 254, 0.7), 0 6px 16px rgba(15, 23, 42, 0.45);
         background: rgba(15, 23, 42, 0.4);
         transform: translateY(-1px);
     }
     .pill .dot {
-        width:12px; height:12px; border-radius:50%;
+        width:9px; height:9px; border-radius:50%;
         border:1px solid rgba(15, 23, 42,.15);
-        flex:0 0 12px;
-        box-shadow: 0 0 0 2px rgba(15, 23, 42, 0.2);
+        flex:0 0 9px;
+        box-shadow: 0 0 0 1.5px rgba(15, 23, 42, 0.2);
     }
-    .pill .name { font-weight:600; }
-    .pill .meta { color:rgba(226, 232, 255, 0.8); font-size:.8rem; }
+    .pill .name { font-weight:600; white-space:nowrap; }
 
-    /* ✅ 카드 헤더 sticky (네비 높이 반영) */
+    /* ✅ 카드 헤더 sticky */
     #monthCardHeader { position: sticky; top: 0; z-index: 30; background: #fff; }
 
-    /* ✅ 요일 줄 sticky */
-    .calendar-dow-row {
-        display:grid; grid-template-columns:repeat(7,1fr);
-        gap:8px; position: sticky; top: var(--month-header-height);
-        z-index:25; background:#fff; padding-bottom:4px;
+    /* ===== 매트릭스 뷰 (.mm-*) ===== */
+    .mm-outer {
+        overflow-x: auto;
+        padding-bottom: 4px;
     }
-    .calendar-dow-row .dow {
-        text-align:center; font-weight:600; color:#6c757d;
-        padding:6px 0; border-bottom:1px dashed #e9ecef;
+    .mm-wrap {
+        min-width: 700px;
     }
-
-    /* 날짜 그리드 */
-    .calendar-grid {
-        display:grid; grid-template-columns:repeat(7,1fr);
-        gap:16px; margin-top:4px;
+    .mm-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        table-layout: fixed;
     }
-
-    .calendar-grid .cell {
-        border:1px solid #e9ecef;
-        border-radius:10px;
-        padding:10px;
-        min-height:200px;
-        background:#fff;
-        display:flex;
-        flex-direction:column;
-        gap:8px;
-        position:relative;
-        overflow:hidden;
+    .mm-corner {
+        width: 100px;
+        min-width: 100px;
+        background: #f8f9fa;
+        position: sticky;
+        left: 0;
+        z-index: 3;
+        border-bottom: 1.5px solid #dee2e6;
+        border-right: 1px solid #e9ecef;
     }
-
-    /* 🔵 각 날짜 셀 상단 헤더(예: 5일  월) 파란 헤더 스타일 */
-    .calendar-grid .cell .date-head {
-        display:flex;
-        align-items:center;
-        justify-content:space-between;
-        gap:4px;
-        margin:-10px -10px 6px; /* 셀 상단까지 붙도록 마진 조정 */
-        padding:6px 8px;
-        background: linear-gradient(135deg, #eff6ff, #dbeafe);
-        border-bottom:1px solid #e5e7eb;
-        border-radius:10px 10px 0 0; /* 상단만 라운드 */
+    .mm-date-head {
+        text-align: center;
+        padding: 6px 2px;
+        font-size: .75rem;
+        font-weight: 600;
+        color: #495057;
+        border-bottom: 1.5px solid #dee2e6;
+        cursor: pointer;
+        user-select: none;
     }
-
-    .date-left {
-        display:inline-flex;
-        align-items:center;
-        gap:6px; /* "몇일"과 버튼 사이 간격 */
+    .mm-date-head:hover {
+        background: #e8f0fe;
     }
-    .seg-btn-wrap {
-        display:inline-flex;
-        gap:4px; /* 수정/삭제 버튼 간 간격 */
+    .mm-date-head.mm-weekend {
+        color: #dc3545;
     }
-    .seg-edit-btn,
-    .seg-delete-btn {
-        font-size:.7rem;
-        line-height:1.2;
-        padding:2px 6px;
+    .mm-date-head.mm-today {
+        background: #e8f5e9;
+        font-weight: 700;
     }
-
-    .cell .date-text {
-        font-weight:600;
-        font-size:.95rem;
-        color:#1f2937; /* 파란 헤더 위에서 진한 글씨 */
+    .mm-member-label {
+        position: sticky;
+        left: 0;
+        z-index: 2;
+        background: #fff;
+        padding: 4px 8px;
+        font-size: .8rem;
+        font-weight: 600;
+        white-space: nowrap;
+        border-right: 1px solid #e9ecef;
+        border-bottom: 1px solid #f0f2f5;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 100px;
     }
-    .cell .dow-mini {
-        font-size:.8rem;
-        color:#374151;
+    .mm-member-label .mm-label-dot {
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        margin-right: 4px;
+        vertical-align: middle;
     }
-
-    .cell .segments { display:flex; flex-direction:column; gap:6px; }
-    .cell .day-total { margin-top:auto; text-align:right; font-size:.875rem; color:#212529; }
-
-    .cell.muted {
-        background:#fcfcfc;
-        color:#96a0aa;
-    }
-    .cell.muted .date-head {
-        background:#f5f5f5;
-    }
-
-    .cell.today {
-        outline:2px solid #51cf66;
-        outline-offset:2px;
-    }
-
-    /* 사람별 배지(라운드 직사각형) */
-    .member-badge {
+    .mm-day-cell {
+        height: 30px;
+        border: 1px solid #f0f2f5;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: opacity .12s, box-shadow .12s;
         position: relative;
-        display:flex; align-items:center; gap:8px;
-        border-radius:10px; padding:6px 8px; line-height:1.1;
-        border:1px solid rgba(0,0,0,.06); background:#f8f9fa; cursor:pointer;
-        transition: transform .05s ease-in-out, box-shadow .1s ease-in-out, opacity .1s ease-in-out;
-        font-size:.88rem;
     }
-    .member-badge:hover { transform: translateY(-1px); box-shadow:0 2px 8px rgba(0,0,0,.06); }
-    .member-badge .color { width:12px; height:12px; border-radius:4px; border:1px solid rgba(0,0,0,.08); flex:0 0 12px; }
-    .member-badge .label { font-weight:600; }
-    .member-badge .times { color:#495057; font-size:.82rem; }
-    .member-badge.selected { box-shadow: 0 0 0 2px rgba(13,110,253,.25); }
+    .mm-day-cell.mm-filled {
+        opacity: 0.8;
+    }
+    .mm-day-cell.mm-filled:hover {
+        opacity: 1;
+        box-shadow: inset 0 0 0 2px rgba(0,0,0,.18);
+    }
+    .mm-day-cell.mm-empty {
+        background: #fff;
+    }
+    .mm-day-cell.mm-empty:hover {
+        background: #f8f9fa;
+    }
+    .mm-day-cell .mm-minutes-text {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: .62rem;
+        font-weight: 600;
+        color: rgba(255,255,255,.9);
+        text-shadow: 0 1px 2px rgba(0,0,0,.3);
+        pointer-events: none;
+    }
 
-    /* 하이라이트(선택 근로자 강조 / 타인 흐리게) */
-    .calendarGrid-hasHighlight .member-badge.dimmed { opacity:.35; }
-    .calendarGrid-hasHighlight .member-badge.highlight {
-        opacity:1;
-        outline:2px solid rgba(13,110,253,.25);
-        outline-offset:1px;
+    /* ===== Gantt 팝업 overlay ===== */
+    .dg-popup-overlay {
+        position: fixed; inset: 0; z-index: 2000;
+        background: rgba(15,23,42,.55);
+        backdrop-filter: blur(2px);
+        display: flex; align-items: center; justify-content: center;
+    }
+    .dg-popup {
+        width: 96vw; max-width: 1200px; max-height: 90vh;
+        background: #1e293b; color: #f1f5f9;
+        border-radius: 18px;
+        box-shadow: 0 20px 60px rgba(0,0,0,.5);
+        display: flex; flex-direction: column;
+        overflow: hidden;
+    }
+    .dg-popup-header {
+        display: flex; justify-content: space-between; align-items: center;
+        padding: 14px 20px 10px;
+        border-bottom: 1px solid rgba(255,255,255,.1);
+    }
+    .dg-popup-title { font-size: 1.05rem; font-weight: 700; }
+    .dg-popup-subtitle { font-size: .72rem; color: rgba(241,245,249,.6); margin-top: 2px; }
+    .dg-popup-close-btn {
+        background: rgba(255,255,255,.12); color: #f1f5f9; border: 1px solid rgba(255,255,255,.2);
+        border-radius: 999px; padding: .3rem 1.2rem; font-size: .78rem; font-weight: 600; cursor: pointer;
+    }
+    .dg-popup-close-btn:hover { background: rgba(255,255,255,.22); }
+    .dg-popup-body {
+        flex: 1; overflow-y: auto; padding: 12px 20px;
+    }
+    .dg-popup-gantt-outer { min-width: 700px; }
+    .dg-popup-footer {
+        display: flex; justify-content: space-between; align-items: center;
+        padding: 10px 20px 12px;
+        border-top: 1px solid rgba(255,255,255,.1);
+    }
+    .dg-popup-legend { display: flex; align-items: center; gap: 12px; font-size: .7rem; color: rgba(255,255,255,.55); }
+    .dg-legend-item { display: flex; align-items: center; gap: 4px; }
+    .dg-legend-swatch { width: 14px; height: 10px; border-radius: 3px; }
+    .dg-legend-modified { background: #fb923c; outline: 1.5px dashed rgba(255,255,255,.5); outline-offset: 1px; }
+    .dg-legend-selected { background: #60a5fa; box-shadow: 0 0 0 2px #2563eb; }
+
+    /* Gantt 행 (팝업 내부) */
+    .dg-popup-gantt-wrap .mw-gantt-header-row { display:flex; align-items:flex-end; border-bottom:1px solid rgba(255,255,255,.08); padding-bottom:2px; margin-bottom:4px; }
+    .dg-popup-gantt-wrap .mw-gantt-label-cell { width:100px; min-width:100px; flex:0 0 100px; display:flex; align-items:center; padding-left:10px; }
+    .dg-popup-gantt-wrap .mw-gantt-track-header { flex:1; position:relative; height:22px; }
+    .dg-popup-gantt-wrap .mw-gantt-time-label { position:absolute; font-size:.65rem; color:rgba(255,255,255,.4); transform:translateX(-50%); }
+    .dg-popup-gantt-wrap .mw-gantt-time-label.minor { font-size:.55rem; color:rgba(255,255,255,.2); }
+    .dg-popup-gantt-wrap .dg-hours-cell { width:60px; min-width:60px; flex:0 0 60px; text-align:center; font-size:.68rem; font-weight:600; color:rgba(255,255,255,.4); }
+
+    .dg-popup-gantt-wrap .mw-gantt-row { display:flex; align-items:center; min-height:42px; border-bottom:1px solid rgba(255,255,255,.06); padding:2px 0; }
+    .dg-popup-gantt-wrap .mw-gantt-row .mw-gantt-label-cell { height:42px; }
+    .dg-popup-gantt-wrap .dg-member-chip { display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:6px; flex-shrink:0; }
+    .dg-popup-gantt-wrap .dg-member-name { font-size:.78rem; font-weight:600; color:#f1f5f9; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .dg-popup-gantt-wrap .mw-gantt-track-cell { flex:1; position:relative; height:34px; background:rgba(255,255,255,.04); border-radius:6px; }
+
+    .dg-popup-bar {
+        position:absolute; top:3px; height:28px; border-radius:5px; cursor:grab; z-index:2;
+        display:flex; align-items:center; justify-content:center;
+        font-size:.68rem; color:#fff; font-weight:600; text-shadow:0 1px 2px rgba(0,0,0,.25);
+        user-select:none; transition:filter .1s;
+    }
+    .dg-popup-bar:hover { filter:brightness(1.1); }
+    .dg-popup-bar.dragging { cursor:grabbing; filter:brightness(1.15); box-shadow:0 4px 14px rgba(0,0,0,.35); z-index:10; }
+    .dg-popup-bar.resizing { z-index:10; }
+    .dg-popup-bar.modified { outline:2px dashed rgba(255,255,255,.5); outline-offset:1px; }
+    .dg-popup-bar.dg-bar-selected { box-shadow:0 0 0 2.5px #2563eb, 0 0 0 4.5px rgba(37,99,235,.35); z-index:5; }
+    .dg-popup-bar .bar-handle-left,
+    .dg-popup-bar .bar-handle-right { position:absolute; top:0; width:8px; height:100%; cursor:col-resize; z-index:3; opacity:0; transition:opacity .15s; }
+    .dg-popup-bar:hover .bar-handle-left,
+    .dg-popup-bar:hover .bar-handle-right { opacity:1; background:rgba(255,255,255,.22); border-radius:3px; }
+    .dg-popup-bar .bar-handle-left { left:-2px; }
+    .dg-popup-bar .bar-handle-right { right:-2px; }
+    .dg-popup-bar .dg-bar-time { font-size:.65rem; pointer-events:none; }
+    .dg-popup-bar .dg-bar-tooltip { display:none; position:absolute; bottom:calc(100% + 6px); left:50%; transform:translateX(-50%); background:#0f172a; color:#e2e8f0; font-size:.68rem; padding:3px 8px; border-radius:6px; white-space:nowrap; z-index:20; pointer-events:none; }
+    .dg-popup-bar:hover .dg-bar-tooltip { display:block; }
+
+    /* ===== 플로팅 드래그 툴팁 ===== */
+    .drag-time-tooltip {
+        position: fixed;
+        z-index: 9999;
+        pointer-events: none;
+        background: #1e293b;
+        color: #f1f5f9;
+        font-size: .78rem;
+        font-weight: 600;
+        padding: 5px 10px;
+        border-radius: 6px;
+        box-shadow: 0 4px 14px rgba(0,0,0,.35);
+        white-space: nowrap;
+        opacity: 0;
+        transition: opacity .12s;
+        font-variant-numeric: tabular-nums;
+    }
+    .drag-time-tooltip.visible {
+        opacity: 1;
+    }
+    .drag-time-tooltip .dtt-arrow {
+        position: absolute;
+        bottom: -4px;
+        left: 50%;
+        transform: translateX(-50%) rotate(45deg);
+        width: 8px;
+        height: 8px;
+        background: #1e293b;
+    }
+    .drag-time-tooltip .dtt-changed {
+        color: #60a5fa;
     }
 
-    /* ✅ 빈 셀에서 쓰는 ‘일정 생성하기’ 버튼 (셀 우상단 고정) */
-    .seg-create-btn{
-        position:absolute; top:6px; right:6px;
-        font-size:.7rem; line-height:1.2; padding:2px 6px;
+    /* ===== 빈 상태 메시지 ===== */
+    .dg-empty-msg {
+        text-align: center;
+        padding: 24px;
+        color: #6b7280;
+        font-size: .9rem;
     }
 
-    /* ===== 모달 공통 ===== */
-    .modal { background:rgba(0,0,0,.35); position:fixed; inset:0; display:none; z-index:1055; }
-    .modal-dialog { margin:50px auto; max-width:980px; }
-    .modal-content { background:#fff; border-radius:12px; box-shadow:0 10px 40px rgba(0,0,0,.2); }
-    .edit-modal-header { padding-bottom:4px; border-bottom:1px solid #e9ecef; }
-    .edit-modal-body { padding-top:8px; }
-
-    .summary-box .chip { display:inline-flex; align-items:center; gap:6px; padding:4px 8px; border:1px solid #e9ecef; border-radius:14px; background:#fff; }
-    .chip .dot { width:10px;height:10px;border-radius:50%;border:1px solid rgba(0,0,0,.08); }
-
-    /* 하루 편집 그리드 – 라운드렉트 스타일 */
-    .day-grid {
-        width:100%;
-        border-radius:12px;
-        background:#f9fafb;
-        padding:8px;
-        box-shadow: inset 0 0 0 1px #e5e7eb;
-        max-height:70vh;
-        overflow-y:auto;
-        user-select:none;
+    /* ===== 월간 캘린더 뷰 (.mc-*) ===== */
+    .mc-table { width:100%; border-collapse:separate; border-spacing:3px; table-layout:fixed; }
+    .mc-dow-head { text-align:center; font-size:.75rem; font-weight:700; padding:6px 2px; color:#5b4434; background:#fff9f2; border-radius:6px; }
+    .mc-dow-head.mc-weekend { color:#dc3545; }
+    .mc-day-cell {
+        vertical-align:top; min-height:70px; padding:5px 6px;
+        border:1px solid #e9ecef; border-radius:8px; background:#fff; cursor:pointer;
+        transition: background .12s, box-shadow .12s;
     }
-    .day-grid table {
-        width:100%;
-        border-collapse:separate;
-        border-spacing:0;
-        table-layout:fixed;
-        border-radius:10px;
-        overflow:hidden;
-        background:#ffffff;
-        box-shadow:0 1px 3px rgba(15,23,42,0.08);
+    .mc-day-cell:hover { background:#f8f9fa; box-shadow:0 2px 8px rgba(0,0,0,.06); }
+    .mc-day-cell.mc-today { background:#f0fdf4; border-color:#86efac; }
+    .mc-day-cell.mc-other-month { opacity:.3; pointer-events:none; }
+    .mc-day-num { font-size:.72rem; font-weight:700; color:#374151; margin-bottom:3px; }
+    .mc-day-num.mc-weekend-num { color:#dc3545; }
+    .mc-schedule-pill {
+        display:block; padding:2px 7px; margin:2px 0; border-radius:999px;
+        font-size:.62rem; font-weight:600; color:#fff; cursor:pointer;
+        transition:box-shadow .12s, filter .1s; white-space:nowrap;
+        overflow:hidden; text-overflow:ellipsis;
     }
-    .day-grid thead th {
-        background:linear-gradient(135deg,#eff6ff,#e0f2fe);
-        color:#334155;
-        font-weight:600;
-        font-size:.9rem;
-        border-bottom:1px solid #dbeafe;
-        text-align:center;
-        padding:.5rem .4rem;
-        position:sticky;
-        top:0;
-        z-index:2;
+    .mc-schedule-pill:hover { filter:brightness(1.1); }
+    .mc-schedule-pill.mc-pill-selected { box-shadow:0 0 0 2px #1d4ed8, 0 0 0 4px rgba(37,99,235,.25); }
+    .mc-no-schedule { font-size:.6rem; color:#9ca3af; }
+    .mc-pill-actions {
+        display:inline-flex; gap:3px; margin-left:4px; vertical-align:middle;
     }
-    .day-grid tbody th.timecell {
-        background:#f9fafb;
-        color:#6b7280;
-        font-weight:600;
-        width:74px;
-        border-right:1px solid #e5e7eb;
-        text-align:center;
-        padding:.25rem .25rem;
-        font-size:.8rem;
-        position:sticky;
-        left:0;
-        z-index:1;
-        font-variant-numeric:tabular-nums;
+    .mc-pill-del-btn {
+        display:inline-flex; align-items:center; justify-content:center;
+        width:16px; height:16px; border-radius:50%;
+        background:rgba(220,38,38,.15); color:#dc3545; border:none;
+        font-size:.6rem; font-weight:700; cursor:pointer; line-height:1;
+        padding:0;
     }
-    .row-hour-start td, .row-hour-start th { border-top:2px solid #e5e7eb!important; }
-
-    .slot-cell {
-        border-bottom:1px dashed #eef2f6;
-        height:22px;
-        cursor:pointer;
-        background:#ffffff;
-        transition: background .12s, box-shadow .12s, transform .05s;
-        border-radius:8px;
-        margin:1px 4px;
-    }
-    .slot-cell:hover {
-        background:#f1f5f9;
-        box-shadow:0 0 0 1px rgba(148,163,184,0.45);
-        transform:translateY(-1px);
-    }
-    .slot-cell.selected {
-        background:rgba(25,135,84,.18);
-        box-shadow:inset 0 0 0 1px rgba(25,135,84,.4);
-    }
-    /* ✅ 원본 일정에 없는데 새로 선택된 블록은 파란색 */
-    .slot-cell.selected.selected-diff {
-        background:rgba(13,110,253,0.18);
-        box-shadow:inset 0 0 0 1px rgba(37,99,235,0.65);
-    }
+    .mc-pill-del-btn:hover { background:rgba(220,38,38,.3); }
 </style>
 
 <script id="membersData" type="application/json">
@@ -548,11 +524,11 @@
         const selectedMemberNameRight = document.getElementById('selectedMemberNameRight');
         const selectedMemberStatusRight = document.getElementById('selectedMemberStatusRight');
 
-        const calendarDowRow = document.getElementById('calendarDowRow');
-        const calendarGrid   = document.getElementById('calendarGrid');
-        const emptyState     = document.getElementById('emptyState');
-        const emptyTitle     = document.getElementById('emptyTitle');
-        const emptyHint      = document.getElementById('emptyHint');
+        const monthMatrixOuter = document.getElementById('monthMatrixOuter');
+        const monthMatrixWrap  = document.getElementById('monthMatrixWrap');
+        const emptyState       = document.getElementById('emptyState');
+        const emptyTitle       = document.getElementById('emptyTitle');
+        const emptyHint        = document.getElementById('emptyHint');
         const btnCreateFromEmpty = document.getElementById('btnCreateFromEmpty');
 
         const monthLabel = document.getElementById('monthLabel');
@@ -564,90 +540,68 @@
 
         const monthSelectedMemberTotalWrap = document.getElementById('monthSelectedMemberTotalWrap');
         const monthSelectedMemberNameLabel = document.getElementById('monthSelectedMemberNameLabel');
-        the_monthSelectedMemberTotal = document.getElementById('monthSelectedMemberTotal');
+        const monthSelectedMemberTotal = document.getElementById('monthSelectedMemberTotal');
 
         const monthCardHeader = document.getElementById('monthCardHeader');
-
-        // ▷ 상단 헤더(“아르바이트 상태별 보기” 우측) 기간 표시 엘리먼트
         const statusPeriodLabel = document.getElementById('statusPeriodLabel');
-
-        // ▷ “필터된 아르바이트생” 줄 오른쪽 인원수 배지
         const statusCountBadgeTop = document.getElementById('statusCountBadgeTop');
 
-        // 🔵 시간 보기/감추기 토글 버튼
-        const btnToggleTimeView = document.getElementById('btnToggleTimeView');
+        // 캘린더 뷰 DOM
+        const memberCalendarCard = document.getElementById('memberCalendarCard');
+        const memberCalendarTitle = document.getElementById('memberCalendarTitle');
+        const memberCalendarWrap = document.getElementById('memberCalendarWrap');
+        let selectedCalPill = null; // { memberId, iso, start, end }
 
-        // ===== 편집 모달 =====
-        const editModal = document.getElementById('editModal');
-        const editTitleDate = document.getElementById('editTitleDate');
-        const editTitleMember = document.getElementById('editTitleMember');
-        const btnSaveEdit = document.getElementById('btnSaveEdit');
-        const btnCancelEdit = document.getElementById('btnCancelEdit');
-        const btnCloseModal = document.getElementById('btnCloseModal');
-        const slotStepButtons = document.getElementById('slotStepButtons');
-        const dayGridBody = document.getElementById('dayGridBody');
-        const selectedMinutesEl = document.getElementById('selectedMinutes');
-
-        const summaryStepBadge = document.getElementById('summaryStepBadge');
-        const summaryOriginal = document.getElementById('summaryOriginal');
-        const summaryCurrent = document.getElementById('summaryCurrent');
-        const summaryOriginalTotal = document.getElementById('summaryOriginalTotal');
-        const summaryCurrentTotal = document.getElementById('summaryCurrentTotal');
-        const summaryDiffTotal = document.getElementById('summaryDiffTotal');
+        // ===== Gantt 팝업 DOM =====
+        const dgPopupOverlay = document.getElementById('dgPopupOverlay');
+        const dgPopupTitle   = document.getElementById('dgPopupTitle');
+        const dgPopupSubtitle= document.getElementById('dgPopupSubtitle');
+        const dgBtnSave      = document.getElementById('dgBtnSave');
+        const dgBtnCancel    = document.getElementById('dgBtnCancel');
+        const dgBtnClose     = document.getElementById('dgBtnClose');
+        const dgBtnDelete    = document.getElementById('dgBtnDelete');
+        const dgChangeInfo   = document.getElementById('dgChangeInfo');
+        const dgPopupGanttWrap = document.getElementById('dgPopupGanttWrap');
 
         // ===== API =====
         const API_ENDPOINT = '/api/schedule/work';
         const API_UPDATE_ENDPOINT = '/api/schedule/work/update';
-        const API_DELETE_ENDPOINT_TEMPLATE = '/api/schedule/work/{memberId}/delete';
+        const API_ACTUAL_ENDPOINT = '/api/schedule';
+        const API_ACTUAL_UPDATE_ENDPOINT = '/api/schedule/update';
+        const dataTypeSelect = document.getElementById('dataTypeSelect');
+        let currentDataType = 'schedule';
 
         // ===== 상태 =====
         let allMembers = [];
         try { allMembers = JSON.parse(document.getElementById('membersData').textContent || '[]'); } catch(e){ allMembers = []; }
-        if(Array.isArray(allMembers) && allMembers.length>0){
-            statusSelect.value = allMembers[0].status || 'WORKING';
-        }
 
-        let currentMember = null;         // 상단 칩 하이라이트(편집 가능 여부를 결정)
+        let currentMember = null;
         let currentMonthStart = firstDayOfMonth(new Date());
         let currentStatusMembers = [];
 
-        // 월 데이터 캐시 & 합계
         let monthAllMembersDayMap = {};
-        let lastMonthTotalByMember = {}; // { memberId: minutes }
+        let lastMonthTotalByMember = {};
         let lastMonthTotalAll = 0;
 
-        // 달력에서 "선택된 배지" (버튼 노출용)
-        let selectedBadge = null; // { dateIso, memberId } | null
+        // Gantt 팝업 상태
+        let dgPopupIso = null;
+        let dgPopupFilterMemberId = null;  // null=전체, id=특정멤버
+        let dgBarInfo = null;               // 선택된 바 { memberId, iso, start, end }
+        let dgOrigSnapshot = {};            // 스냅샷
+        let dgPendingChanges = {};          // { `${mid}_${iso}`: { memberId, iso, segments } }
+        let _dgDragState = null;
+        let _dgJustDragged = false;
+        let _dgDragInited = false;
 
-        // ✅ 하이라이트된 근로자의 "빈 날짜 셀" 선택 상태 (일정 생성 버튼 표시용)
-        let selectedEmptyDateIso = null;
-
-        // 🔵 시간표시 여부 (기본: false = 숨김, 버튼 라벨: 시간보기)
-        let showTimeTexts = false;
-
-        // ===== 모달/편집 상태 =====
-        const START_HOUR = 6;
-        const END_HOUR   = 22; // exclusive
-        const START_MIN  = START_HOUR * 60;
-        const END_MIN    = END_HOUR * 60;
-
-        let stepMinutes  = 30;  // 기본 30분
-        let totalRows    = (END_MIN - START_MIN) / stepMinutes;
-
-        let originalSegments = [];        // 서버에서 받은 저장된 일정
-        let originalSlotSet  = new Set(); // 현재 step 기준 원본 슬롯셋
-        let slotState        = new Set(); // 현재 그리드에서 선택된 슬롯
-        let dragging = false;
-        let dragAdding = true;
+        const HOUR_START = 6;
+        const HOUR_END = 22;
+        const TOTAL_MIN = (HOUR_END - HOUR_START) * 60;
 
         function updateMonthHeaderOffset() {
             if (!monthCardHeader) return;
             const fixedHeader = document.querySelector('.navbar.fixed-top, .fixed-top, header.sticky-top');
             const navH = fixedHeader ? fixedHeader.getBoundingClientRect().height : 0;
-            const headerH = monthCardHeader.getBoundingClientRect().height || 0;
             monthCardHeader.style.top = navH + 'px';
-            const dowOffset = navH + headerH;
-            document.documentElement.style.setProperty('--month-header-height', dowOffset + 'px');
         }
         updateMonthHeaderOffset();
         window.addEventListener('resize', updateMonthHeaderOffset);
@@ -658,22 +612,14 @@
 
         function attachHandlers(){
             statusSelect.addEventListener('change', ()=> renderMembersByStatus());
+            dataTypeSelect.addEventListener('change', ()=> {
+                currentDataType = dataTypeSelect.value;
+                renderAllMembersMonth(currentMonthStart);
+            });
             btnMonthPrev.addEventListener('click', (e)=>{ e.preventDefault(); shiftMonth(-1); });
             btnMonthNext.addEventListener('click', (e)=>{ e.preventDefault(); shiftMonth(+1); });
             btnMonthThis.addEventListener('click', (e)=>{ e.preventDefault(); goToThisMonth(); });
 
-            // 🔵 시간보기/감추기 토글
-            if (btnToggleTimeView) {
-                btnToggleTimeView.addEventListener('click', (e)=>{
-                    e.preventDefault();
-                    showTimeTexts = !showTimeTexts;
-                    btnToggleTimeView.textContent = showTimeTexts ? '시간감추기' : '시간보기';
-                    // 현재 월 다시 렌더링 (배지 시간 표시 여부 반영)
-                    renderAllMembersMonth(currentMonthStart);
-                });
-            }
-
-            // 일정 생성하기(빈 상태): 선택 멤버 기준 팝업
             if(btnCreateFromEmpty){
                 btnCreateFromEmpty.addEventListener('click', ()=>{
                     if(!currentMember){
@@ -686,53 +632,13 @@
                 });
             }
 
-            btnSaveEdit.addEventListener('click', onSaveEdit);
-            btnCancelEdit.addEventListener('click', onCancelEdit);
-            btnCloseModal.addEventListener('click', closeEditModal);
-            editModal.addEventListener('click', (e)=>{ if(e.target===editModal) closeEditModal(); });
-
-            // 모달 슬롯 단위 버튼
-            if (slotStepButtons) {
-                slotStepButtons.querySelectorAll('button[data-step]').forEach(btn=>{
-                    btn.addEventListener('click', ()=>{
-                        const newStep = parseInt(btn.dataset.step, 10);
-                        if(!newStep || newStep === stepMinutes) {
-                            slotStepButtons.querySelectorAll('button[data-step]').forEach(b=>b.classList.remove('active'));
-                            btn.classList.add('active');
-                            updateSaveButton();
-                            return;
-                        }
-                        stepMinutes = newStep;
-                        totalRows = (END_MIN - START_MIN) / stepMinutes;
-                        slotStepButtons.querySelectorAll('button[data-step]').forEach(b=>b.classList.remove('active'));
-                        btn.classList.add('active');
-
-                        // step 변경 시 요약 배지 표시, 원본/현재 재계산
-                        summaryStepBadge.textContent = `슬롯: ${stepMinutes===60?'1시간':(stepMinutes+'분')}`;
-
-                        // 원본을 새 step 기준으로 슬롯세트화
-                        originalSlotSet = segmentsToSlotSet(originalSegments, stepMinutes);
-                        // 현재 선택도 원본 기준으로 초기화
-                        slotState = new Set([...originalSlotSet]);
-
-                        buildDayGrid();
-                        updateSelectedMinutes();
-                        renderLeftSummary();
-                        updateSaveButton();
-                    });
-                });
-            }
-
-            window.addEventListener('mouseup', ()=>{ if(dragging){ dragging = false; }});
-        }
-
-        function updateSaveButton(){
-            // 저장은 10분 단위에서만 가능
-            btnSaveEdit.disabled = (stepMinutes !== 10);
-
-            // 모달 모드에 따라 라벨 변경
-            const mode = editModal.dataset.mode || 'edit';
-            btnSaveEdit.textContent = (mode === 'create') ? '일정 생성' : '저장';
+            // Gantt 팝업 버튼
+            dgBtnClose.addEventListener('click', closeDgPopup);
+            dgPopupOverlay.addEventListener('click', (e)=>{ if(e.target===dgPopupOverlay) closeDgPopup(); });
+            document.addEventListener('keydown', (e)=>{ if(e.key==='Escape' && dgPopupIso) closeDgPopup(); });
+            dgBtnSave.addEventListener('click', onSaveDgPopup);
+            dgBtnCancel.addEventListener('click', onCancelDgPopup);
+            dgBtnDelete.addEventListener('click', onDeleteDgBar);
         }
 
         function renderMembersByStatus(){
@@ -740,7 +646,6 @@
             const filtered = (allMembers||[]).filter(m=>m.status===status);
             currentStatusMembers = filtered;
 
-            // ▷ 오른쪽 인원 배지 갱신
             if(statusCountBadgeTop){
                 statusCountBadgeTop.textContent = `${filtered.length}명`;
             }
@@ -750,41 +655,37 @@
             if(!filtered.length){
                 memberPills.innerHTML = `<span class="text-light small">해당 상태의 아르바이트생이 없습니다.</span>`;
                 setHighlight(null);
-                clearCalendarOnly();
-                // 기간 라벨은 유지
+                clearMatrixOnly();
                 syncStatusPeriodWithMonthRange();
                 return;
             }
 
-            // 칩 렌더
             filtered
-                    .slice()
-                    .sort((a,b)=>(a.name||'').localeCompare(b.name||'', 'ko'))
-                    .forEach(m=>{
-                        const color = colorForMember(m);
-                        const row = document.createElement('button');
-                        row.type = 'button';
-                        row.className = 'pill';
-                        row.dataset.memberId = String(m.id);
-                        row.setAttribute('title','하이라이트 토글');
-                        row.innerHTML = `
+                .slice()
+                .sort((a,b)=>(a.name||'').localeCompare(b.name||'', 'ko'))
+                .forEach(m=>{
+                    const color = colorForMember(m);
+                    const row = document.createElement('button');
+                    row.type = 'button';
+                    row.className = 'pill';
+                    row.dataset.memberId = String(m.id);
+                    row.setAttribute('title','하이라이트 토글');
+                    row.innerHTML = `
                         <span class="dot" style="background:${color}"></span>
                         <span class="name">${escapeHtml(m.name ?? '-')}</span>
-                        <span class="meta">${escapeHtml(m.phone ?? '')}</span>
                     `;
-                        row.addEventListener('click', (evt)=>{
-                            evt.preventDefault();
-                            evt.stopPropagation();
-                            if(currentMember && String(currentMember.id)===String(m.id)){
-                                setHighlight(null);
-                            }else{
-                                setHighlight(m);
-                            }
-                        });
-                        memberPills.appendChild(row);
+                    row.addEventListener('click', (evt)=>{
+                        evt.preventDefault();
+                        evt.stopPropagation();
+                        if(currentMember && String(currentMember.id)===String(m.id)){
+                            setHighlight(null);
+                        }else{
+                            setHighlight(m);
+                        }
                     });
+                    memberPills.appendChild(row);
+                });
 
-            // 기본: 전체 보기
             setHighlight(null);
             renderAllMembersMonth(currentMonthStart);
         }
@@ -792,7 +693,6 @@
         function setHighlight(member){
             currentMember = member || null;
 
-            // 칩 active 처리
             Array.from(memberPills.querySelectorAll('.pill')).forEach(el=>el.classList.remove('active'));
             if(currentMember){
                 const active = memberPills.querySelector(`.pill[data-member-id="${currentMember.id}"]`);
@@ -812,47 +712,34 @@
                 monthSelectedMemberTotalWrap.classList.add('d-none');
             }
 
-            // 하이라이트 변경 시 달력 배지 선택 및 빈셀 선택 초기화
-            selectedBadge = null;
-            selectedEmptyDateIso = null;
-
-            // 캘린더 하이라이트 & 빈상태 처리
-            applyCalendarHighlight();
-            updateSelectedMemberMonthTotal();
-            applyEmptyStateAccordingToSelection();
-            // 다시 렌더링하여 버튼 노출 조건 반영 + 선택된 근로자만 보이도록
             renderAllMembersMonth(currentMonthStart);
         }
 
-        function clearCalendarOnly(){
-            calendarGrid.innerHTML='';
-            calendarDowRow.innerHTML='';
+        function clearMatrixOnly(){
+            monthMatrixWrap.innerHTML='';
             monthRangeLabel.textContent='0000.00.01 ~ 00.00';
             monthActualTotalCell.textContent='0시간';
             emptyTitle.textContent = '이 달에는 저장된 일정이 없습니다.';
             emptyHint.textContent = '* 상단 칩에서 아르바이트생을 선택한 후 눌러주세요.';
             emptyState.classList.remove('d-none');
-            calendarGrid.classList.add('d-none');
-            calendarDowRow.classList.add('d-none');
+            monthMatrixOuter.classList.add('d-none');
+            showMemberCalendar(null);
         }
 
         function shiftMonth(offset){
             currentMonthStart = firstDayOfMonth(new Date(
-                    currentMonthStart.getFullYear(),
-                    currentMonthStart.getMonth()+offset,
-                    1
+                currentMonthStart.getFullYear(),
+                currentMonthStart.getMonth()+offset,
+                1
             ));
-            selectedBadge = null;
-            selectedEmptyDateIso = null;
             renderAllMembersMonth(currentMonthStart);
         }
         function goToThisMonth(){
             currentMonthStart = firstDayOfMonth(new Date());
-            selectedBadge = null;
-            selectedEmptyDateIso = null;
             renderAllMembersMonth(currentMonthStart);
         }
 
+        // ===== 월간 데이터 로드 + 매트릭스 빌드 =====
         async function renderAllMembersMonth(baseDate){
             const ms = firstDayOfMonth(baseDate);
             const me = lastDayOfMonth(baseDate);
@@ -862,15 +749,19 @@
             monthLabel.textContent = monthStartIso;
             const rangeText = `${ms.getFullYear()}.${pad2(ms.getMonth()+1)}.01 ~ ${pad2(me.getMonth()+1)}.${pad2(me.getDate())}`;
             monthRangeLabel.textContent = rangeText;
-
-            // ▷ 상단 헤더 우측 기간 라벨 동기화
             syncStatusPeriodWithMonthRange(rangeText);
+
+            // 렌더링할 멤버: 하이라이트 시 해당 멤버만, 아니면 전체
+            const membersToShow = currentMember
+                ? currentStatusMembers.filter(m => String(m.id) === String(currentMember.id))
+                : currentStatusMembers;
 
             // 모든 근로자 해당 월 데이터 로딩
             monthAllMembersDayMap = {};
             await Promise.all((currentStatusMembers||[]).map(async m=>{
                 try{
-                    const url = `${API_ENDPOINT}/${encodeURIComponent(m.id)}/${monthStartIso}/${monthEndIso}`;
+                    const fetchEp = (currentDataType === 'actual') ? API_ACTUAL_ENDPOINT : API_ENDPOINT;
+                    const url = `${fetchEp}/${encodeURIComponent(m.id)}/${monthStartIso}/${monthEndIso}`;
                     const resp = await fetch(url, { headers: { 'Accept':'application/json' } });
                     if(!resp.ok) return;
                     const data = await resp.json();
@@ -878,499 +769,777 @@
                 }catch(e){ console.error(e); }
             }));
 
-            // 요일 헤더
-            const DOW_HEAD = ['일','월','화','수','목','금','토'];
-            calendarDowRow.innerHTML = '';
-            DOW_HEAD.forEach(label=>{
-                const h = document.createElement('div');
-                h.className = 'dow';
-                h.textContent = label;
-                calendarDowRow.appendChild(h);
-            });
-
-            // 날짜 그리드 빌드
-            calendarGrid.innerHTML = '';
-            const firstDow = ms.getDay();
-            for(let i=0;i<firstDow;i++){
-                const blank = document.createElement('div');
-                blank.className = 'cell muted';
-                calendarGrid.appendChild(blank);
-            }
-
-            const todayIso = toIso(new Date());
-
-            // 월 전체 합계/선택 합계
+            // 합계 계산
             lastMonthTotalAll = 0;
-            const monthTotalByMember = {};
-            lastMonthTotalByMember = monthTotalByMember; // 참조 저장
-
-            // 날짜별 렌더
-            for(let d=new Date(ms); d<=me; d.setDate(d.getDate()+1)){
-                const iso = toIso(d);
-                const dow = d.getDay();
-
-                const cell = document.createElement('div');
-                cell.className = 'cell';
-                cell.dataset.date = iso;
-                if(iso===todayIso) cell.classList.add('today');
-
-                // 해당 날짜에 근무 있는 멤버 수집 (데이터 계산은 전체 기준)
-                const dayBadges = [];
-                (currentStatusMembers||[]).forEach(m=>{
-                    const day = (monthAllMembersDayMap[m.id]||{})[iso];
-                    if(day && (day.minutes||0) > 0){
-                        lastMonthTotalAll += (day.minutes||0);
-                        monthTotalByMember[m.id] = (monthTotalByMember[m.id]||0) + (day.minutes||0);
-                        dayBadges.push({member:m, day});
-                    }
+            lastMonthTotalByMember = {};
+            (currentStatusMembers||[]).forEach(m=>{
+                const dayMap = monthAllMembersDayMap[m.id] || {};
+                let memberTotal = 0;
+                Object.values(dayMap).forEach(v=>{
+                    const mins = v.minutes || 0;
+                    memberTotal += mins;
+                    lastMonthTotalAll += mins;
                 });
-
-                // 🔧 화면에 표시할 멤버: 선택된 근로자가 있을 경우 해당 근로자만, 없으면 전체
-                const dayBadgesForRender = currentMember
-                        ? dayBadges.filter(({member}) => String(member.id) === String(currentMember.id))
-                        : dayBadges;
-
-                const segmentsWrap = document.createElement('div');
-                segmentsWrap.className = 'segments';
-                if(dayBadgesForRender.length===0){
-                    segmentsWrap.innerHTML = `<span class="text-muted small">—</span>`;
-                }else{
-                    dayBadgesForRender
-                            .sort((a,b)=> (a.member.name||'').localeCompare(b.member.name||'', 'ko'))
-                            .forEach(({member, day})=>{
-                                const color = colorForMember(member);
-                                const isSelected = !!(selectedBadge && selectedBadge.dateIso===iso && String(selectedBadge.memberId)===String(member.id));
-                                const isHighlightTarget = !!(currentMember && String(currentMember.id)===String(member.id));
-
-                                const badge = document.createElement('div');
-                                badge.className = `member-badge ${isSelected ? 'selected' : ''} ${isHighlightTarget ? 'highlight' : (currentMember?'dimmed':'')}`;
-                                badge.dataset.memberId = String(member.id);
-                                badge.dataset.date = iso;
-
-                                // 🔵 시간 표시 여부에 따라 times span 추가/미추가
-                                const timesLabel = showTimeTexts ? segmentsToLabel(day.segments||[]) : '';
-
-                                badge.innerHTML = `
-                                <span class="color" style="background:${color}; border-color:${color}"></span>
-                                <span class="label">${escapeHtml(member.name ?? '-')}</span>
-                                ${
-                                        showTimeTexts
-                                                ? `<span class="times">${timesLabel}</span>`
-                                                : ``
-                                }
-                            `;
-
-                                // 배지 클릭: 선택 토글 (헤더 버튼 노출 기준)
-                                badge.addEventListener('click', (evt)=>{
-                                    evt.stopPropagation();
-                                    const already = selectedBadge && selectedBadge.dateIso===iso && String(selectedBadge.memberId)===String(member.id);
-                                    selectedBadge = already ? null : { dateIso: iso, memberId: member.id };
-                                    // 빈 셀 선택은 유지하지 않음
-                                    selectedEmptyDateIso = null;
-                                    renderAllMembersMonth(currentMonthStart);
-                                });
-
-                                segmentsWrap.appendChild(badge);
-                            });
-                }
-
-                // 날짜 하단 합계(해당 날짜 '표시된' 멤버 합계)
-                const dayTotal = (dayBadgesForRender||[]).reduce((acc, x)=> acc + (x.day.minutes||0), 0);
-                const totalEl = document.createElement('div');
-                totalEl.className = 'day-total';
-                totalEl.textContent = formatMins(dayTotal);
-
-                // 날짜 헤더 + 수정/삭제 버튼 (몇일과 요일 사이)
-                const showButtons =
-                        currentMember &&
-                        selectedBadge &&
-                        selectedBadge.dateIso === iso &&
-                        String(selectedBadge.memberId) === String(currentMember.id);
-
-                const selectedMemberId = showButtons ? selectedBadge.memberId : null;
-
-                const DOW_HEAD2 = DOW_HEAD; // 재사용
-
-                cell.innerHTML = `
-                    <div class="date-head">
-                      <div class="date-left">
-                        <span class="date-text">${d.getDate()}일</span>
-                        ${
-                        showButtons
-                                ? `
-                                  <div class="seg-btn-wrap">
-                                      <button type="button"
-                                              class="btn btn-xs btn-primary seg-edit-btn"
-                                              data-date="${iso}"
-                                              data-member="${selectedMemberId}">
-                                          근무일정 수정
-                                      </button>
-                                      <button type="button"
-                                              class="btn btn-xs btn-outline-danger seg-delete-btn"
-                                              data-date="${iso}"
-                                              data-member="${selectedMemberId}">
-                                          삭제
-                                      </button>
-                                  </div>
-                                  `
-                                : ``
-                }
-                      </div>
-                      <span class="dow-mini">${DOW_HEAD2[dow]}</span>
-                    </div>
-                `;
-                cell.appendChild(segmentsWrap);
-                cell.appendChild(totalEl);
-
-                // ✅ 빈 셀 클릭 시 ‘일정 생성하기’ 버튼 토글
-                cell.addEventListener('click', ()=>{
-                    if(!currentMember) return;
-                    const curDay = (monthAllMembersDayMap[currentMember.id]||{})[iso];
-                    const hasAny = !!(curDay && (curDay.minutes||0) > 0);
-                    if(hasAny) {
-                        // 일정이 있으면 빈셀 생성버튼은 의미 없음
-                        selectedEmptyDateIso = null;
-                        renderAllMembersMonth(currentMonthStart);
-                        return;
-                    }
-                    // 빈 셀 토글
-                    selectedEmptyDateIso = (selectedEmptyDateIso === iso) ? null : iso;
-                    // 배지 선택 해제
-                    selectedBadge = null;
-                    renderAllMembersMonth(currentMonthStart);
-                });
-
-                // ✅ 현재 셀에 ‘일정 생성하기’ 버튼이 떠야 하는지 체크
-                if(currentMember){
-                    const curDay = (monthAllMembersDayMap[currentMember.id]||{})[iso];
-                    const hasAny = !!(curDay && (curDay.minutes||0) > 0);
-                    if(!hasAny && selectedEmptyDateIso === iso){
-                        const createBtn = document.createElement('button');
-                        createBtn.type = 'button';
-                        createBtn.className = 'btn btn-xs btn-success seg-create-btn';
-                        createBtn.dataset.date = iso;
-                        createBtn.textContent = '일정 생성하기';
-                        cell.appendChild(createBtn);
-                    }
-                }
-
-                calendarGrid.appendChild(cell);
-            }
-
-            // “근무일정 수정” 버튼 이벤트 (헤더 안)
-            calendarGrid.querySelectorAll('.seg-edit-btn').forEach(btn=>{
-                btn.addEventListener('click', (e)=>{
-                    e.stopPropagation();
-                    const iso = btn.dataset.date;
-                    const mid = btn.dataset.member;
-                    const member = (currentStatusMembers||[]).find(m=> String(m.id)===String(mid));
-                    const dayObj = (monthAllMembersDayMap[mid]||{})[iso] || {segments:[]};
-                    openEditModal(iso, member, dayObj.segments||[], 'edit');
-                });
+                lastMonthTotalByMember[m.id] = memberTotal;
             });
 
-            // “삭제” 버튼 이벤트 (헤더 안)
-            calendarGrid.querySelectorAll('.seg-delete-btn').forEach(btn=>{
-                btn.addEventListener('click', async (e)=>{
-                    e.stopPropagation();
-                    const iso = btn.dataset.date;
-                    const mid = btn.dataset.member;
-                    const member = (currentStatusMembers||[]).find(m=> String(m.id)===String(mid));
-                    const name = member?.name || '';
-
-                    const ok = confirm(`정말로 ${iso} ${name}님의 근무 일정을 모두 삭제하시겠습니까?`);
-                    if(!ok) return;
-
-                    try{
-                        await deleteDaySchedule(mid, iso);
-                        // 삭제 후 상태 초기화
-                        selectedBadge = null;
-                        selectedEmptyDateIso = null;
-                        await renderAllMembersMonth(currentMonthStart);
-                        alert('해당 일자의 일정이 삭제되었습니다.');
-                    }catch(err){
-                        console.error(err);
-                        alert('삭제 중 오류가 발생했습니다.');
-                    }
-                });
-            });
-
-            // “일정 생성하기” 버튼 이벤트(빈 셀 선택 시)
-            calendarGrid.querySelectorAll('.seg-create-btn').forEach(btn=>{
-                btn.addEventListener('click', (e)=>{
-                    e.stopPropagation();
-                    const iso = btn.dataset.date;
-                    if(!currentMember) return;
-                    openEditModal(iso, currentMember, [], 'create');
-                });
-            });
-
-            // 월 합계(전체)
             monthActualTotalCell.textContent = formatMins(lastMonthTotalAll);
+            updateSelectedMemberMonthTotal();
 
-            // 선택된 근로자 합계(있다면)
-            updateSelectedMemberMonthTotal(monthTotalByMember);
-
-            // 비어있음/표시 제어 (선택자 우선)
-            applyEmptyStateAccordingToSelection();
-
-            // 캘린더 하이라이트 반영
-            applyCalendarHighlight();
-        }
-
-        // ★ 선택 멤버 무일정이면 캘린더 숨기고 버튼만 노출
-        function applyEmptyStateAccordingToSelection(){
-            const ms = currentMonthStart;
-            const monthStr = `${ms.getFullYear()}.${pad2(ms.getMonth()+1)}`;
-
+            // 빈 상태 처리
             if(currentMember){
-                const selTotal = (lastMonthTotalByMember && lastMonthTotalByMember[currentMember.id]) || 0;
-                if(selTotal === 0){
+                const selTotal = lastMonthTotalByMember[currentMember.id] || 0;
+                if(selTotal === 0 && membersToShow.length > 0){
+                    const monthStr = `${ms.getFullYear()}.${pad2(ms.getMonth()+1)}`;
                     emptyTitle.textContent = `${currentMember.name ?? '선택한 근로자'}의 ${monthStr} 일정이 없습니다.`;
                     emptyHint.textContent  = '버튼을 눌러 일정 템플릿에서 생성하세요.';
                     emptyState.classList.remove('d-none');
-                    calendarGrid.classList.add('d-none');
-                    calendarDowRow.classList.add('d-none');
+                    monthMatrixOuter.classList.add('d-none');
+                    showMemberCalendar(currentMember);
                     return;
                 }
-                // 선택 멤버 일정이 있으면 정상 노출
-                emptyState.classList.add('d-none');
-                calendarGrid.classList.remove('d-none');
-                calendarDowRow.classList.remove('d-none');
-                return;
-            }
-
-            // 선택 멤버가 없는 경우: 전체 합계로 판단
-            if(lastMonthTotalAll === 0){
-                emptyTitle.textContent = '이 달에는 저장된 일정이 없습니다.';
-                emptyHint.textContent  = '* 상단 칩에서 아르바이트생을 선택한 후 눌러주세요.';
-                emptyState.classList.remove('d-none');
-                calendarGrid.classList.add('d-none');
-                calendarDowRow.classList.add('d-none');
-            }else{
-                emptyState.classList.add('d-none');
-                calendarGrid.classList.remove('d-none');
-                calendarDowRow.classList.remove('d-none');
-            }
-        }
-
-        function updateSelectedMemberMonthTotal(preComputed){
-            const map = preComputed || (()=>{
-                const acc = {};
-                for (const m of (currentStatusMembers||[])) acc[m.id]=0;
-                Object.entries(monthAllMembersDayMap||{}).forEach(([mid, dayMap])=>{
-                    Object.values(dayMap||{}).forEach(v=>{
-                        acc[mid] = (acc[mid]||0) + (v.minutes||0);
-                    });
-                });
-                return acc;
-            })();
-
-            lastMonthTotalByMember = map;
-            if(currentMember){
-                const v = map[currentMember.id]||0;
-                the_monthSelectedMemberTotal.textContent = formatMins(v);
-            }
-        }
-
-        function applyCalendarHighlight(){
-            if(!calendarGrid) return;
-            const badges = calendarGrid.querySelectorAll('.member-badge');
-            calendarGrid.classList.toggle('calendarGrid-hasHighlight', !!currentMember);
-            badges.forEach(b=>{
-                b.classList.remove('dimmed','highlight');
-                if(currentMember){
-                    const mid = b.dataset.memberId;
-                    if(String(mid) === String(currentMember.id)) b.classList.add('highlight');
-                    else b.classList.add('dimmed');
+            } else {
+                if(lastMonthTotalAll === 0){
+                    emptyState.classList.remove('d-none');
+                    monthMatrixOuter.classList.add('d-none');
+                    showMemberCalendar(null);
+                    return;
                 }
+            }
+
+            emptyState.classList.add('d-none');
+            monthMatrixOuter.classList.remove('d-none');
+
+            // 매트릭스 빌드
+            buildMonthMatrix(ms, me, membersToShow);
+
+            // 캘린더 뷰 갱신
+            showMemberCalendar(currentMember);
+        }
+
+        // ===== 매트릭스 빌드 =====
+        function buildMonthMatrix(ms, me, members){
+            const todayIso = toIso(new Date());
+            const daysInMonth = me.getDate();
+            const DOW_SHORT = ['일','월','화','수','목','금','토'];
+
+            // 멤버 정렬
+            const sorted = members.slice().sort((a,b)=>(a.name||'').localeCompare(b.name||'','ko'));
+
+            let html = '<table class="mm-table"><thead><tr>';
+            // 코너
+            html += '<th class="mm-corner"></th>';
+
+            // 날짜 헤더
+            for(let d=1; d<=daysInMonth; d++){
+                const dt = new Date(ms.getFullYear(), ms.getMonth(), d);
+                const dow = dt.getDay();
+                const iso = toIso(dt);
+                const isWeekend = (dow === 0 || dow === 6);
+                const isToday = (iso === todayIso);
+                let cls = 'mm-date-head';
+                if(isWeekend) cls += ' mm-weekend';
+                if(isToday) cls += ' mm-today';
+                html += `<th class="${cls}" data-date="${iso}" title="${iso} (${DOW_SHORT[dow]})">${d}<br><span style="font-size:.62rem;font-weight:400;">${DOW_SHORT[dow]}</span></th>`;
+            }
+            html += '</tr></thead><tbody>';
+
+            // 멤버 행
+            sorted.forEach(m=>{
+                const color = colorForMember(m);
+                const dayMap = monthAllMembersDayMap[m.id] || {};
+
+                html += '<tr>';
+                html += `<td class="mm-member-label"><span class="mm-label-dot" style="background:${color}"></span>${escapeHtml(m.name ?? '-')}</td>`;
+
+                for(let d=1; d<=daysInMonth; d++){
+                    const dt = new Date(ms.getFullYear(), ms.getMonth(), d);
+                    const iso = toIso(dt);
+                    const day = dayMap[iso];
+                    const hasMins = day && (day.minutes||0) > 0;
+
+                    if(hasMins){
+                        const hrs = Math.round(day.minutes / 60 * 10) / 10;
+                        html += `<td class="mm-day-cell mm-filled" data-date="${iso}" data-member="${m.id}" style="background:${color};">`;
+                        html += `<span class="mm-minutes-text">${hrs}</span>`;
+                        html += `</td>`;
+                    } else {
+                        html += `<td class="mm-day-cell mm-empty" data-date="${iso}" data-member="${m.id}"></td>`;
+                    }
+                }
+                html += '</tr>';
+            });
+
+            html += '</tbody></table>';
+            monthMatrixWrap.innerHTML = html;
+
+            // 날짜 헤더 클릭 → 전체 멤버 팝업
+            monthMatrixWrap.querySelectorAll('.mm-date-head').forEach(th=>{
+                th.addEventListener('click', ()=>{
+                    const iso = th.dataset.date;
+                    if(iso) openDayGanttPopup(iso, null);
+                });
+            });
+
+            // 셀 클릭 → 해당 멤버만 팝업
+            monthMatrixWrap.querySelectorAll('.mm-day-cell').forEach(td=>{
+                td.addEventListener('click', ()=>{
+                    const iso = td.dataset.date;
+                    const memberId = td.dataset.member;
+                    if(iso && memberId) openDayGanttPopup(iso, memberId);
+                });
             });
         }
 
-        // ===== 편집 모달 로직 =====
-        function openEditModal(dateIso, member, segments, mode){
-            if(!member) return;
-            editTitleDate.textContent = dateIso;
-            editTitleMember.textContent = member.name ?? '-';
-
-            // 모달 초기 상태: 기본 30분
-            stepMinutes = 30;
-            totalRows = (END_MIN - START_MIN) / stepMinutes;
-            slotStepButtons.querySelectorAll('button[data-step]').forEach(b=>b.classList.remove('active'));
-            slotStepButtons.querySelector('button[data-step="30"]').classList.add('active');
-            summaryStepBadge.textContent = '슬롯: 30분';
-
-            // 원본 세그먼트 저장 + 현재 step 기준 슬롯셋 계산
-            originalSegments = Array.isArray(segments) ? segments.slice() : [];
-            originalSlotSet  = segmentsToSlotSet(originalSegments, stepMinutes);
-            slotState        = new Set([...originalSlotSet]); // 기본은 원본 그대로
-
-            // 모달 모드 세팅 (edit | create)
-            editModal.dataset.mode = (mode === 'create') ? 'create' : 'edit';
-
-            buildDayGrid();
-            updateSelectedMinutes();
-            renderLeftSummary();
-            updateSaveButton(); // 저장 버튼은 10분에서만 활성화 + 라벨 동기
-
-            editModal.dataset.memberId = String(member.id);
-            editModal.dataset.dateIso = dateIso;
-
-            editModal.style.display = 'block';
-        }
-        function closeEditModal(){ editModal.style.display = 'none'; }
-        function onCancelEdit(){
-            slotState = new Set([...originalSlotSet]);
-            buildDayGrid();
-            updateSelectedMinutes();
-            renderLeftSummary();
-        }
-        async function onSaveEdit(){
-            if(stepMinutes !== 10){
-                alert('저장은 10분 단위에서만 가능합니다.');
-                return;
+        function updateSelectedMemberMonthTotal(){
+            if(currentMember){
+                const v = lastMonthTotalByMember[currentMember.id]||0;
+                monthSelectedMemberTotal.textContent = formatMins(v);
             }
-            const mid = editModal.dataset.memberId;
-            const dateIso = editModal.dataset.dateIso;
-            if(!mid || !dateIso) return;
+        }
 
-            const segments = slotSetToSegments(slotState, stepMinutes);
-            try{
-                const body = { memberId: mid, date: dateIso, segments };
-                const resp = await fetch(API_UPDATE_ENDPOINT, {
+        // ===== Gantt 팝업 =====
+        function openDayGanttPopup(iso, filterMemberId){
+            dgPopupIso = iso;
+            dgPopupFilterMemberId = filterMemberId || null;
+            dgBarInfo = null;
+            dgPendingChanges = {};
+
+            // 스냅샷 저장
+            dgOrigSnapshot = {};
+            var membersForPopup = getPopupMembers();
+            membersForPopup.forEach(function(m){
+                var key = m.id + '_' + iso;
+                var dayMap = monthAllMembersDayMap[m.id] || {};
+                var day = dayMap[iso];
+                var segs = (day && day.segments) ? day.segments : [];
+                dgOrigSnapshot[key] = JSON.stringify(segs);
+            });
+
+            // 제목
+            var dt = new Date(iso + 'T00:00:00');
+            var DOW = ['일','월','화','수','목','금','토'];
+            dgPopupTitle.textContent = DOW[dt.getDay()] + '요일 (' + iso + ')';
+
+            var typeLabel = (currentDataType === 'actual') ? '근무시간' : '일정';
+            if(dgPopupFilterMemberId){
+                var fm = currentStatusMembers.find(function(m){ return String(m.id) === String(dgPopupFilterMemberId); });
+                dgPopupSubtitle.textContent = (fm ? fm.name : '') + ' ' + typeLabel + ' · 바를 드래그하여 편집';
+            } else {
+                dgPopupSubtitle.textContent = '전체 아르바이트생 ' + typeLabel + ' · 바를 드래그하여 편집';
+            }
+
+            dgPopupOverlay.classList.remove('d-none');
+            document.body.style.overflow = 'hidden';
+
+            buildDgPopupGantt();
+            initDgPopupDrag();
+            updateDgPopupButtons();
+        }
+
+        function closeDgPopup(){
+            dgPopupOverlay.classList.add('d-none');
+            document.body.style.overflow = '';
+            dgPopupIso = null;
+            dgPopupFilterMemberId = null;
+            dgBarInfo = null;
+            dgOrigSnapshot = {};
+        }
+
+        function getPopupMembers(){
+            var all = (currentStatusMembers || []).slice().sort(function(a,b){ return (a.name||'').localeCompare(b.name||'','ko'); });
+            if(dgPopupFilterMemberId){
+                return all.filter(function(m){ return String(m.id) === String(dgPopupFilterMemberId); });
+            }
+            return all;
+        }
+
+        function buildDgPopupGantt(){
+            var wrap = dgPopupGanttWrap;
+            if(!wrap || !dgPopupIso) return;
+            var iso = dgPopupIso;
+            var members = getPopupMembers();
+
+            // 시간 눈금 헤더
+            var html = '<div class="mw-gantt-header-row">';
+            html += '<div class="mw-gantt-label-cell"><span style="font-size:0.73rem;color:rgba(255,255,255,.4);">이름</span></div>';
+            html += '<div class="mw-gantt-track-header">';
+            for(var h = HOUR_START; h < HOUR_END; h++){
+                var pct = ((h - HOUR_START) * 60 / TOTAL_MIN * 100).toFixed(3);
+                html += '<div class="mw-gantt-time-label" style="left:' + pct + '%">' + pad2(h) + ':00</div>';
+                var hPct = ((h - HOUR_START) * 60 + 30) / TOTAL_MIN * 100;
+                html += '<div class="mw-gantt-time-label minor" style="left:' + hPct.toFixed(3) + '%">:30</div>';
+            }
+            html += '</div>';
+            html += '<div class="dg-hours-cell">시간</div>';
+            html += '</div>';
+
+            // 멤버별 행
+            html += '<div class="mw-gantt-body-wrap">';
+            members.forEach(function(m){
+                var mid = m.id;
+                var key = mid + '_' + iso;
+                var dayMap = monthAllMembersDayMap[mid] || {};
+                var origDay = dayMap[iso];
+                var origSegs = (origDay && origDay.segments) ? origDay.segments : [];
+                var segs = (dgPendingChanges[key]) ? dgPendingChanges[key].segments : origSegs;
+                var isModified = !!dgPendingChanges[key];
+                var color = colorForMember(m);
+
+                html += '<div class="mw-gantt-row" data-popup-member-id="' + mid + '" data-iso="' + iso + '">';
+                html += '<div class="mw-gantt-label-cell" style="height:42px;">';
+                html += '<span class="dg-member-chip" style="background:' + color + ';"></span>';
+                html += '<span class="dg-member-name">' + escapeHtml(m.name || '') + '</span>';
+                html += '</div>';
+                html += '<div class="mw-gantt-track-cell">';
+
+                segs.forEach(function(seg, segIdx){
+                    var effStart = Math.max(hmToMin(seg.start), HOUR_START * 60);
+                    var effEnd = Math.min(hmToMin(seg.end), HOUR_END * 60);
+                    if(effEnd <= effStart) return;
+                    var leftPct = (effStart - HOUR_START * 60) / TOTAL_MIN * 100;
+                    var widthPct = (effEnd - effStart) / TOTAL_MIN * 100;
+                    var modClass = isModified ? ' modified' : '';
+                    var selClass = (dgBarInfo && String(dgBarInfo.memberId) === String(mid) && dgBarInfo.start === seg.start && dgBarInfo.end === seg.end) ? ' dg-bar-selected' : '';
+
+                    html += '<div class="dg-popup-bar' + modClass + selClass + '" data-member-id="' + mid + '" data-iso="' + iso + '" data-seg-idx="' + segIdx + '" data-start="' + seg.start + '" data-end="' + seg.end + '" style="left:' + leftPct.toFixed(3) + '%;width:' + widthPct.toFixed(3) + '%;background:' + color + ';">';
+                    html += '<div class="bar-handle-left"></div>';
+                    html += '<span class="dg-bar-time">' + seg.start + '~' + seg.end + '</span>';
+                    html += '<div class="bar-handle-right"></div>';
+                    html += '<div class="dg-bar-tooltip">' + seg.start + ' ~ ' + seg.end + '</div>';
+                    html += '</div>';
+                });
+
+                html += '</div>'; // track-cell
+
+                // 시간 표시
+                var totalMin = 0;
+                segs.forEach(function(seg){ totalMin += Math.max(0, hmToMin(seg.end) - hmToMin(seg.start)); });
+                var hrsText = totalMin > 0 ? (Math.floor(totalMin/60) + 'h' + (totalMin%60>0 ? (totalMin%60)+'m' : '')) : '-';
+                html += '<div class="dg-hours-cell" style="color:' + (totalMin>0 ? color : 'rgba(255,255,255,.3)') + ';">' + hrsText + '</div>';
+                html += '</div>'; // row
+            });
+            html += '</div>';
+
+            wrap.innerHTML = html;
+
+            // 변경 정보 업데이트
+            if(dgChangeInfo){
+                var cnt = Object.keys(dgPendingChanges).length;
+                dgChangeInfo.textContent = cnt > 0 ? (cnt + '건 변경됨') : '';
+            }
+        }
+
+        function initDgPopupDrag(){
+            var wrap = dgPopupGanttWrap;
+            if(!wrap || _dgDragInited) return;
+            _dgDragInited = true;
+
+            function pxToMin(px, tw){ return Math.round(px / tw * TOTAL_MIN / 10) * 10; }
+            function clampMin(m){ return Math.max(0, Math.min(m, TOTAL_MIN)); }
+
+            // mousedown
+            wrap.addEventListener('mousedown', function(e){
+                var bar = e.target.closest('.dg-popup-bar');
+                if(!bar) return;
+                e.preventDefault();
+                e.stopPropagation();
+
+                var tc = bar.closest('.mw-gantt-track-cell');
+                var trackRect = tc ? tc.getBoundingClientRect() : null;
+                if(!trackRect) return;
+
+                var memberId = bar.dataset.memberId;
+                var iso = bar.dataset.iso;
+                var segIdx = parseInt(bar.dataset.segIdx, 10);
+                var startMin = hmToMin(bar.dataset.start) - HOUR_START * 60;
+                var endMin = hmToMin(bar.dataset.end) - HOUR_START * 60;
+                var duration = endMin - startMin;
+
+                var mode = 'move';
+                if(e.target.classList.contains('bar-handle-left')) mode = 'resize-left';
+                if(e.target.classList.contains('bar-handle-right')) mode = 'resize-right';
+
+                bar.classList.add(mode === 'move' ? 'dragging' : 'resizing');
+
+                _dgDragState = {
+                    bar: bar, memberId: memberId, iso: iso, segIdx: segIdx, mode: mode, trackRect: trackRect,
+                    origStartMin: startMin, origEndMin: endMin, origDuration: duration,
+                    mouseStartX: e.clientX, startX: e.clientX, startY: e.clientY,
+                    hasMoved: false, currentStartMin: startMin, currentEndMin: endMin
+                };
+
+                var dtt = document.getElementById('dragTimeTooltip');
+                if(dtt){
+                    var origS = minToHm(startMin + HOUR_START*60), origE = minToHm(endMin + HOUR_START*60);
+                    dtt.innerHTML = origS + ' <span class="dtt-arrow">\u2192</span> ' + origE;
+                    dtt.style.left = (e.clientX + 14) + 'px';
+                    dtt.style.top = (e.clientY - 36) + 'px';
+                    dtt.classList.add('visible');
+                }
+            });
+
+            // mousemove
+            document.addEventListener('mousemove', function(e){
+                if(!_dgDragState) return;
+                e.preventDefault();
+                var st = _dgDragState;
+                if(!st.hasMoved){
+                    var dist = Math.abs(e.clientX - st.startX) + Math.abs(e.clientY - st.startY);
+                    if(dist < 3) return;
+                    st.hasMoved = true;
+                }
+
+                var dx = e.clientX - st.mouseStartX;
+                var deltaMin = pxToMin(dx, st.trackRect.width);
+                var newStart, newEnd;
+
+                if(st.mode === 'move'){
+                    newStart = clampMin(st.origStartMin + deltaMin);
+                    newEnd = newStart + st.origDuration;
+                    if(newEnd > TOTAL_MIN){ newEnd = TOTAL_MIN; newStart = newEnd - st.origDuration; }
+                    if(newStart < 0){ newStart = 0; newEnd = st.origDuration; }
+                } else if(st.mode === 'resize-left'){
+                    newStart = clampMin(st.origStartMin + deltaMin);
+                    newEnd = st.origEndMin;
+                    if(newStart >= newEnd - 10) newStart = newEnd - 10;
+                } else {
+                    newStart = st.origStartMin;
+                    newEnd = clampMin(st.origEndMin + deltaMin);
+                    if(newEnd <= newStart + 10) newEnd = newStart + 10;
+                }
+
+                st.currentStartMin = newStart;
+                st.currentEndMin = newEnd;
+
+                var leftPct = newStart / TOTAL_MIN * 100;
+                var widthPct = (newEnd - newStart) / TOTAL_MIN * 100;
+                st.bar.style.left = leftPct.toFixed(3) + '%';
+                st.bar.style.width = widthPct.toFixed(3) + '%';
+
+                var dtt = document.getElementById('dragTimeTooltip');
+                if(dtt){
+                    var newS = minToHm(newStart + HOUR_START*60), newE = minToHm(newEnd + HOUR_START*60);
+                    var origS = minToHm(st.origStartMin + HOUR_START*60);
+                    var origE = minToHm(st.origEndMin + HOUR_START*60);
+                    var changed = (newS !== origS || newE !== origE);
+                    dtt.innerHTML = changed
+                        ? '<span class="dtt-changed">' + newS + ' <span class="dtt-arrow">\u2192</span> ' + newE + '</span>'
+                        : newS + ' <span class="dtt-arrow">\u2192</span> ' + newE;
+                    dtt.style.left = (e.clientX + 14) + 'px';
+                    dtt.style.top = (e.clientY - 36) + 'px';
+                }
+            });
+
+            // mouseup
+            document.addEventListener('mouseup', function(e){
+                if(!_dgDragState) return;
+                var st = _dgDragState;
+                st.bar.classList.remove('dragging', 'resizing');
+                var dtt = document.getElementById('dragTimeTooltip');
+                if(dtt) dtt.classList.remove('visible');
+
+                if(!st.hasMoved){
+                    _dgDragState = null;
+                    return;
+                }
+                _dgJustDragged = true;
+                setTimeout(function(){ _dgJustDragged = false; }, 0);
+
+                dgBarInfo = null;
+                if(dgBtnDelete) dgBtnDelete.classList.add('d-none');
+
+                var newStart = minToHm(st.currentStartMin + HOUR_START * 60);
+                var newEnd = minToHm(st.currentEndMin + HOUR_START * 60);
+                var memberId = st.memberId;
+                var iso = st.iso;
+
+                var key = memberId + '_' + iso;
+                var dayMap = monthAllMembersDayMap[memberId] || {};
+                var origDay = dayMap[iso];
+                var origSegs = (origDay && origDay.segments) ? origDay.segments : [];
+                var srcSegs = ((dgPendingChanges[key] && dgPendingChanges[key].segments) || origSegs).map(function(s){ return {start:s.start, end:s.end}; });
+                srcSegs[st.segIdx] = { start: newStart, end: newEnd };
+                srcSegs.sort(function(a,b){ return hmToMin(a.start) - hmToMin(b.start); });
+                dgPendingChanges[key] = { memberId: memberId, iso: iso, segments: mergeSegs(srcSegs) };
+
+                buildDgPopupGantt();
+                updateDgPopupButtons();
+
+                _dgDragState = null;
+            });
+
+            // click: 바 선택 + 빈 트랙 클릭 생성
+            wrap.addEventListener('click', function(e){
+                if(_dgJustDragged) return;
+
+                // 바 클릭 → 선택/해제
+                var clickedBar = e.target.closest('.dg-popup-bar');
+                if(clickedBar){
+                    var barMid = clickedBar.dataset.memberId;
+                    var barStart = clickedBar.dataset.start;
+                    var barEnd = clickedBar.dataset.end;
+
+                    if(dgBarInfo && String(dgBarInfo.memberId) === String(barMid) && dgBarInfo.start === barStart && dgBarInfo.end === barEnd){
+                        dgBarInfo = null;
+                        if(dgBtnDelete) dgBtnDelete.classList.add('d-none');
+                    } else {
+                        dgBarInfo = { memberId: barMid, iso: clickedBar.dataset.iso, start: barStart, end: barEnd };
+                        if(dgBtnDelete) dgBtnDelete.classList.remove('d-none');
+                    }
+                    buildDgPopupGantt();
+                    return;
+                }
+
+                // 빈 트랙 클릭 → 새 바 생성
+                dgBarInfo = null;
+                if(dgBtnDelete) dgBtnDelete.classList.add('d-none');
+
+                var track = e.target.closest('.mw-gantt-track-cell');
+                if(!track) return;
+                var row = track.closest('.mw-gantt-row');
+                if(!row) return;
+                var memberId = row.dataset.popupMemberId;
+                var iso = row.dataset.iso;
+                if(!memberId || !iso) return;
+
+                var rect = track.getBoundingClientRect();
+                var clickX = e.clientX - rect.left;
+                var clickMin = Math.round(clickX / rect.width * TOTAL_MIN / 10) * 10;
+                clickMin = Math.max(0, Math.min(clickMin, TOTAL_MIN - 60));
+                var startHm = minToHm(clickMin + HOUR_START * 60);
+                var endHm = minToHm(clickMin + 60 + HOUR_START * 60);
+
+                var key = memberId + '_' + iso;
+                var dayMap = monthAllMembersDayMap[memberId] || {};
+                var origDay = dayMap[iso];
+                var origSegs = (origDay && origDay.segments) ? origDay.segments : [];
+                var segs = ((dgPendingChanges[key] && dgPendingChanges[key].segments) || origSegs).map(function(s){ return {start:s.start, end:s.end}; });
+                segs.push({ start: startHm, end: endHm });
+                segs.sort(function(a,b){ return hmToMin(a.start) - hmToMin(b.start); });
+                dgPendingChanges[key] = { memberId: memberId, iso: iso, segments: mergeSegs(segs) };
+
+                buildDgPopupGantt();
+                updateDgPopupButtons();
+            });
+        }
+
+        // 겹치는 세그먼트 병합
+        function mergeSegs(segs){
+            if(!segs || segs.length <= 1) return segs;
+            var sorted = segs.slice().sort(function(a,b){ return hmToMin(a.start) - hmToMin(b.start); });
+            var merged = [sorted[0]];
+            for(var i = 1; i < sorted.length; i++){
+                var last = merged[merged.length - 1];
+                if(hmToMin(sorted[i].start) <= hmToMin(last.end)){
+                    last.end = hmToMin(sorted[i].end) > hmToMin(last.end) ? sorted[i].end : last.end;
+                } else {
+                    merged.push(sorted[i]);
+                }
+            }
+            return merged;
+        }
+
+        function updateDgPopupButtons(){
+            if(!dgBtnSave || !dgBtnCancel) return;
+            var iso = dgPopupIso;
+            if(!iso){ dgBtnSave.classList.add('d-none'); dgBtnCancel.classList.add('d-none'); return; }
+
+            var hasChanges = false;
+            var members = getPopupMembers();
+            members.forEach(function(m){
+                var key = m.id + '_' + iso;
+                var currentSegs = dgPendingChanges[key] ? JSON.stringify(dgPendingChanges[key].segments) : (dgOrigSnapshot[key] || '[]');
+                var origSegs = dgOrigSnapshot[key] || '[]';
+                if(currentSegs !== origSegs) hasChanges = true;
+            });
+
+            if(hasChanges){
+                dgBtnSave.classList.remove('d-none');
+                dgBtnCancel.classList.remove('d-none');
+            } else {
+                dgBtnSave.classList.add('d-none');
+                dgBtnCancel.classList.add('d-none');
+            }
+        }
+
+        function onDeleteDgBar(){
+            if(!dgBarInfo) return;
+            var memberId = dgBarInfo.memberId;
+            var iso = dgBarInfo.iso;
+            var start = dgBarInfo.start;
+            var end = dgBarInfo.end;
+
+            var key = memberId + '_' + iso;
+            var dayMap = monthAllMembersDayMap[memberId] || {};
+            var origDay = dayMap[iso];
+            var origSegs = (origDay && origDay.segments) ? origDay.segments : [];
+            var segs = ((dgPendingChanges[key] && dgPendingChanges[key].segments) || origSegs).map(function(s){ return {start:s.start, end:s.end}; });
+            var idx = segs.findIndex(function(s){ return s.start === start && s.end === end; });
+            if(idx >= 0){
+                segs.splice(idx, 1);
+                if(segs.length > 0 || origSegs.length > 0){
+                    dgPendingChanges[key] = { memberId: memberId, iso: iso, segments: segs };
+                } else {
+                    delete dgPendingChanges[key];
+                }
+            }
+
+            dgBarInfo = null;
+            dgBtnDelete.classList.add('d-none');
+            buildDgPopupGantt();
+            updateDgPopupButtons();
+        }
+
+        function onCancelDgPopup(){
+            if(!dgPopupIso) return;
+            var iso = dgPopupIso;
+            var members = getPopupMembers();
+            members.forEach(function(m){
+                var key = m.id + '_' + iso;
+                var dayMap = monthAllMembersDayMap[m.id] || {};
+                var origDay = dayMap[iso];
+                var origSegs = (origDay && origDay.segments) ? origDay.segments : [];
+                var origJson = dgOrigSnapshot[key] || '[]';
+                if(JSON.stringify(origSegs) === origJson){
+                    delete dgPendingChanges[key];
+                } else {
+                    dgPendingChanges[key] = { memberId: String(m.id), iso: iso, segments: JSON.parse(origJson) };
+                }
+            });
+            dgBarInfo = null;
+            if(dgBtnDelete) dgBtnDelete.classList.add('d-none');
+            buildDgPopupGantt();
+            updateDgPopupButtons();
+        }
+
+        async function onSaveDgPopup(){
+            var entries = Object.entries(dgPendingChanges);
+            if(entries.length === 0) return;
+
+            dgBtnSave.textContent = '저장 중...';
+            dgBtnSave.disabled = true;
+
+            var saveEp = (currentDataType === 'actual') ? API_ACTUAL_UPDATE_ENDPOINT : API_UPDATE_ENDPOINT;
+            try {
+                for(var i = 0; i < entries.length; i++){
+                    var data = entries[i][1];
+                    var cleanSegs = data.segments.map(function(s){ return { start: s.start, end: s.end }; });
+                    var body = { memberId: data.memberId, date: data.iso, segments: cleanSegs };
+                    var resp = await fetch(saveEp, {
+                        method: 'POST',
+                        headers: {'Content-Type':'application/json', 'Accept':'application/json'},
+                        body: JSON.stringify(body)
+                    });
+                    if(!resp.ok){
+                        var text = await resp.text().catch(function(){ return ''; });
+                        alert('저장 실패: ' + resp.status + ' ' + text);
+                        dgBtnSave.disabled = false;
+                        dgBtnSave.textContent = '저장';
+                        return;
+                    }
+                }
+
+                // 저장 완료
+                dgPendingChanges = {};
+                updateDgPopupButtons();
+                await renderAllMembersMonth(currentMonthStart);
+
+                // 스냅샷 갱신
+                var members = getPopupMembers();
+                var iso = dgPopupIso;
+                members.forEach(function(m){
+                    var key = m.id + '_' + iso;
+                    var dayMap = monthAllMembersDayMap[m.id] || {};
+                    var day = dayMap[iso];
+                    var segs = (day && day.segments) ? day.segments : [];
+                    dgOrigSnapshot[key] = JSON.stringify(segs);
+                });
+
+                buildDgPopupGantt();
+                updateDgPopupButtons();
+            } catch(e){
+                console.error(e);
+                alert('저장 중 오류가 발생했습니다.');
+            } finally {
+                dgBtnSave.disabled = false;
+                dgBtnSave.textContent = '저장';
+            }
+        }
+
+        // ===== 월간 캘린더 뷰 =====
+        function buildMemberCalendar(member, monthStart){
+            if(!memberCalendarCard || !memberCalendarWrap) return;
+            selectedCalPill = null;
+
+            var ms = firstDayOfMonth(monthStart);
+            var me = lastDayOfMonth(monthStart);
+            var color = colorForMember(member);
+            var dayMap = monthAllMembersDayMap[member.id] || {};
+            var todayIso = toIso(new Date());
+            var typeLabel = (currentDataType === 'actual') ? '근무시간' : '일정';
+
+            memberCalendarTitle.textContent = member.name + ' - ' + ms.getFullYear() + '년 ' + (ms.getMonth()+1) + '월 ' + typeLabel;
+
+            var DOW_NAMES = ['월','화','수','목','금','토','일'];
+            var html = '<table class="mc-table"><thead><tr>';
+            DOW_NAMES.forEach(function(d, i){
+                var cls = 'mc-dow-head';
+                if(i >= 5) cls += ' mc-weekend';
+                html += '<th class="' + cls + '">' + d + '</th>';
+            });
+            html += '</tr></thead><tbody>';
+
+            // 월 시작 요일 (월=0 ... 일=6)
+            var startDow = (ms.getDay() + 6) % 7; // 0=월
+            var daysInMonth = me.getDate();
+
+            // 이전 달 채우기
+            var prevMonth = new Date(ms.getFullYear(), ms.getMonth(), 0);
+            var prevDays = prevMonth.getDate();
+
+            var cells = [];
+            // 이전 달 빈 칸
+            for(var p = startDow - 1; p >= 0; p--){
+                var prevD = prevDays - p;
+                var prevDt = new Date(prevMonth.getFullYear(), prevMonth.getMonth(), prevD);
+                cells.push({ iso: toIso(prevDt), day: prevD, otherMonth: true, dow: (prevDt.getDay()+6)%7 });
+            }
+            // 현재 달
+            for(var d = 1; d <= daysInMonth; d++){
+                var dt = new Date(ms.getFullYear(), ms.getMonth(), d);
+                cells.push({ iso: toIso(dt), day: d, otherMonth: false, dow: (dt.getDay()+6)%7 });
+            }
+            // 다음 달 채우기 (7의 배수까지)
+            var nextD = 1;
+            while(cells.length % 7 !== 0){
+                var nextDt = new Date(me.getFullYear(), me.getMonth()+1, nextD);
+                cells.push({ iso: toIso(nextDt), day: nextD, otherMonth: true, dow: (nextDt.getDay()+6)%7 });
+                nextD++;
+            }
+
+            // 행 렌더링
+            for(var i = 0; i < cells.length; i++){
+                if(i % 7 === 0) html += '<tr>';
+                var c = cells[i];
+                var cls = 'mc-day-cell';
+                if(c.otherMonth) cls += ' mc-other-month';
+                if(c.iso === todayIso) cls += ' mc-today';
+
+                html += '<td class="' + cls + '" data-cal-date="' + c.iso + '" data-cal-member="' + member.id + '">';
+                var numCls = 'mc-day-num';
+                if(c.dow >= 5) numCls += ' mc-weekend-num';
+                html += '<div class="' + numCls + '">' + c.day + '</div>';
+
+                // 일정 pills
+                if(!c.otherMonth){
+                    var day = dayMap[c.iso];
+                    var segs = (day && day.segments) ? day.segments : [];
+                    if(segs.length > 0){
+                        segs.forEach(function(seg, si){
+                            html += '<div class="mc-schedule-pill" data-cal-date="' + c.iso + '" data-cal-seg-idx="' + si + '" data-cal-start="' + seg.start + '" data-cal-end="' + seg.end + '" style="background:' + color + ';">';
+                            html += seg.start + '~' + seg.end;
+                            html += '</div>';
+                        });
+                    }
+                }
+
+                html += '</td>';
+                if(i % 7 === 6) html += '</tr>';
+            }
+
+            html += '</tbody></table>';
+            memberCalendarWrap.innerHTML = html;
+
+            // 이벤트 바인딩: pill 클릭 → 선택/해제 + 삭제 버튼
+            memberCalendarWrap.querySelectorAll('.mc-schedule-pill').forEach(function(pill){
+                pill.addEventListener('click', function(e){
+                    e.stopPropagation();
+                    var pIso = pill.dataset.calDate;
+                    var pStart = pill.dataset.calStart;
+                    var pEnd = pill.dataset.calEnd;
+
+                    // 이미 선택된 pill 토글
+                    if(selectedCalPill && selectedCalPill.iso === pIso && selectedCalPill.start === pStart && selectedCalPill.end === pEnd){
+                        selectedCalPill = null;
+                        buildMemberCalendar(member, monthStart);
+                        return;
+                    }
+
+                    selectedCalPill = { memberId: String(member.id), iso: pIso, start: pStart, end: pEnd };
+                    // 선택 표시 리렌더
+                    memberCalendarWrap.querySelectorAll('.mc-schedule-pill').forEach(function(p){ p.classList.remove('mc-pill-selected'); });
+                    pill.classList.add('mc-pill-selected');
+
+                    // 기존 삭제 버튼 제거
+                    memberCalendarWrap.querySelectorAll('.mc-pill-actions').forEach(function(a){ a.remove(); });
+
+                    // 삭제 버튼 추가
+                    var actions = document.createElement('span');
+                    actions.className = 'mc-pill-actions';
+                    var delBtn = document.createElement('button');
+                    delBtn.className = 'mc-pill-del-btn';
+                    delBtn.type = 'button';
+                    delBtn.textContent = '×';
+                    delBtn.title = '삭제';
+                    delBtn.addEventListener('click', async function(ev){
+                        ev.stopPropagation();
+                        await deleteCalPill(member, pIso, pStart, pEnd, monthStart);
+                    });
+                    actions.appendChild(delBtn);
+                    pill.appendChild(actions);
+                });
+            });
+
+            // 셀 클릭 (pill 아닌 영역) → 팝업 편집
+            memberCalendarWrap.querySelectorAll('.mc-day-cell:not(.mc-other-month)').forEach(function(td){
+                td.addEventListener('click', function(e){
+                    if(e.target.closest('.mc-schedule-pill')) return;
+                    var iso = td.dataset.calDate;
+                    var mid = td.dataset.calMember;
+                    if(iso && mid) openDayGanttPopup(iso, mid);
+                });
+            });
+        }
+
+        async function deleteCalPill(member, iso, start, end, monthStart){
+            var dayMap = monthAllMembersDayMap[member.id] || {};
+            var day = dayMap[iso];
+            var segs = (day && day.segments) ? day.segments.slice() : [];
+            var idx = segs.findIndex(function(s){ return s.start === start && s.end === end; });
+            if(idx < 0) return;
+
+            segs.splice(idx, 1);
+            var cleanSegs = segs.map(function(s){ return { start: s.start, end: s.end }; });
+            var saveEp = (currentDataType === 'actual') ? API_ACTUAL_UPDATE_ENDPOINT : API_UPDATE_ENDPOINT;
+            var body = { memberId: String(member.id), date: iso, segments: cleanSegs };
+
+            try {
+                var resp = await fetch(saveEp, {
                     method: 'POST',
                     headers: {'Content-Type':'application/json', 'Accept':'application/json'},
                     body: JSON.stringify(body)
                 });
                 if(!resp.ok){
-                    const text = await resp.text().catch(()=> '');
-                    alert(`저장 실패: ${resp.status} ${text}`);
+                    alert('삭제 실패: ' + resp.status);
                     return;
                 }
-                closeEditModal();
-                // 저장 후 다시 월 렌더 (선택 상태 유지)
-                if((editModal.dataset.mode||'edit') === 'create'){
-                    selectedEmptyDateIso = null;
-                }
+                selectedCalPill = null;
                 await renderAllMembersMonth(currentMonthStart);
-            }catch(e){
+            } catch(e){
                 console.error(e);
-                alert('저장 중 오류가 발생했습니다.');
+                alert('삭제 중 오류가 발생했습니다.');
             }
         }
 
-        // ===== 하루 격자 =====
-        function buildDayGrid(){
-            dayGridBody.innerHTML = '';
-            for(let idx=0; idx<totalRows; idx++){
-                const tMin = START_MIN + idx*stepMinutes;
-                const h = Math.floor(tMin/60);
-                const m = tMin%60;
-                const hmLabel = `${pad2(h)}:${pad2(m)}`;
-
-                const tr = document.createElement('tr');
-                if(m===0) tr.classList.add('row-hour-start');
-
-                const th = document.createElement('th');
-                th.className = 'timecell';
-                // 30분 간격 레이블
-                th.textContent = (m%30===0) ? hmLabel : '';
-                tr.appendChild(th);
-
-                const td = document.createElement('td');
-                const div = document.createElement('div');
-                div.className = 'slot-cell';
-                div.dataset.hm = hmLabel;
-
-                if(slotState.has(hmLabel)){
-                    div.classList.add('selected');
-                    // 원본에 없던 슬롯이면(=신규 추가 블록) 파란색 강조
-                    if(!originalSlotSet.has(hmLabel)){
-                        div.classList.add('selected-diff');
-                    }
-                }
-                td.appendChild(div);
-                tr.appendChild(td);
-
-                dayGridBody.appendChild(tr);
-            }
-            attachDragHandlers();
-        }
-
-        function attachDragHandlers(){
-            dragging = false;
-            dayGridBody.querySelectorAll('.slot-cell').forEach(div=>{
-                div.addEventListener('mousedown', (e)=>{
-                    e.preventDefault();
-                    const hm = div.dataset.hm;
-                    dragging = true;
-                    const has = slotState.has(hm);
-                    dragAdding = !has;
-                    toggleSlot(div, dragAdding);
-                });
-                div.addEventListener('mouseenter', ()=>{
-                    if(!dragging) return;
-                    toggleSlot(div, dragAdding);
-                });
-            });
-            window.addEventListener('mouseup', ()=> dragging=false);
-        }
-
-        function toggleSlot(el, on){
-            const hm = el.dataset.hm;
-            if(on){
-                if(!slotState.has(hm)){
-                    slotState.add(hm);
-                    el.classList.add('selected');
-                    if(!originalSlotSet.has(hm)) el.classList.add('selected-diff');
-                }
-            }else{
-                if(slotState.has(hm)){
-                    slotState.delete(hm);
-                    el.classList.remove('selected');
-                    el.classList.remove('selected-diff');
-                }
-            }
-            updateSelectedMinutes();
-            renderLeftSummary();
-        }
-        function updateSelectedMinutes(){ selectedMinutesEl.textContent = (slotState.size * stepMinutes)|0; }
-
-        // ===== 좌측 요약 =====
-        function renderLeftSummary(){
-            // 원본 목록
-            summaryOriginal.innerHTML = originalSegments.length
-                    ? originalSegments.map(s => chipHtml('#198754', s.start, s.end)).join(' ')
-                    : '<span class="text-muted">-</span>';
-
-            const currentSegments = slotSetToSegments(slotState, stepMinutes);
-
-            // 현재 목록
-            summaryCurrent.innerHTML = currentSegments.length
-                    ? currentSegments.map(s => chipHtml('#0d6efd', s.start, s.end)).join(' ')
-                    : '<span class="text-muted">-</span>';
-
-            const orgMin = segmentsMinutes(originalSegments);
-            const curMin = segmentsMinutes(currentSegments);
-            summaryOriginalTotal.textContent = `${orgMin}분`;
-            summaryCurrentTotal.textContent = `${curMin}분`;
-            const diff = curMin - orgMin;
-            summaryDiffTotal.textContent = (diff>=0?'+':'') + `${diff}분`;
-            summaryDiffTotal.classList.toggle('text-primary', diff>0);
-            summaryDiffTotal.classList.toggle('text-danger', diff<0);
-        }
-
-        // ===== 삭제 API 호출 유틸 =====
-        async function deleteDaySchedule(memberId, dateIso){
-            const url = API_DELETE_ENDPOINT_TEMPLATE.replace('{memberId}', encodeURIComponent(memberId))
-                    + `?date=${encodeURIComponent(dateIso)}`;
-            const resp = await fetch(url, {
-                method:'POST',
-                headers:{'Accept':'application/json'}
-            });
-            if(!resp.ok){
-                const text = await resp.text().catch(()=> '');
-                throw new Error(`삭제 실패: ${resp.status} ${text}`);
+        function showMemberCalendar(member){
+            if(!memberCalendarCard) return;
+            if(member){
+                memberCalendarCard.classList.remove('d-none');
+                buildMemberCalendar(member, currentMonthStart);
+            } else {
+                memberCalendarCard.classList.add('d-none');
+                memberCalendarWrap.innerHTML = '';
             }
         }
 
@@ -1379,18 +1548,6 @@
         function lastDayOfMonth(d){ return new Date(d.getFullYear(), d.getMonth()+1, 0); }
         function pad2(n){ return String(n).padStart(2,'0'); }
         function toIso(d){ return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`; }
-
-        function displayHm(value){
-            if(!value) return '';
-            const parts = String(value).split(':');
-            const h = parseInt(parts[0], 10) || 0;
-            const m = parseInt(parts[1], 10) || 0;
-            return `${pad2(h)}:${pad2(m)}`;
-        }
-        function segmentsToLabel(segments){
-            if(!segments || !segments.length) return '';
-            return segments.map(s=> `${displayHm(s.start)}~${displayHm(s.end)}`).join(', ');
-        }
 
         function colorForMember(m){
             const key = (m?.id!=null?String(m.id):(m?.name||'x'));
@@ -1416,11 +1573,11 @@
         function escapeHtml(s){
             if(s==null) return '';
             return String(s)
-                    .replace(/&/g,'&amp;')
-                    .replace(/</g,'&lt;')
-                    .replace(/>/g,'&gt;')
-                    .replace(/"/g,'&quot;')
-                    .replace(/'/g,'&#39;');
+                .replace(/&/g,'&amp;')
+                .replace(/</g,'&lt;')
+                .replace(/>/g,'&gt;')
+                .replace(/"/g,'&quot;')
+                .replace(/'/g,'&#39;');
         }
 
         function formatMins(mins){
@@ -1436,8 +1593,8 @@
                 const date = String(d.date);
                 const segments = Array.isArray(d.segments) ? d.segments : [];
                 const minutes = (typeof d.minutes==='number')
-                        ? d.minutes
-                        : segments.reduce((acc,s)=> acc + (hmToMin(s.end) - hmToMin(s.start)), 0);
+                    ? d.minutes
+                    : segments.reduce((acc,s)=> acc + (hmToMin(s.end) - hmToMin(s.start)), 0);
                 map[date] = { segments, minutes };
             });
             return map;
@@ -1455,41 +1612,6 @@
             return `${pad2(h)}:${pad2(m)}`;
         }
 
-        function segmentsToSlotSet(segments, step){
-            const set = new Set();
-            const startMin = START_HOUR*60;
-            const endMin = END_HOUR*60;
-            (segments||[]).forEach(seg=>{
-                let s = Math.max(hmToMin(seg.start), startMin);
-                let e = Math.min(hmToMin(seg.end), endMin);
-                for(let t=s; t<e; t+=step){
-                    set.add(minToHm(t));
-                }
-            });
-            return set;
-        }
-
-        function slotSetToSegments(set, step){
-            const sorted = Array.from(set).map(hmToMin).sort((a,b)=>a-b);
-            const res = [];
-            let i=0;
-            while(i<sorted.length){
-                let s = sorted[i], t = s + step; i++;
-                while(i<sorted.length && sorted[i]===t){ t += step; i++; }
-                res.push({start:minToHm(s), end:minToHm(t)});
-            }
-            return res;
-        }
-
-        function chipHtml(color, start, end){
-            return `<span class="chip"><span class="dot" style="background:${color}"></span><span class="small">${start} ~ ${end}</span></span>`;
-        }
-
-        function segmentsMinutes(segs){
-            return (segs||[]).reduce((acc,s)=> acc + (hmToMin(s.end)-hmToMin(s.start)), 0);
-        }
-
-        // ▷ 상단 기간 라벨 동기화 유틸
         function syncStatusPeriodWithMonthRange(overrideText){
             const text = overrideText || monthRangeLabel.textContent || '';
             if(statusPeriodLabel) statusPeriodLabel.textContent = text;

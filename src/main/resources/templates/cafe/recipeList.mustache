@@ -1,697 +1,504 @@
 {{>layouts/header}}
 
 <style>
-    body {
-        background-color: #f8f9fa;
+    body { background: #fff9f2; }
+
+    .recipe-page {
+        max-width: 960px;
+        margin: 0 auto;
+        padding: 1.5rem 1rem 3rem;
     }
 
-    .table-wrapper {
-        border-radius: 1rem;
-        overflow: hidden;
-        border: 1px solid #dee2e6;
-        background-color: #ffffff;
-    }
-
-    /* 테이블 헤더 녹색 */
-    .table-rounded thead th {
-        border-bottom-width: 1px;
-        background-color: #198754;
-        color: #ffffff;
-        border-color: #198754;
-        font-weight: 600;
-    }
-
-    .table-rounded thead th:first-child {
-        border-top-left-radius: 1rem;
-    }
-
-    .table-rounded thead th:last-child {
-        border-top-right-radius: 1rem;
-    }
-
-    .category-cell {
-        background-color: #e7f5ff;
-    }
-
-    .category-badge {
-        font-size: 0.9rem;
-        padding: 0.35rem 0.9rem;
-        border-radius: 999px;
-        background-color: #fff;
-        color: #000;
-        display: inline-block;
-        border: 2px solid #000;
-        font-weight: 600;
-    }
-
-    /* 레시피 pill */
-    .recipe-pill {
-        display: inline-flex;
+    /* ── 페이지 헤더 ── */
+    .page-hero {
+        background: linear-gradient(135deg, #5b4434 0%, #3f2c20 100%);
+        border-radius: 1.25rem;
+        padding: 1.35rem 1.75rem;
+        margin-bottom: 1.5rem;
+        display: flex;
+        justify-content: space-between;
         align-items: center;
-        padding: 0.45rem 2.6rem 0.45rem 1rem; /* 오른쪽 아이콘 여유 */
+        gap: 1rem;
+        box-shadow: 0 8px 24px rgba(91,68,52,0.22);
+    }
+    .page-hero-title { font-size: 1.35rem; font-weight: 900; color: #fff9f2; }
+    .page-hero-sub   { font-size: 0.8rem; color: rgba(255,249,242,0.6); margin-top: 0.2rem; }
+
+    .btn-hero-new {
+        background: rgba(255,249,242,0.18);
+        border: 1.5px solid rgba(255,249,242,0.4);
+        color: #fff9f2;
         border-radius: 999px;
-        font-weight: 600;
-        cursor: pointer;
-        white-space: nowrap;
-        border: 2px solid #dee2e6;
-        background-color: #ffffff;
-        transition: all 0.15s ease;
-        font-size: 0.95rem;
-        position: relative;
-    }
-
-    .menu-name-text {
-        margin-right: 0.35rem;
-    }
-
-    /* 선택 시 아이콘 그룹 (연필 + 삭제) */
-    .pill-icon-group {
-        position: absolute;
-        right: 0.55rem;
-        top: 50%;
-        transform: translateY(-50%);
-        display: none;               /* 선택 시에만 보임 */
-        gap: 0.2rem;
-        align-items: center;
-    }
-
-    .recipe-pill.selected .pill-icon-group {
-        display: inline-flex;
-    }
-
-    .pill-edit-icon,
-    .pill-delete-icon {
-        font-size: 1.2rem;
-        cursor: pointer;
-        line-height: 1;
-        color: #ffffff;
-        background-color: rgba(0, 0, 0, 0.45);
-        padding: 0.05rem 0.4rem;
-        border-radius: 999px;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-    }
-
-    .pill-delete-icon {
-        background-color: rgba(220, 53, 69, 0.7); /* 삭제는 약간 붉은 톤 */
-    }
-
-    /* 상태 표시 원 (visible/template 공통) */
-    .star-icon {
-        margin-right: 0.35rem;
-        width: 1.4rem;
-        height: 1.4rem;
-        border-radius: 999px;
-        border: 2px solid transparent;
-        background-color: transparent;
-        box-sizing: border-box;
-        font-size: 0;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-    }
-
-    .star-icon::before {
-        content: "★";
+        padding: 0.45rem 1.15rem;
         font-size: 0.85rem;
-        line-height: 1;
-        color: #ffffff;
-        display: block;
-        text-align: center;
+        font-weight: 700;
+        white-space: nowrap;
+        cursor: pointer;
+        transition: background 0.14s, border-color 0.14s;
+    }
+    .btn-hero-new:hover { background: rgba(255,249,242,0.28); border-color: rgba(255,249,242,0.65); }
+
+    /* ── 카테고리 그룹 ── */
+    .recipe-group {
+        background: #fff;
+        border-radius: 1rem;
+        border: 1.5px solid #ede8e3;
+        margin-bottom: 1rem;
+        overflow: hidden;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    }
+    .group-header {
+        display: flex;
+        align-items: center;
+        gap: 0.65rem;
+        padding: 0.65rem 1.2rem;
+        background: linear-gradient(to right, #f7f0ea, #fdfcfb);
+        border-bottom: 1.5px solid #ede8e3;
+    }
+    .group-label { font-size: 0.88rem; font-weight: 800; color: #5b4434; letter-spacing: 0.01em; }
+    .group-count {
+        font-size: 0.72rem; color: #9ca3af;
+        background: #f0ece8; padding: 0.08rem 0.45rem;
+        border-radius: 999px;
     }
 
-    /* visible == true */
-    .star-visible {
-        background-color: #fd7e14;
-        border-color: #fd7e14;
-        animation: starBorderBlinkOrange 1.2s ease-in-out infinite;
-    }
+    /* ── 레시피 행 ── */
+    .recipe-item { border-bottom: 1px solid #f5f0eb; }
+    .recipe-item:last-child { border-bottom: none; }
 
-    /* template == true */
-    .star-template {
-        background-color: #198754;
-        border-color: #198754;
-        animation: starBorderBlinkGreen 1.2s ease-in-out infinite;
+    .recipe-row {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        cursor: pointer;
+        transition: background 0.1s;
+        min-height: 50px;
+        padding-right: 1rem;
     }
+    .recipe-row:hover { background: #fdf8f4; }
+    .recipe-row.selected { background: #f5ece3; }
 
-    @keyframes starBorderBlinkOrange {
-        0%   { box-shadow: 0 0 0 0 rgba(253,126,20,0.7); }
-        50%  { box-shadow: 0 0 0 6px rgba(253,126,20,0); }
+    /* 온도 색상 바 */
+    .temp-bar {
+        width: 4px;
+        align-self: stretch;
+        border-radius: 0 2px 2px 0;
+        flex-shrink: 0;
+        min-height: 40px;
+    }
+    .temp-bar.temp-HOT { background: #ef4444; }
+    .temp-bar.temp-ICE { background: #3b82f6; }
+    .temp-bar.temp-   { background: #cbd5e1; }
+
+    /* 상태 표시 점 */
+    .r-indicators { display: flex; gap: 0.25rem; flex-shrink: 0; }
+
+    .r-dot {
+        width: 22px; height: 22px;
+        border-radius: 50%;
+        display: inline-flex; align-items: center; justify-content: center;
+        font-size: 0.6rem; font-weight: 900;
+        cursor: pointer;
+        transition: transform 0.12s, box-shadow 0.12s;
+        border: 1.5px solid transparent;
+        user-select: none;
+    }
+    .r-dot:hover { transform: scale(1.18); }
+
+    .r-dot.visible-on  {
+        background: #fd7e14; border-color: #fd7e14; color: #fff;
+        box-shadow: 0 0 0 0 rgba(253,126,20,0.6);
+        animation: dotPulseOrange 1.4s ease-in-out infinite;
+    }
+    .r-dot.visible-off { background: #fff; border-color: #e2e8f0; color: #cbd5e1; }
+    .r-dot.tmpl-on  {
+        background: #198754; border-color: #198754; color: #fff;
+        box-shadow: 0 0 0 0 rgba(25,135,84,0.6);
+        animation: dotPulseGreen 1.4s ease-in-out infinite;
+    }
+    .r-dot.tmpl-off { background: #fff; border-color: #e2e8f0; color: #cbd5e1; }
+
+    @keyframes dotPulseOrange {
+        0%   { box-shadow: 0 0 0 0 rgba(253,126,20,0.55); }
+        60%  { box-shadow: 0 0 0 5px rgba(253,126,20,0); }
         100% { box-shadow: 0 0 0 0 rgba(253,126,20,0); }
     }
-
-    @keyframes starBorderBlinkGreen {
-        0%   { box-shadow: 0 0 0 0 rgba(25,135,84,0.7); }
-        50%  { box-shadow: 0 0 0 6px rgba(25,135,84,0); }
+    @keyframes dotPulseGreen {
+        0%   { box-shadow: 0 0 0 0 rgba(25,135,84,0.55); }
+        60%  { box-shadow: 0 0 0 5px rgba(25,135,84,0); }
         100% { box-shadow: 0 0 0 0 rgba(25,135,84,0); }
     }
 
-    /* OFF 상태 */
-    .star-visible-off,
-    .star-template-off {
-        display: none;
-        background-color: #ffffff;
+    /* 레시피 이름 */
+    .r-name {
+        flex: 1;
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: #374151;
+        min-width: 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
 
-    .star-visible-off {
-        border-color: #fd7e14;
+    /* 온도 뱃지 */
+    .r-temp {
+        font-size: 0.68rem; font-weight: 700;
+        padding: 0.1rem 0.42rem;
+        border-radius: 999px;
+        flex-shrink: 0;
     }
-    .star-template-off {
-        border-color: #198754;
-    }
+    .r-temp.hot { background: #fef2f2; color: #b91c1c; border: 1px solid #fca5a5; }
+    .r-temp.ice { background: #eff6ff; color: #1d4ed8; border: 1px solid #93c5fd; }
 
-    .star-visible-off::before {
-        content: "★";
-        color: #fd7e14;
-    }
-
-    .star-template-off::before {
-        content: "★";
-        color: #198754;
-    }
-
-    /* pill 선택 시 OFF 별 표시 */
-    .recipe-pill.selected .star-visible-off,
-    .recipe-pill.selected .star-template-off {
-        display: inline-flex;
-    }
-
-    .recipe-pill[data-temp="HOT"] {
-        border-color: #dc3545;
-    }
-    .recipe-pill[data-temp="ICE"] {
-        border-color: #0d6efd;
-    }
-
-    .recipe-pill.selected[data-temp="HOT"] {
-        background-color: #dc3545;
-        color: #fff;
-        border-color: #b02a37;
-    }
-    .recipe-pill.selected[data-temp="ICE"] {
-        background-color: #0d6efd;
-        color: #fff;
-        border-color: #0a58ca;
-    }
-
-    .recipe-pill:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 0.25rem 0.6rem rgba(0, 0, 0, 0.1);
-    }
-
-    /* visible 깜빡임 */
-    .recipe-pill.visible-blink {
-        animation: visibleBlink 1.3s ease-in-out infinite;
-    }
-
-    @keyframes visibleBlink {
-        0%   { box-shadow: 0 0 0 0 rgba(13,110,253,0.5); }
-        50%  { box-shadow: 0 0 0 6px rgba(13,110,253,0); }
-        100% { box-shadow: 0 0 0 0 rgba(13,110,253,0); }
-    }
-
-    /* 팝업 스타일 */
-    #recipeDetailModal .modal-dialog {
-        max-width: 1200px;
-        width: 95%;
-    }
-
-    #recipeDetailModal .modal-content {
-        border-radius: 0.75rem;
-        box-shadow: 0 0.75rem 1.5rem rgba(0,0,0,0.25);
-        max-height: 90vh;
-    }
-
-    #recipeDetailModal .modal-title {
-        font-size: 2.4rem;
-        font-weight: 700;
-    }
-
-    #recipeDetailModal .modal-body {
-        font-size: 2.4rem;
-        max-height: 80vh;
-        overflow-y: auto;
-    }
-
-    #recipeDetailMeta {
-        font-size: 2rem !important;
-    }
-
-    #recipe-steps-content {
-        padding-right: 0.5rem;
-    }
-
-    /* 팝업 내 스텝 카드 */
-    .recipe-step {
-        position: relative;
-        background-color: #ffffff;
+    /* 액션 버튼 */
+    .r-actions { display: flex; gap: 0.3rem; flex-shrink: 0; }
+    .r-btn {
+        width: 30px; height: 30px;
         border-radius: 0.5rem;
-        padding: 1.1rem 1.4rem;
-        margin-bottom: 1rem;
-        box-shadow: 0 0.35rem 0.8rem rgba(0, 0, 0, 0.08);
-        border-left: 6px solid #0d6efd;
-        font-size: 2.7rem;
-        line-height: 1.45;
+        border: 1.5px solid #e2e8f0;
+        background: #fff;
         cursor: pointer;
-        transition: background-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+        display: inline-flex; align-items: center; justify-content: center;
+        font-size: 0.85rem;
+        transition: all 0.12s;
+    }
+    .r-btn:hover { transform: scale(1.1); }
+    .r-btn.edit-btn:hover { border-color: #5b4434; background: #fff9f2; color: #5b4434; }
+    .r-btn.del-btn:hover  { border-color: #ef4444; background: #fef2f2; }
+
+    /* ── 모달 ── */
+    #recipeDetailModal .modal-dialog { max-width: 1000px; width: 95%; }
+    #recipeDetailModal .modal-content {
+        border-radius: 1rem; border: none; overflow: hidden;
+        box-shadow: 0 1.5rem 4rem rgba(0,0,0,0.28);
+        max-height: 92vh;
+    }
+    #recipeDetailModal .modal-header {
+        background: linear-gradient(135deg, #5b4434 0%, #3f2c20 100%);
+        border-bottom: none; padding: 1.1rem 1.5rem;
+    }
+    #recipeDetailModal .modal-header .btn-close { filter: invert(1) brightness(2); opacity: 0.75; }
+    #recipeDetailModal .modal-header .btn-close:hover { opacity: 1; }
+    #recipeDetailModal .modal-title { color: #fff9f2; font-size: 1.25rem; font-weight: 800; }
+    #recipeDetailModal .modal-body {
+        font-size: 1rem; background: #fdfcfb;
+        padding: 1.5rem; overflow-y: auto; max-height: 70vh;
+    }
+    #recipeDetailModal .modal-footer {
+        background: #fdfcfb; border-top: 1px solid #ede8e3; padding: 0.85rem 1.5rem;
     }
 
+    .recipe-step {
+        display: flex; align-items: flex-start; gap: 0.8rem;
+        background: #fff; border-radius: 0.875rem;
+        padding: 0.9rem 1.1rem;
+        margin-bottom: 0.6rem;
+        border: 1.5px solid #ede8e3;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+        font-size: 1rem; line-height: 1.5;
+        cursor: pointer; transition: all 0.13s;
+    }
+    .recipe-step:hover { border-color: #c4a882; box-shadow: 0 3px 10px rgba(91,68,52,0.1); transform: translateX(2px); }
     .step-index {
-        font-weight: 900;
-        margin-right: 0.9rem;
+        flex: 0 0 auto;
+        background: #5b4434; color: #fff9f2;
+        border-radius: 999px; padding: 0.15rem 0.55rem;
+        font-size: 0.76rem; font-weight: 900;
+        white-space: nowrap; line-height: 1.6; margin-top: 0.05rem;
     }
+    .step-text { flex: 1; display: block; font-weight: 500; color: #374151; }
+    .recipe-step.step-selected { background: #5b4434; border-color: #5b4434; box-shadow: 0 4px 14px rgba(91,68,52,0.26); transform: translateX(2px); }
+    .recipe-step.step-selected .step-index { background: rgba(255,255,255,0.22); color: #fff9f2; }
+    .recipe-step.step-selected .step-text { color: #fff9f2; }
+    .recipe-step.empty-step { border-color: #e2e8f0; }
+    .recipe-step.empty-step .step-index { background: #94a3b8; }
 
-    .step-text {
-        display: inline-block;
-        vertical-align: middle;
+    #recipe-steps-content .recipe-step:nth-child(2) { margin-left: 10px; }
+    #recipe-steps-content .recipe-step:nth-child(3) { margin-left: 20px; }
+    #recipe-steps-content .recipe-step:nth-child(4) { margin-left: 30px; }
+    #recipe-steps-content .recipe-step:nth-child(5) { margin-left: 40px; }
+    #recipe-steps-content .recipe-step:nth-child(6) { margin-left: 50px; }
+    #recipe-steps-content .recipe-step:nth-child(7) { margin-left: 60px; }
+
+    /* 빈 상태 */
+    .empty-state {
+        text-align: center; padding: 3rem 1rem; color: #9ca3af;
     }
+    .empty-state .empty-icon { font-size: 2.5rem; margin-bottom: 0.75rem; }
 
-    /* 계단 효과 */
-    #recipe-steps-content .recipe-step:nth-child(2) { margin-left: 18px; }
-    #recipe-steps-content .recipe-step:nth-child(3) { margin-left: 36px; }
-    #recipe-steps-content .recipe-step:nth-child(4) { margin-left: 54px; }
-    #recipe-steps-content .recipe-step:nth-child(5) { margin-left: 72px; }
-    #recipe-steps-content .recipe-step:nth-child(6) { margin-left: 90px; }
-    #recipe-steps-content .recipe-step:nth-child(7) { margin-left: 108px; }
-
-    .recipe-step.step-selected {
-        background-color: #0d6efd;
-        color: #fff;
-        box-shadow: 0 0.35rem 0.9rem rgba(13,110,253,0.45);
-    }
-
-    .recipe-step.empty-step {
-        border-left-color: #adb5bd;
-        color: #6c757d;
+    /* 모바일 */
+    @media (max-width: 575px) {
+        .page-hero { padding: 1rem 1.1rem; border-radius: 0.875rem; }
+        .page-hero-title { font-size: 1.1rem; }
+        #recipe-steps-content .recipe-step:nth-child(n) { margin-left: 0 !important; }
+        .r-name { font-size: 0.82rem; }
+        #recipeDetailModal .modal-dialog { width: 100%; margin: 0; }
+        #recipeDetailModal .modal-content { border-radius: 0; }
     }
 </style>
 
-
-<div class="container py-4">
-
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <div>
-            <h3 class="fw-bold mb-0">☕ 레시피 목록</h3>
-            <div class="text-muted small mt-1">더블클릭하면 상세 레시피가 팝업으로 열립니다.</div>
+<!-- ========== 데이터 저장소 ========== -->
+<div id="recipe-data-store" style="display:none">
+{{#recipeGroups}}
+    {{#recipes}}
+    <div id="recipe-steps-{{id}}">
+        {{#steps}}
+        <div class="recipe-step" data-step="{{stepOrder}}">
+            <span class="step-index">Step {{stepOrder}}</span>
+            <span class="step-text">{{content}}</span>
         </div>
-
-        <div class="d-flex gap-2">
-            <button class="btn btn-success btn-sm" onclick="location.href='/cafe/recipe/new'">레시피 만들기</button>
-            <button class="btn btn-outline-primary btn-sm" id="btn-edit-recipe" disabled>수정하기</button>
+        {{/steps}}
+        {{^steps}}
+        <div class="recipe-step empty-step">
+            <span class="step-index">Step 1</span>
+            <span class="step-text">등록된 스텝이 없습니다.</span>
         </div>
+        {{/steps}}
     </div>
-
-    <div class="table-wrapper shadow-sm">
-        <table class="table table-rounded mb-0 align-middle">
-            <thead>
-            <tr>
-                <th style="width: 25%;">카테고리</th>
-                <th>레시피</th>
-            </tr>
-            </thead>
-
-            <tbody id="recipe-table-body">
-
-            {{#recipeGroups}}
-                <tr>
-                    <td class="category-cell">
-                        <span class="category-badge">{{categoryLabel}}</span>
-                    </td>
-                    <td>
-                        <div class="d-flex flex-wrap gap-2">
-
-                            {{#recipes}}
-                                <div class="recipe-pill-wrapper" data-id="{{id}}" data-name="{{menuName}}">
-                                    <span class="recipe-pill {{#visible}}visible-blink{{/visible}}"
-                                          data-temp="{{temperature}}">
-
-                                        {{#visible}}
-                                            <span class="star-icon star-visible" title="대시보드에서 숨기기"></span>
-                                        {{/visible}}
-                                        {{^visible}}
-                                            <span class="star-icon star-visible-off" title="대시보드에 표시하기"></span>
-                                        {{/visible}}
-
-                                        {{#template}}
-                                            <span class="star-icon star-template" title="템플릿 해제"></span>
-                                        {{/template}}
-                                        {{^template}}
-                                            <span class="star-icon star-template-off" title="템플릿으로 설정"></span>
-                                        {{/template}}
-
-                                        <span class="menu-name-text">{{menuName}}</span>
-
-                                        <!-- ✏ + 🗑 아이콘 그룹 -->
-                                        <span class="pill-icon-group">
-                                            <span class="pill-edit-icon" title="레시피 수정하기">✎</span>
-                                            <span class="pill-delete-icon" title="레시피 삭제하기">🗑</span>
-                                        </span>
-                                    </span>
-
-                                    <div class="d-none recipe-steps" id="recipe-steps-{{id}}">
-                                        <div class="recipe-steps-wrapper">
-                                            {{#steps}}
-                                                <div class="recipe-step" data-step="{{stepOrder}}">
-                                                    <span class="step-index">Step {{stepOrder}}.</span>
-                                                    <span class="step-text">{{content}}</span>
-                                                </div>
-                                            {{/steps}}
-                                            {{^steps}}
-                                                <div class="recipe-step empty-step">
-                                                    <span class="step-index">Step 1.</span>
-                                                    <span class="step-text text-muted">등록된 스텝이 없습니다.</span>
-                                                </div>
-                                            {{/steps}}
-                                        </div>
-                                    </div>
-                                </div>
-                            {{/recipes}}
-
-                        </div>
-                    </td>
-                </tr>
-            {{/recipeGroups}}
-
-            {{^recipeGroups}}
-                <tr>
-                    <td colspan="2" class="text-center py-4 text-muted">
-                        등록된 레시피가 없습니다.
-                    </td>
-                </tr>
-            {{/recipeGroups}}
-
-            </tbody>
-        </table>
-    </div>
+    {{/recipes}}
+{{/recipeGroups}}
 </div>
 
+<!-- ========== 메인 ========== -->
+<div class="recipe-page">
 
-<!-- 팝업 -->
-<div class="modal fade" id="recipeDetailModal" tabindex="-1">
-    <div class="modal-dialog modal-xl modal-dialog-centered">
-        <div class="modal-content rounded-3">
+    <!-- 헤더 -->
+    <div class="page-hero">
+        <div>
+            <div class="page-hero-title">☕ 레시피 관리</div>
+            <div class="page-hero-sub">클릭하면 상세 레시피, ● 노출 · ★ 템플릿, ✎ 수정, 🗑 삭제</div>
+        </div>
+        <button class="btn-hero-new" onclick="location.href='/cafe/recipe/new'">+ 새 레시피</button>
+    </div>
 
-            <div class="modal-header">
-                <h4 class="modal-title fw-bold" id="recipeDetailModalLabel">레시피 상세</h4>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+    <!-- 레시피 그룹 목록 -->
+    <div id="recipe-list-root">
+    {{#recipeGroups}}
+        <div class="recipe-group">
+            <div class="group-header">
+                <span class="group-label">{{categoryLabel}}</span>
+                <span class="group-count" id="count-{{categoryLabel}}"></span>
             </div>
+            <div class="group-body">
+                {{#recipes}}
+                <div class="recipe-item" data-id="{{id}}" data-name="{{menuName}}" data-temp="{{temperature}}">
+                    <div class="recipe-row" data-temp="{{temperature}}">
+                        <div class="temp-bar temp-{{temperature}}"></div>
 
+                        <div class="r-indicators">
+                            {{#visible}}
+                            <span class="r-dot visible-on" title="노출 중 — 클릭 시 숨기기">●</span>
+                            {{/visible}}
+                            {{^visible}}
+                            <span class="r-dot visible-off" title="숨김 — 클릭 시 노출">○</span>
+                            {{/visible}}
+
+                            {{#template}}
+                            <span class="r-dot tmpl-on" title="템플릿 — 클릭 시 해제">★</span>
+                            {{/template}}
+                            {{^template}}
+                            <span class="r-dot tmpl-off" title="템플릿 아님 — 클릭 시 설정">☆</span>
+                            {{/template}}
+                        </div>
+
+                        <div class="r-name">{{menuName}}</div>
+
+                        {{#temperature}}
+                        <span class="r-temp {{#visible}}{{/visible}}"></span>
+                        {{/temperature}}
+
+                        <div class="r-actions">
+                            <button class="r-btn edit-btn" title="수정">✎</button>
+                            <button class="r-btn del-btn" title="삭제">🗑</button>
+                        </div>
+                    </div>
+                </div>
+                {{/recipes}}
+                {{^recipes}}
+                <div class="empty-state">
+                    <div class="empty-icon">📭</div>
+                    <div>이 카테고리에 등록된 레시피가 없습니다.</div>
+                </div>
+                {{/recipes}}
+            </div>
+        </div>
+    {{/recipeGroups}}
+    {{^recipeGroups}}
+        <div class="empty-state" style="margin-top:2rem">
+            <div class="empty-icon">☕</div>
+            <div>등록된 레시피가 없습니다.</div>
+            <button class="btn-hero-new mt-3" style="background:#5b4434;border-color:#5b4434;" onclick="location.href='/cafe/recipe/new'">+ 첫 레시피 만들기</button>
+        </div>
+    {{/recipeGroups}}
+    </div>
+
+</div>
+
+<!-- ========== 상세 모달 ========== -->
+<div class="modal fade" id="recipeDetailModal" tabindex="-1">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-fullscreen-sm-down">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="recipeDetailModalLabel">레시피 상세</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="닫기"></button>
+            </div>
             <div class="modal-body">
-                <div id="recipeDetailMeta" class="mb-3 text-muted"></div>
                 <div id="recipe-steps-content"></div>
             </div>
-
             <div class="modal-footer">
-                <button id="modal-edit-btn" class="btn btn-outline-primary btn-lg">
-                    이 레시피 수정하기
-                </button>
-                <button class="btn btn-secondary btn-lg" data-bs-dismiss="modal">닫기</button>
+                <button id="modal-edit-btn" class="btn btn-outline-secondary btn-sm">✎ 이 레시피 수정하기</button>
+                <button class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">닫기</button>
             </div>
-
         </div>
     </div>
 </div>
 
-
 <script>
-    (function () {
-        const tableBody = document.getElementById("recipe-table-body");
-        const pillWrappers = tableBody.querySelectorAll(".recipe-pill-wrapper");
+(function () {
+    var listRoot = document.getElementById('recipe-list-root');
+    if (!listRoot) return;
 
-        const editBtn = document.getElementById("btn-edit-recipe");
-        const modalEditBtn = document.getElementById("modal-edit-btn");
+    var currentId = null;
+    var modalEditBtn = document.getElementById('modal-edit-btn');
 
-        let selectedRecipeId = null;
+    /* ── 카운트 뱃지 채우기 ── */
+    document.querySelectorAll('.recipe-group').forEach(function (grp) {
+        var hdr = grp.querySelector('.group-header .group-label');
+        var cnt = grp.querySelectorAll('.recipe-item').length;
+        var badge = grp.querySelector('.group-count');
+        if (badge) badge.textContent = cnt + ' 개';
+    });
 
-        // ✅ visible 변경 호출
-        async function updateRecipeVisible(recipeId, visible) {
-            try {
-                const res = await fetch("/api/cafe/recipe/" + recipeId + "/visible/" + visible, {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({ visible: visible })
-                });
+    /* ── 온도 뱃지 텍스트 ── */
+    document.querySelectorAll('.recipe-item').forEach(function (item) {
+        var temp = (item.dataset.temp || '').toUpperCase();
+        var badge = item.querySelector('.r-temp');
+        if (!badge) return;
+        if (temp === 'HOT') { badge.textContent = 'HOT'; badge.classList.add('hot'); }
+        else if (temp === 'ICE') { badge.textContent = 'ICE'; badge.classList.add('ice'); }
+        else { badge.remove(); }
+    });
 
-                if (!res.ok) {
-                    alert("visible 상태 변경에 실패했습니다. (" + res.status + ")");
-                    return;
-                }
+    /* ── API 헬퍼 ── */
+    async function apiPost(url, errMsg) {
+        try {
+            var res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' } });
+            if (!res.ok && res.status !== 204) { alert(errMsg + ' (' + res.status + ')'); return false; }
+            return true;
+        } catch (e) { console.error(e); alert(errMsg); return false; }
+    }
 
-                location.reload();
-            } catch (e) {
-                console.error(e);
-                alert("visible 상태 변경 중 오류가 발생했습니다.");
-            }
+    /* ── 이벤트 위임 ── */
+    listRoot.addEventListener('click', function (e) {
+        var item    = e.target.closest('.recipe-item');
+        if (!item) return;
+        var id   = item.dataset.id;
+        var name = item.dataset.name || '';
+
+        /* 수정 버튼 */
+        if (e.target.closest('.edit-btn')) {
+            e.stopPropagation();
+            location.href = '/cafe/recipe/' + id + '/edit';
+            return;
         }
 
-        // ✅ template 변경 호출
-        async function updateRecipeTemplate(recipeId, template) {
-            try {
-                const res = await fetch("/api/cafe/recipe/" + recipeId + "/template/" + template, {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({ template: template })
-                });
-
-                if (!res.ok) {
-                    alert("template 상태 변경에 실패했습니다. (" + res.status + ")");
-                    return;
-                }
-
-                location.reload();
-            } catch (e) {
-                console.error(e);
-                alert("template 상태 변경 중 오류가 발생했습니다.");
-            }
-        }
-
-        // ✅ 레시피 삭제 호출
-        async function deleteRecipe(recipeId, recipeName) {
-            const ok = confirm(
-                    `"${recipeName}" 레시피를 삭제하시겠습니까?\n삭제 후에는 되돌릴 수 없습니다.`
-            );
-            if (!ok) return;
-
-            try {
-                const res = await fetch("/api/cafe/recipe/" + recipeId + "/delete", {
-                    method: "POST"
-                    // CSRF 필요하면 여기서 헤더 추가
-                });
-
-                if (!res.ok && res.status !== 204) {
-                    alert("레시피 삭제에 실패했습니다. (" + res.status + ")");
-                    return;
-                }
-
-                // 성공 시 화면 새로고침
-                location.reload();
-            } catch (e) {
-                console.error(e);
-                alert("레시피 삭제 중 오류가 발생했습니다.");
-            }
-        }
-
-        function clearSelection() {
-            tableBody
-                    .querySelectorAll(".recipe-pill")
-                    .forEach(p => p.classList.remove("selected"));
-            selectedRecipeId = null;
-            editBtn.disabled = true;
-        }
-
-        function selectRecipe(wrapper) {
-            clearSelection();
-            const pill = wrapper.querySelector(".recipe-pill");
-            if (!pill) return;
-            pill.classList.add("selected");
-            selectedRecipeId = wrapper.dataset.id;
-            editBtn.disabled = false;
-        }
-
-        function attachStepClickHandlers() {
-            const container = document.getElementById("recipe-steps-content");
-            if (!container) return;
-
-            const steps = container.querySelectorAll(".recipe-step");
-            steps.forEach(step => {
-                step.addEventListener("click", () => {
-                    steps.forEach(s => s.classList.remove("step-selected"));
-                    step.classList.add("step-selected");
-                });
+        /* 삭제 버튼 */
+        if (e.target.closest('.del-btn')) {
+            e.stopPropagation();
+            if (!confirm('"' + name + '" 레시피를 삭제하시겠습니까?\n삭제 후에는 되돌릴 수 없습니다.')) return;
+            apiPost('/api/cafe/recipe/' + id + '/delete', '레시피 삭제에 실패했습니다.').then(function (ok) {
+                if (ok) location.reload();
             });
+            return;
         }
 
-        pillWrappers.forEach(wrapper => {
-            const pill = wrapper.querySelector(".recipe-pill");
-            if (!pill) return;
-
-            const inlineEditIcon = wrapper.querySelector(".pill-edit-icon");
-            const inlineDeleteIcon = wrapper.querySelector(".pill-delete-icon");
-
-            const visibleStarOn  = wrapper.querySelector(".star-visible");
-            const visibleStarOff = wrapper.querySelector(".star-visible-off");
-            const templateStarOn  = wrapper.querySelector(".star-template");
-            const templateStarOff = wrapper.querySelector(".star-template-off");
-
-            /* pill 클릭 = 선택 토글 */
-            pill.addEventListener("click", e => {
-                e.stopPropagation();
-                if (selectedRecipeId === wrapper.dataset.id) {
-                    clearSelection();
-                } else {
-                    selectRecipe(wrapper);
-                }
+        /* 노출 ON 점 클릭 → visible=false */
+        if (e.target.classList.contains('visible-on')) {
+            e.stopPropagation();
+            if (!confirm('"' + name + '" 레시피를 대시보드에서 숨기시겠습니까?')) return;
+            apiPost('/api/cafe/recipe/' + id + '/visible/false', 'visible 변경 실패').then(function (ok) {
+                if (ok) location.reload();
             });
+            return;
+        }
 
-            /* 인라인 연필 아이콘 클릭 = 수정 페이지 이동 */
-            if (inlineEditIcon) {
-                inlineEditIcon.addEventListener("click", e => {
-                    e.stopPropagation();
-                    const id = wrapper.dataset.id;
-                    if (id) {
-                        location.href = "/cafe/recipe/" + id + "/edit";
-                    }
-                });
+        /* 노출 OFF 점 클릭 → visible=true */
+        if (e.target.classList.contains('visible-off')) {
+            e.stopPropagation();
+            if (!confirm('"' + name + '" 레시피를 대시보드에 노출하시겠습니까?')) return;
+            apiPost('/api/cafe/recipe/' + id + '/visible/true', 'visible 변경 실패').then(function (ok) {
+                if (ok) location.reload();
+            });
+            return;
+        }
+
+        /* 템플릿 ON → false */
+        if (e.target.classList.contains('tmpl-on')) {
+            e.stopPropagation();
+            if (!confirm('"' + name + '" 레시피를 템플릿에서 해제하시겠습니까?')) return;
+            apiPost('/api/cafe/recipe/' + id + '/template/false', 'template 변경 실패').then(function (ok) {
+                if (ok) location.reload();
+            });
+            return;
+        }
+
+        /* 템플릿 OFF → true */
+        if (e.target.classList.contains('tmpl-off')) {
+            e.stopPropagation();
+            if (!confirm('"' + name + '" 레시피를 템플릿으로 설정하시겠습니까?')) return;
+            apiPost('/api/cafe/recipe/' + id + '/template/true', 'template 변경 실패').then(function (ok) {
+                if (ok) location.reload();
+            });
+            return;
+        }
+
+        /* 행 클릭 → 상세 모달 */
+        openDetailModal(id, name);
+    });
+
+    /* ── 상세 모달 ── */
+    function openDetailModal(id, name) {
+        currentId = id;
+        document.getElementById('recipeDetailModalLabel').textContent = name;
+
+        var stepsEl = document.getElementById('recipe-steps-' + id);
+        document.getElementById('recipe-steps-content').innerHTML =
+            stepsEl ? stepsEl.innerHTML : '<p class="text-muted">스텝 없음</p>';
+
+        var modalEl = document.getElementById('recipeDetailModal');
+        new bootstrap.Modal(modalEl).show();
+
+        attachStepClicks();
+        setTimeout(function () {
+            var first = document.querySelector('#recipe-steps-content .recipe-step');
+            if (first) {
+                document.querySelectorAll('#recipe-steps-content .recipe-step').forEach(function (s) { s.classList.remove('step-selected'); });
+                first.classList.add('step-selected');
             }
+        }, 50);
+    }
 
-            /* 🗑 삭제 아이콘 클릭 = confirm → 삭제 API 호출 */
-            if (inlineDeleteIcon) {
-                inlineDeleteIcon.addEventListener("click", e => {
-                    e.stopPropagation();
-                    const id = wrapper.dataset.id;
-                    const name = wrapper.dataset.name || "";
-                    if (!id) return;
-                    deleteRecipe(id, name);
-                });
-            }
-
-            /* visible == true 별 아이콘 클릭 시: visible=false */
-            if (visibleStarOn) {
-                visibleStarOn.addEventListener("click", e => {
-                    e.stopPropagation();
-
-                    const id = wrapper.dataset.id;
-                    const name = wrapper.dataset.name || "";
-
-                    const ok = confirm(
-                            `"${name}" 레시피를 대시보드에서 보이지 않게 하시겠습니까?\n(visible = false로 변경됩니다)`
-                    );
-                    if (!ok) return;
-
-                    if (id) {
-                        updateRecipeVisible(id, false);
-                    }
-                });
-            }
-
-            /* visible == false OFF 별 클릭: visible=true */
-            if (visibleStarOff) {
-                visibleStarOff.addEventListener("click", e => {
-                    e.stopPropagation();
-
-                    const id = wrapper.dataset.id;
-                    const name = wrapper.dataset.name || "";
-
-                    const ok = confirm(
-                            `"${name}" 레시피를 대시보드에서 보이도록 설정하시겠습니까?\n(visible = true로 변경됩니다)`
-                    );
-                    if (!ok) return;
-
-                    if (id) {
-                        updateRecipeVisible(id, true);
-                    }
-                });
-            }
-
-            /* template == true 별 아이콘 클릭 시: template=false */
-            if (templateStarOn) {
-                templateStarOn.addEventListener("click", e => {
-                    e.stopPropagation();
-
-                    const id = wrapper.dataset.id;
-                    const name = wrapper.dataset.name || "";
-
-                    const ok = confirm(
-                            `"${name}" 레시피를 템플릿에서 해제하시겠습니까?\n(template = false로 변경됩니다)`
-                    );
-                    if (!ok) return;
-
-                    if (id) {
-                        updateRecipeTemplate(id, false);
-                    }
-                });
-            }
-
-            /* template == false OFF 별 클릭: template=true */
-            if (templateStarOff) {
-                templateStarOff.addEventListener("click", e => {
-                    e.stopPropagation();
-
-                    const id = wrapper.dataset.id;
-                    const name = wrapper.dataset.name || "";
-
-                    const ok = confirm(
-                            `"${name}" 레시피를 템플릿으로 설정하시겠습니까?\n(template = true로 변경됩니다)`
-                    );
-                    if (!ok) return;
-
-                    if (id) {
-                        updateRecipeTemplate(id, true);
-                    }
-                });
-            }
-
-            /* 더블클릭 = 팝업 오픈 */
-            pill.addEventListener("dblclick", e => {
-                e.stopPropagation();
-
-                selectRecipe(wrapper);
-
-                const id = wrapper.dataset.id;
-                const name = wrapper.dataset.name;
-                const stepsHtml = document.getElementById("recipe-steps-" + id)?.innerHTML;
-
-                document.getElementById("recipeDetailModalLabel").innerText = name;
-                document.getElementById("recipe-steps-content").innerHTML =
-                        stepsHtml ? stepsHtml : "<p>스텝 없음</p>";
-
-                const modal = new bootstrap.Modal(document.getElementById("recipeDetailModal"));
-                modal.show();
-
-                attachStepClickHandlers();
-
-                /* 팝업 열릴 때 1 스텝 자동 선택 */
-                setTimeout(() => {
-                    const firstStep = document.querySelector("#recipe-steps-content .recipe-step");
-                    if (firstStep) {
-                        document
-                                .querySelectorAll("#recipe-steps-content .recipe-step")
-                                .forEach(s => s.classList.remove("step-selected"));
-                        firstStep.classList.add("step-selected");
-                    }
-                }, 50);
+    function attachStepClicks() {
+        var cont = document.getElementById('recipe-steps-content');
+        if (!cont) return;
+        var steps = cont.querySelectorAll('.recipe-step');
+        steps.forEach(function (s) {
+            s.addEventListener('click', function () {
+                steps.forEach(function (x) { x.classList.remove('step-selected'); });
+                s.classList.add('step-selected');
             });
         });
+    }
 
-        /* 상단 수정 버튼 */
-        editBtn.addEventListener("click", () => {
-            if (selectedRecipeId) {
-                location.href = "/cafe/recipe/" + selectedRecipeId + "/edit";
-            }
+    /* ── 모달 수정 버튼 ── */
+    if (modalEditBtn) {
+        modalEditBtn.addEventListener('click', function () {
+            if (currentId) location.href = '/cafe/recipe/' + currentId + '/edit';
         });
+    }
 
-        /* 팝업 하단 '이 레시피 수정하기' 버튼 */
-        modalEditBtn.addEventListener("click", () => {
-            if (selectedRecipeId) {
-                location.href = "/cafe/recipe/" + selectedRecipeId + "/edit";
-            }
-        });
-    })();
+})();
 </script>
 
 {{>layouts/footer}}

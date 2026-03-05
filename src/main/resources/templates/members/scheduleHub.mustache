@@ -5,7 +5,7 @@
     <ul class="nav nav-tabs schedule-hub-tabs" id="scheduleHubTabs" role="tablist">
         <li class="nav-item" role="presentation">
             <a
-                    class="nav-link"
+                    class="nav-link active"
                     id="weekly-tab-btn"
                     data-bs-toggle="tab"
                     data-toggle="tab"
@@ -13,12 +13,12 @@
                     role="tab"
                     aria-controls="weekly-tab"
                     aria-selected="true">
-                주간 일정
+                주간일정/근무시간
             </a>
         </li>
         <li class="nav-item" role="presentation">
             <a
-                    class="nav-link active"
+                    class="nav-link"
                     id="monthly-tab-btn"
                     data-bs-toggle="tab"
                     data-toggle="tab"
@@ -26,7 +26,7 @@
                     role="tab"
                     aria-controls="monthly-tab"
                     aria-selected="false">
-                월간 일정
+                월간일정/근무시간
             </a>
         </li>
     </ul>
@@ -34,9 +34,25 @@
     <!-- 탭 콘텐츠 -->
     <div class="tab-content schedule-hub-content" id="scheduleHubTabContent">
 
-        <!-- 월간: /members/schedulemanagement -->
+        <!-- 주간: /members/schedulemanagementbyweek (기본 활성) -->
         <div
                 class="tab-pane fade show active schedule-hub-pane"
+                id="weekly-tab"
+                role="tabpanel"
+                aria-labelledby="weekly-tab-btn">
+
+            <iframe
+                    id="weekly-frame"
+                    class="schedule-hub-iframe"
+                    src="/members/schedulemanagementbyweek"
+                    title="주간일정/근무시간 관리"
+                    style="width:100%; border:none; min-height:calc(100vh - 180px);">
+            </iframe>
+        </div>
+
+        <!-- 월간: /members/schedulemanagement (lazy-load) -->
+        <div
+                class="tab-pane fade schedule-hub-pane"
                 id="monthly-tab"
                 role="tabpanel"
                 aria-labelledby="monthly-tab-btn">
@@ -44,25 +60,8 @@
             <iframe
                     id="monthly-frame"
                     class="schedule-hub-iframe"
-                    src="/members/schedulemanagement"
-                    title="월간 일정 관리"
-                    style="width:100%; border:none; min-height:calc(100vh - 180px);">
-            </iframe>
-        </div>
-
-        <!-- 주간: /members/schedulemanagementbyweek -->
-        <div
-                class="tab-pane fade schedule-hub-pane"
-                id="weekly-tab"
-                role="tabpanel"
-                aria-labelledby="weekly-tab-btn">
-
-            <!-- 처음엔 비워두고 탭 클릭 시 로드 (lazy-load) -->
-            <iframe
-                    id="weekly-frame"
-                    class="schedule-hub-iframe"
-                    data-src="/members/schedulemanagementbyweek"
-                    title="주간 일정 관리"
+                    data-src="/members/schedulemanagement"
+                    title="월간일정/근무시간 관리"
                     style="width:100%; border:none; min-height:calc(100vh - 180px);">
             </iframe>
         </div>
@@ -74,7 +73,7 @@
     document.addEventListener('DOMContentLoaded', function () {
         const tabLinks = document.querySelectorAll('#scheduleHubTabs .nav-link');
         const tabPanes = document.querySelectorAll('#scheduleHubTabContent .tab-pane');
-        const weeklyFrame = document.getElementById('weekly-frame');
+        const monthlyFrame = document.getElementById('monthly-frame');
 
         tabLinks.forEach(function (link) {
             link.addEventListener('click', function (e) {
@@ -106,11 +105,11 @@
                     }
                 }
 
-                // 주간 탭 lazy-load
-                if (link.id === 'weekly-tab-btn' && weeklyFrame && !weeklyFrame.src) {
-                    const dataSrc = weeklyFrame.getAttribute('data-src');
+                // 월간 탭 lazy-load
+                if (link.id === 'monthly-tab-btn' && monthlyFrame && !monthlyFrame.src) {
+                    const dataSrc = monthlyFrame.getAttribute('data-src');
                     if (dataSrc) {
-                        weeklyFrame.src = dataSrc;
+                        monthlyFrame.src = dataSrc;
                     }
                 }
             });

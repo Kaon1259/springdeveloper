@@ -1,74 +1,98 @@
 {{>layouts/header}}
 
 <style>
-    body { background-color: #f8f9fa; }
-
-    .card-count-badge { font-size: 0.85rem; }
+    body { background: #fff9f2; }
 
     .category-chip-group{ display:flex; flex-wrap:wrap; gap:0.5rem; }
     .category-chip{
-        border-radius:999px; border:1px solid #dee2e6; background:#fff;
-        padding:0.35rem 0.9rem; font-size:0.9rem; cursor:pointer;
-        transition: background-color 0.1s ease, color 0.1s ease, box-shadow 0.1s ease, border-color 0.1s ease;
-        white-space:nowrap;
+        border-radius:999px; border:1.5px solid #e2e8f0; background:#fff;
+        padding:0.32rem 0.85rem; font-size:0.88rem; cursor:pointer;
+        transition: all 0.12s ease;
+        white-space:nowrap; font-weight:500; color:#5b4434;
     }
-    .category-chip:hover{ background:#f1f3f5; }
+    .category-chip:hover{ background:#fff9f2; border-color:#c4a882; }
     .category-chip.selected{
-        background:#0d6efd; color:#fff; border-color:#0d6efd;
-        box-shadow:0 0.3rem 0.7rem rgba(13,110,253,0.35);
+        background:#5b4434; color:#fff9f2; border-color:#5b4434;
+        box-shadow:0 2px 8px rgba(91,68,52,0.28);
+        font-weight:700;
     }
 
     .temp-group .btn, .cup-group .btn { min-width: 80px; }
     .temp-group .btn-outline-danger, .temp-group .btn-outline-primary { font-weight: 600; }
 
     .form-wrapper{
-        border-radius:1rem; border:2px solid #fd7e14;
-        padding:1rem 1.25rem; background:#fff; margin-bottom:1rem;
+        border-radius:1rem; border:2px solid #c4a882;
+        padding:1.1rem 1.35rem; background:#fff; margin-bottom:1rem;
+        box-shadow:0 2px 10px rgba(91,68,52,0.07);
     }
 
     .step-wrapper{
-        border-radius:1rem; border:2px solid #fd7e14;
+        border-radius:1rem; border:2px solid #c4a882;
         padding:0.75rem 0.75rem 0.25rem; background:#fff;
+        box-shadow:0 2px 10px rgba(91,68,52,0.07);
     }
 
     .step-time-group{ display:inline-flex; align-items:center; gap:0.25rem; margin-left:0.75rem; }
     .step-time-input{ width:70px; padding:0.1rem 0.35rem; font-size:0.8rem; text-align:right; }
     .step-time-label{ font-size:0.8rem; color:#6c757d; white-space:nowrap; }
 
-    #recipePreviewModal .modal-dialog{ max-width:1200px; width:95%; }
+    /* Preview modal - dark header */
+    #recipePreviewModal .modal-dialog{ max-width:960px; width:95%; }
     #recipePreviewModal .modal-content{
-        border-radius:0.75rem; box-shadow:0 0.75rem 1.5rem rgba(0,0,0,0.25);
-        max-height:90vh;
+        border-radius:1rem; border:none; overflow:hidden;
+        box-shadow:0 1.5rem 4rem rgba(0,0,0,0.28);
+        max-height:92vh;
     }
-    #recipePreviewModal .modal-body{ font-size:2.4rem; max-height:80vh; overflow-y:auto; }
-    #recipePreviewMeta{ font-size:2rem !important; }
-    #recipe-steps-content{ padding-right:0.5rem; }
+    #recipePreviewModal .modal-header{
+        background: linear-gradient(135deg, #5b4434 0%, #3f2c20 100%);
+        border-bottom:none; padding:1.1rem 1.5rem;
+    }
+    #recipePreviewModal .modal-header .btn-close{ filter:invert(1) brightness(2); opacity:0.75; }
+    #recipePreviewModal .modal-header .btn-close:hover{ opacity:1; }
+    #recipePreviewModal .modal-header .modal-title{ color:#fff9f2; font-size:1.15rem; font-weight:800; }
+    #recipePreviewModal .modal-body{
+        font-size:1rem; background:#fdfcfb;
+        padding:1.5rem; max-height:75vh; overflow-y:auto;
+    }
+    #recipePreviewModal .modal-footer{ background:#fdfcfb; border-top:1px solid #ede8e3; }
+    #recipePreviewMeta{ font-size:0.95rem !important; color:#6c757d; }
+    #recipe-steps-content{ padding-right:0.25rem; }
 
     .recipe-step{
-        position:relative; background:#fff; border-radius:0.5rem;
-        padding:1.1rem 1.4rem; margin-bottom:1rem;
-        box-shadow:0 0.35rem 0.8rem rgba(0,0,0,0.08);
-        border-left:6px solid #0d6efd;
-        font-size:2.7rem; line-height:1.45; cursor:pointer;
-        transition: background-color .15s ease, color .15s ease, box-shadow .15s ease;
+        display:flex; align-items:flex-start; gap:0.8rem;
+        background:#fff; border-radius:0.875rem;
+        padding:0.9rem 1.1rem; margin-bottom:0.6rem;
+        border:1.5px solid #ede8e3;
+        box-shadow:0 1px 4px rgba(0,0,0,0.05);
+        font-size:1rem; line-height:1.5; cursor:pointer;
+        transition:all 0.13s ease;
     }
-    .step-index{ font-weight:900; margin-right:0.9rem; }
-    .step-text{ display:inline-block; vertical-align:middle; }
+    .recipe-step:hover{ border-color:#c4a882; box-shadow:0 3px 10px rgba(91,68,52,0.1); transform:translateX(2px); }
+    .step-index{
+        flex:0 0 auto;
+        background:#5b4434; color:#fff9f2; border-radius:999px;
+        padding:0.15rem 0.55rem; font-size:0.76rem; font-weight:900;
+        white-space:nowrap; line-height:1.6; margin-top:0.05rem;
+    }
+    .step-text{ flex:1; display:block; font-weight:500; color:#374151; }
 
-    #recipe-steps-content .recipe-step:nth-child(2){ margin-left:18px; }
-    #recipe-steps-content .recipe-step:nth-child(3){ margin-left:36px; }
-    #recipe-steps-content .recipe-step:nth-child(4){ margin-left:54px; }
-    #recipe-steps-content .recipe-step:nth-child(5){ margin-left:72px; }
-    #recipe-steps-content .recipe-step:nth-child(6){ margin-left:90px; }
-    #recipe-steps-content .recipe-step:nth-child(7){ margin-left:108px; }
+    #recipe-steps-content .recipe-step:nth-child(2){ margin-left:10px; }
+    #recipe-steps-content .recipe-step:nth-child(3){ margin-left:20px; }
+    #recipe-steps-content .recipe-step:nth-child(4){ margin-left:30px; }
+    #recipe-steps-content .recipe-step:nth-child(5){ margin-left:40px; }
+    #recipe-steps-content .recipe-step:nth-child(6){ margin-left:50px; }
+    #recipe-steps-content .recipe-step:nth-child(7){ margin-left:60px; }
 
     .recipe-step.step-selected{
-        background:#0d6efd; color:#fff;
-        box-shadow:0 0.35rem 0.9rem rgba(13,110,253,0.45);
+        background:#5b4434; border-color:#5b4434;
+        box-shadow:0 4px 14px rgba(91,68,52,0.26); transform:translateX(2px);
     }
-    .recipe-step.empty-step{ border-left-color:#adb5bd; color:#6c757d; }
+    .recipe-step.step-selected .step-index{ background:rgba(255,255,255,0.22); color:#fff9f2; }
+    .recipe-step.step-selected .step-text{ color:#fff9f2; }
+    .recipe-step.empty-step{ border-color:#e2e8f0; }
+    .recipe-step.empty-step .step-index{ background:#94a3b8; }
 
-    /* ✅ useBlender 스위치 UI */
+    /* useBlender 스위치 UI */
     .blender-switch-row{
         display:flex; align-items:center; justify-content:space-between; gap:1rem;
         padding:0.65rem 0.85rem;
@@ -148,16 +172,14 @@
     <div class="row justify-content-center">
         <div class="col-lg-8 col-md-10">
 
-            <div class="mb-3 d-flex justify-content-between align-items-center">
+            <div class="page-form-hero mb-4" style="background:linear-gradient(135deg,#5b4434,#3f2c20);border-radius:1rem;padding:1.1rem 1.5rem;display:flex;justify-content:space-between;align-items:center;gap:1rem;box-shadow:0 6px 20px rgba(91,68,52,0.2);">
                 <div>
-                    <h3 class="mb-0 fw-bold">☕ 메뉴 레시피 수정</h3>
-                    <div class="text-muted small mt-1">저장된 레시피 내용을 수정하고 다시 저장할 수 있습니다.</div>
+                    <div style="font-size:1.2rem;font-weight:900;color:#fff9f2;">✎ 레시피 수정</div>
+                    <div style="font-size:0.78rem;color:rgba(255,249,242,0.6);margin-top:0.15rem;">저장된 레시피 내용을 수정하고 다시 저장할 수 있습니다. <span style="color:rgba(255,249,242,0.45)">ID: {{recipeId}}</span></div>
                 </div>
-
                 <div class="d-flex align-items-center gap-2">
-                    <span class="badge bg-light text-muted">ID: {{recipeId}}</span>
-                    <a href="/cafe/recipe/new" class="btn btn-sm btn-success">레시피 만들기</a>
-                    <a href="/cafe/recipes" class="btn btn-sm btn-outline-secondary">목록</a>
+                    <a href="/cafe/recipe/new" class="btn btn-sm" style="background:rgba(255,249,242,0.18);border:1.5px solid rgba(255,249,242,0.4);color:#fff9f2;border-radius:999px;font-weight:700;">+ 새 레시피</a>
+                    <a href="/cafe/recipes" class="btn btn-sm" style="background:rgba(255,249,242,0.1);border:1.5px solid rgba(255,249,242,0.3);color:#fff9f2;border-radius:999px;font-weight:600;">목록</a>
                 </div>
             </div>
 
@@ -220,33 +242,32 @@
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label fw-semibold d-block">HOT / ICE</label>
-                        <div class="btn-group temp-group" role="group" aria-label="Temperature select">
-                            <input type="radio" class="btn-check" name="temperature" id="tempHot" value="HOT" autocomplete="off">
-                            <label class="btn btn-outline-danger" for="tempHot">HOT</label>
+                        <label class="form-label fw-semibold d-block">온도 / 컵 사이즈</label>
+                        <div class="d-flex align-items-center gap-3 flex-wrap">
+                            <div class="btn-group temp-group" role="group" aria-label="Temperature select">
+                                <input type="radio" class="btn-check" name="temperature" id="tempHot" value="HOT" autocomplete="off">
+                                <label class="btn btn-outline-danger" for="tempHot">HOT</label>
 
-                            <input type="radio" class="btn-check" name="temperature" id="tempIce" value="ICE" autocomplete="off">
-                            <label class="btn btn-outline-primary" for="tempIce">ICE</label>
-                        </div>
-                    </div>
+                                <input type="radio" class="btn-check" name="temperature" id="tempIce" value="ICE" autocomplete="off">
+                                <label class="btn btn-outline-primary" for="tempIce">ICE</label>
+                            </div>
 
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold d-block">컵 사이즈</label>
-                        <div class="btn-group cup-group" role="group" aria-label="Cup size select">
-                            <input type="radio" class="btn-check" name="cupSize" id="cup20" value="OZ20" autocomplete="off">
-                            <label class="btn btn-outline-secondary" for="cup20">20oz</label>
+                            <div class="btn-group cup-group" role="group" aria-label="Cup size select">
+                                <input type="radio" class="btn-check" name="cupSize" id="cup20" value="OZ20" autocomplete="off">
+                                <label class="btn btn-outline-secondary" for="cup20">20oz</label>
 
-                            <input type="radio" class="btn-check" name="cupSize" id="cup24" value="OZ24" autocomplete="off">
-                            <label class="btn btn-outline-secondary" for="cup24">24oz</label>
+                                <input type="radio" class="btn-check" name="cupSize" id="cup24" value="OZ24" autocomplete="off">
+                                <label class="btn btn-outline-secondary" for="cup24">24oz</label>
 
-                            <input type="radio" class="btn-check" name="cupSize" id="cup32" value="OZ32" autocomplete="off">
-                            <label class="btn btn-outline-secondary" for="cup32">32oz</label>
+                                <input type="radio" class="btn-check" name="cupSize" id="cup32" value="OZ32" autocomplete="off">
+                                <label class="btn btn-outline-secondary" for="cup32">32oz</label>
 
-                            <input type="radio" class="btn-check" name="cupSize" id="cupL17" value="L17" autocomplete="off">
-                            <label class="btn btn-outline-secondary" for="cupL17">1.7L</label>
+                                <input type="radio" class="btn-check" name="cupSize" id="cupL17" value="L17" autocomplete="off">
+                                <label class="btn btn-outline-secondary" for="cupL17">1.7L</label>
 
-                            <input type="radio" class="btn-check" name="cupSize" id="cupL20" value="L20" autocomplete="off">
-                            <label class="btn btn-outline-secondary" for="cupL20">2.0L</label>
+                                <input type="radio" class="btn-check" name="cupSize" id="cupL20" value="L20" autocomplete="off">
+                                <label class="btn btn-outline-secondary" for="cupL20">2.0L</label>
+                            </div>
                         </div>
                         <div class="form-text text-muted small">
                             HOT 선택 시 기본 20oz, ICE 선택 시 기본 24oz가 자동 선택됩니다.
@@ -364,7 +385,7 @@
     <div class="modal-dialog modal-dialog-centered modal-xl">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title fw-bold" id="recipePreviewModalLabel">레시피 미리보기</h5>
+                <h5 class="modal-title" id="recipePreviewModalLabel">👁 레시피 미리보기</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="닫기"></button>
             </div>
             <div class="modal-body">

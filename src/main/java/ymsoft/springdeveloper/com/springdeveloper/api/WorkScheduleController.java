@@ -32,7 +32,12 @@ public class WorkScheduleController {
     public ResponseEntity<ScheduleGenerateResponse> generate(
             @Valid @RequestBody ScheduleGenerateRequest request
     ) {
+        log.info("[일정생성] memberId={}, 기간={} ~ {}, 항목수={}",
+                request.getMemberId(), request.getFrom(), request.getTo(),
+                request.getItems() != null ? request.getItems().size() : 0);
         ScheduleGenerateResponse resp = workScheduleService.generateSchedules(request);
+        log.info("[일정생성] 완료 - 생성={}, 스킵={}, 덮어쓰기={}",
+                resp.getCreated(), resp.getSkipped(), resp.getOverwritten());
         return ResponseEntity.ok(resp);
     }
 
@@ -40,8 +45,12 @@ public class WorkScheduleController {
     public ResponseEntity<ScheduleDayUpdateResponse> updateDay(
             @Valid @RequestBody ScheduleDayUpdateRequest request
     ) {
-        log.info("api/schedule/work/update: " + request.toString());
+        log.info("[일정수정] memberId={}, 날짜={}, 세그먼트수={}",
+                request.getMemberId(), request.getDate(),
+                request.getSegments() != null ? request.getSegments().size() : 0);
         ScheduleDayUpdateResponse res = workScheduleService.upsertDay(request);
+        log.info("[일정수정] 완료 - memberId={}, 날짜={}, 저장세그먼트={}, 총{}분",
+                res.getMemberId(), res.getDate(), res.getCount(), res.getMinutes());
         return ResponseEntity.ok(res);
     }
 
@@ -49,9 +58,11 @@ public class WorkScheduleController {
     public ResponseEntity<?> updateDay(
             @Valid @RequestBody ScheduleBatchUpdateReqeust request
     ) {
-        log.info("api/schedule/work/batchupdate: " + request.toString());
-
-        List<ScheduleDayUpdateResponse> response =  workScheduleService.batchUpdatePlanWeek(request).stream().toList();
+        log.info("[일정일괄수정] memberId={}, 날짜수={}",
+                request.getMemberId(),
+                request.getDays() != null ? request.getDays().size() : 0);
+        List<ScheduleDayUpdateResponse> response = workScheduleService.batchUpdatePlanWeek(request).stream().toList();
+        log.info("[일정일괄수정] 완료 - 처리된 날짜수={}", response.size());
         return ResponseEntity.ok().build();
     }
 
@@ -61,13 +72,19 @@ public class WorkScheduleController {
             @PathVariable String date
     ) {
         LocalDate workDate = LocalDate.parse(date);
-        log.info("GET /api/schedule/{}/{}", memberId, date);
+        log.info("[일정조회] memberId={}, 날짜={}", memberId, date);
 
-        // ✅ 서비스에서 List<WorkSchedule> 받아오기
-        List<WorkSchedule> schedules = workScheduleService.getSchedulesByMemberAndDate(memberId, workDate);
+        List<WorkSchedule> schedules;
+        try {
+            schedules = workScheduleService.getSchedulesByMemberAndDate(memberId, workDate);
+        } catch (Exception e) {
+            log.error("[일정조회] DB 조회 실패 memberId={}, 날짜={}: {}", memberId, workDate, e.getMessage(), e);
+            return ResponseEntity.internalServerError().build();
+        }
 
         // 데이터 없을 때
         if (schedules == null || schedules.isEmpty()) {
+            log.info("[일정조회] memberId={}, 날짜={} - 데이터 없음", memberId, workDate);
             Map<String, Object> res = new HashMap<>();
             res.put("success", false);
             res.put("message", "해당일 근무 데이터 없음");
@@ -95,6 +112,9 @@ public class WorkScheduleController {
                 .mapToInt(WorkSchedule::getMinutes)
                 .sum();
 
+        log.info("[일정조회] memberId={}, 날짜={} - 세그먼트={}, 총{}분",
+                memberId, workDate, segments, totalMinutes);
+
         Map<String, Object> res = new HashMap<>();
         res.put("success", true);
         res.put("memberId", memberId);
@@ -112,8 +132,15 @@ public class WorkScheduleController {
             @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate start,
             @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate end
     ) {
-        log.info("memberId={}, start={}, end={}", memberId, start, end);
-        return ResponseEntity.ok(workScheduleService.getWorkRange(memberId, start, end));
+        log.info("[기간일정조회] memberId={}, 기간={} ~ {}", memberId, start, end);
+        try {
+            ScheduleRangeResponse resp = workScheduleService.getWorkRange(memberId, start, end);
+            log.info("[기간일정조회] 결과 - {}일 데이터", resp.getDays() != null ? resp.getDays().size() : 0);
+            return ResponseEntity.ok(resp);
+        } catch (Exception e) {
+            log.error("[기간일정조회] DB 조회 실패 memberId={}, {}-{}: {}", memberId, start, end, e.getMessage(), e);
+            return ResponseEntity.internalServerError().build();
+        }
     }
 
 

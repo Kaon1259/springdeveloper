@@ -13,6 +13,9 @@ import java.util.List;
 @AllArgsConstructor
 public class RecipeGroupDto {
 
+    // 카테고리 enum 이름 (예: "HOT_COFFEE") - 순서 저장용
+    private String categoryKey;
+
     // 화면에 표시할 카테고리 라벨 (예: "Hot 커피")
     private String categoryLabel;
 

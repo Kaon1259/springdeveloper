@@ -1,15 +1,7 @@
 package ymsoft.springdeveloper.com.springdeveloper.entity;
 
+import lombok.*;
 
-import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-
-@Entity
-@Table(name = "recipe_step")
 @Getter
 @Setter
 @Builder
@@ -17,23 +9,10 @@ import lombok.Setter;
 @AllArgsConstructor
 public class RecipeStep {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
-    // 어느 레시피에 속한 단계인지
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "recipe_id", nullable = false)
+    private Long recipeId;
     private Recipe recipe;
-
-    // Step 순서 (1, 2, 3, …)
-    @Column(nullable = false)
     private Integer stepOrder;
-
-    @Column(nullable = false)
     private Integer stepTime = 0;
-
-    // 실제 레시피 내용
-    @Column(nullable = false, columnDefinition = "TEXT")
     private String content;
 }

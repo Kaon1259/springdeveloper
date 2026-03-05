@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ymsoft.springdeveloper.com.springdeveloper.mapper.ScheduleItemMapper">
+
+    <resultMap id="scheduleItemMap" type="ymsoft.springdeveloper.com.springdeveloper.entity.ScheduleItem">
+        <id property="id" column="id"/>
+        <result property="memberId" column="member_id"/>
+        <result property="day" column="day_name"
+                typeHandler="org.apache.ibatis.type.EnumTypeHandler"/>
+        <result property="start" column="start_time"/>
+        <result property="end" column="end_time"/>
+    </resultMap>
+
+    <delete id="deleteByMemberIdAndDay">
+        DELETE FROM schedule_item WHERE member_id = #{memberId} AND day_name = #{day}
+    </delete>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO schedule_item (member_id, day_name, start_time, end_time)
+        VALUES (#{memberId}, #{day, typeHandler=org.apache.ibatis.type.EnumTypeHandler}, #{start}, #{end})
+    </insert>
+
+    <select id="findByMemberId" resultMap="scheduleItemMap">
+        SELECT * FROM schedule_item WHERE member_id = #{memberId}
+    </select>
+
+</mapper>

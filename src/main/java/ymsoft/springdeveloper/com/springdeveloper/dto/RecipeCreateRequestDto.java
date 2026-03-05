@@ -98,10 +98,11 @@ public class RecipeCreateRequestDto {
                                         .collect(Collectors.toList())
                 )
                 .stepTimes(
-                        recipe.getSteps().stream()
-                                .sorted(Comparator.comparing(RecipeStep::getStepOrder))
-                                .map(RecipeStep::getStepTime)
-                                .collect(Collectors.toList())
+                        recipe.getSteps() == null ? null :
+                                recipe.getSteps().stream()
+                                        .sorted(Comparator.comparing(RecipeStep::getStepOrder))
+                                        .map(RecipeStep::getStepTime)
+                                        .collect(Collectors.toList())
                 )
                 .build();
     }

@@ -1,0 +1,199 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ymsoft.springdeveloper.com.springdeveloper.mapper.RecipeMapper">
+
+    <resultMap id="recipeMap" type="ymsoft.springdeveloper.com.springdeveloper.entity.Recipe">
+        <id property="id" column="id"/>
+        <result property="menuName" column="menu_name"/>
+        <result property="author" column="author"/>
+        <result property="description" column="description"/>
+        <result property="imgname" column="imgname"/>
+        <result property="visible" column="visible"/>
+        <result property="template" column="template"/>
+        <result property="useBlender" column="use_blender"/>
+        <result property="temperature" column="temperature"
+                typeHandler="org.apache.ibatis.type.EnumTypeHandler"/>
+        <result property="cupSize" column="cup_size"
+                typeHandler="org.apache.ibatis.type.EnumTypeHandler"/>
+        <result property="category" column="category"
+                typeHandler="org.apache.ibatis.type.EnumTypeHandler"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+        <collection property="steps"
+                    ofType="ymsoft.springdeveloper.com.springdeveloper.entity.RecipeStep"
+                    columnPrefix="rs_">
+            <id property="id" column="id"/>
+            <result property="recipeId" column="recipe_id"/>
+            <result property="stepOrder" column="step_order"/>
+            <result property="stepTime" column="step_time"/>
+            <result property="content" column="content"/>
+        </collection>
+    </resultMap>
+
+    <resultMap id="stepMap" type="ymsoft.springdeveloper.com.springdeveloper.entity.RecipeStep">
+        <id property="id" column="id"/>
+        <result property="recipeId" column="recipe_id"/>
+        <result property="stepOrder" column="step_order"/>
+        <result property="stepTime" column="step_time"/>
+        <result property="content" column="content"/>
+    </resultMap>
+
+    <!-- 카테고리별 독립 순서(recipe_order 테이블) 기준으로 정렬 -->
+    <select id="findAllOrderByCategoryMenuName" resultMap="recipeMap">
+        SELECT r.*,
+               rs.id AS rs_id,
+               rs.recipe_id AS rs_recipe_id,
+               rs.step_order AS rs_step_order,
+               rs.step_time AS rs_step_time,
+               rs.content AS rs_content
+        FROM recipe r
+        LEFT JOIN recipe_order ro ON ro.recipe_id = r.id AND ro.category COLLATE utf8mb4_0900_ai_ci = r.category
+        LEFT JOIN recipe_step rs ON rs.recipe_id = r.id
+        ORDER BY r.category ASC, COALESCE(ro.position, 999999) ASC, r.menu_name ASC, rs.step_order ASC
+    </select>
+
+    <!-- 카테고리별 레시피 순서 UPSERT -->
+    <insert id="upsertRecipeOrders">
+        INSERT INTO recipe_order (category, recipe_id, position)
+        VALUES
+        <foreach collection="orders" item="item" separator=",">
+            (#{catKey}, #{item.id}, #{item.sortOrder})
+        </foreach>
+        ON DUPLICATE KEY UPDATE position = VALUES(position)
+    </insert>
+
+    <!-- 레시피 삭제 시 순서 정보도 함께 삭제 -->
+    <delete id="deleteRecipeOrderByRecipeId">
+        DELETE FROM recipe_order WHERE recipe_id = #{recipeId}
+    </delete>
+
+    <select id="findById" resultMap="recipeMap">
+        SELECT r.*,
+               rs.id AS rs_id,
+               rs.recipe_id AS rs_recipe_id,
+               rs.step_order AS rs_step_order,
+               rs.step_time AS rs_step_time,
+               rs.content AS rs_content
+        FROM recipe r
+        LEFT JOIN recipe_step rs ON rs.recipe_id = r.id
+        WHERE r.id = #{id}
+        ORDER BY rs.step_order ASC
+    </select>
+
+    <!-- 즐겨찾기 페이지 - favorite_order 기준 정렬 -->
+    <select id="findByVisibleTrueOrderByFavoritePosition" resultMap="recipeMap">
+        SELECT r.*,
+               rs.id AS rs_id,
+               rs.recipe_id AS rs_recipe_id,
+               rs.step_order AS rs_step_order,
+               rs.step_time AS rs_step_time,
+               rs.content AS rs_content
+        FROM recipe r
+        LEFT JOIN recipe_step rs ON rs.recipe_id = r.id
+        LEFT JOIN favorite_order fo ON fo.recipe_id = r.id
+        WHERE r.visible = 1
+        ORDER BY COALESCE(fo.position, 999999) ASC, r.updated_at DESC, rs.step_order ASC
+    </select>
+
+    <!-- 즐겨찾기 순서 UPSERT -->
+    <insert id="upsertFavoriteOrders">
+        INSERT INTO favorite_order (recipe_id, position)
+        VALUES
+        <foreach collection="list" item="item" separator=",">
+            (#{item.id}, #{item.position})
+        </foreach>
+        ON DUPLICATE KEY UPDATE position = VALUES(position)
+    </insert>
+
+    <select id="findByVisibleTrueOrderByUpdatedAtDesc" resultMap="recipeMap">
+        SELECT r.*,
+               rs.id AS rs_id,
+               rs.recipe_id AS rs_recipe_id,
+               rs.step_order AS rs_step_order,
+               rs.step_time AS rs_step_time,
+               rs.content AS rs_content
+        FROM recipe r
+        LEFT JOIN recipe_step rs ON rs.recipe_id = r.id
+        WHERE r.visible = 1
+        ORDER BY r.updated_at DESC, rs.step_order ASC
+    </select>
+
+    <select id="findAllByTemplateTrueOrderByCategoryMenuName" resultMap="recipeMap">
+        SELECT r.*,
+               rs.id AS rs_id,
+               rs.recipe_id AS rs_recipe_id,
+               rs.step_order AS rs_step_order,
+               rs.step_time AS rs_step_time,
+               rs.content AS rs_content
+        FROM recipe r
+        LEFT JOIN recipe_step rs ON rs.recipe_id = r.id
+        WHERE r.template = 1
+        ORDER BY r.category ASC, r.menu_name ASC, rs.step_order ASC
+    </select>
+
+    <update id="updateVisible">
+        UPDATE recipe SET visible = #{visible} WHERE id = #{id}
+    </update>
+
+    <update id="updateTemplate">
+        UPDATE recipe SET template = #{template} WHERE id = #{id}
+    </update>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO recipe (menu_name, author, description, imgname, visible, template, use_blender,
+                           temperature, cup_size, category, created_at, updated_at)
+        VALUES (#{menuName}, #{author}, #{description}, #{imgname}, #{visible}, #{template}, #{useBlender},
+                #{temperature, typeHandler=org.apache.ibatis.type.EnumTypeHandler},
+                #{cupSize, typeHandler=org.apache.ibatis.type.EnumTypeHandler},
+                #{category, typeHandler=org.apache.ibatis.type.EnumTypeHandler},
+                NOW(), NOW())
+    </insert>
+
+    <update id="update">
+        UPDATE recipe SET
+            menu_name = #{menuName},
+            author = #{author},
+            description = #{description},
+            imgname = #{imgname},
+            visible = #{visible},
+            template = #{template},
+            use_blender = #{useBlender},
+            temperature = #{temperature, typeHandler=org.apache.ibatis.type.EnumTypeHandler},
+            cup_size = #{cupSize, typeHandler=org.apache.ibatis.type.EnumTypeHandler},
+            category = #{category, typeHandler=org.apache.ibatis.type.EnumTypeHandler},
+            updated_at = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM recipe WHERE id = #{id}
+    </delete>
+
+    <insert id="insertStep" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO recipe_step (recipe_id, step_order, step_time, content)
+        VALUES (#{recipeId}, #{stepOrder}, #{stepTime}, #{content})
+    </insert>
+
+    <delete id="deleteStepsByRecipeId">
+        DELETE FROM recipe_step WHERE recipe_id = #{recipeId}
+    </delete>
+
+    <select id="findStepsByRecipeId" resultMap="stepMap">
+        SELECT * FROM recipe_step WHERE recipe_id = #{recipeId} ORDER BY step_order ASC
+    </select>
+
+    <select id="findAllCategoryOrders" resultType="map">
+        SELECT category_name, sort_order FROM recipe_category_order ORDER BY sort_order ASC
+    </select>
+
+    <insert id="upsertCategoryOrders">
+        INSERT INTO recipe_category_order (category_name, sort_order)
+        VALUES
+        <foreach collection="list" item="item" separator=",">
+            (#{item.categoryName}, #{item.sortOrder})
+        </foreach>
+        ON DUPLICATE KEY UPDATE sort_order = VALUES(sort_order)
+    </insert>
+
+</mapper>

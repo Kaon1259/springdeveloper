@@ -5,17 +5,22 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import ymsoft.springdeveloper.com.springdeveloper.dto.CategoryReorderDto;
 import ymsoft.springdeveloper.com.springdeveloper.dto.MenuDto;
 import ymsoft.springdeveloper.com.springdeveloper.dto.RecipeCreateRequestDto;
 import ymsoft.springdeveloper.com.springdeveloper.dto.RecipeGroupDto;
+import ymsoft.springdeveloper.com.springdeveloper.dto.RecipeReorderDto;
 import ymsoft.springdeveloper.com.springdeveloper.entity.Recipe;
 import ymsoft.springdeveloper.com.springdeveloper.service.RecipeService;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @Controller
@@ -91,6 +96,28 @@ public class CafeController {
         return "cafe/recipeListForOnlyRead2";
     }
 
+
+    @PostMapping("/recipes/reorder")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> reorderRecipes(@RequestBody RecipeReorderDto dto) {
+        log.info("[레시피 순서 저장] {}개", dto.getOrders() != null ? dto.getOrders().size() : 0);
+        recipeService.reorderRecipes(dto);
+        Map<String, Object> result = new HashMap<>();
+        result.put("success", true);
+        result.put("message", "순서가 저장되었습니다.");
+        return ResponseEntity.ok(result);
+    }
+
+    @PostMapping("/categories/reorder")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> reorderCategories(@RequestBody CategoryReorderDto dto) {
+        log.info("[카테고리 순서 저장] {}개", dto.getOrders() != null ? dto.getOrders().size() : 0);
+        recipeService.reorderCategories(dto);
+        Map<String, Object> result = new HashMap<>();
+        result.put("success", true);
+        result.put("message", "카테고리 순서가 저장되었습니다.");
+        return ResponseEntity.ok(result);
+    }
 
     @GetMapping("/recipe/new")
     public String showCreateForm(Model model) throws JsonProcessingException {

@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ymsoft.springdeveloper.com.springdeveloper.mapper.PayrollMonthMapper">
+
+    <resultMap id="pmMap" type="ymsoft.springdeveloper.com.springdeveloper.entity.PayrollMonth">
+        <id property="id" column="id"/>
+        <result property="memberId" column="member_id"/>
+        <result property="payYear" column="pay_year"/>
+        <result property="payMonth" column="pay_month"/>
+        <result property="hourlyWage" column="hourly_wage"/>
+        <result property="monthWorkMinutes" column="month_work_minutes"/>
+        <result property="monthJuhyuMinutes" column="month_juhyu_minutes"/>
+        <result property="monthWorkPay" column="month_work_pay"/>
+        <result property="monthJuhyuPay" column="month_juhyu_pay"/>
+        <result property="monthTotalPay" column="month_total_pay"/>
+        <result property="status" column="status"
+                typeHandler="org.apache.ibatis.type.EnumTypeHandler"/>
+        <result property="confirmedAt" column="confirmed_at"/>
+        <result property="paidAt" column="paid_at"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+    </resultMap>
+
+    <resultMap id="pmWithMemberMap" type="ymsoft.springdeveloper.com.springdeveloper.entity.PayrollMonth"
+               extends="pmMap">
+        <association property="member"
+                     javaType="ymsoft.springdeveloper.com.springdeveloper.entity.Member"
+                     columnPrefix="m_">
+            <id property="id" column="id"/>
+            <result property="name" column="name"/>
+            <result property="phone" column="phone"/>
+        </association>
+    </resultMap>
+
+    <select id="findByMemberIdAndPayYearAndPayMonth" resultMap="pmMap">
+        SELECT * FROM PAYROLL_MONTH
+        WHERE member_id = #{memberId} AND pay_year = #{payYear} AND pay_month = #{payMonth}
+    </select>
+
+    <select id="findByMemberIdOrderByPayYearDescPayMonthDesc" resultMap="pmMap">
+        SELECT * FROM PAYROLL_MONTH
+        WHERE member_id = #{memberId}
+        ORDER BY pay_year DESC, pay_month DESC
+    </select>
+
+    <select id="findByMemberIdAndStatusOrderByPayYearDescPayMonthDesc" resultMap="pmMap">
+        SELECT * FROM PAYROLL_MONTH
+        WHERE member_id = #{memberId} AND status = #{status}
+        ORDER BY pay_year DESC, pay_month DESC
+    </select>
+
+    <select id="findByPayYearAndPayMonth" resultMap="pmWithMemberMap">
+        SELECT pm.*,
+               m.id AS m_id,
+               m.name AS m_name,
+               m.phone AS m_phone
+        FROM PAYROLL_MONTH pm
+        JOIN member m ON pm.member_id = m.id
+        WHERE pm.pay_year = #{payYear} AND pm.pay_month = #{payMonth}
+    </select>
+
+    <select id="findYearlySummaryByYear" resultType="ymsoft.springdeveloper.com.springdeveloper.dto.YearlyPayrollDto">
+        SELECT m.id AS memberId,
+               m.name AS memberName,
+               m.phone AS memberPhone,
+               SUM(pm.month_work_minutes) AS workMinutes,
+               SUM(pm.month_juhyu_minutes) AS juhyuMinutes,
+               AVG(pm.hourly_wage) AS hourlyWage,
+               SUM(pm.month_work_pay) AS workPay,
+               SUM(pm.month_juhyu_pay) AS juhyuPay,
+               SUM(pm.month_work_pay + pm.month_juhyu_pay) AS totalPay
+        FROM PAYROLL_MONTH pm
+        JOIN member m ON pm.member_id = m.id
+        WHERE pm.pay_year = #{year}
+        GROUP BY m.id, m.name, m.phone
+        ORDER BY m.name
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO PAYROLL_MONTH (member_id, pay_year, pay_month, hourly_wage,
+                                   month_work_minutes, month_juhyu_minutes,
+                                   month_work_pay, month_juhyu_pay, month_total_pay,
+                                   status, confirmed_at, paid_at)
+        VALUES (#{memberId}, #{payYear}, #{payMonth}, #{hourlyWage},
+                #{monthWorkMinutes}, #{monthJuhyuMinutes},
+                #{monthWorkPay}, #{monthJuhyuPay}, #{monthTotalPay},
+                #{status, typeHandler=org.apache.ibatis.type.EnumTypeHandler},
+                #{confirmedAt}, #{paidAt})
+    </insert>
+
+    <update id="update">
+        UPDATE PAYROLL_MONTH SET
+            hourly_wage = #{hourlyWage},
+            month_work_minutes = #{monthWorkMinutes},
+            month_juhyu_minutes = #{monthJuhyuMinutes},
+            month_work_pay = #{monthWorkPay},
+            month_juhyu_pay = #{monthJuhyuPay},
+            month_total_pay = #{monthTotalPay},
+            status = #{status, typeHandler=org.apache.ibatis.type.EnumTypeHandler},
+            confirmed_at = #{confirmedAt},
+            paid_at = #{paidAt}
+        WHERE id = #{id}
+    </update>
+
+</mapper>

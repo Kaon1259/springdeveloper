@@ -24,7 +24,7 @@ public class WorkScheduleDto {
     public static WorkScheduleDto fromEntity(WorkSchedule e) {
         return WorkScheduleDto.builder()
                 .id(e.getId())
-                .memberId(e.getMember() != null ? e.getMember().getId() : null)
+                .memberId(e.getMemberId())
                 .date(e.getWorkDate())
                 .start(e.getStart())
                 .end(e.getEnd())

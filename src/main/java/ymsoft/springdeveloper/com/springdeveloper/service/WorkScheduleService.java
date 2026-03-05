@@ -1,14 +1,14 @@
 package ymsoft.springdeveloper.com.springdeveloper.service;
 
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ymsoft.springdeveloper.com.springdeveloper.dto.*;
 import ymsoft.springdeveloper.com.springdeveloper.entity.Member;
 import ymsoft.springdeveloper.com.springdeveloper.entity.WorkSchedule;
-import ymsoft.springdeveloper.com.springdeveloper.repository.memberRepository;
-import ymsoft.springdeveloper.com.springdeveloper.repository.WorkScheduleRepository;
+import ymsoft.springdeveloper.com.springdeveloper.mapper.MemberMapper;
+import ymsoft.springdeveloper.com.springdeveloper.mapper.WorkScheduleMapper;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -20,15 +20,18 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class WorkScheduleService {
 
-    private final memberRepository memberRepository;
-    private final WorkScheduleRepository workScheduleRepository;
+    private final MemberMapper memberMapper;
+    private final WorkScheduleMapper workScheduleMapper;
 
     private static final int SLOT_MIN = 10;
     private static final LocalTime START_BOUND = LocalTime.of(6, 0);
-    private static final LocalTime END_BOUND = LocalTime.of(22, 0); // exclusive
+    private static final LocalTime END_BOUND = LocalTime.of(22, 0);
 
     public List<WorkSchedule> findByWorkDateWithMember(LocalDate date) {
-        return workScheduleRepository.findByWorkDateWithMember(date);
+        log.info("[근무조회] 날짜={} 전체 근무 스케줄 조회", date);
+        List<WorkSchedule> result = workScheduleMapper.findByWorkDateWithMember(date);
+        log.info("[근무조회] 날짜={} - {}건 조회됨", date, result.size());
+        return result;
     }
 
     @Transactional
@@ -36,25 +39,24 @@ public class WorkScheduleService {
         final Long memberId = req.getMemberId();
         final LocalDate date = req.getDate();
 
-        Member member = memberRepository.findById(memberId)
+        log.info("[일정저장] memberId={}, 날짜={}, 세그먼트수={}", memberId, date,
+                req.getSegments() != null ? req.getSegments().size() : 0);
+
+        Member member = memberMapper.findById(memberId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 memberId: " + memberId));
 
-        // 1) 구간 정규화
         List<ScheduleDayUpdateRequest.Segment> normalized = normalizeAndValidate(req.getSegments());
 
-        // 2) 해당 날짜 기존 일정 전체 삭제 + 즉시 flush
-        workScheduleRepository.deleteByMemberIdAndWorkDate(memberId, date);
-        workScheduleRepository.flush(); // ★ 인덱스 충돌 방지(삭제를 즉시 DB반영)
+        workScheduleMapper.deleteByMemberIdAndWorkDate(memberId, date);
 
-        // 3) 저장 전 동일 구간 de-dup (start|end 기준)
         Set<String> seen = new HashSet<>();
         List<WorkSchedule> toSave = new ArrayList<>();
         for (ScheduleDayUpdateRequest.Segment seg : normalized) {
             String key = seg.getStart() + "|" + seg.getEnd();
-            if (!seen.add(key)) continue; // ★ 동일 구간 중복 방지
+            if (!seen.add(key)) continue;
 
             WorkSchedule ws = WorkSchedule.builder()
-                    .member(member)
+                    .memberId(memberId)
                     .workDate(date)
                     .start(seg.getStart())
                     .end(seg.getEnd())
@@ -64,42 +66,28 @@ public class WorkScheduleService {
             toSave.add(ws);
         }
 
-        // 4) 저장
         if (toSave.isEmpty()) {
+            log.info("[일정저장] memberId={}, 날짜={} - 저장할 세그먼트 없음 (기존 삭제만 처리)", memberId, date);
             return ScheduleDayUpdateResponse.builder()
-                    .memberId(memberId)
-                    .date(date)
-                    .count(0)
-                    .minutes(0)
-                    .segments(List.of())
-                    .build();
+                    .memberId(memberId).date(date).count(0).minutes(0).segments(List.of()).build();
         }
 
-        List<WorkSchedule> saved = workScheduleRepository.saveAll(toSave);
+        for (WorkSchedule ws : toSave) {
+            workScheduleMapper.insert(ws);
+        }
+        log.info("[일정저장] memberId={}, 날짜={} - {}개 세그먼트 저장 완료", memberId, date, toSave.size());
 
-        int minutes = saved.stream()
-                .mapToInt(s -> diffMinutes(s.getStart(), s.getEnd()))
-                .sum();
+        int minutes = toSave.stream().mapToInt(s -> diffMinutes(s.getStart(), s.getEnd())).sum();
 
-        List<ScheduleDayUpdateResponse.Segment> outSegs = saved.stream()
+        List<ScheduleDayUpdateResponse.Segment> outSegs = toSave.stream()
                 .sorted(Comparator.comparing(WorkSchedule::getStart))
                 .map(s -> ScheduleDayUpdateResponse.Segment.builder()
-                        .start(fmt(s.getStart()))
-                        .end(fmt(s.getEnd()))
-                        .note(s.getNote())
-                        .build())
+                        .start(fmt(s.getStart())).end(fmt(s.getEnd())).note(s.getNote()).build())
                 .toList();
 
         return ScheduleDayUpdateResponse.builder()
-                .memberId(memberId)
-                .date(date)
-                .count(saved.size())
-                .minutes(minutes)
-                .segments(outSegs)
-                .build();
+                .memberId(memberId).date(date).count(toSave.size()).minutes(minutes).segments(outSegs).build();
     }
-
-    // ====== 이하 보조 메서드(그대로 사용) ======
 
     private List<ScheduleDayUpdateRequest.Segment> normalizeAndValidate(List<ScheduleDayUpdateRequest.Segment> segments) {
         if (segments == null || segments.isEmpty()) return List.of();
@@ -109,21 +97,16 @@ public class WorkScheduleService {
             LocalTime st = s.getStart();
             LocalTime en = s.getEnd();
             if (st == null || en == null) continue;
-
             if (st.isBefore(START_BOUND)) st = START_BOUND;
             if (en.isAfter(END_BOUND)) en = END_BOUND;
             if (!st.isBefore(en)) continue;
-
             st = snapDownTo10(st);
             en = snapUpTo10(en);
             if (!st.isBefore(en)) continue;
-
             if (!isTenMinUnit(st) || !isTenMinUnit(en)) {
                 throw new IllegalArgumentException("구간은 10분 단위여야 합니다. (" + st + "~" + en + ")");
             }
-
-            clipped.add(ScheduleDayUpdateRequest.Segment.builder()
-                    .start(st).end(en).note(s.getNote()).build());
+            clipped.add(ScheduleDayUpdateRequest.Segment.builder().start(st).end(en).note(s.getNote()).build());
         }
         if (clipped.isEmpty()) return List.of();
 
@@ -138,20 +121,16 @@ public class WorkScheduleService {
             LocalTime s2 = clipped.get(i).getStart();
             LocalTime e2 = clipped.get(i).getEnd();
             String n2 = clipped.get(i).getNote();
-
-            if (!s2.isAfter(curE)) {                 // 겹침
+            if (!s2.isAfter(curE)) {
                 if (e2.isAfter(curE)) curE = e2;
-            } else if (s2.equals(curE)) {            // 인접
+            } else if (s2.equals(curE)) {
                 curE = e2;
             } else {
                 merged.add(ScheduleDayUpdateRequest.Segment.builder().start(curS).end(curE).note(curNote).build());
-                curS = s2;
-                curE = e2;
-                curNote = n2;
+                curS = s2; curE = e2; curNote = n2;
             }
         }
         merged.add(ScheduleDayUpdateRequest.Segment.builder().start(curS).end(curE).note(curNote).build());
-
         return merged;
     }
 
@@ -177,255 +156,160 @@ public class WorkScheduleService {
 
     @Transactional
     public ScheduleGenerateResponse generateSchedules(ScheduleGenerateRequest req) {
-        // 1) 멤버 확인
-        Member member = memberRepository.findById(req.getMemberId())
+        Member member = memberMapper.findById(req.getMemberId())
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 근로자(memberId=" + req.getMemberId() + ") 입니다."));
 
         int totalRequested = req.getItems().size();
-        int created = 0;
-        int skipped = 0;
-        int overwritten = 0;
-
+        int created = 0, skipped = 0, overwritten = 0;
         List<Long> createdIds = new ArrayList<>();
         List<ScheduleGenerateResponse.Conflict> conflicts = new ArrayList<>();
 
-        // 2) 날짜 범위 검증
         if (req.getFrom().isAfter(req.getTo())) {
             throw new IllegalArgumentException("from 은 to 보다 이후일 수 없습니다.");
         }
 
         for (ScheduleGenerateRequest.Item item : req.getItems()) {
-
-            // 2-1) 요청 항목 기본 검증
             LocalDate date = item.getDate();
             LocalTime start = item.getStart();
             LocalTime end = item.getEnd();
 
-            // 범위 밖의 날짜는 스킵
             if (date.isBefore(req.getFrom()) || date.isAfter(req.getTo())) {
                 skipped++;
                 conflicts.add(ScheduleGenerateResponse.Conflict.builder()
-                        .date(String.valueOf(date))
-                        .start(start != null ? start.toString() : null)
-                        .end(end != null ? end.toString() : null)
-                        .existingId(null)
-                        .reason("OUT_OF_RANGE")
-                        .build());
+                        .date(String.valueOf(date)).start(start != null ? start.toString() : null)
+                        .end(end != null ? end.toString() : null).existingId(null).reason("OUT_OF_RANGE").build());
                 continue;
             }
 
-            // 시각/10분단위/역전 검증
             String invalidReason = validateTimes(start, end);
             if (invalidReason != null) {
                 skipped++;
                 conflicts.add(ScheduleGenerateResponse.Conflict.builder()
-                        .date(date.toString())
-                        .start(start != null ? start.toString() : null)
-                        .end(end != null ? end.toString() : null)
-                        .existingId(null)
-                        .reason(invalidReason) // INVALID_TIME / INVALID_10MIN / REVERSED
-                        .build());
+                        .date(date.toString()).start(start != null ? start.toString() : null)
+                        .end(end != null ? end.toString() : null).existingId(null).reason(invalidReason).build());
                 continue;
             }
 
-            // 3) 같은 날짜 기존 일정 조회 후 겹침 판단
-            List<WorkSchedule> existing = workScheduleRepository.findByMember_IdAndWorkDate(member.getId(), date);
+            List<WorkSchedule> existing = workScheduleMapper.findByMemberIdAndWorkDate(member.getId(), date);
             List<WorkSchedule> overlapped = existing.stream()
-                    .filter(ws -> isOverlap(start, end, ws.getStart(), ws.getEnd()))
-                    .toList();
+                    .filter(ws -> isOverlap(start, end, ws.getStart(), ws.getEnd())).toList();
 
             if (!overlapped.isEmpty()) {
                 if (req.isOverwrite()) {
-                    // 덮어쓰기: 겹치는 일정 삭제 후 새로 저장
-                    overlapped.forEach(workScheduleRepository::delete);
+                    List<Long> ids = overlapped.stream().map(WorkSchedule::getId).collect(Collectors.toList());
+                    workScheduleMapper.deleteAll(ids);
                     overwritten += overlapped.size();
-
-                    WorkSchedule saved = saveOne(member, date, start, end, item.getNote());
+                    WorkSchedule saved = saveOne(member.getId(), date, start, end, item.getNote());
                     created++;
                     createdIds.add(saved.getId());
                 } else {
-                    // 덮어쓰기 아님: 스킵 + 충돌 등록(첫 건만 existingId 노출)
                     skipped++;
                     Long firstId = overlapped.get(0).getId();
                     conflicts.add(ScheduleGenerateResponse.Conflict.builder()
-                            .date(date.toString())
-                            .start(start.toString())
-                            .end(end.toString())
-                            .existingId(firstId)
-                            .reason("DUPLICATED")
-                            .build());
+                            .date(date.toString()).start(start.toString()).end(end.toString())
+                            .existingId(firstId).reason("DUPLICATED").build());
                 }
             } else {
-                // 4) 겹치지 않으면 저장
-                WorkSchedule saved = saveOne(member, date, start, end, item.getNote());
+                WorkSchedule saved = saveOne(member.getId(), date, start, end, item.getNote());
                 created++;
                 createdIds.add(saved.getId());
             }
         }
 
         return ScheduleGenerateResponse.builder()
-                .totalRequested(totalRequested)
-                .created(created)
-                .skipped(skipped)
-                .overwritten(overwritten)
-                .createdIds(createdIds)
-                .conflicts(conflicts)
-                .build();
+                .totalRequested(totalRequested).created(created).skipped(skipped)
+                .overwritten(overwritten).createdIds(createdIds).conflicts(conflicts).build();
     }
 
-    private WorkSchedule saveOne(Member member, LocalDate date, LocalTime start, LocalTime end, String note) {
+    private WorkSchedule saveOne(Long memberId, LocalDate date, LocalTime start, LocalTime end, String note) {
         WorkSchedule ws = WorkSchedule.builder()
-                .member(member)
-                .workDate(date)
-                .start(start)
-                .end(end)
-                .source(WorkSchedule.SourceType.GENERATED)
-                .note(note)
-                .build();
-        return workScheduleRepository.save(ws);
+                .memberId(memberId).workDate(date).start(start).end(end)
+                .source(WorkSchedule.SourceType.GENERATED).note(note).build();
+        workScheduleMapper.insert(ws);
+        return ws;
     }
 
     public ScheduleRangeResponse getWorkRange(Long memberId, LocalDate start, LocalDate end) {
         validateParams(memberId, start, end);
-
-        // (선택) 멤버 존재 여부 체크
-        if (!memberRepository.existsById(memberId)) {
+        if (!memberMapper.existsById(memberId)) {
             throw new IllegalArgumentException("존재하지 않는 근로자입니다. memberId=" + memberId);
         }
+        log.info("[기간일정] memberId={}, 조회기간={} ~ {}", memberId, start, end);
 
         List<WorkSchedule> schedules =
-                workScheduleRepository.findByMemberIdAndWorkDateBetweenOrderByWorkDateAscStartAsc(
-                        memberId, start, end
-                );
+                workScheduleMapper.findByMemberIdAndWorkDateBetweenOrderByWorkDateAscStartAsc(memberId, start, end);
+        log.info("[기간일정] memberId={} - {}건 조회됨", memberId, schedules.size());
 
-        // workDate 기준으로 그룹핑(정렬 유지)
         Map<LocalDate, List<WorkSchedule>> byDate = schedules.stream()
-                .collect(Collectors.groupingBy(
-                        WorkSchedule::getWorkDate,
-                        LinkedHashMap::new,
-                        Collectors.toList()
-                ));
+                .collect(Collectors.groupingBy(WorkSchedule::getWorkDate, LinkedHashMap::new, Collectors.toList()));
 
         ScheduleRangeResponse resp = new ScheduleRangeResponse();
-
         byDate.forEach((date, list) -> {
-            // 해당 날짜의 구간 목록
             List<ScheduleRangeResponse.Seg> segs = list.stream()
                     .map(ws -> ScheduleRangeResponse.Seg.builder()
-                            .start(ws.getStart())
-                            .end(ws.getEnd())
-                            .note(ws.getNote())
-                            .build())
+                            .start(ws.getStart()).end(ws.getEnd()).note(ws.getNote()).build())
                     .collect(Collectors.toList());
-
-            int minutes = list.stream()
-                    .mapToInt(ws -> diffMinutes(ws.getStart(), ws.getEnd()))
-                    .filter(m -> m > 0)
-                    .sum();
-
+            int minutes = list.stream().mapToInt(ws -> diffMinutes(ws.getStart(), ws.getEnd()))
+                    .filter(m -> m > 0).sum();
             resp.getDays().add(ScheduleRangeResponse.Day.builder()
-                    .date(date)
-                    .segments(segs)
-                    .minutes(minutes)
-                    .build());
+                    .date(date).segments(segs).minutes(minutes).build());
         });
-
         return resp;
     }
 
     public List<WorkSchedule> getWeeklyWork(Long memberId, LocalDate start, LocalDate end) {
         validateParams(memberId, start, end);
-
-        // (선택) 멤버 존재 여부 체크
-        if (!memberRepository.existsById(memberId)) {
+        if (!memberMapper.existsById(memberId)) {
             throw new IllegalArgumentException("존재하지 않는 근로자입니다. memberId=" + memberId);
         }
-
-        return workScheduleRepository.findByMemberIdAndWorkDateBetweenOrderByWorkDateAscStartAsc(
-                memberId, start, end
-        );
+        return workScheduleMapper.findByMemberIdAndWorkDateBetweenOrderByWorkDateAscStartAsc(memberId, start, end);
     }
 
     @Transactional
     public List<ScheduleDayUpdateResponse> batchUpdatePlanWeek(ScheduleBatchUpdateReqeust req) {
-
         List<ScheduleDayUpdateResponse> response = new ArrayList<>();
-
-        List<ScheduleBatchUpdateReqeust.PlanDay> days = req.getDays();
-        for (ScheduleBatchUpdateReqeust.PlanDay day : days) {
-            log.info("day=" + day.toString());
-        }
-        // 각 날짜별로 기존 upsertDay() 호출
         req.getDays().forEach(planDay -> {
             List<ScheduleDayUpdateRequest.Segment> segments =
-                    (planDay.getSegments() == null)
-                            ? List.of()
-                            : planDay.getSegments().stream()
+                    (planDay.getSegments() == null) ? List.of() :
+                    planDay.getSegments().stream()
                             .map(seg -> ScheduleDayUpdateRequest.Segment.builder()
-                                    .start(LocalTime.parse(seg.getStart()))  // "HH:mm" → LocalTime
+                                    .start(LocalTime.parse(seg.getStart()))
                                     .end(LocalTime.parse(seg.getEnd()))
-                                    .note(null)                              // 메모 필요하면 프론트/DTO에 추가
-                                    .build())
+                                    .note(null).build())
                             .collect(Collectors.toList());
 
             ScheduleDayUpdateRequest dayReq = ScheduleDayUpdateRequest.builder()
-                    .memberId(req.getMemberId())
-                    .date(planDay.getDate())   // LocalDate (SchedulePlanWeekUpdateRequest 안의 내부 클래스)
-                    .segments(segments)
-                    .build();
-
-            // 기존 로직 재사용
-            ScheduleDayUpdateResponse res = upsertDay(dayReq);
-            response.add(res);
+                    .memberId(req.getMemberId()).date(planDay.getDate()).segments(segments).build();
+            response.add(upsertDay(dayReq));
         });
-
         return response;
     }
 
-
-    public Integer deleteWorkScheduleByMemberAndDate(Long memberId, LocalDate date)
-    {
-        List<WorkSchedule> schedules = workScheduleRepository.findByMemberIdAndWorkDate(memberId, date);
-
-        Integer size = schedules.size();
-        workScheduleRepository.deleteAll(schedules);
-        return size;
+    public Integer deleteWorkScheduleByMemberAndDate(Long memberId, LocalDate date) {
+        List<WorkSchedule> schedules = workScheduleMapper.findByMemberIdAndWorkDate(memberId, date);
+        if (!schedules.isEmpty()) {
+            List<Long> ids = schedules.stream().map(WorkSchedule::getId).collect(Collectors.toList());
+            workScheduleMapper.deleteAll(ids);
+        }
+        return schedules.size();
     }
 
     public List<WorkSchedule> getTodaySchedulesByMember(Long memberId) {
-        LocalDate today = LocalDate.now();
-        return getSchedulesByMemberAndDate(memberId, today);
+        return getSchedulesByMemberAndDate(memberId, LocalDate.now());
     }
 
-    /**
-     * 특정 멤버의 특정 날짜 스케줄 조회
-     */
     public List<WorkSchedule> getSchedulesByMemberAndDate(Long memberId, LocalDate date) {
-        return workScheduleRepository.findByMember_IdAndWorkDate(memberId, date);
+        return workScheduleMapper.findByMemberIdAndWorkDate(memberId, date);
     }
 
-    /**
-     * 여러 멤버의 오늘자 스케줄을 memberId 기준으로 묶어서 반환
-     */
     public Map<Long, List<WorkSchedule>> getTodaySchedulesByMembers(List<Long> memberIds) {
-        LocalDate today = LocalDate.now();
-        return getSchedulesByMembersAndDate(memberIds, today);
+        return getSchedulesByMembersAndDate(memberIds, LocalDate.now());
     }
 
-    /**
-     * 여러 멤버의 특정 날짜 스케줄을 memberId 기준으로 묶어서 반환
-     */
     public Map<Long, List<WorkSchedule>> getSchedulesByMembersAndDate(List<Long> memberIds, LocalDate date) {
-        if (memberIds == null || memberIds.isEmpty()) {
-            return Map.of();
-        }
-
-        List<WorkSchedule> list =
-                workScheduleRepository.findByMember_IdInAndWorkDate(memberIds, date);
-
-        // memberId 별로 그룹핑
-        return list.stream()
-                .collect(Collectors.groupingBy(ws -> ws.getMember().getId()));
+        if (memberIds == null || memberIds.isEmpty()) return Map.of();
+        List<WorkSchedule> list = workScheduleMapper.findByMemberIdInAndWorkDate(memberIds, date);
+        return list.stream().collect(Collectors.groupingBy(WorkSchedule::getMemberId));
     }
 
     private void validateParams(Long memberId, LocalDate start, LocalDate end) {
@@ -440,13 +324,10 @@ public class WorkScheduleService {
         return (e.getHour() * 60 + e.getMinute()) - (s.getHour() * 60 + s.getMinute());
     }
 
-
-    /** 겹침 판단: [aStart, aEnd) 와 [bStart, bEnd) 가 교차하는가 */
     private boolean isOverlap(LocalTime aStart, LocalTime aEnd, LocalTime bStart, LocalTime bEnd) {
         return aStart.isBefore(bEnd) && aEnd.isAfter(bStart);
     }
 
-    /** 시간 검증: null / 역전 / 10분 단위 검사 */
     private String validateTimes(LocalTime start, LocalTime end) {
         if (start == null || end == null) return "INVALID_TIME";
         if (!isTenMinuteAligned(start) || !isTenMinuteAligned(end)) return "INVALID_10MIN";
@@ -458,4 +339,3 @@ public class WorkScheduleService {
         return t.getMinute() % 10 == 0;
     }
 }
-

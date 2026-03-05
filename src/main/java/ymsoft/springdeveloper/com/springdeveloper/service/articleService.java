@@ -1,23 +1,24 @@
 package ymsoft.springdeveloper.com.springdeveloper.service;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ymsoft.springdeveloper.com.springdeveloper.dto.articleDto;
 import ymsoft.springdeveloper.com.springdeveloper.entity.Article;
-import ymsoft.springdeveloper.com.springdeveloper.repository.articleRepository;
+import ymsoft.springdeveloper.com.springdeveloper.mapper.ArticleMapper;
 
 import java.util.List;
-import java.util.Optional;
 
 @Service
+@RequiredArgsConstructor
 public class articleService {
-    @Autowired
-    private articleRepository articleRepository;
+
+    private final ArticleMapper articleMapper;
 
     public List<articleDto> getAllArticles() {
-       return articleRepository.findAll()
+        return articleMapper.findAll()
                 .stream()
-                .map(article-> new articleDto(
+                .map(article -> new articleDto(
                         article.getId(),
                         article.getArticleTitle(),
                         article.getArticleAuthor(),
@@ -25,37 +26,45 @@ public class articleService {
                 )).toList();
     }
 
-    public articleDto saveArticle(articleDto dto){
-        return articleRepository.save(articleDto.toEntity(dto)).toDto();
-    }
-    public Article saveArticle(Article entity){
-        return articleRepository.save(entity);
-    }
-
-    public articleDto findArticleById(Long articleId){
-        return  articleRepository.findById(articleId).stream().findFirst().get().toDto();
+    @Transactional
+    public articleDto saveArticle(articleDto dto) {
+        Article entity = articleDto.toEntity(dto);
+        articleMapper.insert(entity);
+        return entity.toDto();
     }
 
-    public articleDto updateArticleById(Long articleId, articleDto articleDto){
-        Article article = articleRepository.findById(articleId).orElse(null);
-
-        if(article != null){
-            article.setArticleTitle(articleDto.getArticleTitle());
-            article.setArticleAuthor(articleDto.getArticleAuthor());
-            article.setArticleDescription(articleDto.getArticleDescription());
-            return articleRepository.save(article).toDto();
-        }
-
-        return null;
+    @Transactional
+    public Article saveArticle(Article entity) {
+        articleMapper.insert(entity);
+        return entity;
     }
 
-    public articleDto deleteArticleById(Long articleId){
-        return articleRepository.findById(articleId)
-                .map(article ->
-                        {
-                            articleRepository.delete(article);
-                            return article.toDto();
-                        })
+    public articleDto findArticleById(Long articleId) {
+        return articleMapper.findById(articleId)
+                .orElseThrow(() -> new IllegalArgumentException("게시글을 찾을 수 없습니다. id=" + articleId))
+                .toDto();
+    }
+
+    @Transactional
+    public articleDto updateArticleById(Long articleId, articleDto dto) {
+        return articleMapper.findById(articleId)
+                .map(article -> {
+                    article.setArticleTitle(dto.getArticleTitle());
+                    article.setArticleAuthor(dto.getArticleAuthor());
+                    article.setArticleDescription(dto.getArticleDescription());
+                    articleMapper.update(article);
+                    return article.toDto();
+                })
+                .orElse(null);
+    }
+
+    @Transactional
+    public articleDto deleteArticleById(Long articleId) {
+        return articleMapper.findById(articleId)
+                .map(article -> {
+                    articleMapper.deleteById(articleId);
+                    return article.toDto();
+                })
                 .orElse(null);
     }
 }

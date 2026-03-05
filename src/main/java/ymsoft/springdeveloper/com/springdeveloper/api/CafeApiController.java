@@ -2,14 +2,11 @@ package ymsoft.springdeveloper.com.springdeveloper.api;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.*;
+import ymsoft.springdeveloper.com.springdeveloper.dto.FavoriteReorderDto;
 import ymsoft.springdeveloper.com.springdeveloper.service.RecipeService;
-
-import java.net.http.HttpResponse;
 
 @Slf4j
 @RestController
@@ -17,8 +14,7 @@ import java.net.http.HttpResponse;
 @RequestMapping("/api/cafe")
 public class CafeApiController {
 
-    @Autowired
-    private RecipeService recipeService;
+    private final RecipeService recipeService;
 
     @PostMapping("/recipe/{recipeId}/visible/{visible}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
@@ -49,6 +45,14 @@ public class CafeApiController {
         log.info("delete recipe... " + recipeId);
         recipeService.deleteRecipe(recipeId);
 
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/favorites/reorder")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public ResponseEntity<?> reorderFavorites(@RequestBody FavoriteReorderDto dto) {
+        log.info("reorder favorites... {}개", dto.getOrders() != null ? dto.getOrders().size() : 0);
+        recipeService.reorderFavorites(dto);
         return ResponseEntity.noContent().build();
     }
 }

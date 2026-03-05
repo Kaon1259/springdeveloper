@@ -49,6 +49,13 @@ public class MemberScheduleController {
         return ResponseEntity.ok().build();
     }
 
+    @GetMapping("/{id}")
+    public ResponseEntity<MemberDto> getMemberDetail(@PathVariable Long id) throws Exception {
+        MemberDto member = memberService.findById(id);
+        if (member == null) return ResponseEntity.notFound().build();
+        return ResponseEntity.ok(member);
+    }
+
     @GetMapping("/{id}/schedule")
     public ResponseEntity<List<MemberDto.ScheduleRow>> getMemberSchedule(@PathVariable Long id) throws Exception {
 

@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ymsoft.springdeveloper.com.springdeveloper.mapper.ActualWorkScheduleMapper">
+
+    <resultMap id="awsMap" type="ymsoft.springdeveloper.com.springdeveloper.entity.ActualWorkSchedule">
+        <id property="id" column="id"/>
+        <result property="memberId" column="member_id"/>
+        <result property="workDate" column="work_date"/>
+        <result property="segmentsJson" column="segments_json"/>
+        <result property="totalMinutes" column="total_minutes"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+    </resultMap>
+
+    <select id="findByMemberIdAndWorkDate" resultMap="awsMap">
+        SELECT * FROM actual_work_schedule
+        WHERE member_id = #{memberId} AND work_date = #{workDate}
+    </select>
+
+    <select id="findByMemberIdOrderByWorkDateDesc" resultMap="awsMap">
+        SELECT * FROM actual_work_schedule
+        WHERE member_id = #{memberId}
+        ORDER BY work_date DESC
+    </select>
+
+    <select id="findByWorkDate" resultMap="awsMap">
+        SELECT * FROM actual_work_schedule WHERE work_date = #{workDate}
+    </select>
+
+    <select id="findByMemberIdAndWorkDateBetweenOrderByWorkDateAsc" resultMap="awsMap">
+        SELECT * FROM actual_work_schedule
+        WHERE member_id = #{memberId}
+          AND work_date BETWEEN #{start} AND #{end}
+        ORDER BY work_date ASC
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO actual_work_schedule (member_id, work_date, segments_json, total_minutes, created_at, updated_at)
+        VALUES (#{memberId}, #{workDate}, #{segmentsJson}, #{totalMinutes}, NOW(), NOW())
+    </insert>
+
+    <update id="update">
+        UPDATE actual_work_schedule SET
+            segments_json = #{segmentsJson},
+            total_minutes = #{totalMinutes},
+            updated_at = NOW()
+        WHERE member_id = #{memberId} AND work_date = #{workDate}
+    </update>
+
+</mapper>

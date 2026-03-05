@@ -1,285 +1,403 @@
 {{>layouts/header}}
 <style>
-    body { background-color: #f8f9fa; }
+    body { background: #fff9f2; }
 
-    .top-status-bar {
+    /* ── 상단 고정 헤더 바 ── */
+    .page-hero-bar {
         position: sticky;
-        top: 0;
+        top: 72px;
         z-index: 20;
-        background-color: #ffffff;
-        border-bottom: 1px solid #dee2e6;
-        padding: 0.9rem 1.5rem;
-        min-height: 64px;
+        background: linear-gradient(135deg, #5b4434 0%, #3f2c20 100%);
+        padding: 0.8rem 1.5rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1rem;
+        box-shadow: 0 4px 14px rgba(91,68,52,0.22);
+    }
+    .hero-text .hero-title {
+        font-size: 1rem;
+        font-weight: 800;
+        color: #fff9f2;
+        letter-spacing: 0.01em;
+    }
+    .hero-text .hero-sub {
+        font-size: 0.76rem;
+        color: rgba(255,249,242,0.58);
+        margin-top: 0.1rem;
+    }
+    .selected-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        background: rgba(255,249,242,0.15);
+        border: 1.5px solid rgba(255,249,242,0.35);
+        color: #fff9f2;
+        border-radius: 999px;
+        padding: 0.28rem 0.85rem;
+        font-size: 0.8rem;
+        font-weight: 700;
+        white-space: nowrap;
+        transition: background 0.12s;
+    }
+    .selected-chip .chip-count {
+        background: rgba(255,249,242,0.25);
+        border-radius: 999px;
+        padding: 0.05rem 0.45rem;
+        font-size: 0.78rem;
     }
 
+    /* ── 그리드 래퍼 ── */
+    .menu-grid-wrapper {
+        height: calc(100vh - 135px);
+        overflow-y: auto;
+        padding: 1rem 1rem 2rem;
+    }
+
+    /* ── 카드 그리드 ── */
+    .menu-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 1rem;
+    }
+    @media (max-width: 1023px) { .menu-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+    @media (max-width: 767px)  { .menu-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.65rem; } }
+    @media (max-width: 420px)  { .menu-grid { gap: 0.45rem; } }
+
+    /* ── 메뉴 카드 ── */
     .menu-card {
         cursor: pointer;
-        transition: transform 0.1s ease, box-shadow 0.1s ease, border-color 0.1s ease;
-        border-width: 2px;
-        border-color: transparent;
+        transition: transform 0.12s ease, box-shadow 0.12s ease, border-color 0.12s ease;
+        border: 2px solid #ede8e3;
         height: 100%;
         display: flex;
         flex-direction: column;
         border-radius: 1rem;
         position: relative;
         overflow: hidden;
-        background-color: #ffffff;
+        background: #fff;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
     }
-
     .menu-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 0.4rem 1rem rgba(0,0,0,0.08);
+        transform: translateY(-3px);
+        box-shadow: 0 8px 24px rgba(91,68,52,0.14);
+        border-color: #c4a882;
     }
-
     .menu-card.selected {
-        border-color: #0d6efd;
-        box-shadow: 0 0.4rem 1rem rgba(13,110,253,0.25);
+        border-color: #5b4434;
+        box-shadow: 0 6px 20px rgba(91,68,52,0.28);
     }
 
+    /* 온도 삼각 표시 */
     .menu-card::before {
         content: "";
         position: absolute;
-        top: 0;
-        left: 0;
-        width: 56px;
-        height: 56px;
+        top: 0; left: 0;
+        width: 46px; height: 46px;
         clip-path: polygon(0 0, 100% 0, 0 100%);
         z-index: 2;
+        opacity: 0.85;
     }
+    .menu-card[data-recipe-temp="HOT"]::before { background: #ef4444; }
+    .menu-card[data-recipe-temp="ICE"]::before { background: #3b82f6; }
 
-    .menu-card[data-recipe-temp="HOT"]::before { background-color: #dc3545; }
-    .menu-card[data-recipe-temp="ICE"]::before { background-color: #0d6efd; }
-
-    .menu-grid-wrapper {
-        height: calc(100vh - 210px);
-        overflow-y: auto;
+    /* ── 카드 내부 ── */
+    .menu-card-split {
+        display: flex;
+        flex-direction: row;
+        gap: 0;
+        padding: 0;
+        min-height: 150px;
     }
-
-    .menu-grid {
-        display: grid;
-        grid-template-columns: repeat(4, minmax(0, 1fr));
-        gap: 1rem;
-    }
-
-    .temp-badge {
-        display: inline-flex;
+    .menu-card-left {
+        width: 46%;
+        border-right: 1px solid #f0ebe6;
+        display: flex;
         align-items: center;
-        padding: 0.4rem 1rem 0.4rem 1.4rem;
+        justify-content: center;
+        padding: 0.7rem;
+        background: #fdfcfb;
+    }
+    .menu-card-right {
+        width: 54%;
+        padding: 0.85rem 0.85rem;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 0.6rem;
+    }
+
+    .menu-img {
+        width: 100%; height: 140px;
+        object-fit: contain; object-position: center;
+        border-radius: 0.65rem;
+        border: 1px solid #ede8e3;
+        background: #fff;
+        display: block;
+    }
+    .menu-img-placeholder {
+        width: 100%; height: 140px;
+        border-radius: 0.65rem;
+        border: 1.5px dashed #d4c5b5;
+        background: #fdfcfb;
+        display: flex; align-items: center; justify-content: center;
+        color: #b8a898; font-weight: 700; font-size: 0.9rem;
+        flex-direction: column; gap: 0.3rem;
+    }
+    .menu-img-placeholder::before { content: "☕"; font-size: 1.6rem; }
+
+    .menu-name {
+        font-size: 1.5rem;
+        font-weight: 900;
+        text-align: center;
+        line-height: 1.2;
+        word-break: keep-all;
+        color: #2d1f14;
+    }
+
+    /* 온도 뱃지 */
+    .temp-badge {
+        display: inline-flex; align-items: center;
+        padding: 0.3rem 0.85rem 0.3rem 1.1rem;
         border-radius: 999px;
-        background-color: #fff;
-        border: 3px solid;
-        font-size: 1.3rem;
+        background: #fff;
+        border: 2px solid;
+        font-size: 1rem;
         font-weight: 800;
         position: relative;
         line-height: 1;
         white-space: nowrap;
     }
+    .temp-HOT { border-color: #ef4444; color: #ef4444; }
+    .temp-ICE { border-color: #3b82f6; color: #3b82f6; }
+    .temp-HOT::after { content: "🔥"; margin-left: 0.35rem; font-size: 0.9em; }
+    .temp-ICE::after { content: "❄"; margin-left: 0.35rem; font-size: 0.9em; }
 
-    .temp-HOT { border-color: #dc3545; color: #dc3545; }
-    .temp-ICE { border-color: #0d6efd; color: #0d6efd; }
-
-    .temp-HOT::after { content: "🔥"; margin-left: .4rem; }
-    .temp-ICE::after { content: "❄"; margin-left: .4rem; }
-
+    /* 컵 뱃지 */
     .cup-badge {
-        font-size: 1.3rem;
-        font-weight: 800;
-        padding: 0.2rem 0.8rem;
+        font-size: 1rem; font-weight: 800;
+        padding: 0.18rem 0.7rem;
         border-radius: 999px;
-        background-color: #f8f9fa;
-        border: 2px solid #adb5bd;
-        display: inline-flex;
-        align-items: center;
-        gap: 0.5rem;
-        line-height: 1;
+        background: #fff9f2;
+        border: 2px solid #c4a882;
+        color: #5b4434;
+        display: inline-flex; align-items: center; gap: 0.4rem;
+        line-height: 1; white-space: nowrap;
+    }
+    .blender-img-inline {
+        height: 1.4rem; width: auto;
+        object-fit: contain; display: inline-block;
+        vertical-align: middle; flex: 0 0 auto; pointer-events: none;
+    }
+
+    /* 카테고리 뱃지 */
+    .cat-label {
+        font-size: 0.72rem; font-weight: 700;
+        padding: 0.1rem 0.5rem;
+        border-radius: 999px;
+        background: #f0ebe6; color: #7a5c48;
         white-space: nowrap;
     }
 
-    /* ✅ 카드 내 블렌더 이미지 */
-    .blender-img-inline{
-        height: 1.6rem;
-        width: auto;
-        object-fit: contain;
-        display: inline-block;
-        vertical-align: middle;
-        flex: 0 0 auto;
-        pointer-events: none;
+    /* ── 팝업 모달 ── */
+    #recipePopupModal .modal-dialog { max-width: 1100px; width: 95%; }
+    #recipePopupModal .modal-content {
+        border-radius: 1rem; border: none; overflow: hidden;
+        box-shadow: 0 1.5rem 4rem rgba(0,0,0,0.3);
+        max-height: 92vh;
     }
 
-    /* =========================
-       ✅ 카드 좌/우 분할(이미지/정보)
-       ========================= */
-    .menu-card-split{
-        display:flex;
-        flex-direction: row;
-        gap: 0;
-        padding: 0;
-        min-height: 160px;
+    /* 다크 헤더 */
+    #recipePopupModal .modal-header {
+        background: linear-gradient(135deg, #5b4434 0%, #3f2c20 100%);
+        border-bottom: none;
+        padding: 1.1rem 1.5rem;
+    }
+    #recipePopupModal .modal-header .btn-close {
+        filter: invert(1) brightness(2); opacity: 0.75;
+    }
+    #recipePopupModal .modal-header .btn-close:hover { opacity: 1; }
+
+    .popup-title-wrap {
+        display: flex; align-items: center;
+        gap: 0.55rem; flex-wrap: wrap;
+    }
+    .popup-title {
+        font-size: 1.5rem; font-weight: 900;
+        letter-spacing: -0.3px; color: #fff9f2;
     }
 
-    .menu-card-left{
-        width: 48%;
-        border-right: 1px solid #eef1f4;
-        display:flex;
-        align-items:center;
-        justify-content:center;
-        padding: 0.75rem;
-        background: #fbfcfe;
+    /* 헤더 내 블렌더/메타 chip */
+    .popup-meta-chip {
+        display: inline-flex; align-items: center; gap: 0.3rem;
+        padding: 0.2rem 0.65rem;
+        border-radius: 999px;
+        border: 1.5px solid rgba(255,249,242,0.35);
+        background: rgba(255,249,242,0.12);
+        font-size: 0.8rem; font-weight: 700;
+        color: #fff9f2; white-space: nowrap;
+    }
+    .popup-meta-chip.chip-hot  { border-color: #fca5a5; color: #fca5a5; background: rgba(239,68,68,0.15); }
+    .popup-meta-chip.chip-ice  { border-color: #93c5fd; color: #93c5fd; background: rgba(59,130,246,0.15); }
+    .popup-meta-chip.chip-cup  { border-color: #6ee7b7; color: #6ee7b7; background: rgba(16,185,129,0.12); }
+    .popup-meta-chip.chip-blen { border-color: #fca5a5; color: #fca5a5; background: rgba(239,68,68,0.13); }
+
+    .blender-img-modal {
+        height: 1.8rem; width: auto;
+        object-fit: contain; display: inline-block;
+        vertical-align: middle; border-radius: 0.25rem;
     }
 
-    .menu-card-right{
-        width: 52%;
-        padding: 0.9rem 0.9rem;
-        display:flex;
-        flex-direction: column;
-        align-items:center;
-        justify-content:center;
-        gap: 0.75rem;
+    #recipePopupModal .modal-body {
+        font-size: 1rem; background: #fdfcfb;
+        padding: 1.5rem; max-height: 70vh; overflow-y: auto;
     }
 
-    /* ✅ [수정] 카드 이미지: 전체 보이게 (잘림 방지) */
-    .menu-img{
-        width: 100%;
-        height: 150px;               /* 카드에서 동일 높이 유지 */
-        object-fit: contain;         /* ✅ cover → contain (전체 표시) */
-        object-position: center;
-        border-radius: 0.75rem;
-        border: 1px solid #e9ecef;
-        background: #fff;            /* 레터박스 배경 */
-        display: block;
-    }
-
-    .menu-img-placeholder{
-        width: 100%;
-        height: 150px;
-        border-radius: 0.75rem;
-        border: 1px dashed #ced4da;
-        background: #ffffff;
-        display:flex;
-        align-items:center;
-        justify-content:center;
-        color:#6c757d;
-        font-weight: 800;
-        font-size: 1.1rem;
-    }
-
-    .menu-name {
-        font-size: 1.9rem;
-        font-weight: 900;
-        text-align: center;
-        line-height: 1.1;
-        word-break: keep-all;
-    }
-
-    /* =========================
-       ✅ 팝업(모달) 스타일
-       ========================= */
-    #recipePopupModal .modal-dialog{
-        max-width: 1200px;
-        width: 95%;
-    }
-    #recipePopupModal .modal-content{
-        border-radius: 0.9rem;
-        max-height: 90vh;
-        box-shadow: 0 0.75rem 1.5rem rgba(0,0,0,0.25);
-    }
-    #recipePopupModal .modal-body{
-        max-height: 75vh;
-        overflow-y: auto;
-        font-size: 2.2rem;
-    }
-
-    .popup-title-wrap{
-        display:flex;
-        align-items:center;
-        gap: 0.75rem;
-        flex-wrap:wrap;
-    }
-    .popup-title{
-        font-size: 2.4rem;
-        font-weight: 900;
-        letter-spacing: -0.2px;
-    }
-
-    /* ✅ [수정] 팝업 이미지: 전체 보이게 (잘림 방지) */
-    .popup-img{
-        width: 100%;
-        height: 320px;               /* ✅ max-height 대신 고정 높이로 통일(스크롤 안정) */
-        object-fit: contain;         /* ✅ cover → contain */
-        object-position: center;
+    /* 팝업 이미지 */
+    .popup-img {
+        width: 100%; max-height: 260px;
+        object-fit: contain; object-position: center;
         border-radius: 0.85rem;
-        border: 1px solid #e9ecef;
-        background:#fff;
-        margin-bottom: 1rem;
-        display:block;
-    }
-
-    /* ✅ 팝업에서 블렌더 이미지는 더 크게 */
-    .blender-img-modal{
-        height: 4.6rem;
-        width: auto;
-        object-fit: contain;
-        display:inline-block;
-        vertical-align: middle;
-    }
-    .blender-note{
-        color:#dc3545;
-        font-weight: 900;
-        font-size: 1.6rem;
-        letter-spacing: -0.2px;
-        white-space: nowrap;
-    }
-
-    .popup-meta{
-        font-size: 1.6rem;
-        color: #6c757d;
-        margin-bottom: 1rem;
-    }
-
-    .popup-step{
+        border: 1px solid #ede8e3;
         background: #fff;
-        border-radius: 0.7rem;
-        padding: 1.1rem 1.2rem;
-        margin-bottom: 0.9rem;
-        border-left: 8px solid #0d6efd;
-        box-shadow: 0 0.35rem 0.9rem rgba(0,0,0,0.08);
-        line-height: 1.35;
+        margin-bottom: 1.1rem; display: block;
+    }
+
+    /* 팝업 메타 */
+    .popup-meta {
+        font-size: 0.82rem; color: #9ca3af;
+        margin-bottom: 1rem;
+        padding: 0.4rem 0.7rem;
+        background: #f7f3ef;
+        border-radius: 0.5rem;
+        border-left: 3px solid #c4a882;
+    }
+
+    /* 팝업 스텝 */
+    .popup-step {
+        display: flex; align-items: flex-start; gap: 0.8rem;
+        background: #fff;
+        border-radius: 0.875rem;
+        padding: 0.9rem 1.1rem;
+        margin-bottom: 0.6rem;
+        border: 1.5px solid #ede8e3;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+        font-size: 1rem; line-height: 1.5;
+        cursor: pointer; transition: all 0.13s;
+    }
+    .popup-step:hover {
+        border-color: #c4a882;
+        box-shadow: 0 3px 10px rgba(91,68,52,0.1);
+        transform: translateX(2px);
+    }
+    .popup-step .idx {
+        flex: 0 0 auto;
+        background: #5b4434; color: #fff9f2;
+        border-radius: 999px;
+        padding: 0.15rem 0.55rem;
+        font-size: 0.76rem; font-weight: 900;
+        white-space: nowrap; line-height: 1.6;
+        margin-top: 0.05rem;
+    }
+    .popup-step .txt {
+        flex: 1; display: block;
+        font-weight: 500; color: #374151;
+    }
+    .popup-step .time {
+        flex: 0 0 auto;
+        font-size: 0.78rem; color: #9ca3af;
+        white-space: nowrap; margin-top: 0.2rem;
+    }
+    .popup-step.selected {
+        background: #5b4434; border-color: #5b4434;
+        box-shadow: 0 4px 14px rgba(91,68,52,0.26);
+        transform: translateX(2px);
+    }
+    .popup-step.selected .idx { background: rgba(255,255,255,0.22); color: #fff9f2; }
+    .popup-step.selected .txt { color: #fff9f2; }
+    .popup-step.selected .time { color: rgba(255,249,242,0.6); }
+
+    #recipePopupModal .modal-footer {
+        background: #fdfcfb; border-top: 1px solid #ede8e3; padding: 0.8rem 1.5rem;
+    }
+
+    /* ── 모바일 반응형 ── */
+    @media (max-width: 767px) {
+        .menu-card-split { flex-direction: column; min-height: unset; }
+        .menu-card-left  { width: 100%; border-right: none; border-bottom: 1px solid #f0ebe6; padding: 0.55rem; }
+        .menu-card-right { width: 100%; padding: 0.65rem 0.75rem; gap: 0.4rem; }
+        .menu-img { height: 100px; }
+        .menu-img-placeholder { height: 100px; font-size: 0.82rem; }
+        .menu-name { font-size: 1.05rem; }
+        .temp-badge { font-size: 0.82rem; padding: 0.26rem 0.65rem 0.26rem 0.9rem; border-width: 1.5px; }
+        .cup-badge  { font-size: 0.82rem; padding: 0.15rem 0.5rem; border-width: 1.5px; gap: 0.3rem; }
+        .blender-img-inline { height: 1.1rem; }
+        .page-hero-bar { padding: 0.55rem 0.75rem; }
+        .hero-text .hero-title { font-size: 0.88rem; }
+        .menu-grid-wrapper { height: calc(100vh - 120px); padding: 0.6rem 0.6rem 1.5rem; }
+        .popup-title { font-size: 1.15rem; }
+        .blender-img-modal { height: 1.5rem; }
+        .popup-img { max-height: 180px; }
+    }
+    @media (max-width: 480px) {
+        .menu-name { font-size: 0.92rem; }
+        .temp-badge { font-size: 0.75rem; }
+        .cup-badge  { font-size: 0.75rem; }
+        .menu-img { height: 85px; }
+        .menu-img-placeholder { height: 85px; }
+        .menu-grid-wrapper { height: calc(100vh - 112px); }
+    }
+
+    /* ── 즐겨찾기 삭제 버튼 ── */
+    .btn-fav-delete {
+        position: absolute;
+        top: 7px; right: 7px;
+        z-index: 10;
+        width: 26px; height: 26px;
+        border-radius: 50%;
+        background: rgba(255,255,255,0.92);
+        border: 1.5px solid #ef4444;
+        color: #ef4444;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 0.75rem;
+        line-height: 1;
         cursor: pointer;
+        opacity: 0;
+        transition: opacity 0.15s, background 0.12s;
+        padding: 0;
     }
-    .popup-step.selected{
-        background:#0d6efd;
-        color:#fff;
-        box-shadow: 0 0.35rem 0.9rem rgba(13,110,253,0.35);
-    }
-    .popup-step .idx{
-        font-weight: 900;
-        margin-right: 0.75rem;
-    }
-    .popup-step .time{
-        font-size: 1.5rem;
-        color: rgba(255,255,255,0.85);
-        margin-left: 0.7rem;
-    }
-    .popup-step:not(.selected) .time{
-        color:#6c757d;
+    .menu-card:hover .btn-fav-delete { opacity: 1; }
+    .btn-fav-delete:hover { background: #ef4444; color: #fff; }
+    /* 터치 디바이스에서는 항상 표시 */
+    @media (hover: none) { .btn-fav-delete { opacity: 0.6; } }
+
+    /* ── 드래그 앤 드롭 ── */
+    .menu-grid-item { cursor: grab; }
+    .menu-grid-item.dragging { opacity: 0.35; cursor: grabbing; }
+    .menu-grid-item.drag-over > .menu-card {
+        outline: 2.5px dashed #5b4434;
+        outline-offset: 3px;
     }
 </style>
 
-<div class="container-fluid py-3">
-    <div class="top-status-bar d-flex justify-content-between align-items-center mb-3">
-        <div class="fw-bold">
-            주요 레시피를 선택하세요
-            <span class="text-muted ms-1">(한 번에 하나만 선택)</span>
+<div class="container-fluid px-0">
+
+    <!-- 헤더 바 -->
+    <div class="page-hero-bar">
+        <div class="hero-text">
+            <div class="hero-title">⭐ 즐겨찾기</div>
+            <div class="hero-sub">레시피를 클릭하면 상세 내용을 볼 수 있습니다</div>
         </div>
-        <span class="badge bg-primary">
-            선택한 레시피 <span id="selected-count">0</span> / 1
+        <span class="selected-chip">
+            선택 <span class="chip-count" id="selected-count">0</span> / 1
         </span>
     </div>
 
     <div class="menu-grid-wrapper">
         <div class="menu-grid" id="menu-grid">
             {{#recipeRows}}
-                <div class="menu-grid-item">
+                <div class="menu-grid-item" draggable="true">
                     <div class="menu-card"
                          data-recipe-id="{{id}}"
                          data-recipe-name="{{menuName}}"
@@ -289,8 +407,14 @@
                          data-use-blender="{{useBlender}}"
                          data-imgname="{{imgname}}">
 
+                        <!-- 즐겨찾기 삭제 버튼 -->
+                        <button class="btn-fav-delete"
+                                title="즐겨찾기에서 삭제"
+                                draggable="false"
+                                onclick="event.stopPropagation(); deleteFavorite({{id}}, this);">🗑</button>
+
                         <div class="menu-card-split">
-                            <!-- ✅ 왼쪽: 이미지 -->
+                            <!-- 왼쪽: 이미지 -->
                             <div class="menu-card-left">
                                 {{#imgname}}
                                     <img class="menu-img"
@@ -298,24 +422,21 @@
                                          alt="{{menuName}}"
                                          loading="lazy"
                                          onerror="this.onerror=null; this.style.display='none'; this.parentElement.querySelector('.menu-img-placeholder')?.classList.remove('d-none');">
-                                    <div class="menu-img-placeholder d-none">NO IMAGE</div>
+                                    <div class="menu-img-placeholder d-none">{{menuName}}</div>
                                 {{/imgname}}
-
                                 {{^imgname}}
-                                    <div class="menu-img-placeholder">NO IMAGE</div>
+                                    <div class="menu-img-placeholder">{{menuName}}</div>
                                 {{/imgname}}
                             </div>
 
-                            <!-- ✅ 오른쪽: 정보 -->
+                            <!-- 오른쪽: 정보 -->
                             <div class="menu-card-right">
                                 <div class="menu-name">{{menuName}}</div>
 
                                 <div class="d-flex flex-column align-items-center gap-2">
-                                    <span class="badge text-bg-light">{{category}}</span>
-
-                                    <div class="d-flex gap-2 align-items-center">
+                                    <span class="cat-label">{{category}}</span>
+                                    <div class="d-flex gap-2 align-items-center flex-wrap justify-content-center">
                                         <span class="temp-badge temp-{{temperature}}">{{temperature}}</span>
-
                                         <span class="cup-badge cup-badge-js">{{cupSize}}
                                             {{#useBlender}}
                                                 <img class="blender-img-inline"
@@ -329,7 +450,7 @@
                             </div>
                         </div>
 
-                        <!-- ✅ hidden steps/times (팝업에서 사용) -->
+                        <!-- hidden steps/times -->
                         <div class="d-none recipe-steps" id="recipe-steps-{{id}}">
                             {{#steps}}
                                 <div class="recipe-step-text">{{.}}</div>
@@ -344,16 +465,18 @@
             {{/recipeRows}}
 
             {{^recipeRows}}
-                <div class="alert alert-warning w-100">
-                    표시할 레시피가 없습니다.
+                <div class="col-12 text-center py-5 text-muted">
+                    <div style="font-size:2.5rem;margin-bottom:0.75rem;">☕</div>
+                    <div>표시할 레시피가 없습니다.</div>
                 </div>
             {{/recipeRows}}
         </div>
     </div>
 </div>
 
+<!-- 팝업 모달 -->
 <div class="modal fade" id="recipePopupModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-xl modal-dialog-centered">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-fullscreen-sm-down">
         <div class="modal-content">
             <div class="modal-header">
                 <div class="popup-title-wrap" id="popup-title-wrap">
@@ -363,15 +486,13 @@
             </div>
 
             <div class="modal-body">
-                <!-- ✅ 팝업 이미지 영역(있을 때만 JS로 넣음) -->
                 <div id="popup-img-wrap"></div>
-
                 <div class="popup-meta" id="popup-meta"></div>
                 <div id="popup-steps"></div>
             </div>
 
             <div class="modal-footer">
-                <button class="btn btn-secondary btn-lg" data-bs-dismiss="modal">닫기</button>
+                <button class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">닫기</button>
             </div>
         </div>
     </div>
@@ -383,7 +504,6 @@
         if (!grid) return;
 
         const selectedCountEl = document.getElementById('selected-count');
-
         const modalEl = document.getElementById('recipePopupModal');
         const popupTitleWrap = document.getElementById('popup-title-wrap');
         const popupTitle = document.getElementById('popup-title');
@@ -404,7 +524,6 @@
             if (selectedCountEl) selectedCountEl.textContent = String(n);
         }
 
-        // ✅ 목록(기본 출력)용: 17 -> 1.7, 20 -> 2.0 만 적용, 나머지는 그대로
         function displayCupInList(rawCupText) {
             const raw = String(rawCupText || '').trim().toUpperCase();
             if (raw === 'L17' || raw === '17L' || raw === '57' || raw === '17') return '1.7';
@@ -412,7 +531,6 @@
             return String(rawCupText || '').trim();
         }
 
-        // ✅ 팝업(모달)용: 17 -> 1.7L, 20 -> 2.0L 만 적용, 나머지는 그대로
         function displayCupInModal(rawCupText) {
             const raw = String(rawCupText || '').trim().toUpperCase();
             if (raw === 'L17' || raw === '17L' || raw === '57' || raw === '17') return '1.7L';
@@ -420,7 +538,6 @@
             return String(rawCupText || '').trim();
         }
 
-        // ✅ 페이지 로드시 기본 출력(카드의 컵뱃지)에서 17/20만 변환
         function applyCupDisplayOnCards() {
             const badges = grid.querySelectorAll('.cup-badge-js');
             badges.forEach(badge => {
@@ -441,27 +558,39 @@
             const useBlender = parseTruth(card.dataset.useBlender);
             const imgname = (card.dataset.imgname || '').trim();
 
-            // 제목
+            /* 제목 */
             popupTitle.textContent = name;
 
-            // 제목 옆 블렌더(팝업)
-            popupTitleWrap.querySelectorAll('img.blender-img-modal, span.blender-note').forEach(el => el.remove());
-            if (useBlender) {
-                const img = document.createElement('img');
-                img.className = 'blender-img-modal';
-                img.src = '/img/blender.jpg';
-                img.alt = '블렌더 사용';
-                img.title = '블렌더 사용';
+            /* 헤더 칩 제거 후 재삽입 */
+            popupTitleWrap.querySelectorAll('.popup-meta-chip, img.blender-img-modal').forEach(el => el.remove());
 
-                const note = document.createElement('span');
-                note.className = 'blender-note';
-                note.textContent = '(블렌더사용)';
+            const tempChip = document.createElement('span');
+            tempChip.className = 'popup-meta-chip ' + (temp === 'HOT' ? 'chip-hot' : temp === 'ICE' ? 'chip-ice' : '');
+            tempChip.textContent = temp || '';
+            if (temp) popupTitleWrap.appendChild(tempChip);
 
-                popupTitleWrap.appendChild(img);
-                popupTitleWrap.appendChild(note);
+            const cupLabel = displayCupInModal(cupRaw);
+            if (cupLabel) {
+                const cupChip = document.createElement('span');
+                cupChip.className = 'popup-meta-chip chip-cup';
+                cupChip.textContent = cupLabel;
+                popupTitleWrap.appendChild(cupChip);
             }
 
-            // ✅ 팝업 이미지(있을 때만) - CSS에서 contain이라 전체가 보입니다.
+            if (useBlender) {
+                const bChip = document.createElement('span');
+                bChip.className = 'popup-meta-chip chip-blen';
+                bChip.textContent = '블렌더 사용';
+                popupTitleWrap.appendChild(bChip);
+
+                const bImg = document.createElement('img');
+                bImg.className = 'blender-img-modal';
+                bImg.src = '/img/blender.jpg';
+                bImg.alt = '블렌더';
+                popupTitleWrap.appendChild(bImg);
+            }
+
+            /* 이미지 */
             if (popupImgWrap) {
                 popupImgWrap.innerHTML = '';
                 if (imgname) {
@@ -470,47 +599,40 @@
                     imgEl.src = '/img/' + imgname;
                     imgEl.alt = name;
                     imgEl.loading = 'lazy';
-                    imgEl.onerror = function () {
-                        popupImgWrap.innerHTML = '';
-                    };
+                    imgEl.onerror = function () { popupImgWrap.innerHTML = ''; };
                     popupImgWrap.appendChild(imgEl);
                 }
             }
 
-            // 메타
+            /* 메타 */
             const tempLabel = temp === 'HOT' ? 'HOT 🔥' : (temp === 'ICE' ? 'ICE ❄' : temp);
-            const cupLabel = displayCupInModal(cupRaw);
-            popupMeta.textContent = `카테고리: ${category} · 온도: ${tempLabel} · 컵: ${cupLabel}` + (imgname ? ` · 이미지: ${imgname}` : '');
+            popupMeta.textContent = `카테고리: ${category} · 온도: ${tempLabel} · 컵: ${cupLabel}`;
 
-            // 스텝/시간 읽기
+            /* 스텝 */
             const hidden = document.getElementById('recipe-steps-' + id);
             const stepTexts = hidden ? Array.from(hidden.querySelectorAll('.recipe-step-text')).map(x => (x.textContent || '').trim()) : [];
             const stepTimes = hidden ? Array.from(hidden.querySelectorAll('.recipe-step-time')).map(x => (x.textContent || '').trim()) : [];
 
-            // 렌더링
             popupSteps.innerHTML = '';
             if (stepTexts.length === 0) {
-                popupSteps.innerHTML = '<div class="text-muted">등록된 단계가 없습니다.</div>';
+                popupSteps.innerHTML = '<div class="text-muted small">등록된 단계가 없습니다.</div>';
                 return;
             }
 
             stepTexts.forEach((txt, idx) => {
                 if (!txt) return;
-
                 const t = stepTimes[idx] || '';
                 const row = document.createElement('div');
                 row.className = 'popup-step';
-                row.innerHTML = `
-                    <span class="idx">Step ${idx + 1}.</span>
-                    <span class="txt">${txt.replace(/\\n/g, '<br>')}</span>
-                    ${t ? `<span class="time">(${t}초)</span>` : ``}
-                `;
+                row.innerHTML =
+                    `<span class="idx">Step ${idx + 1}</span>` +
+                    `<span class="txt">${txt.replace(/\n/g, '<br>')}</span>` +
+                    (t ? `<span class="time">(${t}초)</span>` : '');
 
                 row.addEventListener('click', () => {
                     popupSteps.querySelectorAll('.popup-step').forEach(s => s.classList.remove('selected'));
                     row.classList.add('selected');
                 });
-
                 popupSteps.appendChild(row);
             });
 
@@ -520,30 +642,108 @@
 
         function openModal(card) {
             buildPopup(card);
-
             if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
-                const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
-                modal.show();
-            } else {
-                alert('Bootstrap Modal을 찾을 수 없습니다. (header에서 bootstrap.bundle.min.js 로드 확인)');
+                bootstrap.Modal.getOrCreateInstance(modalEl).show();
             }
         }
 
-        // ✅ 이벤트 위임: 카드 클릭 시 팝업
         grid.addEventListener('click', (e) => {
+            if (e.target.closest('.btn-fav-delete')) return;
+            if (isDragging) return;
             const card = e.target.closest('.menu-card');
             if (!card) return;
-
             clearSelected();
             card.classList.add('selected');
             setSelectedCount(1);
-
             openModal(card);
         });
 
-        // 초기 카운트 + 컵 표기 보정
         setSelectedCount(0);
         applyCupDisplayOnCards();
+
+        // ── 드래그 앤 드롭 ─────────────────────────────────────────
+        let draggingEl = null;
+        let isDragging = false;
+
+        function initDragAndDrop() {
+            const items = grid.querySelectorAll('.menu-grid-item');
+            items.forEach(item => attachDragListeners(item));
+        }
+
+        function attachDragListeners(item) {
+            item.addEventListener('dragstart', (e) => {
+                if (e.target.closest('.btn-fav-delete')) { e.preventDefault(); return; }
+                draggingEl = item;
+                isDragging = true;
+                item.classList.add('dragging');
+                e.dataTransfer.effectAllowed = 'move';
+            });
+
+            item.addEventListener('dragend', () => {
+                item.classList.remove('dragging');
+                grid.querySelectorAll('.menu-grid-item').forEach(el => el.classList.remove('drag-over'));
+                setTimeout(() => { isDragging = false; }, 80);
+                draggingEl = null;
+                saveFavoriteOrder();
+            });
+
+            item.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'move';
+                if (draggingEl && draggingEl !== item) {
+                    item.classList.add('drag-over');
+                }
+            });
+
+            item.addEventListener('dragleave', () => {
+                item.classList.remove('drag-over');
+            });
+
+            item.addEventListener('drop', (e) => {
+                e.preventDefault();
+                item.classList.remove('drag-over');
+                if (!draggingEl || draggingEl === item) return;
+                const allItems = [...grid.querySelectorAll('.menu-grid-item')];
+                const fromIdx = allItems.indexOf(draggingEl);
+                const toIdx = allItems.indexOf(item);
+                if (fromIdx > toIdx) {
+                    grid.insertBefore(draggingEl, item);
+                } else {
+                    item.after(draggingEl);
+                }
+            });
+        }
+
+        function saveFavoriteOrder() {
+            const items = grid.querySelectorAll('.menu-grid-item');
+            const orders = Array.from(items).map((item, idx) => {
+                const card = item.querySelector('.menu-card');
+                return { id: parseInt(card.dataset.recipeId), position: idx };
+            });
+            fetch('/api/cafe/favorites/reorder', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ orders })
+            }).catch(err => console.error('순서 저장 실패:', err));
+        }
+
+        initDragAndDrop();
+
+        // ── 즐겨찾기 삭제 ───────────────────────────────────────────
+        window.deleteFavorite = function (recipeId, btn) {
+            if (!confirm('즐겨찾기에서 삭제하시겠습니까?')) return;
+            fetch('/api/cafe/recipe/' + recipeId + '/visible/false', { method: 'POST' })
+                .then(res => {
+                    if (res.ok) {
+                        const item = btn.closest('.menu-grid-item');
+                        if (item) item.remove();
+                        if (!grid.querySelector('.menu-card.selected')) setSelectedCount(0);
+                    } else {
+                        alert('삭제에 실패했습니다.');
+                    }
+                })
+                .catch(() => alert('삭제 중 오류가 발생했습니다.'));
+        };
     })();
 </script>
 

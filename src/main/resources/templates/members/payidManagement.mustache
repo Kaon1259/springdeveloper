@@ -1,901 +1,568 @@
 {{>layouts/header_}}
 
 <main class="container my-4">
-
-    <!-- ============ 상단: 아르바이트 상태별 보기 (칩 리스트) ============ -->
-    <!-- ✅ 파란 배경 + 상단 라운드 적용 -->
-    <div class="card mb-3 state-card-blue">
-        <div class="card-header d-flex justify-content-between align-items-center">
-            <span class="fw-bold">아르바이트 상태별 보기</span>
-            <!-- 파란 배경 위에서는 primary 대신 light 버튼이 시인성이 좋아서 변경 -->
-            <a href="/members/new" class="btn btn-sm btn-light">추가등록</a>
+    <div class="pay-shell">
+        <div class="pay-shell-header">
+            <span class="fw-bold text-white fs-5">지급관리</span>
+            <ul class="nav nav-pills" id="tabTabs">
+                <li class="nav-item"><button class="nav-link active" data-tab="MONTH" type="button">월별</button></li>
+                <li class="nav-item"><button class="nav-link" data-tab="YEAR" type="button">연도별</button></li>
+            </ul>
         </div>
-        <div class="card-body">
-            <div class="row g-3">
-                <!-- 상태 선택 -->
-                <div class="col-12 col-md-4">
-                    <label for="statusSelect" class="form-label small text-muted">상태</label>
-                    <select id="statusSelect" class="form-select">
+
+        <div class="pay-shell-body">
+
+            <!-- ===== 상단 컨트롤 ===== -->
+            <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+                <div class="d-flex flex-wrap align-items-center gap-2">
+                    <span class="small text-muted">보기</span>
+                    <select id="viewModeSelect" class="form-select form-select-sm" style="width:auto;min-width:100px;">
+                        <option value="all" selected>전체</option>
+                        <option value="individual">개인별</option>
+                    </select>
+
+                    <span class="small text-muted ms-2 d-none" id="statusLabel">상태</span>
+                    <select id="statusSelect" class="form-select form-select-sm d-none" style="width:auto;min-width:120px;">
                         <option value="WORKING" selected>근무중</option>
                         <option value="WAITING">시작전</option>
                         <option value="RESTING">휴식중</option>
                         <option value="PAUSED">일시중지</option>
                         <option value="RESIGNED">퇴사</option>
                     </select>
-                    <div class="form-text">
-                        상태를 바꾸면 아래 아르바이트 목록과 지급내역이 함께 갱신됩니다.
-                    </div>
                 </div>
 
-                <!-- 아르바이트 리스트: 칩(Pill) UI -->
-                <div class="col-12 col-md-8">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <div class="small text-muted">아르바이트 목록</div>
-                        <span id="memberCountBadge" class="badge bg-light text-dark">0명</span>
+                <!-- 월/연 네비게이션 -->
+                <div class="d-flex align-items-center small text-muted gap-2 flex-wrap" id="navWrap">
+                    <span id="navLabel"></span>
+                    <div id="monthNav">
+                        <button class="btn btn-sm btn-outline-secondary" id="prevMonthBtn">◀ 이전달</button>
+                        <button class="btn btn-sm btn-outline-secondary" id="thisMonthBtn">이번달</button>
+                        <button class="btn btn-sm btn-outline-secondary" id="nextMonthBtn">다음달 ▶</button>
+                        <input type="month" id="monthPicker" class="form-control form-control-sm d-inline-block ms-1" style="width:160px;">
                     </div>
-
-                    <div id="memberPills" class="vlist">
-                        <!-- JS 렌더 -->
-                    </div>
-
-                    <div class="small text-muted mt-2">
-                        * 각 사람 옆의 색상은 근로자의 고유 색입니다.
+                    <div id="yearNav" class="d-none">
+                        <button class="btn btn-sm btn-outline-secondary" id="prevYearBtn">◀ 이전해</button>
+                        <button class="btn btn-sm btn-outline-secondary" id="thisYearBtn">올해</button>
+                        <button class="btn btn-sm btn-outline-secondary" id="nextYearBtn">다음해 ▶</button>
+                        <input type="number" id="yearInput" class="form-control form-control-sm d-inline-block ms-1" style="width:100px;" min="2000" max="2100">
                     </div>
                 </div>
             </div>
-        </div>
-    </div>
 
-    <!-- ============ 하단: 지급된 급여 내역 (월별 / 연도별 탭) ============ -->
-    <div class="pay-right-wrapper">
-
-        <!-- 🔼 상단: 제목 (스크롤 시 상단 고정) -->
-        <div class="d-flex flex-wrap justify-content-between align-items-center mb-2 gap-2 sticky-pay-header">
-            <div class="d-flex flex-wrap align-items-center gap-2">
-                <div>
-                    <span class="fw-bold h5 mb-0" id="pageTitle">급여 지급관리</span>
-                    <span id="selectedMemberName" class="ms-2 text-primary fw-semibold"></span>
-                    <span id="selectedMemberStatus" class="badge bg-secondary ms-2 d-none">-</span>
+            <!-- ===== 개인별 멤버 리스트 ===== -->
+            <div id="memberPillsWrap" class="d-none mb-3">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <span class="small text-muted">근무자 선택</span>
+                    <span id="memberCountBadge" class="badge bg-light text-dark small">0명</span>
                 </div>
+                <div id="memberPills" class="vlist"></div>
             </div>
-        </div>
 
-        <div class="card">
-            <div class="card-header fw-bold d-flex justify-content-between align-items-center">
-                <span>지급된 급여 내역</span>
-                <div class="d-flex align-items-center gap-3">
-                    <span id="payHistoryCount" class="badge bg-light text-dark">0건</span>
-
-                    <!-- 🔁 월별 / 연도별 탭 -->
-                    <ul class="nav nav-pills nav-pills-sm" id="payViewTabs">
-                        <li class="nav-item">
-                            <button class="nav-link active" type="button" data-view="MONTH">월별</button>
-                        </li>
-                        <li class="nav-item">
-                            <button class="nav-link" type="button" data-view="YEAR">연도별</button>
-                        </li>
-                    </ul>
-
-                    <!-- 🔹 PDF 버튼 (선택한 근무자의 지급내역 출력용 페이지 호출) -->
-                    <a href="#" id="paidPdfBtn" class="btn btn-sm btn-outline-primary" target="_blank">
-                        PDF
-                    </a>
-                </div>
-            </div>
-            <div class="card-body">
-
-                <!-- 안내 -->
-                <div class="small text-muted mb-2">
-                    위에서 근무자를 선택하면, <b>지급완료된 월급 내역</b>과 <b>연도별 합산 내역</b>을 볼 수 있습니다.<br>
-                    하단에는 지금까지 지급한 <b>실근무시간 / 주휴수당시간 / 근무수당 / 주휴수당 / 총 지급액(세전) / 실지급액(세후)</b>이 합산됩니다.
-                </div>
-
-                <!-- 📊 월별 / 연도별 지급내역 테이블 -->
+            <!-- ===== 월별 뷰 ===== -->
+            <section id="viewMonth">
                 <div class="table-responsive">
-
-                    <!-- 📅 월별 뷰 -->
-                    <div id="payViewMonth">
-                        <table class="table table-bordered align-middle text-center" id="payHistoryTableMonth">
-                            <!-- ✅ 헤더 파란색 + 상단 라운드 -->
-                            <thead class="pay-table-header">
-                            <tr>
-                                <th style="width:90px;">연도-월</th>
-                                <th style="width:160px;">지급일</th>
-                                <th style="width:80px;">상태</th>
-                                <th style="width:110px;">시급</th>
-                                <th style="width:120px;">실근무</th>
-                                <th style="width:120px;">주휴수당 시간</th>
-                                <th style="width:140px;" class="text-end">근무수당</th>
-                                <th style="width:140px;" class="text-end">주휴수당</th>
-                                <th style="width:110px;">세금부가</th>
-                                <th style="width:130px;" class="text-end">세금(3.3%)</th>
-                                <th style="width:160px;" class="text-end">실지급액(세후)</th>
-                            </tr>
-                            </thead>
-                            <tbody id="payHistoryBodyMonth">
-                            <!-- JS 렌더 -->
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <!-- 📆 연도별 뷰 -->
-                    <div id="payViewYear" class="d-none">
-                        <table class="table table-bordered align-middle text-center" id="payHistoryTableYear">
-                            <!-- ✅ 헤더 파란색 + 상단 라운드 -->
-                            <thead class="pay-table-header">
-                            <tr>
-                                <th style="width:100px;">연도</th>
-                                <th style="width:140px;">실근무시간 합계</th>
-                                <th style="width:150px;">주휴수당 시간 합계</th>
-                                <th style="width:150px;" class="text-end">근무수당 합계</th>
-                                <th style="width:150px;" class="text-end">주휴수당 합계</th>
-                                <th style="width:140px;" class="text-end">세금 합계</th>
-                                <th style="width:180px;" class="text-end">실지급액 합계</th>
-                            </tr>
-                            </thead>
-                            <tbody id="payHistoryBodyYear">
-                            <!-- JS 렌더 -->
-                            </tbody>
-                        </table>
-                    </div>
-
+                    <table class="table table-bordered align-middle text-center pay-tbl" id="monthTable">
+                        <thead class="inner-table-header"><tr id="monthThead"></tr></thead>
+                        <tbody id="monthTbody"></tbody>
+                    </table>
                 </div>
+                <div class="mt-3 p-3 bg-light rounded" id="monthSummary"></div>
+            </section>
 
-                <!-- 합계 영역 -->
-                <div class="mt-3">
-                    <div class="d-flex justify-content-between">
-                        <div class="small text-muted">총 실근무 시간</div>
-                        <div class="fw-semibold" id="summaryTotalWorkTime">0시간</div>
-                    </div>
-                    <div class="d-flex justify-content-between">
-                        <div class="small text-muted">총 주휴수당 시간</div>
-                        <div class="fw-semibold" id="summaryTotalJuhyuTime">0시간</div>
-                    </div>
-                    <div class="d-flex justify-content-between">
-                        <div class="small text-muted">총 근무수당</div>
-                        <div class="fw-semibold" id="summaryTotalWorkPay">-</div>
-                    </div>
-                    <div class="d-flex justify-content-between">
-                        <div class="small text-muted">총 주휴수당</div>
-                        <div class="fw-semibold" id="summaryTotalJuhyuPay">-</div>
-                    </div>
-                    <div class="d-flex justify-content-between">
-                        <div class="small text-muted">총 지급액(세전, 근무+주휴)</div>
-                        <div class="fw-semibold" id="summaryTotalPay">-</div>
-                    </div>
-                    <div class="d-flex justify-content-between">
-                        <div class="small text-muted">총 세금(3.3%)</div>
-                        <div class="fw-semibold" id="summaryTotalTax">-</div>
-                    </div>
-                    <hr class="my-2">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div class="small fw-bold">총 실지급액(세후)</div>
-                        <div class="fw-bold text-primary" id="summaryTotalNet">-</div>
-                    </div>
+            <!-- ===== 연도별 뷰 ===== -->
+            <section id="viewYear" class="d-none">
+                <div class="table-responsive">
+                    <table class="table table-bordered align-middle text-center pay-tbl" id="yearTable">
+                        <thead class="inner-table-header"><tr id="yearThead"></tr></thead>
+                        <tbody id="yearTbody"></tbody>
+                    </table>
                 </div>
+                <div class="mt-3 p-3 bg-light rounded" id="yearSummary"></div>
+            </section>
 
-                <div class="small text-muted mt-3">
-                    * "급여 관리" 화면에서 <b>지급완료</b>로 처리된 월급만 이 화면에 표시됩니다.<br>
-                    * 연도별 내역은 월별 지급 내역을 연도 단위로 합산한 값입니다.
-                </div>
-            </div>
         </div>
-
     </div>
 </main>
 
 <style>
-    /* ✅ 상단 아르바이트 상태 카드: 파란 배경 + 상단 모서리 라운드 */
-    .state-card-blue{
-        border-radius:1rem;
-        overflow:hidden;
-        background:#0d6efd;
-        color:#fff;
-        border:none;
-    }
-    .state-card-blue .card-header{
-        background:rgba(255,255,255,0.08);
-        border-bottom:1px solid rgba(255,255,255,0.25);
-    }
-    .state-card-blue .card-body{
-        background:transparent;
-    }
-    .state-card-blue .form-label,
-    .state-card-blue .form-text,
-    .state-card-blue .text-muted{
-        color:rgba(255,255,255,0.85) !important;
-    }
-    .state-card-blue .form-select{
-        background-color:#ffffff;
-        border-color:rgba(0,0,0,0.1);
-    }
-    .state-card-blue .btn-light{
-        color:#0d6efd;
-        border-color:transparent;
-    }
+    .pay-shell{ border-radius:1rem; border:1px solid #dee2e6; overflow:hidden; background:#fff; box-shadow:0 4px 12px rgba(0,0,0,.03); }
+    .pay-shell-header{ background:#0d6efd; color:#fff; padding:.75rem 1rem; display:flex; align-items:center; justify-content:space-between; gap:1rem; }
+    .pay-shell-header .nav-pills .nav-link{ color:rgba(255,255,255,.8); border-radius:999px; padding:.25rem .9rem; font-size:.9rem; border:1px solid transparent; background:transparent; }
+    .pay-shell-header .nav-pills .nav-link:hover{ color:#fff; border-color:rgba(255,255,255,.4); background:rgba(255,255,255,.08); }
+    .pay-shell-header .nav-pills .nav-link.active{ color:#0d6efd; background:#fff; border-color:#fff; font-weight:600; }
+    .pay-shell-body{ padding:1.25rem 1.5rem 1.5rem; }
 
-    /* ===== 상단 아르바이트 리스트: 칩 스타일 ===== */
-    .vlist {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-    }
-    .pill {
-        display:flex;
-        align-items:center;
-        gap:8px;
-        padding:8px 10px;
-        border-radius:999px;
-        border:1px solid #e9ecef;
-        background:#fff;
-        cursor:pointer;
-        font-size:.9rem;
-        transition: background .15s, box-shadow .15s, border-color .15s;
-        color:#212529;
-    }
-    .pill:hover {
-        background:#fafafa;
-        border-color:#dee2e6;
-    }
-    .pill.active {
-        border-color: rgba(13,110,253,.45);
-        box-shadow: 0 0 0 3px rgba(13,110,253,.15) inset;
-        background:#f0f6ff;
-    }
-    .pill .dot {
-        width:12px;
-        height:12px;
-        border-radius:50%;
-        border:1px solid rgba(0,0,0,.08);
-        flex:0 0 12px;
-    }
-    .pill .name {
-        font-weight:600;
-        color:#212529;
-    }
-    .pill .meta {
-        color:#6c757d;
-        font-size:.8rem;
-    }
+    .inner-table-header th{ background:#0d6efd !important; color:#fff !important; border-color:#0b5ed7 !important; vertical-align:middle; font-size:.82rem; }
+    .inner-table-header th:first-child{ border-top-left-radius:.75rem; }
+    .inner-table-header th:last-child{ border-top-right-radius:.75rem; }
+    .pay-tbl{ border-collapse:separate; border-spacing:0; border-radius:.75rem; overflow:hidden; }
 
-    /* 우측 전체 래퍼 – sticky 기준 컨테이너 */
-    .pay-right-wrapper {
-        position: relative;
-    }
+    .vlist{ display:flex; flex-wrap:wrap; gap:6px; }
+    .pill{ display:flex; align-items:center; gap:6px; padding:5px 10px; border-radius:999px; border:1px solid #dee2e6; background:#fff; cursor:pointer; font-size:.82rem; transition:background .15s,box-shadow .15s; }
+    .pill:hover{ background:#f0f6ff; border-color:#aac8ff; }
+    .pill.active{ border-color:rgba(13,110,253,.5); box-shadow:0 0 0 2px rgba(13,110,253,.15) inset; background:#e8f0fe; font-weight:700; }
+    .pill .dot{ width:10px; height:10px; border-radius:50%; border:1px solid rgba(0,0,0,.08); flex:0 0 10px; }
+    .pill .name{ font-weight:600; }
 
-    /* ✅ 상단 타이틀 + 선택한 근무자 정보 sticky */
-    .sticky-pay-header {
-        position: sticky;
-        top: 70px;
-        z-index: 1030;
-        background:#ffffff;
-        padding-top: .25rem;
-        padding-bottom: .25rem;
-    }
-
-    /* 합계 숫자 오른쪽 정렬 */
-    #summaryTotalWorkTime,
-    #summaryTotalJuhyuTime,
-    #summaryTotalWorkPay,
-    #summaryTotalJuhyuPay,
-    #summaryTotalPay,
-    #summaryTotalTax,
-    #summaryTotalNet {
-        text-align:right;
-    }
-
-    .toast-top-center {
-        margin-top: 70px;
-    }
-
-    /* ✅ 월별/연도별 테이블 헤더 파란색 + 상단 모서리 라운드 */
-    .pay-table-header th{
-        background:#0d6efd !important;
-        color:#fff !important;
-        border-color:#0b5ed7 !important;
-        vertical-align:middle;
-    }
-    .pay-table-header th:first-child{
-        border-top-left-radius:0.75rem;
-    }
-    .pay-table-header th:last-child{
-        border-top-right-radius:0.75rem;
-    }
-    #payHistoryTableMonth,
-    #payHistoryTableYear{
-        border-collapse:separate;
-        border-spacing:0;
-        border-radius:0.75rem;
-        overflow:hidden;
-    }
+    .status-dot{ display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:6px; border:1px solid rgba(0,0,0,.08); }
+    .status-dot-draft{ background:#ced4da; } .status-dot-confirmed{ background:#ffe08a; } .status-dot-paid{ background:#4dabf7; }
+    .member-cell{ text-align:left; white-space:nowrap; }
+    .member-name{ font-weight:600; }
+    .member-meta{ font-size:.72rem; color:#6c757d; }
+    #monthTbody tr.paid-row{ background:#e8f2ff; }
+    #monthTbody tr.confirmed-row{ background:#fff8e1; }
+    #monthTbody tr.draft-row{ background:#f8f9fa; }
 </style>
 
-<!-- ✅ 부트스트랩 토스트 영역 -->
-<div class="position-fixed top-0 start-50 translate-middle-x p-3 toast-top-center" style="z-index:1080;">
-    <div id="mainToast" class="toast align-items-center text-bg-success border-0" role="alert"
-         aria-live="assertive" aria-atomic="true">
-        <div class="d-flex">
-            <div class="toast-body" id="mainToastBody">
-                처리되었습니다.
-            </div>
-            <button type="button" class="btn-close btn-close-white me-2 m-auto"
-                    data-bs-dismiss="toast" aria-label="Close"></button>
-        </div>
+<div class="position-fixed top-0 start-50 translate-middle-x p-3" style="z-index:1080;margin-top:70px;">
+    <div id="mainToast" class="toast align-items-center text-bg-success border-0" role="alert" data-bs-delay="3000" data-bs-autohide="true">
+        <div class="d-flex"><div class="toast-body" id="mainToastBody">OK</div>
+            <button type="button" class="btn btn-sm btn-link fw-bold text-dark ms-2" data-bs-dismiss="toast" style="text-decoration:none;font-size:1.2rem;">×</button></div>
     </div>
 </div>
 
-<!-- 서버에서 내려준 멤버 JSON -->
-<script id="membersData" type="application/json">
-{{{membersJson}}}
-</script>
+<script id="membersData" type="application/json">{{{membersJson}}}</script>
 
 <script>
-    (function() {
-        // 급여 내역 조회 API
-        const PAYROLL_MEMBER_API = '/api/payroll/member';
+(function(){
+    const MONTHLY_API = '/api/payroll/monthly';
+    const YEARLY_API  = '/api/payroll/yearly';
+    const MEMBER_API  = '/api/payroll/member';
 
-        // 상단 상태/리스트
-        const statusSelect         = document.getElementById('statusSelect');
-        const memberPills          = document.getElementById('memberPills');
-        const memberCountBadge     = document.getElementById('memberCountBadge');
+    /* ===== DOM refs ===== */
+    const viewModeSelect  = document.getElementById('viewModeSelect');
+    const statusSelect    = document.getElementById('statusSelect');
+    const statusLabel     = document.getElementById('statusLabel');
+    const memberPillsWrap = document.getElementById('memberPillsWrap');
+    const memberPills     = document.getElementById('memberPills');
+    const memberCountBadge= document.getElementById('memberCountBadge');
 
-        // 우측 상단
-        const pageTitle            = document.getElementById('pageTitle');
-        const selectedMemberNameEl = document.getElementById('selectedMemberName');
-        const selectedMemberStatus = document.getElementById('selectedMemberStatus');
+    const tabBtns         = document.querySelectorAll('#tabTabs .nav-link');
+    const viewMonthEl     = document.getElementById('viewMonth');
+    const viewYearEl      = document.getElementById('viewYear');
+    const monthNav        = document.getElementById('monthNav');
+    const yearNav         = document.getElementById('yearNav');
+    const navWrap         = document.getElementById('navWrap');
+    const navLabelEl      = document.getElementById('navLabel');
 
-        // 우측 탭
-        const payViewTabs          = document.querySelectorAll('#payViewTabs .nav-link');
-        const payViewMonthEl       = document.getElementById('payViewMonth');
-        const payViewYearEl        = document.getElementById('payViewYear');
+    const monthPicker     = document.getElementById('monthPicker');
+    const yearInput       = document.getElementById('yearInput');
+    const monthThead      = document.getElementById('monthThead');
+    const monthTbody      = document.getElementById('monthTbody');
+    const monthSummary    = document.getElementById('monthSummary');
+    const yearThead       = document.getElementById('yearThead');
+    const yearTbody       = document.getElementById('yearTbody');
+    const yearSummary     = document.getElementById('yearSummary');
 
-        // 지급 내역 테이블
-        const payHistoryBodyMonth  = document.getElementById('payHistoryBodyMonth');
-        const payHistoryBodyYear   = document.getElementById('payHistoryBodyYear');
-        const payHistoryCount      = document.getElementById('payHistoryCount');
+    const toastEl         = document.getElementById('mainToast');
+    const toastBodyEl     = document.getElementById('mainToastBody');
 
-        // 합계 영역
-        const summaryTotalWorkTime = document.getElementById('summaryTotalWorkTime');
-        const summaryTotalJuhyuTime= document.getElementById('summaryTotalJuhyuTime');
-        const summaryTotalWorkPay  = document.getElementById('summaryTotalWorkPay');
-        const summaryTotalJuhyuPay = document.getElementById('summaryTotalJuhyuPay');
-        const summaryTotalPay      = document.getElementById('summaryTotalPay');
-        const summaryTotalTax      = document.getElementById('summaryTotalTax');
-        const summaryTotalNet      = document.getElementById('summaryTotalNet');
+    /* ===== state ===== */
+    let allMembers = [];
+    try { allMembers = JSON.parse(document.getElementById('membersData').textContent||'[]'); } catch(e){}
 
-        // PDF 버튼
-        const paidPdfBtn           = document.getElementById('paidPdfBtn');
+    let viewMode    = 'all';       // 'all' | 'individual'
+    let currentTab  = 'MONTH';     // 'MONTH' | 'YEAR'
+    let selectedMember = null;
 
-        // 토스트
-        const toastEl              = document.getElementById('mainToast');
-        const toastBodyEl          = document.getElementById('mainToastBody');
+    const now = new Date();
+    monthPicker.value = `${now.getFullYear()}-${pad2(now.getMonth()+1)}`;
+    yearInput.value   = now.getFullYear();
 
-        // 상태
-        let allMembers = [];
-        try {
-            allMembers = JSON.parse(document.getElementById('membersData').textContent || '[]');
-        } catch(e) {
-            allMembers = [];
+    /* ===== events ===== */
+    viewModeSelect.addEventListener('change', ()=>{ viewMode = viewModeSelect.value; applyViewMode(); });
+    statusSelect.addEventListener('change', refreshMemberPills);
+
+    tabBtns.forEach(btn=> btn.addEventListener('click', ()=>{
+        currentTab = btn.dataset.tab;
+        tabBtns.forEach(b=>b.classList.remove('active'));
+        btn.classList.add('active');
+        viewMonthEl.classList.toggle('d-none', currentTab!=='MONTH');
+        viewYearEl.classList.toggle('d-none', currentTab!=='YEAR');
+        const isAll = (viewMode==='all');
+        navWrap.classList.toggle('d-none', !isAll);
+        monthNav.classList.toggle('d-none', currentTab!=='MONTH');
+        yearNav.classList.toggle('d-none', currentTab!=='YEAR');
+        loadData();
+    }));
+
+    document.getElementById('prevMonthBtn').addEventListener('click', ()=>shiftMonth(-1));
+    document.getElementById('thisMonthBtn').addEventListener('click', ()=>{ monthPicker.value=`${new Date().getFullYear()}-${pad2(new Date().getMonth()+1)}`; loadData(); });
+    document.getElementById('nextMonthBtn').addEventListener('click', ()=>shiftMonth(1));
+    monthPicker.addEventListener('change', ()=>loadData());
+
+    document.getElementById('prevYearBtn').addEventListener('click', ()=>shiftYear(-1));
+    document.getElementById('thisYearBtn').addEventListener('click', ()=>{ yearInput.value=new Date().getFullYear(); loadData(); });
+    document.getElementById('nextYearBtn').addEventListener('click', ()=>shiftYear(1));
+    yearInput.addEventListener('change', ()=>loadData());
+
+    /* ===== init ===== */
+    applyViewMode();
+
+    /* ===== view mode switch ===== */
+    function applyViewMode(){
+        const isAll = (viewMode==='all');
+        statusLabel.classList.toggle('d-none', isAll);
+        statusSelect.classList.toggle('d-none', isAll);
+        memberPillsWrap.classList.toggle('d-none', isAll);
+        navWrap.classList.toggle('d-none', !isAll);
+
+        if (!isAll) {
+            refreshMemberPills();
+        } else {
+            selectedMember = null;
+            loadData();
+        }
+    }
+
+    /* ===== member pills (개인별) ===== */
+    function refreshMemberPills(){
+        const filtered = allMembers.filter(m=>m.status===statusSelect.value);
+        memberPills.innerHTML = '';
+        memberCountBadge.textContent = filtered.length + '명';
+
+        if (!filtered.length){
+            memberPills.innerHTML = '<span class="small text-muted">해당 상태의 근무자가 없습니다.</span>';
+            selectedMember = null;
+            clearTables();
+            return;
         }
 
-        let currentMember = null;
-        let selectedMemberId = null;
-        let currentPayView = 'MONTH';
-        let lastMonthlyCount = 0;
-        let lastYearlyCount  = 0;
-
-        // 상태 초기값
-        if (Array.isArray(allMembers) && allMembers.length > 0) {
-            statusSelect.value = allMembers[0].status || 'WORKING';
+        let toSelect = null;
+        if (selectedMember && filtered.some(m=>String(m.id)===String(selectedMember.id))){
+            toSelect = filtered.find(m=>String(m.id)===String(selectedMember.id));
+        } else {
+            toSelect = filtered[0];
         }
 
-        // 이벤트 바인딩
-        statusSelect.addEventListener('change', handleStatusChange);
-
-        // 우측 탭 클릭
-        payViewTabs.forEach(btn => {
-            btn.addEventListener('click', () => {
-                const view = btn.dataset.view; // MONTH | YEAR
-                if (!view) return;
-                currentPayView = view;
-
-                payViewTabs.forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-
-                if (view === 'MONTH') {
-                    payViewMonthEl.classList.remove('d-none');
-                    payViewYearEl.classList.add('d-none');
-                    payHistoryCount.textContent = `${lastMonthlyCount}건`;
-                } else {
-                    payViewYearEl.classList.remove('d-none');
-                    payViewMonthEl.classList.add('d-none');
-                    payHistoryCount.textContent = `${lastYearlyCount}건`;
-                }
-            });
+        filtered.slice().sort((a,b)=>(a.name||'').localeCompare(b.name||'','ko')).forEach(m=>{
+            const btn = document.createElement('button');
+            btn.type='button'; btn.className='pill'; btn.dataset.memberId=String(m.id);
+            btn.innerHTML = `<span class="dot" style="background:${colorFor(m)}"></span><span class="name">${esc(m.name||'-')}</span>`;
+            btn.addEventListener('click', ()=>selectMember(m));
+            memberPills.appendChild(btn);
         });
 
-        // 🔹 PDF 버튼 클릭 → memberId 없으면 경고, 있으면 출력용 페이지 호출
-        paidPdfBtn.addEventListener('click', function(e){
-            if (!selectedMemberId) {
-                e.preventDefault();
-                showToast('근무자를 먼저 선택해 주세요.', 'warning');
-                return;
-            }
-            this.href = `/payment/payidmanager/print?memberId=${encodeURIComponent(selectedMemberId)}`;
-        });
+        selectMember(toSelect);
+    }
 
-        // 초기 실행
-        handleStatusChange();
+    function selectMember(m){
+        selectedMember = m;
+        memberPills.querySelectorAll('.pill').forEach(el=>el.classList.toggle('active', el.dataset.memberId===String(m.id)));
+        loadData();
+    }
 
-        // ===== 상태 변경 시 멤버 칩 리스트 갱신 =====
-        function handleStatusChange() {
-            const status = statusSelect.value;
-            const filtered = (allMembers || []).filter(m => m.status === status);
-            renderMembersByStatus(filtered);
-        }
+    /* ===== data loading ===== */
+    function loadData(){
+        if (currentTab==='MONTH') loadMonthData();
+        else loadYearData();
+    }
 
-        function renderMembersByStatus(members) {
-            memberPills.innerHTML = '';
-            memberCountBadge.textContent = members.length + '명';
+    /* --- 월별 --- */
+    async function loadMonthData(){
+        buildMonthHeader();
+        monthTbody.innerHTML = '<tr><td colspan="12" class="text-center text-muted">불러오는 중...</td></tr>';
+        monthSummary.innerHTML = '';
 
-            if (!members.length) {
-                memberPills.innerHTML = `<span class="text-muted small">해당 상태의 아르바이트생이 없습니다.</span>`;
-                selectedMemberId = null;
-                currentMember = null;
-                clearRight();
-                return;
-            }
-
-            let toSelect = null;
-            if (currentMember && members.some(m => String(m.id) === String(currentMember.id))) {
-                toSelect = members.find(m => String(m.id) === String(currentMember.id));
-            } else {
-                toSelect = members[0];
-            }
-
-            members
-                    .slice()
-                    .sort((a,b) => (a.name||'').localeCompare(b.name||'', 'ko'))
-                    .forEach(m => {
-                        const btn = document.createElement('button');
-                        btn.type = 'button';
-                        btn.className = 'pill';
-                        btn.dataset.memberId = String(m.id);
-
-                        const color = colorForMember(m);
-                        btn.innerHTML = `
-                        <span class="dot" style="background:${color}"></span>
-                        <span class="name">${escapeHtml(m.name ?? '-')}</span>
-                        <span class="meta">${escapeHtml(m.phone ?? '')}</span>
-                    `;
-
-                        btn.addEventListener('click', (e) => {
-                            e.preventDefault();
-                            selectMember(m);
-                        });
-
-                        memberPills.appendChild(btn);
-                    });
-
-            selectMember(toSelect);
-        }
-
-        function selectMember(member) {
-            currentMember = member;
-            selectedMemberId = member.id;
-            updateMemberListActive();
-            renderMemberHeader(member);
-            loadPaidPayroll(member);
-        }
-
-        function updateMemberListActive() {
-            Array.from(memberPills.querySelectorAll('.pill')).forEach(el => {
-                el.classList.toggle('active', el.dataset.memberId === String(selectedMemberId));
-            });
-        }
-
-        function renderMemberHeader(member) {
-            if (!member) {
-                pageTitle.textContent = '급여 지급관리';
-                selectedMemberNameEl.textContent = '';
-                selectedMemberStatus.classList.add('d-none');
-                selectedMemberStatus.textContent = '-';
-                selectedMemberStatus.className = 'badge bg-secondary d-none';
-                return;
-            }
-            pageTitle.textContent = '급여 지급관리';
-            selectedMemberNameEl.textContent = `(${member.name ?? '-'})`;
-            const badgeMap = {
-                WORKING: 'bg-success',
-                WAITING: 'bg-secondary',
-                RESTING: 'bg-info',
-                PAUSED: 'bg-warning',
-                RESIGNED: 'bg-danger'
-            };
-            selectedMemberStatus.classList.remove('d-none');
-            selectedMemberStatus.textContent = member.status || '-';
-            selectedMemberStatus.className = `badge ${badgeMap[member.status] || 'bg-secondary'} ms-2`;
-        }
-
-        function clearRight() {
-            payHistoryBodyMonth.innerHTML = '';
-            payHistoryBodyYear.innerHTML  = '';
-            payHistoryCount.textContent   = '0건';
-            lastMonthlyCount = 0;
-            lastYearlyCount  = 0;
-
-            summaryTotalWorkTime.textContent  = '0시간';
-            summaryTotalJuhyuTime.textContent = '0시간';
-            summaryTotalWorkPay.textContent   = '-';
-            summaryTotalJuhyuPay.textContent  = '-';
-            summaryTotalPay.textContent       = '-';
-            summaryTotalTax.textContent       = '-';
-            summaryTotalNet.textContent       = '-';
-
-            renderMemberHeader(null);
-        }
-
-        // ===== 지급완료 급여 내역 로딩 =====
-        async function loadPaidPayroll(member) {
-            if (!member) {
-                clearRight();
-                return;
-            }
-
-            payHistoryBodyMonth.innerHTML = `
-                <tr>
-                    <td colspan="11" class="text-center text-muted">불러오는 중...</td>
-                </tr>
-            `;
-            payHistoryBodyYear.innerHTML = '';
-            payHistoryCount.textContent = '0건';
-            lastMonthlyCount = 0;
-            lastYearlyCount  = 0;
-
-            let list = [];
+        if (viewMode==='all'){
+            const [y,m] = (monthPicker.value||'').split('-');
+            const year=Number(y)||now.getFullYear(), month=Number(m)||(now.getMonth()+1);
+            navLabelEl.textContent = `${year}년 ${month}월`;
             try {
-                const url = `${PAYROLL_MEMBER_API}/${encodeURIComponent(member.id)}`;
-                const resp = await fetch(url, { headers: { 'Accept': 'application/json' } });
-                if (!resp.ok) {
-                    const text = await resp.text().catch(()=> '');
-                    console.error('loadPaidPayroll error', resp.status, text);
-                    showToast('지급내역을 불러오는 중 오류가 발생했습니다.', 'danger');
-                    clearRight();
-                    renderMemberHeader(member);
-                    return;
-                }
-                list = await resp.json();
-                if (!Array.isArray(list)) list = [];
-            } catch (e) {
-                console.error('loadPaidPayroll fetch error', e);
-                showToast('지급내역을 불러오는 중 통신 오류가 발생했습니다.', 'danger');
-                clearRight();
-                renderMemberHeader(member);
-                return;
-            }
-
-            renderPayrollList(member, list);
+                const resp = await fetch(`${MONTHLY_API}?year=${year}&month=${month}`, {headers:{'Accept':'application/json'}});
+                if (!resp.ok) throw new Error(resp.status);
+                let list = await resp.json(); if (!Array.isArray(list)) list=[];
+                renderMonthAll(list);
+            } catch(e){ monthTbody.innerHTML='<tr><td colspan="12" class="text-center text-danger">오류 발생</td></tr>'; }
+        } else {
+            if (!selectedMember){ clearTables(); return; }
+            navLabelEl.textContent = `${esc(selectedMember.name)} 지급내역`;
+            try {
+                const resp = await fetch(`${MEMBER_API}/${encodeURIComponent(selectedMember.id)}`, {headers:{'Accept':'application/json'}});
+                if (!resp.ok) throw new Error(resp.status);
+                let list = await resp.json(); if (!Array.isArray(list)) list=[];
+                renderMonthIndividual(list);
+            } catch(e){ monthTbody.innerHTML='<tr><td colspan="12" class="text-center text-danger">오류 발생</td></tr>'; }
         }
+    }
 
-        // ===== 지급내역 테이블 + 합계 렌더 =====
-        function renderPayrollList(member, list) {
-            payHistoryBodyMonth.innerHTML = '';
-            payHistoryBodyYear.innerHTML  = '';
-
-            if (!Array.isArray(list) || list.length === 0) {
-                const emptyMonth = `
-                    <tr>
-                        <td colspan="11" class="text-center text-muted">
-                            지급완료된 급여 내역이 없습니다.
-                        </td>
-                    </tr>
-                `;
-                const emptyYear = `
-                    <tr>
-                        <td colspan="7" class="text-center text-muted">
-                            연도별로 집계할 급여 내역이 없습니다.
-                        </td>
-                    </tr>
-                `;
-                payHistoryBodyMonth.innerHTML = emptyMonth;
-                payHistoryBodyYear.innerHTML  = emptyYear;
-
-                payHistoryCount.textContent = '0건';
-                lastMonthlyCount = 0;
-                lastYearlyCount  = 0;
-
-                summaryTotalWorkTime.textContent  = '0시간';
-                summaryTotalJuhyuTime.textContent = '0시간';
-                summaryTotalWorkPay.textContent   = '-';
-                summaryTotalJuhyuPay.textContent  = '-';
-                summaryTotalPay.textContent       = '-';
-                summaryTotalTax.textContent       = '-';
-                summaryTotalNet.textContent       = '-';
-
-                return;
-            }
-
-            // payYear, payMonth 기준 최신순 정렬
-            list.sort((a, b) => {
-                const ay = a.payYear || 0, by = b.payYear || 0;
-                const am = a.payMonth || 0, bm = b.payMonth || 0;
-                if (ay !== by) return by - ay;
-                return bm - am;
-            });
-
-            let totalWorkMinutes = 0;
-            let totalJuhyuMinutes = 0;
-            let totalWorkPay = 0;
-            let totalJuhyuPay = 0;
-            let totalPay = 0;   // 세전 총액
-            let totalTax = 0;   // 세금 합계
-            let totalNet = 0;   // 세후 실지급액 합계
-
-            const yearMap = {};
-
-            const monthRows = list.map(item => {
-                const year  = item.payYear ?? '-';
-                const month = item.payMonth != null ? pad2(item.payMonth) : '--';
-
-                const rawPaidDate = item.paidDate;
-                const paidDate = rawPaidDate ? formatDateTime(rawPaidDate) : '-';
-
-                const status = (item.status || 'PAID').toUpperCase();
-
-                const workMinutes  = item.monthWorkMinutes  || 0;
-                const juhyuMinutes = item.monthJuhyuMinutes || 0;
-                const workPay      = item.monthWorkPay      || 0;
-                const juhyuPay     = item.monthJuhyuPay     || 0;
-                const grossTotal   = item.monthTotalPay     || (workPay + juhyuPay); // 세전 총액
-
-                totalWorkMinutes  += workMinutes;
-                totalJuhyuMinutes += juhyuMinutes;
-                totalWorkPay      += workPay;
-                totalJuhyuPay     += juhyuPay;
-                totalPay          += grossTotal;
-
-                const taxApplied = isTaxAppliedForItem(item, member);
-                let taxAmount = 0;
-                let netPay    = grossTotal;
-                if (taxApplied && grossTotal > 0) {
-                    taxAmount = Math.round(grossTotal * 0.033);
-                    netPay    = grossTotal - taxAmount;
-                }
-
-                totalTax += taxAmount;
-                totalNet += netPay;
-
-                if (item.payYear != null) {
-                    const y = item.payYear;
-                    if (!yearMap[y]) {
-                        yearMap[y] = {
-                            workMinutes: 0,
-                            juhyuMinutes: 0,
-                            workPay: 0,
-                            juhyuPay: 0,
-                            totalPay: 0,
-                            tax: 0,
-                            net: 0
-                        };
-                    }
-                    yearMap[y].workMinutes  += workMinutes;
-                    yearMap[y].juhyuMinutes += juhyuMinutes;
-                    yearMap[y].workPay      += workPay;
-                    yearMap[y].juhyuPay     += juhyuPay;
-                    yearMap[y].totalPay     += grossTotal;
-                    yearMap[y].tax          += taxAmount;
-                    yearMap[y].net          += netPay;
-                }
-
-                const hourly = (typeof item.hourlyWage === 'number')
-                        ? krw(item.hourlyWage)
-                        : ((typeof member?.hourlyWage === 'number') ? krw(member.hourlyWage) : '-');
-
-                const statusLabelMap = { DRAFT:'임시저장', CONFIRMED:'확정', PAID:'지급완료' };
-                const statusBadgeMap = { DRAFT:'bg-secondary', CONFIRMED:'bg-info', PAID:'bg-success' };
-                const statusLabel = statusLabelMap[status] || status;
-                const statusClass = statusBadgeMap[status] || 'bg-secondary';
-
-                const taxLabel = taxApplied
-                        ? '<span class="text-danger fw-bold">부과</span>'
-                        : '<span class="text-muted">미부과</span>';
-
-                return `
-                    <tr>
-                        <td>${year}-${month}</td>
-                        <td>${paidDate}</td>
-                        <td>
-                            <span class="badge ${statusClass}">${statusLabel}</span>
-                        </td>
-                        <td class="text-end">${hourly}</td>
-                        <td>${formatMins(workMinutes)}</td>
-                        <td>${formatMins(juhyuMinutes)}</td>
-                        <td class="text-end">${workPay ? krw(workPay) : '-'}</td>
-                        <td class="text-end">${juhyuPay ? krw(juhyuPay) : '-'}</td>
-                        <td>${taxLabel}</td>
-                        <td class="text-end">${taxApplied && taxAmount ? krw(taxAmount) : (taxApplied ? krw(0) : '-')}</td>
-                        <td class="text-end fw-semibold">${netPay ? krw(netPay) : '-'}</td>
-                    </tr>
-                `;
-            });
-
-            payHistoryBodyMonth.innerHTML = monthRows.join('');
-            lastMonthlyCount = list.length;
-
-            const years = Object.keys(yearMap).map(y => Number(y)).sort((a,b) => b - a);
-            if (years.length === 0) {
-                payHistoryBodyYear.innerHTML = `
-                    <tr>
-                        <td colspan="7" class="text-center text-muted">
-                            연도별로 집계할 급여 내역이 없습니다.
-                        </td>
-                    </tr>
-                `;
-                lastYearlyCount = 0;
-            } else {
-                const yearRows = years.map(y => {
-                    const aggr = yearMap[y];
-                    return `
-                        <tr>
-                            <td>${y}</td>
-                            <td>${formatMins(aggr.workMinutes)}</td>
-                            <td>${formatMins(aggr.juhyuMinutes)}</td>
-                            <td class="text-end">${aggr.workPay ? krw(aggr.workPay) : '-'}</td>
-                            <td class="text-end">${aggr.juhyuPay ? krw(aggr.juhyuPay) : '-'}</td>
-                            <td class="text-end">${aggr.tax ? krw(aggr.tax) : '-'}</td>
-                            <td class="text-end fw-semibold">${aggr.net ? krw(aggr.net) : '-'}</td>
-                        </tr>
-                    `;
-                });
-                payHistoryBodyYear.innerHTML = yearRows.join('');
-                lastYearlyCount = years.length;
-            }
-
-            if (currentPayView === 'MONTH') {
-                payHistoryCount.textContent = `${lastMonthlyCount}건`;
-            } else {
-                payHistoryCount.textContent = `${lastYearlyCount}건`;
-            }
-
-            summaryTotalWorkTime.textContent  = formatMins(totalWorkMinutes);
-            summaryTotalJuhyuTime.textContent = formatMins(totalJuhyuMinutes);
-            summaryTotalWorkPay.textContent   = totalWorkPay  ? krw(totalWorkPay)  : '-';
-            summaryTotalJuhyuPay.textContent  = totalJuhyuPay ? krw(totalJuhyuPay) : '-';
-            summaryTotalPay.textContent       = totalPay      ? krw(totalPay)      : '-';
-            summaryTotalTax.textContent       = totalTax      ? krw(totalTax)      : '-';
-            summaryTotalNet.textContent       = totalNet      ? krw(totalNet)      : '-';
+    function buildMonthHeader(){
+        if (viewMode==='all'){
+            monthThead.innerHTML = `
+                <th style="width:200px;">근무자</th>
+                <th style="width:110px;">실근무시간</th>
+                <th style="width:110px;">주휴시간</th>
+                <th style="width:90px;">시급</th>
+                <th style="width:120px;" class="text-end">근무수당</th>
+                <th style="width:120px;" class="text-end">주휴수당</th>
+                <th style="width:100px;">세금부가</th>
+                <th style="width:110px;" class="text-end">세금(3.3%)</th>
+                <th style="width:130px;" class="text-end">실지급액</th>
+                <th style="width:80px;">상태</th>
+                <th style="width:150px;">처리일자</th>`;
+        } else {
+            monthThead.innerHTML = `
+                <th style="width:90px;">연도-월</th>
+                <th style="width:140px;">지급일</th>
+                <th style="width:80px;">상태</th>
+                <th style="width:90px;">시급</th>
+                <th style="width:100px;">실근무</th>
+                <th style="width:100px;">주휴시간</th>
+                <th style="width:120px;" class="text-end">근무수당</th>
+                <th style="width:120px;" class="text-end">주휴수당</th>
+                <th style="width:80px;">세금부가</th>
+                <th style="width:110px;" class="text-end">세금(3.3%)</th>
+                <th style="width:130px;" class="text-end">실지급액</th>`;
         }
+    }
 
-        // ===== 토스트 헬퍼 =====
-        function showToast(message, type) {
-            if (!toastEl || !toastBodyEl) return;
-            toastBodyEl.textContent = message;
+    function renderMonthAll(list){
+        monthTbody.innerHTML='';
+        if (!list.length){ monthTbody.innerHTML='<tr><td colspan="11" class="text-center text-muted">데이터가 없습니다.</td></tr>'; monthSummary.innerHTML=''; return; }
 
-            toastEl.classList.remove('text-bg-success','text-bg-danger','text-bg-warning','text-bg-info');
-            if (type === 'danger') {
-                toastEl.classList.add('text-bg-danger');
-            } else if (type === 'warning') {
-                toastEl.classList.add('text-bg-warning');
-            } else if (type === 'info') {
-                toastEl.classList.add('text-bg-info');
-            } else {
-                toastEl.classList.add('text-bg-success');
-            }
+        const SO = {DRAFT:0,CONFIRMED:1,PAID:2};
+        list.sort((a,b)=>{ const d=(SO[(a.status||'DRAFT').toUpperCase()]||0)-(SO[(b.status||'DRAFT').toUpperCase()]||0); return d!==0?d:(a.memberName||'').localeCompare(b.memberName||'','ko'); });
 
-            if (window.bootstrap && bootstrap.Toast) {
-                const t = bootstrap.Toast.getOrCreateInstance(toastEl);
-                t.show();
-            } else {
-                toastEl.style.display = 'block';
-                setTimeout(() => { toastEl.style.display = 'none'; }, 2000);
-            }
+        let tWM=0,tJM=0,tWP=0,tJP=0,tTx=0,tNt=0;
+
+        list.forEach(item=>{
+            const wm=item.workMinutes||0, jm=item.juhyuMinutes||0, wp=item.workPay||0, jp=item.juhyuPay||0;
+            const gross=item.totalPay||(wp+jp);
+            const status=(item.status||'DRAFT').toUpperCase();
+            const taxApplied = flagToBool(item.applyTax);
+            let tax=0, net=gross;
+            if (taxApplied && gross>0){ tax=Math.round(gross*0.033); net=gross-tax; }
+
+            tWM+=wm; tJM+=jm; tWP+=wp; tJP+=jp; tTx+=tax; tNt+=net;
+
+            const sLabel={DRAFT:'임시저장',CONFIRMED:'확정',PAID:'지급완료'}[status]||status;
+            const sBadge={DRAFT:'bg-secondary',CONFIRMED:'bg-warning text-dark',PAID:'bg-success'}[status]||'bg-secondary';
+            const rCls={DRAFT:'draft-row',CONFIRMED:'confirmed-row',PAID:'paid-row'}[status]||'';
+            const dotCls=status==='PAID'?'status-dot-paid':status==='CONFIRMED'?'status-dot-confirmed':'status-dot-draft';
+
+            let rawDate=null;
+            if(status==='DRAFT') rawDate=item.savedAt||item.createdAt;
+            else if(status==='CONFIRMED') rawDate=item.confirmedAt;
+            else rawDate=item.paidAt;
+
+            const hourly=(typeof item.hourlyWage==='number')?item.hourlyWage:0;
+            const mn=esc(item.memberName||'-'), mp=esc(item.memberPhone||'');
+
+            monthTbody.innerHTML += `<tr class="${rCls}">
+                <td class="member-cell"><span class="status-dot ${dotCls}"></span><span class="member-name">${mn}</span>${mp?`<div class="member-meta">${mp}</div>`:''}</td>
+                <td>${fmtMins(wm)}</td><td>${fmtMins(jm)}</td>
+                <td class="text-end">${hourly?krw(hourly):'-'}</td>
+                <td class="text-end">${wp?krw(wp):'-'}</td><td class="text-end">${jp?krw(jp):'-'}</td>
+                <td>${taxApplied?'<span class="text-danger fw-bold">부과</span>':'<span class="text-muted">미부과</span>'}</td>
+                <td class="text-end">${taxApplied?krw(tax):'-'}</td>
+                <td class="text-end fw-semibold">${net?krw(net):'-'}</td>
+                <td><span class="badge ${sBadge}">${sLabel}</span></td>
+                <td>${rawDate?fmtDt(rawDate):'-'}</td></tr>`;
+        });
+
+        monthSummary.innerHTML = summaryHtml([
+            ['총 실근무시간', fmtMins(tWM)], ['총 주휴시간', fmtMins(tJM)],
+            ['총 근무수당', tWP?krw(tWP):'-'], ['총 주휴수당', tJP?krw(tJP):'-'],
+            ['총 세금(3.3%)', tTx?krw(tTx):'-']
+        ], '총 실지급액', tNt?krw(tNt):'-');
+    }
+
+    function renderMonthIndividual(list){
+        monthTbody.innerHTML='';
+        if (!list.length){ monthTbody.innerHTML='<tr><td colspan="11" class="text-center text-muted">지급 내역이 없습니다.</td></tr>'; monthSummary.innerHTML=''; return; }
+
+        list.sort((a,b)=>{ const ay=a.payYear||0,by=b.payYear||0; if(ay!==by) return by-ay; return (b.payMonth||0)-(a.payMonth||0); });
+
+        let tWM=0,tJM=0,tWP=0,tJP=0,tTx=0,tNt=0;
+
+        list.forEach(item=>{
+            const y=item.payYear??'-', mo=item.payMonth!=null?pad2(item.payMonth):'--';
+            const wm=item.monthWorkMinutes||0, jm=item.monthJuhyuMinutes||0, wp=item.monthWorkPay||0, jp=item.monthJuhyuPay||0;
+            const gross=item.monthTotalPay||(wp+jp);
+            const status=(item.status||'PAID').toUpperCase();
+            const taxApplied=isTaxAppliedForItem(item, selectedMember);
+            let tax=0, net=gross;
+            if(taxApplied&&gross>0){ tax=Math.round(gross*0.033); net=gross-tax; }
+
+            tWM+=wm; tJM+=jm; tWP+=wp; tJP+=jp; tTx+=tax; tNt+=net;
+
+            const sLabel={DRAFT:'임시저장',CONFIRMED:'확정',PAID:'지급완료'}[status]||status;
+            const sBadge={DRAFT:'bg-secondary',CONFIRMED:'bg-info',PAID:'bg-success'}[status]||'bg-secondary';
+            const paidDate=item.paidDate?fmtDt(item.paidDate):'-';
+            const hourly=(typeof item.hourlyWage==='number')?krw(item.hourlyWage):((typeof selectedMember?.hourlyWage==='number')?krw(selectedMember.hourlyWage):'-');
+            const taxLabel=taxApplied?'<span class="text-danger fw-bold">부과</span>':'<span class="text-muted">미부과</span>';
+
+            monthTbody.innerHTML += `<tr>
+                <td>${y}-${mo}</td><td>${paidDate}</td>
+                <td><span class="badge ${sBadge}">${sLabel}</span></td>
+                <td class="text-end">${hourly}</td>
+                <td>${fmtMins(wm)}</td><td>${fmtMins(jm)}</td>
+                <td class="text-end">${wp?krw(wp):'-'}</td><td class="text-end">${jp?krw(jp):'-'}</td>
+                <td>${taxLabel}</td>
+                <td class="text-end">${taxApplied?krw(tax):'-'}</td>
+                <td class="text-end fw-semibold">${net?krw(net):'-'}</td></tr>`;
+        });
+
+        monthSummary.innerHTML = summaryHtml([
+            ['총 실근무시간', fmtMins(tWM)], ['총 주휴시간', fmtMins(tJM)],
+            ['총 근무수당', tWP?krw(tWP):'-'], ['총 주휴수당', tJP?krw(tJP):'-'],
+            ['총 세금(3.3%)', tTx?krw(tTx):'-']
+        ], '총 실지급액', tNt?krw(tNt):'-');
+    }
+
+    /* --- 연도별 --- */
+    async function loadYearData(){
+        buildYearHeader();
+        yearTbody.innerHTML='<tr><td colspan="8" class="text-center text-muted">불러오는 중...</td></tr>';
+        yearSummary.innerHTML='';
+
+        if (viewMode==='all'){
+            const year=Number(yearInput.value)||now.getFullYear();
+            navLabelEl.textContent=`${year}년`;
+            try {
+                const resp=await fetch(`${YEARLY_API}?year=${year}`,{headers:{'Accept':'application/json'}});
+                if(!resp.ok) throw new Error(resp.status);
+                let list=await resp.json(); if(!Array.isArray(list)) list=[];
+                renderYearAll(list);
+            } catch(e){ yearTbody.innerHTML='<tr><td colspan="8" class="text-center text-danger">오류 발생</td></tr>'; }
+        } else {
+            if(!selectedMember){ clearTables(); return; }
+            navLabelEl.textContent=`${esc(selectedMember.name)} 연도별`;
+            try {
+                const resp=await fetch(`${MEMBER_API}/${encodeURIComponent(selectedMember.id)}`,{headers:{'Accept':'application/json'}});
+                if(!resp.ok) throw new Error(resp.status);
+                let list=await resp.json(); if(!Array.isArray(list)) list=[];
+                renderYearIndividual(list);
+            } catch(e){ yearTbody.innerHTML='<tr><td colspan="8" class="text-center text-danger">오류 발생</td></tr>'; }
         }
+    }
 
-        // ===== 유틸 함수들 =====
-        function pad2(n) {
-            return String(n).padStart(2,'0');
+    function buildYearHeader(){
+        if (viewMode==='all'){
+            yearThead.innerHTML = `
+                <th style="width:200px;">근무자</th>
+                <th style="width:110px;">연간 실근무시간</th>
+                <th style="width:110px;">연간 주휴시간</th>
+                <th style="width:90px;">시급</th>
+                <th style="width:120px;" class="text-end">연간 근무수당</th>
+                <th style="width:120px;" class="text-end">연간 주휴수당</th>
+                <th style="width:140px;" class="text-end">연간 총액</th>
+                <th style="width:100px;">비고</th>`;
+        } else {
+            yearThead.innerHTML = `
+                <th style="width:90px;">연도</th>
+                <th style="width:120px;">실근무시간</th>
+                <th style="width:120px;">주휴시간</th>
+                <th style="width:120px;" class="text-end">근무수당</th>
+                <th style="width:120px;" class="text-end">주휴수당</th>
+                <th style="width:120px;" class="text-end">세금</th>
+                <th style="width:140px;" class="text-end">실지급액</th>`;
         }
+    }
 
-        function formatMins(mins) {
-            const v = Math.max(0, mins|0);
-            const h = Math.floor(v/60);
-            const m = v % 60;
-            return m === 0 ? `${h}시간` : `${h}시간 ${m}분`;
-        }
+    function renderYearAll(list){
+        yearTbody.innerHTML='';
+        if(!list.length){ yearTbody.innerHTML='<tr><td colspan="8" class="text-center text-muted">데이터가 없습니다.</td></tr>'; yearSummary.innerHTML=''; return; }
+        list.sort((a,b)=>(a.memberName||'').localeCompare(b.memberName||'','ko'));
 
-        function krw(v) {
-            return new Intl.NumberFormat('ko-KR', {
-                style: 'currency',
-                currency: 'KRW',
-                maximumFractionDigits: 0
-            }).format(v);
-        }
+        let tWM=0,tJM=0,tWP=0,tJP=0,tTP=0;
+        list.forEach(item=>{
+            const wm=item.workMinutes||0, jm=item.juhyuMinutes||0, wp=item.workPay||0, jp=item.juhyuPay||0;
+            const total=item.totalPay||(wp+jp);
+            tWM+=wm; tJM+=jm; tWP+=wp; tJP+=jp; tTP+=total;
+            const hourly=(typeof item.hourlyWage==='number')?item.hourlyWage:0;
+            const mn=esc(item.memberName||'-'), mp=esc(item.memberPhone||'');
+            yearTbody.innerHTML += `<tr>
+                <td class="member-cell"><span class="member-name">${mn}</span>${mp?`<div class="member-meta">${mp}</div>`:''}</td>
+                <td>${fmtMins(wm)}</td><td>${fmtMins(jm)}</td>
+                <td class="text-end">${hourly?krw(hourly):'-'}</td>
+                <td class="text-end">${wp?krw(wp):'-'}</td><td class="text-end">${jp?krw(jp):'-'}</td>
+                <td class="text-end fw-semibold">${total?krw(total):'-'}</td>
+                <td>-</td></tr>`;
+        });
+        yearSummary.innerHTML = summaryHtml([
+            ['총 실근무시간', fmtMins(tWM)], ['총 주휴시간', fmtMins(tJM)],
+            ['총 근무수당', tWP?krw(tWP):'-'], ['총 주휴수당', tJP?krw(tJP):'-']
+        ], '총 지급액', tTP?krw(tTP):'-');
+    }
 
-        function colorForMember(m) {
-            const key = (m?.id != null ? String(m.id) : (m?.name || 'x'));
-            const h = seededHash(key) % 360, s = 65, l = 55;
-            return hslToHex(h, s, l);
-        }
+    function renderYearIndividual(list){
+        yearTbody.innerHTML='';
+        if(!list.length){ yearTbody.innerHTML='<tr><td colspan="7" class="text-center text-muted">지급 내역이 없습니다.</td></tr>'; yearSummary.innerHTML=''; return; }
 
-        function seededHash(str) {
-            let h = 2166136261 >>> 0;
-            for (let i=0;i<str.length;i++) {
-                h ^= str.charCodeAt(i);
-                h = (h * 16777619) >>> 0;
-            }
-            return h >>> 0;
-        }
+        const yMap={};
+        list.forEach(item=>{
+            const y=item.payYear; if(y==null) return;
+            if(!yMap[y]) yMap[y]={wm:0,jm:0,wp:0,jp:0,tax:0,net:0};
+            const wm=item.monthWorkMinutes||0, jm=item.monthJuhyuMinutes||0, wp=item.monthWorkPay||0, jp=item.monthJuhyuPay||0;
+            const gross=item.monthTotalPay||(wp+jp);
+            const taxApplied=isTaxAppliedForItem(item, selectedMember);
+            let tax=0, net=gross;
+            if(taxApplied&&gross>0){ tax=Math.round(gross*0.033); net=gross-tax; }
+            yMap[y].wm+=wm; yMap[y].jm+=jm; yMap[y].wp+=wp; yMap[y].jp+=jp; yMap[y].tax+=tax; yMap[y].net+=net;
+        });
 
-        function hslToHex(h,s,l) {
-            s/=100; l/=100;
-            const k = n => (n + h/30) % 12;
-            const a = s * Math.min(l, 1-l);
-            const f = n => l - a * Math.max(-1, Math.min(k(n)-3, Math.min(9-k(n),1)));
-            const toHex = x => Math.round(255*x).toString(16).padStart(2,'0');
-            return `#${toHex(f(0))}${toHex(f(8))}${toHex(f(4))}`;
-        }
+        const years=Object.keys(yMap).map(Number).sort((a,b)=>b-a);
+        let tWM=0,tJM=0,tWP=0,tJP=0,tTx=0,tNt=0;
 
-        function escapeHtml(s) {
-            if (s == null) return '';
-            return String(s)
-                    .replace(/&/g,'&amp;')
-                    .replace(/</g,'&lt;')
-                    .replace(/"/g,'&quot;')
-                    .replace(/'/g,'&#39;');
-        }
+        years.forEach(y=>{
+            const a=yMap[y];
+            tWM+=a.wm; tJM+=a.jm; tWP+=a.wp; tJP+=a.jp; tTx+=a.tax; tNt+=a.net;
+            yearTbody.innerHTML += `<tr>
+                <td>${y}</td><td>${fmtMins(a.wm)}</td><td>${fmtMins(a.jm)}</td>
+                <td class="text-end">${a.wp?krw(a.wp):'-'}</td><td class="text-end">${a.jp?krw(a.jp):'-'}</td>
+                <td class="text-end">${a.tax?krw(a.tax):'-'}</td>
+                <td class="text-end fw-semibold">${a.net?krw(a.net):'-'}</td></tr>`;
+        });
 
-        // ✅ 지급일 포맷터: 2025-11-12 10:20
-        function formatDateTime(value) {
-            if (!value) return '-';
+        yearSummary.innerHTML = summaryHtml([
+            ['총 실근무시간', fmtMins(tWM)], ['총 주휴시간', fmtMins(tJM)],
+            ['총 근무수당', tWP?krw(tWP):'-'], ['총 주휴수당', tJP?krw(tJP):'-'],
+            ['총 세금', tTx?krw(tTx):'-']
+        ], '총 실지급액', tNt?krw(tNt):'-');
+    }
 
-            let d;
+    /* ===== helpers ===== */
+    function clearTables(){
+        monthTbody.innerHTML=''; monthSummary.innerHTML='';
+        yearTbody.innerHTML=''; yearSummary.innerHTML='';
+        navLabelEl.textContent='';
+    }
 
-            if (value instanceof Date) {
-                d = value;
-            } else if (typeof value === 'number') {
-                d = new Date(value < 1e12 ? value * 1000 : value);
-            } else {
-                const s = String(value).replace(' ', 'T');
-                const parsed = new Date(s);
-                if (isNaN(parsed.getTime())) {
-                    return String(value);
-                }
-                d = parsed;
-            }
+    function summaryHtml(rows, totalLabel, totalValue){
+        let html = rows.map(([l,v])=>`<div class="d-flex justify-content-between mb-1"><span class="small text-muted">${l}</span><span class="fw-semibold">${v}</span></div>`).join('');
+        html += `<hr class="my-2"><div class="d-flex justify-content-between align-items-center"><span class="small fw-bold">${totalLabel}</span><span class="fw-bold text-primary">${totalValue}</span></div>`;
+        return html;
+    }
 
-            const y  = d.getFullYear();
-            const M  = pad2(d.getMonth() + 1);
-            const D  = pad2(d.getDate());
-            const hh = pad2(d.getHours());
-            const mm = pad2(d.getMinutes());
+    function shiftMonth(d){ const cur=monthPicker.value||`${now.getFullYear()}-${pad2(now.getMonth()+1)}`; const dt=new Date(cur+'-01T00:00:00'); if(isNaN(dt.getTime())) return; dt.setMonth(dt.getMonth()+d); monthPicker.value=`${dt.getFullYear()}-${pad2(dt.getMonth()+1)}`; loadData(); }
+    function shiftYear(d){ yearInput.value=(Number(yearInput.value)||now.getFullYear())+d; loadData(); }
 
-            return `${y}-${M}-${D} ${hh}:${mm}`;
-        }
+    function pad2(n){ return String(n).padStart(2,'0'); }
+    function fmtMins(m){ m=Math.max(0,m|0); const h=Math.floor(m/60),r=m%60; return r===0?`${h}시간`:`${h}시간 ${r}분`; }
+    function krw(v){ return new Intl.NumberFormat('ko-KR',{style:'currency',currency:'KRW',maximumFractionDigits:0}).format(v|0); }
+    function esc(s){ return s==null?'':String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
-        // === 세금 부과 여부 플래그 처리 ===
-        function flagToBool(v){
-            if (v === true) return true;
-            if (v === false || v == null) return false;
-            if (typeof v === 'number') return v === 1;
-            if (typeof v === 'string'){
-                const s = v.trim().toUpperCase();
-                return s === 'Y' || s === 'TRUE' || s === 'T' || s === '1';
-            }
-            return false;
-        }
+    function fmtDt(v){
+        if(!v) return '-';
+        let d; if(v instanceof Date) d=v; else if(typeof v==='number') d=new Date(v<1e12?v*1000:v);
+        else { d=new Date(String(v).replace(' ','T')); if(isNaN(d.getTime())) return String(v); }
+        return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())} ${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+    }
 
-        function isTaxApplied(source){
-            return flagToBool(source?.applyTax);
-        }
+    function colorFor(m){ const k=m?.id!=null?String(m.id):(m?.name||'x'); let h=2166136261>>>0; for(let i=0;i<k.length;i++){h^=k.charCodeAt(i);h=(h*16777619)>>>0;} h=h%360; const s=65,l=55; const s2=s/100,l2=l/100,a=s2*Math.min(l2,1-l2); const f=n=>{const k2=(n+h/30)%12; return l2-a*Math.max(-1,Math.min(k2-3,Math.min(9-k2,1)));}; const hx=x=>Math.round(255*x).toString(16).padStart(2,'0'); return `#${hx(f(0))}${hx(f(8))}${hx(f(4))}`; }
 
-        function isTaxAppliedForItem(item, member){
-            if (item && item.applyTax != null){
-                return flagToBool(item.applyTax);
-            }
-            return isTaxApplied(member);
-        }
+    function flagToBool(v){ if(v===true) return true; if(v===false||v==null) return false; if(typeof v==='number') return v===1; if(typeof v==='string'){const s=v.trim().toUpperCase(); return s==='Y'||s==='TRUE'||s==='T'||s==='1';} return false; }
+    function isTaxApplied(src){ return flagToBool(src?.applyTax); }
+    function isTaxAppliedForItem(item,member){ if(item&&item.applyTax!=null) return flagToBool(item.applyTax); return isTaxApplied(member); }
 
-    })();
+    function showToast(msg,type){
+        if(!toastEl) return; toastBodyEl.textContent=msg;
+        toastEl.classList.remove('text-bg-success','text-bg-danger','text-bg-warning');
+        toastEl.classList.add(type==='danger'?'text-bg-danger':type==='warning'?'text-bg-warning':'text-bg-success');
+        if(window.bootstrap&&bootstrap.Toast) bootstrap.Toast.getOrCreateInstance(toastEl,{delay:3000}).show();
+    }
+})();
 </script>
 
 {{>layouts/footer_}}
